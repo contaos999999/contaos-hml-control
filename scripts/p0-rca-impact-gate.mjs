@@ -42,8 +42,8 @@ export function validateRcaImpact({
   const errors = [];
   const err = (msg) => errors.push("P0 RCA: " + msg);
   const id = String(planId || "").padStart(2, "0");
-  const version = Object.keys(RANGES).find((v) => RANGES[v].includes(id));
-  const paths = changed.filter(codeFile);
+  let version = Object.keys(RANGES).find((v) => RANGES[v].includes(id));
+  let paths = changed.filter(codeFile);
   if (!paths.length) return { errors, applicable: false, version };
   if (!version) {
     if (!(Number(id) <= 42 || id === "43" || id === "75"))
@@ -55,8 +55,6 @@ export function validateRcaImpact({
     if (future.length)
       err("código de V2–V5 sob PLAN V1: " + future.join(", "));
     const governancePaths = paths.filter((p) => !appFile(p));
-    // Um PLAN específico, pré-integrado na main, deve abranger os scripts do
-    // PR efetivo. Não classificar governança V2–V5 como código V1 legado.
     if (governancePaths.length &&
         (!governancePlan?.approved ||
          governancePlan.pr_number !== prNumber ||
@@ -66,39 +64,29 @@ export function validateRcaImpact({
         governancePaths.join(", "));
     }
     const appPaths = paths.filter(appFile);
-    if (appPaths.length) {
-      const unknown = appPaths.filter((p) => !legacyAllowlist.includes(p));
-      if (unknown.length)
-        err("código V1 novo/sem classificação na allowlist pré-BUILD: " + unknown.join(", "));
-      const introduced = appPaths.filter((p) =>
-        /(?:^|[^a-z0-9])V[2-5](?:[-_/ ]|$)|V[2-5]-(?:DIL|PRO|ACT|KB|CONTEST)/i
-          .test(String(addedLines[p] || "")));
-      if (introduced.length)
-        err("diff de V1 introduz referências V2–V5: " + introduced.join(", "));
-      if (!v1ScopeChanged || !changed.includes(V1_SCOPE) ||
-          v1Scope?.schema !== "contaos.p0.v1-scope-proof.v1" ||
-          v1Scope?.prompt_id !== id ||
-          v1Scope?.baseline_sha !== expectedFrontendSha ||
-          !Array.isArray(v1Scope?.arquivos) ||
-          v1Scope.arquivos.length !== appPaths.length ||
-          new Set(v1Scope.arquivos.map((a) => a?.arquivo)).size !== appPaths.length ||
-          appPaths.some((p) => !v1Scope.arquivos.some((a) =>
-            a.arquivo === p && a.versao === "V1" && hasText(a.justificativa))) ||
-          !Array.isArray(v1Scope?.testes) || v1Scope.testes.length === 0 ||
-          v1Scope.testes.some((t) => !caseValid(t, fileExists))) {
-        err("mudança em V1 exige declaração de escopo, dependências e testes executáveis no mesmo diff.");
-      }
-    }
-    return {
-      errors, applicable: false,
-      version: appPaths.length ? "V1_ATTESTATION" : "P0_GOV",
-    };
+    if (!appPaths.length)
+      return { errors, applicable: false, version: "P0_GOV" };
+    const unknown = appPaths.filter((p) => !legacyAllowlist.includes(p));
+    if (unknown.length)
+      err("código V1 novo/sem classificação na allowlist pré-BUILD: " + unknown.join(", "));
+    const introduced = appPaths.filter((p) =>
+      /(?:^|[^a-z0-9])V[2-5](?:[-_/ ]|$)|V[2-5]-(?:DIL|PRO|ACT|KB|CONTEST)/i
+        .test(String(addedLines[p] || "")));
+    if (introduced.length)
+      err("diff de V1 introduz referências V2–V5: " + introduced.join(", "));
+    // Emenda X P0-RCA: V1 fases 3–7 exigem causa, RED GitHub, impactos,
+    // negativos e regressões, não somente allowlist e teste genérico.
+    report = v1Scope;
+    reportExists = v1ScopeChanged;
+    version = "V1";
+    paths = appPaths;
   }
-  if (!reportExists || !changed.includes(REPORT) || !report) {
+  const evidenceFile = version === "V1" ? V1_SCOPE : REPORT;
+  if (!reportExists || !changed.includes(evidenceFile) || !report) {
     err("BUILD " + version + " sem ficha RCA alterada no mesmo diff.");
     return { errors, applicable: true, version };
   }
-  if (report.schema !== "contaos.p0.rca-report.v2" ||
+  if (report.schema !== (version === "V1" ? "contaos.p0.v1-scope-proof.v2" : "contaos.p0.rca-report.v2") ||
       report.versao !== version || report.prompt_id !== id ||
       !validSha(report.baseline?.frontend_sha) ||
       !validSha(report.baseline?.backend_sha) ||
@@ -304,7 +292,7 @@ function changes() {
     try { head = git("rev-parse", "HEAD^2"); } catch { head = "HEAD"; }
     base = git("merge-base", base, head);
   }
-  return { base, changed: git("diff", "--name-only", "--diff-filter=ACMRD", base, head).split("\n").filter(Boolean) };
+  return { base, head, changed: git("diff", "--name-only", "--diff-filter=ACMRD", base, head).split("\n").filter(Boolean) };
 }
 async function http(path, token, raw = false) {
   if (!token) throw new Error("token de leitura indisponível.");
@@ -318,9 +306,9 @@ async function http(path, token, raw = false) {
   return raw ? res.text() : res.json();
 }
 async function main() {
-  let base, changed, plan, previous, report = null;
+  let base, head, changed, plan, previous, report = null;
   try {
-    ({ base, changed } = changes());
+    ({ base, head, changed } = changes());
     plan = JSON.parse(readFileSync(PLAN, "utf8"));
     previous = JSON.parse(git("show", base + ":" + PLAN));
     if (existsSync(REPORT)) report = JSON.parse(readFileSync(REPORT, "utf8"));
@@ -328,7 +316,8 @@ async function main() {
     console.error("P0 RCA FAIL: baseline/diff/PLAN: " + e.message);
     process.exitCode = 1; return;
   }
-  const active = Object.keys(RANGES).some((v) => RANGES[v].includes(plan.prompt_id));
+  const active = Object.keys(RANGES).some((v) => RANGES[v].includes(plan.prompt_id)) ||
+    Number(plan.prompt_id) <= 42 || ["43", "75"].includes(String(plan.prompt_id));
   const appChanged = changed.some(codeFile);
   const canonicalToken = String(process.env.CONTAOS_CANONICAL_READ_TOKEN || "");
   const githubToken = String(process.env.GITHUB_TOKEN || "");
@@ -386,7 +375,7 @@ async function main() {
   const addedLines = {};
   for (const path of changed.filter(appFile)) {
     try {
-      addedLines[path] = git("diff", "--unified=0", base, "HEAD", "--", path)
+      addedLines[path] = git("diff", "--unified=0", base, head, "--", path)
         .split("\n").filter((line) => line.startsWith("+") && !line.startsWith("+++"))
         .map((line) => line.slice(1)).join("\n");
     } catch { addedLines[path] = ""; }
@@ -403,20 +392,11 @@ async function main() {
     process.exitCode = 1; return;
   }
   if (!result.applicable) {
-    if (result.version === "V1_ATTESTATION") {
-      for (const t of v1Scope.testes) {
-        if (!runCase(t)) {
-          console.error("P0 V1 SCOPE FAIL: teste não executado: " + t.caso);
-          process.exitCode = 1; return;
-        }
-      }
-      console.log("P0 V1 SCOPE PASS: allowlist, diff e testes V1 verificados.");
-    } else {
-      console.log("P0 RCA N/A: governança com PLAN protegido ou diff documental.");
-    }
+    console.log("P0 RCA N/A: governança com PLAN protegido ou diff documental.");
     return;
   }
-  const evidence = await verifyRcaOperational(report, {
+  const activeReport = result.version === "V1" ? v1Scope : report;
+  const evidence = await verifyRcaOperational(activeReport, {
     apiGet: (path) => http(path, githubToken),
     apiText: (path) => http(path, githubToken, true),
     execute: runCase,
@@ -429,7 +409,7 @@ async function main() {
     evidence.errors.forEach((msg) => console.error(msg));
     process.exitCode = 1; return;
   }
-  console.log("P0 RCA PASS: baseline real, RED comprovado e " +
+  console.log("P0 RCA PASS " + result.version + ": baseline real, RED comprovado e " +
     evidence.executed + " casos GREEN/NEG/REG executados no HEAD.");
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) ===
