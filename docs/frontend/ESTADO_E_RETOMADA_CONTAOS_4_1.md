@@ -1,3 +1,26 @@
+## Integração funcional V1: Fase 3, BUILD-2b-1 integrado, 14/11/2026 Bahia
+
+- **BUILD-2b-1 integrado.** A PR #658 (autora Edivan5002) entrou com o merge `fb02383`, cujos pais são a main `fb8d05b` e o HEAD `f30851d`. A contaos9999 publicou o APPROVE 5903293851 no HEAD `f30851d`, depois de sete rodadas de revisão independente; o histórico está em `fase3/BUILD2B1_INFRA.md`.
+  - Readback na main: os blobs batem com os do HEAD aprovado; o ledger tem SHA `1d402a1a…`; o `types.ts` está no blob `8ea7750b`.
+  - Checks da main: Zero-Drift, Teste C e protect-types estão verdes.
+  - O job "Trilha A Autenticada" falha fechado com `REQUEST_PARENT` porque não existe REQUEST. É o mesmo comportamento do merge `d2a6557`.
+- **Modelo entregue, ainda offline.** É uma máquina de estados única com eventos e replay no relatório e no ledger, mais:
+  - âncoras do próprio módulo: catálogo, ledger com SHA e política de produção no gate e no gravador;
+  - árvore JSON pura e log canônico;
+  - intenções tipadas e transição `abandon`;
+  - todo fato observado registrado no inventário;
+  - livro transacional e relatório parcial que carrega o livro;
+  - regra C ligada ao replay.
+- **Obrigações do BUILD-2b-2:**
+  - **M2:** o livro passa a receber a proveniência completa.
+  - **M3:** a execução gravada no ledger passa a se ligar ao artefato (`artifactId`, `sha256`, `reviewId`).
+  - **M-A:** o teste de propriedade passa a exigir que entidades na `e87f7e68` sejam sorteadas.
+  - O `runCli` passa o livro a `blockedF3Report`.
+  - O isolamento dos pré-requisitos encerra a execução com código.
+- **Regra canônica P0-RCA-001** estendida à V1 e a toda revisão, por diretriz do titular de 14/11/2026: `AGENTS.md` e emenda X do documento de governança.
+- **Próximo:** BUILD-2b-2, que cobre os drivers de UI dos 16 produtores e do ADM01, as sessões do MASTER e do `leitor`, a política de duplicidade com fonte e as obrigações acima. Depois vêm o pin de deployment e o REQUEST `fixtures` com nonce `integracao-v1-fase3-rel-20261113-r1`.
+- **Fase 3:** EM EXECUÇÃO.
+
 ## Integração funcional V1: Fase 3, BUILD-2a integrado e BUILD-2b-1 em revisão, 13/11/2026 Bahia
 
 - **BUILD-2a integrado** pela PR #657 (merge `d2a6557`). O contaos9999 pediu mudanças no HEAD `59f171f` e aprovou no HEAD `a071ef4`. Catálogo `fase3/F3_CASES.json` com SHA-256 `bce15980…`: MASTER `ALLOW` nas 138 posições; `leitor` com 7 `DENY` e 19 `ALLOW` nas 26 de ADM01.

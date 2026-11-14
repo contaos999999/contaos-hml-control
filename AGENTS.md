@@ -25,6 +25,15 @@
 
 Ambiente: HML. Supabase oficial conectado: `gklhhhyosgasnyoxlrui`.
 
+## P0-RCA-001 — CAUSA RAIZ, IMPACTO E ANTIRREGRESSÃO EM TODA FALHA (VINCULANTE, 14/11/2026)
+
+Diretriz expressa do titular, em 14/11/2026, às 00h10 (Bahia), registrada como regra canônica: "sempre que encontrar uma falha, seja ela crítica ou pequena, a sua análise deve ser profunda para achar a causa raiz daquela falha e, ao propor a solução, deve ser analisado não só a correção daquela falha, mas também se a correção proposta não causa nova falha; objetivo aqui é ser eficaz e eficiente, evitando retrabalho e remendos."
+
+- O procedimento obrigatório é o de `docs/frontend/governanca/P0_RCA_IMPACTO_ANTIRRETRABALHO_V2_V5_2026-11-14.md` (RCA → IMPACTO → RED → BUILD → GREEN → AUDIT). Pela emenda X desse documento, ele vale para **todo** o trabalho a partir de 14/11/2026: a integração funcional V1 em curso (fases 3 a 7), V2 a V5, a auditoria global e qualquer revisão independente.
+- Achados de uma revisão são agrupados por causa raiz, e cada grupo recebe uma única correção que feche a classe. Remendo por sintoma, retry sem delta causal e afrouxar teste ou guard para obter PASS são proibidos.
+- Antes de publicar a correção, verificar e registrar se ela introduz falha nova (mapa de impacto, teste negativo e, quando couber, teste de propriedade ou de mutação). Uma falha nova causada pela correção suspende os patches reativos e reabre a análise do conjunto.
+- A revisão independente faz uma passada completa, não para no primeiro achado e calibra a severidade; achado Menor que não comprometa segurança nem fidelidade ao PLAN não impede APPROVE e vira obrigação registrada.
+
 ## Regras constitucionais
 
 1. Supabase é a única fonte de verdade.
