@@ -208,3 +208,41 @@ test("P0 LIVE — relatório HML com hash divergente é FAIL", async () => {
   x.finalReceipt.hml_e2e.arquivo_sha256="f".repeat(64);
   await assertFail(x,/HML E2E|SHA256 diferente/);
 });
+
+test("P0 LIVE — Teste C workflow_dispatch separado no HEAD revisado: PASS", async () => {
+  const x = fixture();
+  x.finalReceipt.teste_c_run_url =
+    "https://github.com/contaos999999/contaos-hml-control/actions/runs/987";
+  x.responses["/actions/runs/987"] = {
+    name: "ContaOS Teste C Independente", conclusion: "success", head_sha: H,
+  };
+  x.responses["/actions/runs/987/jobs?per_page=100"] = {
+    total_count: 1,
+    jobs: [structuredClone(x.responses["/actions/runs/789/jobs?per_page=100"].jobs[1])],
+  };
+  x.responses["/actions/runs/987/artifacts?per_page=100"] = {
+    total_count: 1,
+    artifacts: [{name:"contaos-teste-c-987-1",expired:false,size_in_bytes:4096}],
+  };
+  const r = await x.run();
+  assert.deepEqual(r.errors, []);
+  assert.equal(r.checked, 1);
+});
+test("P0 LIVE — Teste C separado de outro SHA é FAIL", async () => {
+  const x = fixture();
+  x.finalReceipt.teste_c_run_url =
+    "https://github.com/contaos999999/contaos-hml-control/actions/runs/987";
+  x.responses["/actions/runs/987"] = {
+    name:"ContaOS Teste C Independente",conclusion:"success",
+    head_sha:"c".repeat(40),
+  };
+  x.responses["/actions/runs/987/jobs?per_page=100"] = {
+    total_count:1,
+    jobs:[structuredClone(x.responses["/actions/runs/789/jobs?per_page=100"].jobs[1])],
+  };
+  x.responses["/actions/runs/987/artifacts?per_page=100"] = {
+    total_count:1,
+    artifacts:[{name:"contaos-teste-c-987-1",expired:false,size_in_bytes:4096}],
+  };
+  await assertFail(x,/SHA divergente/);
+});
