@@ -970,7 +970,7 @@ export function createF3IntentBook(options = {}) {
   // Transação: o evento é aplicado numa cópia e só substitui o estado se tudo der certo.
   // Controle de segurança do livro (parecer R2, grupo C): no máximo uma cerca, e o congelamento
   // é do livro, não do objeto cerca. Livro congelado não sela nem reenvia; fatos ainda entram.
-  const control = { fenced: false, frozen: false };
+  const control = { fenced: false, frozen: false, failure: null };
   const apply = (e) => {
     if (control.frozen && (e.op === "seal" || e.op === "resend")) fail("F3_FENCE_FROZEN");
     const next = cloneState(st),
@@ -1328,7 +1328,8 @@ export function createF3MutationFence(options = {}) {
     typeof r.sessionId === "string" && typeof r.interceptionId === "string"
       ? r.sessionId + "\u0000" + r.interceptionId
       : null;
-  const freeze = () => {
+  const freeze = (code = "F3_FENCE_FROZEN") => {
+    control.failure ??= code;
     control.frozen = true;
     return false;
   };
@@ -1359,6 +1360,13 @@ export function createF3MutationFence(options = {}) {
       return true;
     }
     if (!isF3Mutation(request)) return requestAllowed(request) === true;
+    const target = parseUrl(request.url);
+    if (
+      target &&
+      [API_ORIGIN, STORAGE_ORIGIN].includes(target.origin) &&
+      /^\/storage\/v1\/upload\/resumable(?:\/|$)/.test(target.pathname)
+    )
+      return freeze("F3_UPLOAD_RESUMABLE");
     if (control.frozen || !active || !ticket || tickets.has(ticket)) return freeze();
     if (performance.now() - active.armedAt >= F3_FENCE_WINDOW_MS) return freeze();
     const s = active.flow[active.done];
@@ -2380,7 +2388,7 @@ export async function runF3Session({
     let code = CODE.test(error?.code || "") ? error.code : "F3_FAILURE";
     // Congelamento por desvio da cerca é a causa, não o sintoma que o driver viu depois.
     if (book?.frozen() && !["F3_SESSION_DEADLINE", "F3_SESSION_ABORTED"].includes(code))
-      code = "F3_FENCE_FROZEN";
+      code = BOOKS.get(book)().control.failure ?? "F3_FENCE_FROZEN";
     freezeBook();
     return {
       code,

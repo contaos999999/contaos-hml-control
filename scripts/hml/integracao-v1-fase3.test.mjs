@@ -2233,6 +2233,29 @@ test("F3 §12.6: SYS04 sem chave só permite reconciliar após envio incerto", (
   assert.equal(f.book.summary().sent, 1);
 });
 
+test("F3 §12.6: tentativa TUS bloqueia a sessão com o código canônico", async () => {
+  const result = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive(book) {
+      const fence = sut.createF3MutationFence({ book });
+      assert.equal(
+        fence.policy(
+          req({
+            url: API + "/storage/v1/upload/resumable",
+            postData: undefined,
+          }),
+        ),
+        false,
+      );
+      assert.equal(book.frozen(), true);
+    },
+  });
+  assert.equal(result.code, "F3_UPLOAD_RESUMABLE");
+  assert.equal(result.report.intents.sent, 0);
+});
+
 test("F3 §12.6: espera vencida ou recusada afeta só o dependente", async () => {
   let reads = 0;
   const read = async () => {
