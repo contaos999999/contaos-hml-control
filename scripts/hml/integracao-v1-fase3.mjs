@@ -672,9 +672,9 @@ export function assertJsonTree(value, code, depth = 0) {
 // ---------------------------------------------------------------------------------------------
 export const F3_INTENT_KINDS = Object.freeze(["principal", "prerequisito", "duplicidade"]);
 export const F3_MAX_PREREQUISITES = 11;
-// Teto provado: no máximo 8 eventos por intenção por execução (selar, incerto, ausente, reenviar,
-// incerto, ausente, abandonar, encontrada) e no máximo 60 intenções na fase.
-export const F3_MAX_EVENTS_PER_RUN = 8 * 60;
+// Teto provado: no máximo 9 eventos por intenção por execução (selar, incerto, ausente, reenviar,
+// incerto, ausente, abandonar, encontrada, vínculo do corpo) e no máximo 60 intenções na fase.
+export const F3_MAX_EVENTS_PER_RUN = 9 * 60;
 const EVENT_KEYS = Object.freeze([
   "op",
   "requestId",
@@ -738,6 +738,16 @@ function cloneState(st) {
 
 function validateEvent(e) {
   const code = "F3_INTENT_EVENT";
+  if (e.op === "bind") {
+    strictPlain(e, ["op", "requestId", "bodySha256"], code);
+    if (
+      !isUuid(e.requestId) ||
+      typeof e.bodySha256 !== "string" ||
+      !/^[a-f0-9]{64}$/.test(e.bodySha256)
+    )
+      fail(code);
+    return;
+  }
   strictPlain(e, EVENT_KEYS, code);
   if (!enumOf(e.op, EVENT_OPS) || !isUuid(e.requestId)) fail(code);
   const entity = e.op === "confirm" || e.op === "found";
@@ -843,6 +853,12 @@ function applyEvent(st, run, e) {
   }
   const i = st.intents.get(e.requestId);
   if (!i) fail("F3_INTENT_UNKNOWN");
+  if (e.op === "bind") {
+    if (i.producerOrder !== 8 || i.state !== "sealed" || i.bodySha256 !== undefined)
+      fail("F3_INTENT_STATE");
+    i.bodySha256 = e.bodySha256;
+    return;
+  }
   const from = {
     confirm: ["sealed"],
     reject: ["sealed"],
@@ -961,6 +977,7 @@ export function createF3IntentBook(options = {}) {
     organizationId: null,
     ...extra,
   });
+  const bindV106Body = (requestId, bodySha256) => apply({ op: "bind", requestId, bodySha256 });
   const book = Object.freeze({
     seal({
       requestId,
@@ -1035,7 +1052,7 @@ export function createF3IntentBook(options = {}) {
       return true;
     },
   });
-  BOOKS.set(book, () => ({ st, run, record, provenance, control }));
+  BOOKS.set(book, () => ({ st, run, record, provenance, control, bindV106Body }));
   return book;
 }
 
@@ -1325,6 +1342,16 @@ export function createF3MutationFence(options = {}) {
       body = parseJsonBody(request.postData);
       if (body === undefined || !matchBody(body, armed, active.slots, got)) return freeze();
     }
+    const bodySha256 =
+      active.producerOrder === 8
+        ? createHash("sha256").update(canonicalJson(body)).digest("hex")
+        : null;
+    if (
+      bodySha256 !== null &&
+      active.resend &&
+      BOOKS.get(book)().st.intents.get(active.requestId)?.bodySha256 !== bodySha256
+    )
+      return freeze();
     // A primeira requisição da intenção é a que conta: sela (ou reenvia) antes de sair.
     if (active.done === 0) {
       try {
@@ -1341,6 +1368,8 @@ export function createF3MutationFence(options = {}) {
       } catch {
         return freeze();
       }
+      if (bodySha256 !== null && !active.resend)
+        BOOKS.get(book)().bindV106Body(active.requestId, bodySha256);
       active.sealed = true;
     }
     Object.assign(active.slots, got);

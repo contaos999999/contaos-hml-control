@@ -1609,7 +1609,7 @@ test("F3 B2b1 RED: relatório parcial com o livro preserva envios, eventos e inv
     () => big.intents.events[0],
   );
   assert.throws(() => sut.validateF3Report(big, catalogue, NP), { code: "F3_REPORT" });
-  assert.equal(sut.F3_MAX_EVENTS_PER_RUN, 480);
+  assert.equal(sut.F3_MAX_EVENTS_PER_RUN, 540);
 });
 
 test("F3 B2b1 RED: gravador só com a política de produção; entrada do ledger pela execução citada", async (t) => {
@@ -2207,6 +2207,30 @@ test("F3 §12.6: SYS04 sem chave só permite reconciliar após envio incerto", (
   assert.throws(() => f.book.resend(id), { code: "F3_UNCERTAIN_RESEND" });
   assert.equal(f.book.summary().sent, 1);
 });
+
+for (const sameKey of [true, false]) {
+  test(`F3 §12.6: V106 ${sameKey ? "preserva a chave" : "recusa chave nova"} no reenvio`, (t) => {
+    const f = fenceWith(t, withContract);
+    const bodies = [v106(uuid(107), sut.f3Slot("uuid", "chave"))];
+    const id = f.fence.arm({ producerOrder: 8, bodies });
+    const send = (key) =>
+      f.fence.policy(
+        req({
+          url: RPC("atualizar_contrato_v1"),
+          postData: JSON.stringify(v106(uuid(107), key)),
+        }),
+      );
+    assert.equal(send(uuid(420)), true);
+    f.fence.settle();
+    f.book.uncertain(id);
+    f.book.reconcile(id, { found: false });
+    f.fence.arm({ producerOrder: 8, bodies, resendOf: id });
+    assert.equal(send(uuid(sameKey ? 420 : 421)), sameKey);
+    assert.equal(f.fence.frozen(), !sameKey);
+    assert.equal(f.book.summary().sent, sameKey ? 4 : 3);
+    assert.equal(f.book.summary().events.filter((event) => event.op === "bind").length, 1);
+  });
+}
 
 test("F3 B2b2a: propriedade da cerca, semente fixa: ordem de chaves e leituras não mudam nada", (t) => {
   let seed = 0x2b2a5eed;
