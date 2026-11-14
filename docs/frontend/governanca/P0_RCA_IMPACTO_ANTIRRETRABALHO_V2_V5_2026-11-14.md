@@ -1,6 +1,6 @@
 # P0-RCA-001 — Protocolo obrigatório de causa raiz, análise de impacto e antirregressão (V2–V5)
 
-**Origem:** diretriz expressa do titular em 14/11/2026, decorrente das falhas recorrentes, retrabalho e consumo excessivo de tempo/tokens na implementação da V1. **Estado:** emenda documental proposta, com eficácia após revisão, CI e merge protegido; não certifica trabalho prévio.
+**Origem:** diretriz expressa do titular em 14/11/2026, decorrente das falhas recorrentes, retrabalho e consumo excessivo de tempo/tokens na implementação da V1. **Estado:** documento integrado à main pela PR #659/merge `77bb34cd00afc863bd31055984b7275a4eb0310d`, com revisão independente formal da PR #659 não demonstrada; automação do P0-RCA exige CI/revisão/merge próprios sob PLAN #660. Não certifica versões nem autoriza PROD.
 **Abrangência:** toda atividade de desenvolvimento, correção, integração, teste, auditoria e certificação da V2, V3, V4 e V5; transversal também na auditoria global. Cobre falhas críticas, pequenas e intermitentes. **Não revoga** regras P0 existentes, PRD, segurança, HML, PLAN/GATE, aprovação humana, LOCK, GOV-020, BRAND-01 ou testes obrigatórios.
 
 ## I. Regra constitucional
@@ -74,3 +74,55 @@ Caso que motivou a extensão: a PR #658 (BUILD-2b-1 da Fase 3) passou por sete r
 O teste de propriedade com semente fixa e o teste de mutação passaram a ser a prova de que a correção fecha a classe e não abre falha nova.
 
 Esta emenda não revoga nem relaxa nenhum item anterior deste documento, nem as demais regras P0.
+
+## XI. Prova técnica RCA v2 e certificação live (emenda corretiva da revisão #5903137025)
+
+Após a integração protegida do BUILD #661, a implementação técnica deverá obedecer ao esquema `contaos.p0.rca-report.v2` (nunca aceitar a antiga ficha v1 como prova de execução).
+
+**Classificação de escopo:** alterações de produto V2–V5 não podem ser classificadas como V1 apenas pelo `PLANO_ATIVO.prompt_id`. O guard cruza paths com marcas V1–V5, allowlist da V1 comprometida **antes do BUILD**, baseline do Git e a matriz por arquivo `escopo[{arquivo,versao,justificativa}]`. Código novo não classificado ou V2+ sob PLAN 75 é NO-GO. Alteração legítima da V2 em consumidores da V1 requer cobertura explícita do impacto e regressão. A dispensa V1 é apenas para escopo pré-aprovado e sem arquivos identificados como V2–V5.
+
+**Ficha RCA operacional:** `P0_RCA_ATIVO.json` somente por PLAN V2–V5, alterada no mesmo diff do BUILD, deve conter `schema`, `versao`, `prompt_id`, `baseline.frontend_sha`, `baseline.backend_sha`, `escopo` por arquivo, itens RCA com `causa.status=CONFIRMADA`, alternativas descartadas, `impacto.riscos[].teste_preventivo`, `testes.red/green/negativos/regressao` e rollback. Cada caso contém `id`, `runner` (node/vitest), `arquivo` e `caso` exato. RED contém adicionalmente `run_url` e `run_sha`. O CI verifica HEAD backend vivo com token canônico, baseline frontend pela base Git e a existência do caso testável, consulta logs de um RED que de fato falhou no SHA ancestral e executa os casos GREEN/negativos/regressão no HEAD auditado. Nome do teste sem execução comprovada não é evidência.
+
+**Certificado cumulativo e autenticação live:** status PASS não equivale a texto em JSON; `scripts/p0-evidence-live-gate.mjs` exige para certificados novos revisão independente APPROVED no HEAD do PR, PR efetivamente merged à main, SHA do merge ancestral da main, workflow Zero-Drift e job Teste C SUCCESS no mesmo SHA, SHA256 das provas e correspondência binária dos artefatos com o arquivo existente no HEAD revisado. Exige todas as Fases 1–6 antes da Fase 7 interna/cumulativa (e fases 1–7 antes de um certificado funcional V2–V5 na Fase 8), com recibos por fase em `fases_anteriores`. Falta de token, API indisponível, fonte posterior ao PR, hash diferente ou review de autoria própria = FAIL, nunca PASS presumido. A comprovação V1 funcional histórica é preservada dentro de seu escopo, sem exigir migração fictícia.
+
+Os validadores verificam evidências **que existem e podem ser testadas**; não substituem a auditoria de qualidade semântica dos casos, da integridade clínica/financeira nem a revisão independente do código. As suites e CHECKs existentes, Teste C, RBAC/RLS, HML-only e PROD proibido permanecem.
+
+
+## XII. Fechamento técnico exigido na revisão independente #5903386404
+
+**Eficácia:** somente após aprovação independente de Edivan5002, CI do HEAD aprovado e merge protegido da PR #661. A alteração de gate não certifica, por si, V1-interna ou V2–V5.
+
+### Escopo V1 e governança
+
+PLAN_ATIVO 75 não autoriza automaticamente implantação V2 em arquivo antigo ou em scripts. Alterações novas de aplicativo V1 devem entregar, no próprio diff, docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json (schema contaos.p0.v1-scope-proof.v1), com baseline SHA, allowlist aprovada, mapa exato de arquivos V1, justificativas e testes reais executados no CI. Referências V2–V5 adicionadas ao diff bloqueiam classificação V1. A análise semântica do código continua obrigatória na revisão independente; uma mera declaração textual não a substitui. Certificações históricas continuam válidas em seu escopo.
+
+Mudanças em scripts ou workflows sob PLAN 75 exigem um PLAN de governança previamente integrado à main, vinculado ao número da PR e com allowlist fechada. PRs futuras podem usar docs/frontend/planos/P0_GOV_PLAN_<numero>.json, com approved:true, pr_number e files, integrado por PR protegido antes do BUILD. A exceção inicial para #661 é **exclusiva da PR #661**, apoiada no PLAN #662 integrado e nos sete caminhos de governança ali relacionados. Não é autorização reaproveitável para outra PR.
+
+### Preflight de NOVA_FUNCIONALIDADE
+
+Aceitar somente preflight.status=VERIFICADO com baseline_sha igual ao baseline real, arquivo evidência sob docs/frontend/auditorias/preflight/ e arquivo_sha256 validado contra bytes efetivamente versionados no SHA do CI. Exigir quatro testes executáveis independentes com tipo CONTRATO, RBAC_RLS, DADOS_INTEGRIDADE e DEPENDENCIAS. Cada teste tem id, runner, arquivo e caso exato; a etapa operacional executa os quatro no HEAD e rejeita testes faltantes, skipped ou não aprovados. Texto como "preflight conferido" não é prova.
+
+### Certificação em duas PRs protegidas: solução antideadlock
+
+**PR A, evidências ainda PENDENTE:** gerar evidências de fases 1–6 e certificado de fase7, ou fases 1–7 e fase8 para funcional; incluir matriz, grafo e relatório autenticado de HML sob diretórios canônicos. Obter a revisão independente no HEAD da PR A, executar o Teste C realmente aplicável com Playwright e artefatos de screenshots e SHA256SUMS. Se a PR A for só documental, executar o workflow Teste C por workflow_dispatch no mesmo SHA: a dispensa por escopo administrativo nunca vira prova E2E. Integrar PR A por merge protegido, conferir recibos e provas na main. O manifesto permanece PENDENTE.
+
+**PR B, ativação PASS:** só após o merge A preencher o manifesto com PR merge SHA de A, review APPROVED no HEAD A por autor independente, CI de A, SHA256 dos documentos, recibos das fases anteriores, teste_c_run_url da execução efetiva do Teste C no SHA de A e hml_e2e com ambiente HML_AUTENTICADO, arquivo_evidencia, arquivo_sha256, casos, run_url e tested_sha. O verificador confere no GitHub REST o workflow ContaOS Trilha A Autenticada efetivamente SUCCESS na main, job privado, etapa de auditoria com contas sintéticas, SHA256SUMS e artifact não expirado. O tested_sha deve ser ancestral do HEAD revisado sem mudanças em código, executores ou contratos desde o teste. Um relatório HML textual sem run real não certifica. O CI da PR B autentica tudo pelo GitHub REST, confirmando PR A merged na main, SHA ancestral, review, CI, steps Playwright SUCCESS, upload SUCCESS, artifact existente e relatório HML no SHA revisado. Após outro review independente de B e CI aprovado, merge protegido da ativação e readback. Essa sequência evita exigir que a PR B já esteja merged para validar a própria PR B.
+
+Um Teste C com job SUCCESS, mas Playwright e evidências SKIPPED, permanece aceitável em PR administrativa; é NO-GO para certificado final de integração. Relatórios HML não são presumidos, e os testes só provam o que efetivamente executam. Não criar certificados artificiais nem reabrir versões já certificadas sem delta invalidante.
+
+### Gates de aceite
+
+Os testes negativos devem reproduzir bypass em scripts sob V1, classificação falsa de V2 em arquivo V1, preflight apenas textual, Teste C SKIPPED, artefato/HML ausente, hash e SHA incompatíveis e PR não merged. Zero-Drift e LOCK no HEAD final + nova auditoria independente APPROVED são obrigatórios antes do merge de #661. PROD proibido.
+
+
+## XIII. Norma efetiva após emenda PLAN #666: V1 RCA e HML de integração por caso
+
+A emenda X da main obriga o mesmo RCA→IMPACTO→RED→GREEN→AUDIT na V1, a partir das fases 3–7 de integração e revisões ainda pendentes, sem reabrir certificações históricas sem delta invalidante. O gate técnico exige, para novos BUILDs V1 de produto, \`docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json\` versionado na mesma PR do código, com \`schema=contaos.p0.v1-scope-proof.v2\`, \`versao=V1\`, \`prompt_id\`, baselines frontend/backend reais, \`escopo\` por arquivo e \`itens\` de CORRECAO ou NOVA_FUNCIONALIDADE. O contrato de itens é **o mesmo** de RCA v2 da V2–V5: causa CONFIRMADA, alternativas descartadas e reprodução, red com workflow FAILURE e caso realmente falho no SHA ancestral, green/negativos/regressão/preventivos executados no HEAD; preflight de nova funcionalidade com quatro provas e SHA256. Guard de allowlist V1 ou teste genérico não constituem RCA.
+
+Para scripts e governança sob PLAN de V1, a alteração continua vinculada à PR e ao PLAN protegido anterior, com a cadeia causal fundamentada no próprio PLAN para correções e revisão técnica. Toda mudança que introduza versão futura sem autorização permanece NO-GO. A comparação de linhas adicionadas é feita entre base e HEAD **real da branch**, não sobre mudanças alheias no merge sintético do GitHub Actions.
+
+**Certificação interna/cumulativa HML:** o validador de recibos não aceita \`ContaOS Trilha A Autenticada\` como prova de jornadas internas/cumulativas. A prova final \`hml_e2e\` exige \`escopo=Vn/interna|cumulativa|funcional\`, \`casos\` com IDs não repetidos, run \`ContaOS P0 Integracao Autenticada\` com HEAD main sem drift funcional e um job com nome exato \`P0 Integracao <escopo> <ID>\`, step \`E2E autenticado: <ID>\` SUCCESS e artefato \`p0-hml-<versao>-<tipo>-<ID>-<runId>\` não expirado com digest sha256 real, para **cada** caso. O JSON comprovante versionado no SHA aprovado deve conter \`schema=contaos.p0.hml-integration-e2e.v1\`, escopo, run_url, tested_sha, casos e artefatos correspondentes às respostas autenticadas do GitHub REST, com hash local e remoto verificados. Caso inventado, mistura de versão, execução visual genérica, artefato de outro escopo, documento posterior ao review ou job skipped: FAIL.
+
+**Limite de eficácia:** o workflow específico \`ContaOS P0 Integracao Autenticada\` e os testes de integração por caso ainda exigem PLAN/implementação próprios. Enquanto não existirem e não forem executados, os certificados internos/cumulativos permanecem **PENDENTE/NO-GO**, não são convertidos em PASS por sua exigência no script. A prova do workflow confirma execução e proveniência nominal dos casos; o auditor independente ainda deve avaliar a correção semântica e cobertura de jornadas. Essa limitação é proposital e preferível a um falso certificado.
+
+A PR #661 só integra os **guards**, não gera certificados nem autoriza V2 funcional ou PROD. Integrar \`main\` sem conflito, Zero-Drift/LOCK no HEAD exato e revisão Edivan5002 antes de merge.
