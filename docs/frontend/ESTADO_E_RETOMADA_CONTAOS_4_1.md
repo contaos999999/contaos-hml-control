@@ -1,3 +1,17 @@
+## Integração funcional V1: Fase 3, BUILD-2b-2a em revisão, 14/11/2026 Bahia
+
+- **BUILD-2b-2 em incrementos.** O titular pediu a execução integral ("Execute integralmente"). O levantamento mostrou que o BUILD-2b-2 tem o porte do preparador da Trilha A, por isso sai em PRs revisadas: 2b-2a (fundação), 2b-2b (sessões do MASTER e do `leitor`, SYS04 e ADM01) e 2b-2c em diante (produtores V102 a V122). Nenhum REQUEST antes do último incremento. O detalhe está em `fase3/BUILD2B2_DRIVERS.md`.
+- **2b-2a, branch `build/integracao-v1-fase3-b2b2-drivers`:**
+  - obrigações M2, M3 e M-A cumpridas;
+  - `runCli` cria o livro depois do ledger e o passa ao relatório parcial;
+  - `assertIsolation` encerra a execução com `F3_ISOLATION_BREACH`;
+  - nova cerca de mutação ligada ao livro, que classifica por destino e método, compara o corpo pela forma canônica com vagas e aceita só referências do inventário; fluxos declarados para SYS04, ADM01, V102 e V106;
+  - 50 testes verdes, com propriedade da cerca e sete mutações detectadas; o ledger não mudou (SHA `1d402a1a…`).
+- **Revisão R1 (HEAD `ec69e0e`):** REQUEST_CHANGES com quatro grupos Maiores (A a D) e um Menor (E). Todos foram corrigidos por classe na R2. A correção revelou um vazamento de diretório temporário no teste M4 do 2b-1, que enchia o disco; também foi corrigido.
+- **Revisão R2 (HEAD `af50cff`):** REQUEST_CHANGES. C, D, E e G foram corrigidos; 55 testes verdes; 14 de 15 mutantes derrubam a suíte. A e B (origem dos UUIDs e reenvio) têm a mesma causa raiz das rodadas anteriores: cerca desenhada antes do fluxo dos produtores. O levantamento em `fase3/F3_FLUXOS_PRODUTORES.md` mostra que o PLAN precisa de emenda: pelo menos 8 pré-requisitos contra 5, pelo menos 36 intenções contra 30 por execução, e uploads sem regra.
+- **Próximo:** decisão do titular sobre a emenda do PLAN e sobre a leitura autorizada das pré-condições do backend; depois, redesenho único da cerca, nova revisão e merge do 2b-2a.
+- **Fase 3:** EM EXECUÇÃO.
+
 ## Integração funcional V1: Fase 3, BUILD-2b-1 integrado, 14/11/2026 Bahia
 
 - **BUILD-2b-1 integrado.** A PR #658 (autora Edivan5002) entrou com o merge `fb02383`, cujos pais são a main `fb8d05b` e o HEAD `f30851d`. A contaos9999 publicou o APPROVE 5903293851 no HEAD `f30851d`, depois de sete rodadas de revisão independente; o histórico está em `fase3/BUILD2B1_INFRA.md`.
