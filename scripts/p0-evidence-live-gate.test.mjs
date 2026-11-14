@@ -42,6 +42,8 @@ const fixture = () => {
       arquivo_evidencia: hmlPath,
       arquivo_sha256: digest,
       casos: ["HML-REAL-001"],
+      run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/555",
+      tested_sha:H,
     },
     fases_anteriores: stages,
   };
@@ -79,6 +81,25 @@ const fixture = () => {
       ],
     },
     ["/compare/" + M + "...main"]: { status: "ahead" },
+    ["/compare/" + H + "..." + H]: { status: "identical", files:[] },
+    "/actions/runs/555": {
+      name:"ContaOS Trilha A Autenticada",conclusion:"success",
+      head_sha:H,head_branch:"main",
+    },
+    "/actions/runs/555/jobs?per_page=100": {
+      total_count:1,jobs:[{
+        name:"Trilha A auditoria privada HML",conclusion:"success",
+        steps:[
+          {name:"Somente agora fornecer o par sintetico ao auditor",conclusion:"success"},
+          {name:"Verificar hashes gerados, inclusive em resultado parcial",conclusion:"success"},
+          {name:"Evidencia privada imutavel por 90 dias",conclusion:"success"},
+        ],
+      }],
+    },
+    "/actions/runs/555/artifacts?per_page=100": {
+      total_count:1,
+      artifacts:[{name:"trilha-a-private-555-1",expired:false,size_in_bytes:8100}],
+    },
     "/actions/runs/789/artifacts?per_page=100": {
       total_count: 1,
       artifacts: [{name:"contaos-teste-c-789-1",expired:false,size_in_bytes:4096}],
@@ -245,4 +266,26 @@ test("P0 LIVE — Teste C separado de outro SHA é FAIL", async () => {
     artifacts:[{name:"contaos-teste-c-987-1",expired:false,size_in_bytes:4096}],
   };
   await assertFail(x,/SHA divergente/);
+});
+
+test("P0 LIVE — HML privado com job SUCCESS e evidência SKIPPED: FAIL", async () => {
+  const x=fixture();
+  x.responses["/actions/runs/555/jobs?per_page=100"].jobs[0].steps[0].conclusion="skipped";
+  await assertFail(x,/HML autenticado sem run real/);
+});
+test("P0 LIVE — HML sem artifact privado: FAIL", async () => {
+  const x=fixture();
+  x.responses["/actions/runs/555/artifacts?per_page=100"].artifacts=[];
+  await assertFail(x,/HML autenticado sem run real/);
+});
+test("P0 LIVE — HML SHA antigo com mudança funcional posterior: FAIL", async () => {
+  const x=fixture();
+  x.responses["/compare/"+H+"..."+H].files=[
+    {filename:"src/components/competencias/CompetenciaVisaoGeral.tsx"}];
+  await assertFail(x,/SHA\/contrato estáveis/);
+});
+test("P0 LIVE — HML run sem execução privada real: FAIL", async () => {
+  const x=fixture();
+  x.responses["/actions/runs/555"].conclusion="skipped";
+  await assertFail(x,/HML autenticado sem run real/);
 });
