@@ -33,6 +33,12 @@ jobs:
         env:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: node scripts/p0-version-order-gate.mjs
+      - name: P0 RCA V2-V5 — testes negativos de causa raiz e impacto
+        run: node --test scripts/p0-rca-impact-gate.test.mjs
+      - name: P0 RCA V2-V5 — exigir relatorio e mapa no BUILD
+        env:
+          FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/p0-rca-impact-gate.mjs
       - name: Autoteste do guard (casos permitidos e proibidos)
         run: node --test scripts/frontend-scope-gate.test.mjs
       - name: Verificar contrato de seguranca do Auto-Lock por PR
