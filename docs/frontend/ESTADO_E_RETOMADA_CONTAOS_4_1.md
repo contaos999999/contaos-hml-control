@@ -5,9 +5,10 @@
   - obrigações M2, M3 e M-A cumpridas;
   - `runCli` cria o livro depois do ledger e o passa ao relatório parcial;
   - `assertIsolation` encerra a execução com `F3_ISOLATION_BREACH`;
-  - nova cerca de mutação ligada ao livro, com fluxo só do SYS04 por enquanto;
-  - 44 testes verdes; o ledger não mudou (SHA `1d402a1a…`).
-- **Próximo:** revisão independente e merge do 2b-2a; depois o 2b-2b.
+  - nova cerca de mutação ligada ao livro, que classifica por destino e método, compara o corpo pela forma canônica com vagas e aceita só referências do inventário; fluxos declarados para SYS04, ADM01, V102 e V106;
+  - 50 testes verdes, com propriedade da cerca e sete mutações detectadas; o ledger não mudou (SHA `1d402a1a…`).
+- **Revisão R1 (HEAD `ec69e0e`):** REQUEST_CHANGES com quatro grupos Maiores (A a D) e um Menor (E). Todos foram corrigidos por classe na R2. A correção revelou um vazamento de diretório temporário no teste M4 do 2b-1, que enchia o disco; também foi corrigido.
+- **Próximo:** PR aberta pela Edivan5002, nova revisão independente no HEAD da R2 e merge do 2b-2a; depois o 2b-2b.
 - **Fase 3:** EM EXECUÇÃO.
 
 ## Integração funcional V1: Fase 3, BUILD-2b-1 integrado, 14/11/2026 Bahia
