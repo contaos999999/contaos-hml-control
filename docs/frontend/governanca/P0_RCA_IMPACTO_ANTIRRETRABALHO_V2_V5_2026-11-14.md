@@ -1,6 +1,6 @@
 # P0-RCA-001 — Protocolo obrigatório de causa raiz, análise de impacto e antirregressão (V2–V5)
 
-**Origem:** diretriz expressa do titular em 14/11/2026, decorrente das falhas recorrentes, retrabalho e consumo excessivo de tempo/tokens na implementação da V1. **Estado:** emenda documental proposta, com eficácia após revisão, CI e merge protegido; não certifica trabalho prévio.
+**Origem:** diretriz expressa do titular em 14/11/2026, decorrente das falhas recorrentes, retrabalho e consumo excessivo de tempo/tokens na implementação da V1. **Estado:** documento integrado à main pela PR #659/merge `77bb34cd00afc863bd31055984b7275a4eb0310d`, com revisão independente formal da PR #659 não demonstrada; automação do P0-RCA exige CI/revisão/merge próprios sob PLAN #660. Não certifica versões nem autoriza PROD.
 **Abrangência:** toda atividade de desenvolvimento, correção, integração, teste, auditoria e certificação da V2, V3, V4 e V5; transversal também na auditoria global. Cobre falhas críticas, pequenas e intermitentes. **Não revoga** regras P0 existentes, PRD, segurança, HML, PLAN/GATE, aprovação humana, LOCK, GOV-020, BRAND-01 ou testes obrigatórios.
 
 ## I. Regra constitucional
