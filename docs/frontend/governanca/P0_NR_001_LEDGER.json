@@ -30,7 +30,7 @@
     },
     {
       "id": "NR-002",
-      "fingerprint": "CI_NOT_TRIGGERED_MERGE_CONFLICT",
+      "fingerprint": "PREMATURE_STOP_ON_KNOWN_BLOCKER",
       "classe": "CONTINUIDADE",
       "causa_status": "CONFIRMADA",
       "causa": "Bloqueio técnico foi interpretado como encerramento da missão antes de diagnóstico de causas e alternativas legítimas.",
