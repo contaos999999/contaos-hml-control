@@ -1927,7 +1927,7 @@ test("F3 B2b2a RED: leitura vai à allowlist real; GET, HEAD e OPTIONS nunca sã
   // RPC sem fluxo declarado ou com nome malformado não é de fluxo: a allowlist real a recusa, e
   // a cerca nativa encerra o contexto em qualquer recusa.
   for (const m of [
-    req({ url: RPC("atualizar_contratante"), postData: "{}" }),
+    req({ url: RPC("publicar_versao_proposta_v108"), postData: "{}" }),
     req({ url: API + "/rest/v1/rpc/criar_organizacao/" }),
   ]) {
     assert.equal(sut.isF3Mutation(m), false, m.url);
@@ -2026,7 +2026,7 @@ test("F3 B2b2a RED: arm valida pela regra do livro, por inteiro e por isolamento
       (e) => /^F3_/.test(e.code),
       JSON.stringify(bad),
     );
-  for (const order of ["2", "__proto__", "constructor", 2.5, 99, 6])
+  for (const order of ["2", "__proto__", "constructor", 2.5, 99, 9])
     assert.throws(() => f.fence.arm({ producerOrder: order, bodies: [ORG_BODY] }), {
       code: "F3_FLOW_UNDEFINED",
     });
@@ -2231,6 +2231,48 @@ test("F3 §12.6: SYS04 sem chave só permite reconciliar após envio incerto", (
   });
   assert.throws(() => f.book.resend(id), { code: "F3_UNCERTAIN_RESEND" });
   assert.equal(f.book.summary().sent, 1);
+});
+
+test("F3 §12.6: V103 aponta para contratante inventariado", (t) => {
+  const fixture = () =>
+    fenceWith(t, (book) => {
+      createOrg(book);
+      seal(book, 5, 5);
+      book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+    });
+  const body = {
+    p_id_organizacao: F3,
+    p_id_contratante: uuid(105),
+    p_versao_esperada: 1,
+    p_tipo_pessoa: "pj",
+    p_documento: "00000000000100",
+    p_razao_social: "Contratante F3",
+    p_nome_fantasia: "F3",
+    p_contato: {},
+    p_situacao: "ativo",
+  };
+  const f = fixture();
+  f.fence.arm({ producerOrder: 6, bodies: [body] });
+  assert.equal(
+    f.fence.policy(
+      req({
+        url: RPC("atualizar_contratante"),
+        postData: JSON.stringify(body),
+      }),
+    ),
+    true,
+  );
+  assert.equal(f.fence.settle().complete, true);
+  const bad = fixture();
+  assert.throws(
+    () =>
+      bad.fence.arm({
+        producerOrder: 6,
+        bodies: [{ ...body, p_id_contratante: F3 }],
+      }),
+    { code: "F3_FOREIGN_ORG" },
+  );
+  assert.equal(bad.fence.frozen(), true);
 });
 
 test("F3 §12.6: V105 aceita contrato com contratante criado por V102", (t) => {

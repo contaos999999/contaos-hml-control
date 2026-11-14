@@ -1126,6 +1126,12 @@ export const F3_MUTATION_FLOWS = Object.freeze({
       source: "src/lib/contratantes/novoContratanteDados.ts:148-148",
     }),
   ]),
+  6: flow([
+    step("rpc", "atualizar_contratante", {
+      inventory: { p_id_organizacao: 2, p_id_contratante: 5 },
+      source: "src/lib/contratantes/editarContratanteDados.ts:94-115",
+    }),
+  ]),
   7: flow([
     step("table", "contratos", {
       inventory: { id_organizacao: 2, id_contratante: 5 },
