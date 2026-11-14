@@ -261,7 +261,7 @@
         "tipo": "TESTE",
         "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
         "procedimento": null,
-        "teste": "F3 B2b2a R3 RED (NR-008): cada fluxo declarado tem uma linha do levantamento e cada linha tem fluxo, com fonte que existe no código"
+        "teste": "F3 B2b1 RED: intenções e inventário declarados precisam ser o replay dos eventos"
       },
       "recibo": null,
       "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo.",
