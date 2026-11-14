@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  actions: read
+  pull-requests: read
 
 concurrency:
   group: frontend-zero-drift-${{ github.ref }}
@@ -33,12 +35,14 @@ jobs:
         env:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: node scripts/p0-version-order-gate.mjs
+      - name: P0 LIVE — testes negativos de proveniencia PR/review/CI
+        run: node --test scripts/p0-evidence-live-gate.test.mjs
+      - name: P0 LIVE — auditar GitHub real para cada certificado PASS
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/p0-evidence-live-gate.mjs
       - name: P0 RCA V2-V5 — testes negativos de causa raiz e impacto
         run: node --test scripts/p0-rca-impact-gate.test.mjs
-      - name: P0 RCA V2-V5 — exigir relatorio e mapa no BUILD
-        env:
-          FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: node scripts/p0-rca-impact-gate.mjs
       - name: Autoteste do guard (casos permitidos e proibidos)
         run: node --test scripts/frontend-scope-gate.test.mjs
       - name: Verificar contrato de seguranca do Auto-Lock por PR
@@ -70,6 +74,12 @@ jobs:
           node scripts/ci/install-pinned-bun.mjs
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
+      - name: P0 RCA V2-V5 — verificar escopo, RED GitHub e executar GREEN/REG reais
+        env:
+          FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          GITHUB_TOKEN: ${{ github.token }}
+          CONTAOS_CANONICAL_READ_TOKEN: ${{ secrets.CONTAOS_CANONICAL_READ_TOKEN }}
+        run: node scripts/p0-rca-impact-gate.mjs
       - name: GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada
         run: node --test scripts/route-tree-drift-gate.test.mjs
       - name: Lint e formatacao do saneamento transversal
