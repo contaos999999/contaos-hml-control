@@ -1,14 +1,25 @@
-## Integração funcional V1: Fase 3, emenda 1 do PLAN em revisão, 14/11/2026 Bahia
+## Integração funcional V1: Fase 3, emenda 1 do PLAN em revisão (R2), 14/11/2026 Bahia
 
-- **Causa raiz das revisões R1 e R2 do BUILD-2b-2a:** a cerca de mutação estava sendo desenhada antes do fluxo de rede dos produtores. O levantamento completo está em `fase3/F3_FLUXOS_PRODUTORES.md`: frontend, mais as definições das funções do Supabase HML, lidas sem escrita por autorização do titular ("Autorizo só leitura (Recomendado)").
-- **Emenda 1 (PLAN §12),** por decisão do titular ("Emenda completa (Recomendado)"):
-  - até 10 pré-requisitos (V107 3, V108 3, V109 2, V118 1, V119 1);
-  - 40 intenções por execução, com o total de 60 mantido;
-  - uploads contados dentro da ação que os consome;
-  - esperas assíncronas (verificador de arquivos, análise e parecer de IA) com prazo e `BLOCKED` próprio, sem reenvio.
-- **BUILD-2b-2a,** branch `build/integracao-v1-fase3-b2b2-drivers`: os grupos C, D, E e G da R2 estão corrigidos. A e B (redesenho da cerca) saem depois do merge desta emenda.
-- **PRs (autor Edivan5002):** emenda #678; BUILD-2b-2a #679. Main `02de927` mesclada nas duas, sem conflito (prevenção NR-001).
-- **Gate P0 RCA da main:** a #679 altera `scripts/hml/*` e exige `docs/frontend/planos/P0_GOV_PLAN_679.json` aprovado na main. Esse arquivo entra pela #678, com allowlist fechada nos dois arquivos do executor F3. Até o merge da #678, a #679 falha nesse gate por desenho.
+- **PRs (autora Edivan5002, revisora contaos9999):**
+  - emenda 1 do PLAN: #678;
+  - BUILD-2b-2a: #679.
+- **Conflito entre as duas PRs:** a main `02de927` foi mesclada nas duas, sem conflito com a main (prevenção NR-001). Entre elas, porém, há conflito previsto em `PLANO_ATIVO.json` (bloco `integracao_funcional_fase3_r1`), no topo deste checkpoint e no `F3_FLUXOS_PRODUTORES.md`, que a #678 reescreve. Depois do merge da #678, a #679 recebe a main por merge. A resolução preserva as chaves das duas branches e adota o levantamento da main.
+- **R1 da #678:** CHANGES_REQUESTED, contaos9999, review 5905890909, no HEAD `20b7ff3`. Quatro grupos Importantes e um Menor. A R2 corrige cada classe uma vez:
+  - **I.** Levantamento campo a campo (revisão 2), com lista fechada de sete origens e leitura do backend (só definições, gatilhos e agregados, com autorização do titular). Três correções saíram dele:
+    - V122 ganha um pré-requisito e duas esperas;
+    - V117 exige evidência aprovada, porque o caso C0415 só é visível pela evidência;
+    - V119 não exige reanálise.
+  - **II.** Cinco esperas (W1–W5) com prazos e códigos. A recuperação usa um nonce novo, que entra por BUILD próprio. Há conferência dos workers antes de cada REQUEST (§9, passo 4-A) e testes RED novos na §12.6.
+  - **III.** `orcamento_intencoes`: 40 por execução, 39 previstas, até 11 pré-requisitos.
+  - **IV.** O NR-008 foi para `PENDENTE_PR`, com tentativas 2, revisão causal ampliada e diagnóstico. A #679 o leva a `REINCIDENCIA` junto com os testes de barreira, porque o gate exige testes existentes no checkout (§12.7).
+  - **V.** O `P0_GOV_PLAN_679.json` agora diz 2b-2a e cita as seções 7.2, 7.3, 7.6, 9 e 12.
+- **Obrigações da #679, depois do merge da #678:**
+  - fazer um commit novo, porque o gate P0 RCA lê o `P0_GOV_PLAN_679.json` em `origin/main` durante a execução;
+  - `F3_BUDGET` e `F3_MAX_PREREQUISITES` conforme a §12;
+  - um fluxo por ação de pré-requisito;
+  - cerca tipada pela lista fechada e evento de vínculo;
+  - testes da §12.6.
+- **Desvio registrado:** os commits `0dc9e60` e `20b7ff3` da #678 saíram com autor git `contaos9999`, a identidade revisora, em vez do padrão `Claude` das PRs anteriores. O histórico não foi reescrito (sem force push), e os commits seguintes voltaram ao padrão. O conteúdo foi revisado de forma independente.
 - **Fase 3:** EM EXECUÇÃO.
 
 ## Integração funcional V1: Fase 3, BUILD-2b-1 integrado, 14/11/2026 Bahia

@@ -207,8 +207,11 @@ Em cada PR, implementador e revisor são identidades diferentes, e o revisor nun
    - mutação feita pelo 2º usuário;
    - perfil diferente de `leitor`.
 
+   Os testes RED da emenda 1 estão na seção 12.6.
+
    Antes do merge: suíte completa, lint, as 18 nativas, checks no mesmo HEAD e revisão independente.
 4. **Pins.** Deployment HML fixado por SHA (Ignored Build Step) e ledger inicial vazio, com SHA fixado.
+   - **4-A. Conferência dos workers.** Antes de cada REQUEST, só por leitura, pelas condições da seção 12.4.
 5. **REQUEST.** JSON de sete campos com operação `fixtures`, nonce F3 e pai igual ao merge do BUILD. A revisão canônica JSON é a última review no HEAD, e o merge é por merge commit. A execução é automática na attempt 1, sem dispatch, rerun ou cancelamento.
 6. **Evidência.** Download e verificação do artefato (CRC, `SHA256SUMS`, schema e catálogo) e atualização do ledger por PR. Se a falha for parcial, os PASS válidos são preservados. A execução seguinte só sai por novo PLAN, BUILD ou REQUEST, com novo nonce.
 7. **Emenda de N/A, se houver.** Aprovada pelo titular antes do REQUEST que fecha a matriz (seção 4, item 5).
@@ -227,23 +230,28 @@ O rollback dos arquivos do BUILD é feito por PR. Os dados já criados ficam iso
 
 ## 12. Emenda 1, 14/11/2026: pré-requisitos, orçamento, uploads e esperas assíncronas
 
-**Origem.** A seção 3 manda o BUILD confirmar no código os pré-requisitos finos e transformar qualquer divergência em emenda. A seção 10 manda emendar o PLAN se um vínculo depender de conclusão assíncrona. No BUILD-2b-2a, as revisões R1 e R2 mostraram a causa raiz de seus achados: a cerca de mutação estava sendo desenhada antes do fluxo de rede dos produtores. O levantamento completo está em `docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md`. Ele foi feito no frontend e, com autorização do titular ("Autorizo só leitura (Recomendado)"), na leitura das definições das funções do Supabase HML, sem nenhuma escrita.
+**Origem.** A seção 3 manda o BUILD confirmar no código os pré-requisitos finos e transformar qualquer divergência em emenda. A seção 10 manda emendar o PLAN se um vínculo depender de conclusão assíncrona. No BUILD-2b-2a, as revisões R1 e R2 mostraram a causa raiz de seus achados: a cerca de mutação estava sendo desenhada antes do fluxo de rede dos produtores.
+
+A revisão R1 desta emenda (PR #678, review 5905890909) achou a mesma causa no primeiro levantamento, que contava pré-requisitos sem inventariar cada requisição. Por isso, a fonte desta seção é o levantamento campo a campo `docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md`, revisão 2. Ele foi feito no frontend e, com autorização do titular ("Autorizo só leitura (Recomendado)"), na leitura das definições das funções, dos gatilhos e de contagens agregadas do Supabase HML, sem nenhuma escrita. Se esta seção e o levantamento divergirem, prevalece o levantamento, e a divergência é defeito desta emenda.
 
 **Decisão do titular.** Na conversa de execução de 14/11/2026, a pergunta foi como emendar o PLAN. Resposta literal: "Emenda completa (Recomendado)".
 
 ### 12.1 Pré-requisitos (substitui o teto de 5 da seção 7.2)
 
-Até **10** pré-requisitos, todos ações de negócio feitas pela UI do MASTER na organização da Fase 3:
+Até **11** pré-requisitos, todos ações de negócio feitas pela UI do MASTER na organização da Fase 3. Cada um é uma ação própria, com fluxo próprio no executor. Um único fluxo de pré-requisito por produtor não basta.
 
-| Produtor | Pré-requisitos | Fonte |
+| Produtor | Pré-requisitos | Por que (fonte no levantamento, seção 3) |
 |---|---|---|
-| V107 | fonte normativa (`salvar_fonte_normativa_v107`), versão por texto (`registrar_versao_fonte_v107`) e aprovação humana (`aprovar_versao_fonte_v107`) | `privado.definir_aplicabilidade_fonte_v107` exige versão aprovada |
-| V108 | proposta (`salvar_proposta_orcamentaria_v108`), versão com documento-base (`registrar_versao_proposta_v108`) e uma rubrica (`salvar_linha_orcamentaria_v108`) | `privado.publicar_versao_proposta_v108` exige rascunho, rubrica e documento-base aprovado |
-| V109 | além do comando produtor (`criar_lista`), `salvar_item` e `publicar_versao` pelo mesmo `executar_comando_lista_v1` | `privado.crud_lista_mutar_v1` |
-| V118 | `solicitar_parecer_interno` | `privado.aprovar_parecer_interno` exige parecer gerado |
-| V119 | `aprovar_apresentacao` | `privado.registrar_apresentacao` exige `pode_apresentar_contratante` |
+| V107 | fonte normativa, versão por texto e aprovação humana (3) | `definir_aplicabilidade_fonte_v107` exige versão aprovada |
+| V108 | proposta, versão com documento-base enviado por upload e uma rubrica (3) | `publicar_versao_proposta_v108` exige rascunho, rubrica e documento-base aprovado |
+| V109 | `salvar_item` e `publicar_versao`, pelo mesmo `executar_comando_lista_v1` do produtor `criar_lista` (2) | `crud_lista_mutar_v1`. O item aponta para a versão de fonte aprovada em V107, com `obrigatorio` e `aplicavel` verdadeiros e `regra_validacao` `{"documento":{"obrigatorio":true}}` |
+| V118 | `solicitar_parecer_interno` (1) | `aprovar_parecer_interno` exige parecer gerado |
+| V119 | `aprovar_apresentacao` (1) | `registrar_apresentacao` exige `pode_apresentar_contratante` |
+| V122 | upload e `criar_documento_contrato_completo` do relatório (1) | na UI, o registro só é liberado depois de o documento existir, estar aprovado e ter o processamento concluído |
 
-O item da lista de V109 aponta para a versão de fonte aprovada em V107. Com isso, a competência de V113 nasce com um único requisito, revisado em V117.
+Com o item de V109, a competência de V113 nasce com **um único requisito**, porque a organização e o contrato da F3 não têm regras de conformidade nem preventivas (`criar_organizacao` e o gatilho de V105 não as semeiam). V115 liga seu documento a esse requisito. V117 o revisa como `conforme`, citando como evidência a versão do documento de V115. Isso libera o portão e torna visível, no detalhe do requisito, o vínculo cobrado pelo caso C0415.
+
+V119 não precisa de reanálise: a revisão de V117 grava uma execução `reanálise` `concluida` com o hash vigente e não altera nada que entre no snapshot da competência.
 
 ### 12.2 Orçamento (substitui a tabela da seção 7.2)
 
@@ -252,54 +260,88 @@ O item da lista de V109 aponta para a versão de fonte aprovada em V107. Com iss
 | Criar a organização | 1 |
 | Vínculo do 2º usuário | 1 |
 | 16 produtores de negócio (ordens 5 a 20) | 16 |
-| Pré-requisitos da seção 12.1 | até 10 |
+| Pré-requisitos da seção 12.1 | até 11 |
 | Tentativas de duplicidade | até 10 |
-| **Total previsto** | **até 38** |
+| **Total previsto** | **até 39** |
 
-O teto por execução sobe de 30 para **40**. O total da Fase 3 continua em **60**. Toda tentativa enviada conta como intenção, inclusive as rejeitadas por duplicidade.
+O teto por execução sobe de 30 para **40**. O total da Fase 3 continua em **60**. Toda tentativa enviada conta como intenção, inclusive as rejeitadas por duplicidade. O job continua com 45 minutos, e a sessão do executor, com 40.
 
 ### 12.3 Uploads
 
-Um upload conta dentro da ação de negócio que o consome, e não como intenção própria:
-- documento-base da versão em V108;
-- documentos em V110, V111 e V115;
-- relatório em V122.
+Um upload conta dentro da ação de negócio que consome o arquivo, e não como intenção própria:
+- o documento-base, no 2º pré-requisito de V108;
+- os documentos de V110, V111 e V115;
+- o relatório, no pré-requisito de V122.
 
-O upload é composto por Edge de assinatura, envio ao Storage e `confirmar_upload_arquivo`. A primeira requisição da ação sela a intenção no livro. Em todos os casos o arquivo é o sintético mínimo de texto da seção 10 (R-01), gerado no job e sem dado real, e continua sem contar como prova de R-01.
+O upload é composto por três requisições: Edge `storage-sign-upload`, envio ao Storage pela URL assinada e `confirmar_upload_arquivo`. A primeira requisição da ação sela a intenção no livro. Um upload sem o RPC que o consome não fecha a intenção, e um upload incerto nunca é repetido sem releitura.
 
-### 12.4 Esperas assíncronas (complementa a seção 10)
+O arquivo é sempre o sintético mínimo de texto da seção 10 (R-01), gerado no job e sem dado real, e continua sem contar como prova de R-01. A configuração do HML aceita `txt` com `text/plain`, e o limiar de envio resumível é de 100 MB. Se a Edge pedir envio resumível (TUS), a cerca bloqueia e o caso fica `BLOCKED` com `F3_UPLOAD_RESUMABLE`.
 
-Há três processos em segundo plano do HML:
-- o verificador de arquivos, para o documento-base de V108 e a evidência de V117;
-- a análise de V116, de que V117 depende;
-- o parecer de IA de V118, de que V119 depende.
+### 12.4 Esperas assíncronas e recuperação (complementa as seções 9 e 10)
 
-O executor espera por eles só por leitura, dentro do prazo interno da sessão, que fica abaixo dos 45 minutos do job. Cada espera tem prazo próprio, fixo no executor.
+**Cinco esperas.** O executor espera só por leitura, pela UI do MASTER. O prazo de cada uma conta a partir do selo da requisição que disparou o processo:
 
-Se um processo não concluir no prazo:
-- o caso dependente fica `BLOCKED`, com código próprio de espera;
+| Espera | O que espera | Prazo | Se vencer | Se recusar ou falhar |
+|---|---|---:|---|---|
+| W1 | verificador aprova o documento-base de V108 e o relatório de V122 | 8 min | `F3_WAIT_VERIFICADOR_PRAZO` | `F3_WAIT_VERIFICADOR_RECUSA` |
+| W2 | verificador aprova o arquivo de V115, citado como evidência em V117 | 8 min | `F3_WAIT_VERIFICADOR_PRAZO` | `F3_WAIT_VERIFICADOR_RECUSA` |
+| W3 | análise de V116 `concluida`, liberando a revisão de V117 | 6 min | `F3_WAIT_ANALISE_PRAZO` | `F3_WAIT_ANALISE_FALHA` |
+| W4 | parecer gerado pelo job de IA de V118 | 6 min | `F3_WAIT_PARECER_PRAZO` | `F3_WAIT_PARECER_FALHA` |
+| W5 | processamento documental do relatório de V122 `concluido` | 8 min | `F3_WAIT_PROCESSAMENTO_PRAZO` | `F3_WAIT_PROCESSAMENTO_FALHA` |
+
+**Prazos.** A base está no levantamento, seção 4: as análises do HML levaram até 37 s, mas não há série histórica legível do verificador nem do parecer, então os prazos são margens fixas. O pré-requisito de V122 roda logo depois de V105, para que W1 e W5 corram durante os demais produtores. W2 e W3 correm em paralelo. No pior caso, as esperas somam 22 minutos no caminho crítico, dentro dos 40 minutos da sessão. O prazo da sessão sempre prevalece, e o que ele cortar fica com `F3_SESSION_DEADLINE`. Os prazos ficam fixos no módulo, como as demais âncoras.
+
+**Se uma espera não concluir:**
+- o caso dependente fica `BLOCKED` com o código da tabela;
 - a intenção não é reenviada;
-- os casos que não dependem dele seguem.
+- os casos que não dependem dela seguem;
+- um arquivo recusado pelo verificador também segue a seção 10: o caso fica `BLOCKED` e o PLAN é emendado.
 
-V116 continua com o critério da seção 10: o vínculo da análise criada e observável basta para o caso de V116, e o fluxo completo do worker continua na Fase 6. Pelo gate da seção 5, um `BLOCKED` por espera exige a execução de recuperação, dentro do total de 60.
+V116 continua com o critério da seção 10: a análise criada e observável basta para os casos de V116, e o fluxo completo do worker continua na Fase 6.
+
+**Recuperação.** Pelo gate da seção 5, um `BLOCKED` exige outra execução. Ela segue a seção 9, passo 6: novo PLAN, BUILD ou REQUEST, com **novo nonce**.
+- O nonce `integracao-v1-fase3-rel-20261113-r1` é o da primeira execução e nunca é reutilizado (seção 11).
+- Como `parseSingleRequest` só aceita os nonces fixados no código (seção 7.1), o nonce da recuperação entra por um BUILD próprio, revisado.
+- O saldo do total de 60 é apurado pelo ledger. As intenções da primeira execução contam, e a recuperação só repete casos sem PASS preservado.
+
+**Conferência dos workers antes de cada REQUEST (seção 9, passo 4-A).** Feita pelo agente, só por leitura no Supabase HML, e registrada no checkpoint com data e hora. O REQUEST só sai se todas as condições valerem:
+1. `contaos-workers-rapidos`, `contaos-workers-pesados` e `contaos-worker-historico-v1-22` ativos, com execução bem-sucedida nos últimos 5 minutos e nenhuma falha nas últimas 24 horas;
+2. nenhum arquivo `pendente` e nenhuma execução de análise `pendente` ou `processando` criados nas últimas 24 horas e com mais de 15 minutos;
+3. nenhuma entrada nova em `jobs_dlq` nas últimas 24 horas;
+4. os itens legados conhecidos (levantamento, seção 6) continuam fora da organização F3 e não são reavaliados.
+
+Se alguma condição falhar, não há REQUEST. O impedimento é registrado e investigado pelo escalonamento de backend do `AGENTS.md`. Esta conferência não prova que cada item novo será processado. Esse risco fica coberto pelos códigos de espera.
 
 ### 12.5 Consequências para o BUILD-2b-2
 
-- **Origem de cada valor variável.** A cerca de mutação passa a tipar a origem de cada valor variável do corpo, conforme o levantamento:
-  - gerado pela UI;
-  - inventário do livro;
-  - derivado lido pela UI do MASTER na organização da Fase 3;
-  - capturado de passo anterior da mesma ação.
-- **Fluxos.** Os fluxos são declarados por produtor e tipo de intenção, com fonte no código e variantes declaradas, por exemplo a repetição do ADM01 sem convite e o upload simples.
-- **Limite do upload.** Se a Edge pedir envio resumível (TUS), a cerca bloqueia e o caso fica `BLOCKED`.
-- **Âncoras do módulo.** Os tetos e prazos desta emenda ficam fixos no módulo, como as demais âncoras.
+- **Origem de cada valor variável.** A cerca de mutação passa a tipar cada posição variável do corpo, por passo, com a lista fechada da seção 1 do levantamento: `gerado_ui`, `gerado_harness`, `inventario`, `derivado`, `capturado`, `vinculado` e `usuario_sintetico`. Os campos literais são comparados literalmente. Um valor cuja origem não esteja declarada para aquela posição congela o livro.
+- **Evento de vínculo no livro.** As chaves e os valores de cada envio ficam registrados no livro por um evento próprio. No reenvio, as posições `vinculado` são resolvidas pelo livro, e uma chave nova é recusada. Os produtores `sem chave` no levantamento (SYS04, V102, V103, V105, V113, V116, os dois RPCs de V118, `aprovar_apresentacao` e o RPC principal de V122) nunca são reenviados; só são relidos.
+- **Fluxos.** Cada fluxo é declarado por produtor, tipo de intenção e ação, com fonte no código, e liga-se a uma linha da seção 3 do levantamento. As variantes também são declaradas: a repetição do ADM01 sem convite, o upload retomável e os dois RPCs da ação principal de V122.
+- **Âncoras.** Os tetos (40 por execução, 11 pré-requisitos), os prazos e os códigos desta emenda ficam fixos no módulo. Na PR #679, `F3_BUDGET` deixa de ser `{ total: 60, perRun: 30, planned: 33, minutes: 45 }` e passa a refletir a seção 12.2, e `F3_MAX_PREREQUISITES` passa de 5 para 11.
 
-### 12.6 O que não muda
+### 12.6 Testes RED adicionais (complementa a seção 9, passo 3)
+
+- espera vencida: caso `BLOCKED` com o código da espera, sem reenvio, e os casos independentes seguem;
+- arquivo recusado pelo verificador: `F3_WAIT_VERIFICADOR_RECUSA`;
+- Edge pede TUS: a cerca bloqueia com `F3_UPLOAD_RESUMABLE`;
+- upload dentro da ação: as três requisições mais o RPC consumidor formam uma única intenção, e um upload sem RPC consumidor não fecha a intenção;
+- 41ª intenção na execução e 12º pré-requisito: recusados (`F3_BUDGET`, `F3_INTENT_PREREQUISITES`);
+- valor com origem não declarada para a posição: UUID da `e87f7e68`, outro usuário no ADM01, chave nova no reenvio e caminho de Storage fora do padrão da organização F3. Todos congelam o livro;
+- reenvio de produtor `sem chave`: recusado; só a releitura é permitida;
+- cada fluxo declarado no executor corresponde a uma linha do levantamento, e o teste falha se um fluxo não tiver linha ou uma linha não tiver fluxo. Essa é a barreira do NR-008 (seção 12.7).
+
+### 12.7 Registro no P0-NR-001 (NR-008)
+
+A classe NR-008 (retrabalho por correções sem atacar a origem causal) reapareceu no ciclo R1 e R2 do BUILD-2b-2a e no primeiro levantamento desta emenda. O registro é feito em duas PRs, porque o gate do ledger só aceita o estado `REINCIDENCIA` com testes novos que já existam no checkout:
+- **Nesta PR (#678):** o NR-008 recebe `tentativas_ciclo` 2, `revisao_causal_ampliada` verdadeiro, `diagnostico_ampliado` apontando para o levantamento, a PR #679 em `origem` e o estado `PENDENTE_PR`, com a barreira nova declarada;
+- **Na PR #679:** o estado passa a `REINCIDENCIA`, com `novos_testes` apontando para os testes da seção 12.6 no executor. O estado seguinte só muda com merge, CI e readback, pelo P0-NR-001.
+
+### 12.8 O que não muda
 
 Esta emenda não muda nada do seguinte:
 - os casos, o catálogo `F3_CASES.json` e o gate da seção 5;
 - a lista fechada da seção 7.6 e as proibições;
-- o nonce único `integracao-v1-fase3-rel-20261113-r1`;
+- o nonce da primeira execução, `integracao-v1-fase3-rel-20261113-r1`, e a regra de nonce novo por execução das seções 9 e 11;
 - o ledger vazio e o protocolo de solicitação única.
 
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
