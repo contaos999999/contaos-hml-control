@@ -103,3 +103,27 @@ test("P0 NR LIVE — token/REST indisponivel com status RESOLVIDO falha fechado"
 test("P0 NR LIVE — ausencia de recibos RESOLVIDO nao inventa status",async()=>{
   assert.deepEqual(await verifyResolvedLive(clone(),null),[]);
 });
+
+test("P0 NR — recibo com review de outra PR nao autentica resolucao",()=>{
+  const x=resolved();x.cases.find(e=>e.id==="NR-008").recibo.review_url=
+    url+"/pull/999#pullrequestreview-888";
+  fail(x,/RESOLVIDO sem PR/);
+});
+test("P0 NR — readback de outro arquivo nao comprova prevencao",()=>{
+  const x=resolved();x.cases.find(e=>e.id==="NR-008").recibo.readback_url=
+    url+"/blob/main/docs/frontend/governanca/OUTRA.md";
+  fail(x,/RESOLVIDO sem PR/);
+});
+test("P0 NR LIVE — review aprovado depois invalidado nao e certificado",async()=>{
+  const api=async(path)=>{
+    if(path.endsWith("/pulls/"+prNo+"/reviews?per_page=100"))
+      return [
+        {id:888,state:"APPROVED",user:{login:"Edivan5002"},
+          commit_id:sha,submitted_at:"2026-11-14T10:00:00Z"},
+        {id:889,state:"CHANGES_REQUESTED",user:{login:"Edivan5002"},
+          commit_id:sha,submitted_at:"2026-11-14T10:10:00Z"},
+      ];
+    return mockGet()(path);
+  };
+  assert.match((await verifyResolvedLive(resolved(),api)).join(" "),/nao comprovados/);
+});
