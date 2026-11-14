@@ -940,7 +940,11 @@ export function createF3IntentBook(options = {}) {
   let st = cloneState(record.state),
     run = { sent: 0, events: [] };
   // Transação: o evento é aplicado numa cópia e só substitui o estado se tudo der certo.
+  // Controle de segurança do livro (parecer R2, grupo C): no máximo uma cerca, e o congelamento
+  // é do livro, não do objeto cerca. Livro congelado não sela nem reenvia; fatos ainda entram.
+  const control = { fenced: false, frozen: false };
   const apply = (e) => {
+    if (control.frozen && (e.op === "seal" || e.op === "resend")) fail("F3_FENCE_FROZEN");
     const next = cloneState(st),
       nextRun = { sent: run.sent, events: run.events };
     applyEvent(next, nextRun, e);
@@ -992,8 +996,13 @@ export function createF3IntentBook(options = {}) {
      * Simula um selo ou reenvio sobre uma cópia do estado, com a mesma applyEvent: a cerca
      * valida a intenção ao armar com a regra do livro, sem reescrevê-la (parecer 2b-2a, grupo B).
      */
-    check({ op, requestId, producerOrder = null, kind = null, duplicateOf = null }) {
+    check(input) {
+      assertJsonTree(input, "F3_INTENT_STATE");
+      const keys = ["op", "requestId", "producerOrder", "kind", "duplicateOf"];
+      if (Object.keys(input).some((k) => !keys.includes(k))) fail("F3_INTENT_STATE");
+      const { op, requestId, producerOrder = null, kind = null, duplicateOf = null } = input;
       if (op !== "seal" && op !== "resend") fail("F3_INTENT_STATE");
+      if (control.frozen) fail("F3_FENCE_FROZEN");
       const e =
         op === "seal"
           ? ev("seal", requestId, { producerOrder, kind, duplicateOf })
@@ -1007,6 +1016,7 @@ export function createF3IntentBook(options = {}) {
     created: () => st.created.map((c) => ({ ...c })),
     summary: () => summarize(st, run),
     provenance: () => ({ ...provenance }),
+    frozen: () => control.frozen,
     /**
      * Conferência de isolamento (BUILD2B1_INFRA, obrigação de pré-requisitos). Encerram a
      * execução com código: entidade fora da F3, de qualquer intenção (houve mutação fora do
@@ -1025,7 +1035,7 @@ export function createF3IntentBook(options = {}) {
       return true;
     },
   });
-  BOOKS.set(book, () => ({ st, run, record, provenance }));
+  BOOKS.set(book, () => ({ st, run, record, provenance, control }));
   return book;
 }
 
@@ -1066,11 +1076,11 @@ export const F3_MUTATION_FLOWS = Object.freeze({
   4: flow([
     step("edge", "admin-invite-user", {
       free: ["chave_idempotencia"],
-      source: DOC + "207-211",
+      source: DOC + "188-211",
     }),
     step("rpc", "salvar_vinculo_usuario_adm", {
       free: ["p_id_usuario", "p_chave_idempotencia"],
-      source: DOC + "183-185",
+      source: DOC + "171-185",
     }),
   ]),
   5: flow([
@@ -1141,6 +1151,22 @@ const flowNames = (target) =>
   new Set(ALL_STEPS.filter((s) => s.target === target).map((s) => s.name));
 const FLOW_RPCS = flowNames("rpc"),
   FLOW_EDGES = flowNames("edge");
+
+// Invariante de carregamento (parecer R2, grupo G): RPC fora de fluxo vai à allowlist de leitura,
+// então nenhuma RPC produtora do PLAN 3, nem variante conhecida de cadastro, pode ser aceita
+// por ela em POST. Se o auditor passar a aceitar uma, o executor não carrega.
+export const F3_PRODUCER_RPC_VARIANTS = Object.freeze([
+  "alterar_situacao_contrato_v1",
+  "atualizar_organizacao_v1",
+  "alterar_situacao_organizacao_v1",
+]);
+for (const name of new Set([
+  ...F3_PRODUCERS.filter((p) => F3_MUTATING_ORDERS.includes(p.order)).map((p) => p.producer),
+  ...ALL_STEPS.map((x) => x.name),
+  ...F3_PRODUCER_RPC_VARIANTS,
+]))
+  if (requestAllowed({ url: API_ORIGIN + "/rest/v1/rpc/" + name, method: "POST" }) === true)
+    fail("F3_READ_ALLOWLIST_MUTATION");
 
 /**
  * Mutação pelo significado: método fora de GET, HEAD e OPTIONS em RPC de fluxo, em tabela, em
@@ -1241,15 +1267,19 @@ export function createF3MutationFence(options = {}) {
   if (Object.keys(options).some((k) => k !== "book")) fail("F3_FENCE_OPTIONS");
   const book = options.book;
   if (!BOOKS.has(book)) fail("F3_FENCE_BOOK");
-  let active = null,
-    frozen = false;
+  const control = BOOKS.get(book)().control;
+  // Uma cerca por livro: uma cerca nova não pode contornar o congelamento nem abrir intenções
+  // em paralelo. O contexto do leitor usa f3ReadOnlyPolicy, que nunca admite mutação.
+  if (control.fenced) fail("F3_FENCE_DUPLICATE");
+  control.fenced = true;
+  let active = null;
   const tickets = new Map();
   const ticketOf = (r) =>
     typeof r.sessionId === "string" && typeof r.interceptionId === "string"
       ? r.sessionId + "\u0000" + r.interceptionId
       : null;
   const freeze = () => {
-    frozen = true;
+    control.frozen = true;
     return false;
   };
   const nextUrlMatches = (u) => {
@@ -1274,12 +1304,12 @@ export function createF3MutationFence(options = {}) {
     if (request.method === "OPTIONS") {
       if (requestAllowed(request) === true) return true;
       const u = parseUrl(request.url);
-      if (frozen || !ticket || !u || !nextUrlMatches(u)) return false;
+      if (control.frozen || !ticket || !u || !nextUrlMatches(u)) return false;
       tickets.set(ticket, { url: request.url, method: "OPTIONS", body: null });
       return true;
     }
     if (!isF3Mutation(request)) return requestAllowed(request) === true;
-    if (frozen || !active || !ticket || tickets.has(ticket)) return freeze();
+    if (control.frozen || !active || !ticket || tickets.has(ticket)) return freeze();
     if (performance.now() - active.armedAt >= F3_FENCE_WINDOW_MS) return freeze();
     const s = active.flow[active.done];
     const u = parseUrl(request.url);
@@ -1333,7 +1363,7 @@ export function createF3MutationFence(options = {}) {
       }
     },
     arm(input = {}) {
-      if (frozen) fail("F3_FENCE_FROZEN");
+      if (control.frozen) fail("F3_FENCE_FROZEN");
       if (active) fail("F3_FENCE_PENDING");
       const ARM_KEYS = ["producerOrder", "kind", "duplicateOf", "resendOf", "bodies"];
       assertJsonTree(input, "F3_FENCE_ARM");
@@ -1405,8 +1435,23 @@ export function createF3MutationFence(options = {}) {
       active = null;
       return out;
     },
-    frozen: () => frozen,
+    frozen: () => control.frozen,
   });
+}
+
+/**
+ * Política do contexto do 2º usuário (leitor): só leitura da allowlist do auditor, e nenhuma
+ * requisição classificada como mutação, em nenhum estágio.
+ */
+export function f3ReadOnlyPolicy(request) {
+  try {
+    if (typeof request !== "object" || request === null || typeof request.url !== "string")
+      return false;
+    if (request.stage !== "REQUEST" && request.stage !== "RESPONSE") return false;
+    return !isF3Mutation(request) && requestAllowed(request) === true;
+  } catch {
+    return false;
+  }
 }
 
 /** Intenções do relatório: os eventos desta execução, reexecutados sobre o ledger. */
@@ -2161,25 +2206,66 @@ async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }
 
+// Prazo interno da sessão (parecer R2, grupo D), abaixo dos 45 minutos do PLAN 7.2 e do limite
+// do job: o relatório parcial é gravado pelo próprio executor, nunca perdido num job morto.
+export const F3_SESSION_DEADLINE_MS = 40 * 60 * 1000;
+
 /**
- * Sessão da execução, depois do ledger validado: cria o livro com a proveniência (M2), roda o
- * driver, faz a conferência final de isolamento e devolve o relatório. Toda falha depois de
- * criado o livro gera o relatório parcial com o livro: eventos, envios e inventário.
+ * Sessão da execução, depois do ledger validado: confere o catálogo, cria o livro com a
+ * proveniência (M2), roda o driver dentro do prazo, faz a conferência final de isolamento e
+ * devolve o relatório. Prazo esgotado ou cancelamento (signal, ligado a SIGTERM e SIGINT no
+ * runCli) congelam o livro, que deixa de selar, e devolvem o parcial. Toda falha depois de
+ * criado o livro gera o relatório parcial com o livro: eventos, envios e inventário. Livro
+ * congelado por desvio da cerca encerra com F3_FENCE_FROZEN.
  */
-export async function runF3Session({ catalogue, ledger, provenance, drive = pendingDriver }) {
-  let book = null;
+export async function runF3Session({
+  catalogue,
+  ledger,
+  provenance,
+  drive = pendingDriver,
+  signal,
+}) {
+  let book = null,
+    timer = null,
+    onAbort = null;
+  const freezeBook = () => {
+    if (book) BOOKS.get(book)().control.frozen = true;
+  };
   try {
+    assertCatalogue(catalogue, "F3_REPORT");
+    if (catalogue === null) fail("F3_REPORT");
     // Proveniência incompleta para o livro: nenhuma mutação pode ser registrada (M2).
     book = createF3IntentBook({ ledger, provenance });
-    await drive(book);
+    const stop = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        freezeBook();
+        reject(Object.assign(new Error("F3_SESSION_DEADLINE"), { code: "F3_SESSION_DEADLINE" }));
+      }, F3_SESSION_DEADLINE_MS);
+      onAbort = () => {
+        freezeBook();
+        reject(Object.assign(new Error("F3_SESSION_ABORTED"), { code: "F3_SESSION_ABORTED" }));
+      };
+      if (signal?.aborted) onAbort();
+      else signal?.addEventListener("abort", onAbort, { once: true });
+    });
+    stop.catch(() => {});
+    await Promise.race([Promise.resolve().then(() => drive(book)), stop]);
+    if (book.frozen()) fail("F3_FENCE_FROZEN");
     book.assertIsolation();
     fail("F3_DRIVER_PENDING");
   } catch (error) {
-    const code = CODE.test(error?.code || "") ? error.code : "F3_FAILURE";
+    let code = CODE.test(error?.code || "") ? error.code : "F3_FAILURE";
+    // Congelamento por desvio da cerca é a causa, não o sintoma que o driver viu depois.
+    if (book?.frozen() && !["F3_SESSION_DEADLINE", "F3_SESSION_ABORTED"].includes(code))
+      code = "F3_FENCE_FROZEN";
+    freezeBook();
     return {
       code,
       report: blockedF3Report({ code, catalogue, provenance, ledger, book }),
     };
+  } finally {
+    clearTimeout(timer);
+    if (onAbort) signal?.removeEventListener("abort", onAbort);
   }
 }
 
@@ -2204,7 +2290,17 @@ export async function runCli(args = process.argv.slice(2), env = process.env) {
     const ledgerRaw = await readFile(join(root, F3_LEDGER_PATH), "utf8");
     if (sha256(ledgerRaw) !== F3_LEDGER_SHA256) fail("F3_LEDGER_HASH");
     ledger = validateF3Ledger(ledgerRaw, catalogue);
-    session = await runF3Session({ catalogue, ledger, provenance });
+    // Cancelamento do job (SIGTERM ou SIGINT) congela o livro e grava o parcial.
+    const abort = new AbortController();
+    const onSignal = () => abort.abort();
+    process.once("SIGTERM", onSignal);
+    process.once("SIGINT", onSignal);
+    try {
+      session = await runF3Session({ catalogue, ledger, provenance, signal: abort.signal });
+    } finally {
+      process.off("SIGTERM", onSignal);
+      process.off("SIGINT", onSignal);
+    }
     fail(session.code);
   } catch (error) {
     // Resultado parcial ou bloqueado também gera F3_REPORT.json e SHA256SUMS (BUILD-1, obrigação 1).
@@ -2216,9 +2312,12 @@ export async function runCli(args = process.argv.slice(2), env = process.env) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  runCli().catch((error) => {
-    const code = /^[A-Z0-9_]{1,80}$/.test(error?.code || "") ? error.code : "F3_FAILURE";
-    process.stderr.write(JSON.stringify({ state: "BLOCKED", code }) + "\n");
-    process.exitCode = 1;
-  });
+  runCli()
+    .catch((error) => {
+      const code = /^[A-Z0-9_]{1,80}$/.test(error?.code || "") ? error.code : "F3_FAILURE";
+      process.stderr.write(JSON.stringify({ state: "BLOCKED", code }) + "\n");
+      process.exitCode = 1;
+    })
+    // Artefatos já gravados: sai mesmo que o driver tenha deixado navegador ou timer vivos.
+    .finally(() => process.exit(process.exitCode ?? 0));
 }

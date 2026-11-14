@@ -1431,7 +1431,7 @@ test("F3 B2b1: executor confere YAML e ledger por SHA antes do driver", async ()
     "assertF3WorkflowContract(",
     "validateF3Cases(",
     "validateF3Ledger(",
-    "runF3Session({ catalogue, ledger, provenance })",
+    "runF3Session({ catalogue, ledger, provenance, signal: abort.signal })",
     "writeF3Artifacts(",
   ].map((needle) => body.indexOf(needle));
   assert.ok(
@@ -2103,14 +2103,21 @@ test("F3 B2b2a RED: vaga da UI em qualquer posição, só em campo free, e UUID 
     code: "F3_FENCE_ARM",
   });
   assert.throws(arm(v106(uuid(107), sut.f3Slot("path", "p"))), { code: "F3_FENCE_ARM" });
-  assert.throws(arm(v106(uuid(999), uuid(1))), { code: "F3_FOREIGN_ORG" });
-  assert.throws(arm({ ...v106(uuid(107), uuid(1)), p_id_organizacao: sut.F3_E87_ORG }), {
+  // Cada recusa isolada: a chave vai em vaga, e só o campo do caso traz o UUID alheio.
+  const k = sut.f3Slot("uuid", "chave");
+  assert.ok(
+    fenceWith(t, withContract).fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), k)] }),
+  );
+  assert.throws(arm(v106(uuid(999), k)), { code: "F3_FOREIGN_ORG" });
+  assert.throws(arm({ ...v106(uuid(107), k), p_id_organizacao: sut.F3_E87_ORG }), {
     code: "F3_FOREIGN_ORG",
   });
-  assert.throws(
-    arm({ ...v106(uuid(107), uuid(1)), p_alteracoes: { ref: "x-" + sut.F3_E87_ORG } }),
-    { code: "F3_FOREIGN_ORG" },
-  );
+  assert.throws(arm({ ...v106(uuid(107), k), p_alteracoes: { ref: "x-" + sut.F3_E87_ORG } }), {
+    code: "F3_FOREIGN_ORG",
+  });
+  assert.throws(arm({ ...v106(uuid(107), k), p_alteracoes: { lista: [{ id: uuid(998) }] } }), {
+    code: "F3_FOREIGN_ORG",
+  });
   assert.throws(() => sut.f3Slot("uuid", "Nome Invalido"), { code: "F3_FENCE_ARM" });
 });
 
@@ -2262,16 +2269,201 @@ test("F3 B2b2a: fluxos só de produtores mutantes, com fonte que existe no códi
       const lines = (await readFile(new URL("../../" + m[1], import.meta.url), "utf8")).split("\n");
       const excerpt = lines.slice(Number(m[2]) - 1, Number(m[3])).join("\n");
       assert.ok(excerpt.includes(s.name), s.name + " em " + s.source);
-      for (const k of s.free)
-        assert.ok(
-          new RegExp("\\b" + k + "\\b").test(excerpt) ||
-            k === "p_id_usuario" ||
-            k === "chave_idempotencia",
-          k,
-        );
+      for (const k of s.free) assert.ok(new RegExp("\\b" + k + "\\b").test(excerpt), k);
       assert.ok(Object.isFrozen(s) && Object.isFrozen(s.free));
       names.push(s.name);
     }
   }
   assert.ok(names.includes("criar_organizacao") && names.includes("admin-invite-user"));
+});
+
+// ---------------------------------------------------------------------------------------------
+// Parecer R2 (HEAD af50cff): grupos C, D, E e G.
+
+test("F3 B2b2a R2 RED (C): uma cerca por livro, congelamento no livro e leitor só leitura", (t) => {
+  const f = fenceWith(t);
+  assert.throws(() => sut.createF3MutationFence({ book: f.book }), { code: "F3_FENCE_DUPLICATE" });
+  armOrg(f);
+  assert.equal(f.fence.policy(req({ postData: "{" })), false);
+  assert.equal(f.book.frozen(), true);
+  // Congelado, o livro não sela nem reenvia por nenhum caminho; fatos ainda entram.
+  assert.throws(() => seal(f.book, 2, 2), { code: "F3_FENCE_FROZEN" });
+  assert.throws(
+    () => f.book.check({ op: "seal", requestId: uuid(9), producerOrder: 2, kind: "principal" }),
+    { code: "F3_FENCE_FROZEN" },
+  );
+  const g = fenceWith(t);
+  armOrg(g);
+  assert.equal(g.fence.policy(req()), true);
+  g.fence.settle();
+  g.fence.policy(req({ url: API + "/rest/v1/contratos", postData: "{}" }));
+  g.book.confirm(uuid(7001), { entityId: F3, organizationId: F3 });
+  assert.equal(g.book.state(uuid(7001)), "confirmed");
+  // book.check com chave a mais diverge de seal: recusado.
+  const h = fenceWith(t);
+  assert.throws(
+    () =>
+      h.book.check({ op: "seal", requestId: uuid(9), producerOrder: 2, kind: "principal", x: 1 }),
+    { code: "F3_INTENT_STATE" },
+  );
+  // Leitor: leitura passa; qualquer mutação, mesmo de fluxo e corpo exato, é recusada.
+  const read = req({ url: API + "/rest/v1/contratos?select=id", method: "GET" });
+  assert.equal(sut.f3ReadOnlyPolicy(read), true);
+  assert.equal(sut.f3ReadOnlyPolicy({ ...read, stage: "RESPONSE" }), true);
+  for (const m of [
+    req(),
+    req({ url: API + "/rest/v1/contratantes?select=id%2Crazao_social%2Csituacao" }),
+    req({ url: API + "/functions/v1/admin-invite-user" }),
+    { ...read, stage: "OTHER" },
+    null,
+  ])
+    assert.equal(sut.f3ReadOnlyPolicy(m), false);
+});
+
+test("F3 B2b2a R2 RED (C): desvio da cerca encerra a sessão com F3_FENCE_FROZEN", async (t) => {
+  t.mock.method(globalThis.crypto, "randomUUID", () => uuid(7001));
+  const out = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async (book) => {
+      const fence = sut.createF3MutationFence({ book });
+      fence.arm({ producerOrder: 2, bodies: [ORG_BODY] });
+      fence.policy(req({ postData: "{" }));
+      // O que o driver vê depois é sintoma (a cerca nativa fecha o contexto).
+      throw Object.assign(new Error("x"), { code: "FENCE_REQUEST" });
+    },
+  });
+  assert.equal(out.code, "F3_FENCE_FROZEN");
+  assert.equal(out.report.blockCode, "F3_FENCE_FROZEN");
+  assert.equal(sut.validateF3Report(out.report, catalogue, { ledger: EMPTY }), true);
+});
+
+test("F3 B2b2a R2 RED (D): prazo e cancelamento congelam o livro e devolvem o parcial", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let held;
+  const pending = sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: (book) => {
+      held = book;
+      createOrg(book);
+      return new Promise(() => {});
+    },
+  });
+  await Promise.resolve();
+  await Promise.resolve();
+  t.mock.timers.tick(sut.F3_SESSION_DEADLINE_MS);
+  const out = await pending;
+  assert.equal(out.code, "F3_SESSION_DEADLINE");
+  assert.equal(out.report.intents.sent, 1);
+  // O driver pode continuar vivo, mas o livro congelado não sela mais.
+  assert.throws(() => seal(held, 5, 5), { code: "F3_FENCE_FROZEN" });
+  assert.ok(sut.F3_SESSION_DEADLINE_MS < 45 * 60 * 1000);
+  t.mock.timers.reset();
+  const abort = new AbortController();
+  const aborted = sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    signal: abort.signal,
+    drive: (book) => {
+      createOrg(book);
+      return new Promise(() => {});
+    },
+  });
+  await Promise.resolve();
+  abort.abort();
+  const a = await aborted;
+  assert.equal(a.code, "F3_SESSION_ABORTED");
+  assert.equal(a.report.intents.sent, 1);
+  assert.equal(sut.validateF3Report(a.report, catalogue, { ledger: EMPTY }), true);
+  // Já cancelado antes de começar: o driver nem chega a mutar.
+  const pre = new AbortController();
+  pre.abort();
+  let ran = false;
+  const b = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    signal: pre.signal,
+    drive: async (book) => {
+      ran = true;
+      createOrg(book);
+    },
+  });
+  assert.equal(b.code, "F3_SESSION_ABORTED");
+  assert.equal(b.report.intents.sent, 0, String(ran));
+});
+
+test("F3 B2b2a R2 RED (G): catálogo do módulo antes do driver e allowlist sem RPC produtora", async () => {
+  let ran = false;
+  await assert.rejects(
+    sut.runF3Session({
+      catalogue: structuredClone(catalogue),
+      ledger: EMPTY,
+      provenance: PROV,
+      drive: async () => (ran = true),
+    }),
+    { code: "F3_REPORT" },
+  );
+  assert.equal(ran, false);
+  const { requestAllowed } = await import("./authenticated-visual-audit.mjs");
+  const names = [
+    ...sut.F3_PRODUCERS.filter((p) => sut.F3_MUTATING_ORDERS.includes(p.order)).map(
+      (p) => p.producer,
+    ),
+    ...sut.F3_PRODUCER_RPC_VARIANTS,
+  ];
+  assert.ok(names.length >= 21);
+  for (const n of names)
+    assert.equal(requestAllowed({ url: RPC(n), method: "POST", postData: "{}" }), false, n);
+});
+
+test("F3 B2b2a R2 RED (E): ticket reusado no meio do fluxo e vaga repetida com outro valor", (t) => {
+  const edge = {
+    id_organizacao: F3,
+    email: "leitor@example.test",
+    chave_idempotencia: sut.f3Slot("uuid", "k"),
+  };
+  const save = {
+    p_id_organizacao: F3,
+    p_id_usuario: sut.f3Slot("uuid", "usuario"),
+    p_email: "leitor@example.test",
+    p_perfil: "leitor",
+    p_escopo_todos_contratos: true,
+    p_ativo: true,
+    p_ids_contratos_ativar: [],
+    p_ids_contratos_revogar: [],
+    p_versao_esperada: null,
+    p_chave_idempotencia: sut.f3Slot("uuid", "k"),
+  };
+  const edgeReq = (key) =>
+    req({
+      url: API + "/functions/v1/admin-invite-user",
+      postData: JSON.stringify({ ...edge, chave_idempotencia: key }),
+      interceptionId: "fixo",
+    });
+  const saveReq = (key, interceptionId = "outro") =>
+    req({
+      url: RPC("salvar_vinculo_usuario_adm"),
+      postData: JSON.stringify({ ...save, p_id_usuario: uuid(31), p_chave_idempotencia: key }),
+      interceptionId,
+    });
+  // Mesmo ticket no segundo passo: bloqueia e congela, sem segundo envio do passo.
+  const reuse = fenceWith(t, orgOk);
+  reuse.fence.arm({ producerOrder: 4, bodies: [edge, save] });
+  assert.equal(reuse.fence.policy(edgeReq(uuid(30))), true);
+  assert.equal(reuse.fence.policy(saveReq(uuid(30), "fixo")), false);
+  assert.equal(reuse.book.frozen(), true);
+  // A mesma vaga em dois passos: o segundo valor tem de ser igual ao primeiro.
+  const diff = fenceWith(t, orgOk);
+  diff.fence.arm({ producerOrder: 4, bodies: [edge, save] });
+  assert.equal(diff.fence.policy(edgeReq(uuid(30))), true);
+  assert.equal(diff.fence.policy(saveReq(uuid(39))), false);
+  const same = fenceWith(t, orgOk);
+  same.fence.arm({ producerOrder: 4, bodies: [edge, save] });
+  assert.equal(same.fence.policy(edgeReq(uuid(30))), true);
+  assert.equal(same.fence.policy(saveReq(uuid(30))), true);
 });

@@ -84,8 +84,26 @@ Nada muda no YAML, no auditor, no preparador, em `src/**`, em `types.ts`, nas de
 
 **Falha nova achada durante a correção, mesma rodada.** O teste M4 do 2b-1 copiava `node_modules` para um diretório temporário a cada execução e nunca o apagava. Isso encheu o disco no meio da verificação. A correção (`t.after` com remoção) entrou em todos os testes que criam diretório temporário.
 
+### Revisão independente R2 (HEAD `af50cff`): REQUEST_CHANGES, correção em andamento
+
+A R2 confirmou que os grupos A (forma do texto), C, D e E da R1 foram fechados no que foi apontado, e achou sete grupos novos.
+
+**Causa raiz comum aos grupos A e B da R2 e aos grupos A e B da R1.** A cerca estava sendo desenhada antes de se levantar o fluxo de rede de cada produtor. Cada rodada achava, na leitura do produto, uma origem de valor ou um passo que o modelo não previa. Por isso a correção deles não é um remendo por caso. Primeiro vem o levantamento completo em `F3_FLUXOS_PRODUTORES.md`; depois, um único redesenho contra ele. O levantamento mostrou que o PLAN precisa de emenda (pré-requisitos, orçamento por execução e uploads), e essa decisão é do titular.
+
+| Grupo R2 | Severidade | Estado |
+|---|---|---|
+| A: origem dos UUIDs sem tipo (vaga aceita qualquer UUID; referências derivadas de V107 e V117 recusadas; caminho do Storage sem conferência) | Maior | Pendente: redesenho contra o levantamento, depois da emenda do PLAN |
+| B: reenvio como repetição do primeiro envio; chave capturada fora do livro; ADM01 repetido sem convite | Maior | Pendente: mesmo redesenho, com evento no livro para as chaves capturadas e variantes de fluxo declaradas |
+| C: congelamento e intenção ativa por objeto cerca | Maior | **Corrigido.** Uma cerca por livro (`F3_FENCE_DUPLICATE`); o congelamento é do livro, que deixa de selar e reenviar (`F3_FENCE_FROZEN`); `runF3Session` encerra com `F3_FENCE_FROZEN`; `f3ReadOnlyPolicy` para o contexto do `leitor` |
+| D: sessão sem prazo e parcial perdido em job morto | Maior | **Corrigido.** Prazo fixo `F3_SESSION_DEADLINE_MS` de 40 minutos; prazo e cancelamento (SIGTERM e SIGINT) congelam o livro e devolvem o parcial; o processo sai depois de gravar os artefatos. Obrigação para o 2b-2b: testar `runCli` com driver que gere eventos |
+| E: asserções que passavam por motivo errado | Menor | **Corrigido.** Recusas isoladas com a chave em vaga, inclusive UUID aninhado em array; reutilização de ticket num fluxo de dois passos; vaga repetida com outro valor; faixas de fonte do ADM01 corrigidas e isenção retirada |
+| F: documento descreve mais que o código | Menor | Pendente junto com A e B |
+| G: catálogo validado tarde; allowlist de leitura como dependência implícita; `check` sem chaves estritas | Menor | **Corrigido.** Catálogo do módulo conferido antes do livro; invariante de carregamento (nenhuma RPC produtora, nem as variantes de cadastro, aceita pela allowlist em POST); `check` estrito |
+
+**Prova de mutação desta rodada.** São 15 mutantes. Catorze derrubam a suíte, entre eles os M3, M4 e M5 do parecer, a cerca duplicada, o livro congelado que ainda sela, o catálogo tardio e o leitor que aceita mutação. O único que sobrevive é retirar o congelamento dentro do temporizador do prazo. Ele é equivalente na prática, porque o `catch` da sessão congela o livro em seguida; o congelamento no temporizador fica como defesa, para fechar a janela antes do `catch`.
+
 ### Testes
 
-- `integracao-v1-fase3.test.mjs` tem 50 testes, todos verdes. Catorze são novos neste incremento: M2, M3, isolamento, `runF3Session`, os da cerca (opções, leitura real, envio único com preflight, desvios, regra do livro, vagas e inventário, fluxo de dois passos e tabela, reenvio, propriedade) e o dos fluxos com fonte conferida no arquivo.
+- `integracao-v1-fase3.test.mjs` tem 55 testes, todos verdes. Dezenove são novos neste incremento: M2, M3, isolamento, `runF3Session`, os da cerca (opções, leitura real, envio único com preflight, desvios, regra do livro, vagas e inventário, fluxo de dois passos e tabela, reenvio, propriedade), o dos fluxos com fonte conferida no arquivo e cinco da R2 (C, C na sessão, D, G e E).
 - Nenhum teste deixa diretório temporário no disco.
 - `eslint` e `prettier --check` estão limpos nos dois scripts.
