@@ -66,15 +66,21 @@ const fixture = () => {
     },
     ["/compare/" + M + "...main"]: { status: "ahead" },
   };
+  const remoteFiles = new Map(files);
   const run = () => verifyEvidenceLive(manifest, {
     apiGet: async (p) => {
+      if (p.startsWith("/contents/")) {
+        const match = /^\/contents\/(.+)\?ref=[a-f0-9]{40}$/.exec(p);
+        if (!match || !remoteFiles.has(match[1])) throw new Error("GitHub REST HTTP 404");
+        return { encoding: "base64", content: remoteFiles.get(match[1]).toString("base64") };
+      }
       if (!(p in responses)) throw new Error("GitHub REST HTTP 404");
       return responses[p];
     },
     fileExists: (path) => files.has(path),
     readBytes: (path) => files.get(path),
   });
-  return { files, manifest, responses, run, finalReceipt };
+  return { files, remoteFiles, manifest, responses, run, finalReceipt };
 };
 const assertFail = async (t, pattern) => {
   const r = await t.run();
@@ -146,4 +152,15 @@ test("P0 LIVE — commit fora da main: FAIL", async () => {
 test("P0 LIVE — REST indisponível com PASS: FAIL fechado", async () => {
   const x = fixture(); delete x.responses["/actions/runs/789"];
   await assertFail(x, /falha de API GitHub/);
+});
+
+test("P0 LIVE — certificado criado após o PR revisado não serve como evidência", async () => {
+  const x = fixture();
+  x.remoteFiles.delete(prefix + "fase7/CERTIFICADO.md");
+  await assertFail(x, /fonte inexistente no HEAD aprovado/);
+});
+test("P0 LIVE — conteúdo alterado após review é rejeitado", async () => {
+  const x = fixture();
+  x.remoteFiles.set(prefix + "fase6/CERTIFICADO.md", Buffer.from("arquivo posterior"));
+  await assertFail(x, /fonte não coincide com o SHA do PR revisado/);
 });
