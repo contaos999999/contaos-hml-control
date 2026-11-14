@@ -77,7 +77,7 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
     throw new Error("Reviews incompletas por paginação.");
   }
 
-  async function authenticate(rec, label) {
+  async function authenticate(rec, label, sourceFiles) {
     const rr = reviewRef(rec?.revisao_independente_url);
     const runId = ciRef(rec?.ci_url);
     if (!rr || !runId || !sha40(rec?.pr_merge_sha)) {
@@ -112,6 +112,24 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
           ![pr.head.sha, pr.merge_commit_sha].includes(run.head_sha)) {
         fail(label + ": execução Zero-Drift não está SUCCESS no SHA do PR.");
         return;
+      }
+      // Vincular a prova ao conteúdo realmente existente no SHA aprovado.
+      // Arquivo criado somente depois do PR autenticado não constitui prova.
+      for (const source of sourceFiles) {
+        try {
+          const remote = await get("/contents/" + source.path +
+            "?ref=" + pr.head.sha);
+          if (remote?.encoding !== "base64" || !remote.content ||
+              !sha256(source.hash) ||
+              createHash("sha256").update(Buffer.from(remote.content, "base64"))
+                .digest("hex") !== source.hash) {
+            fail(label + ": fonte não coincide com o SHA do PR revisado: " + source.path);
+            return;
+          }
+        } catch {
+          fail(label + ": fonte inexistente no HEAD aprovado: " + source.path);
+          return;
+        }
       }
       const [jobs, ancestry] = await Promise.all([
         get("/actions/runs/" + runId + "/jobs?per_page=100"),
@@ -160,9 +178,15 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
       }
       await shaPath(stage.arquivo_evidencia, stage.arquivo_sha256,
         root + "fase" + phase + "/", label + " Fase " + phase);
-      await authenticate(stage, label + " Fase " + phase);
+      await authenticate(stage, label + " Fase " + phase, [{
+        path: stage.arquivo_evidencia, hash: stage.arquivo_sha256,
+      }]);
     }
-    await authenticate(receipt, label + " Fase " + terminal);
+    await authenticate(receipt, label + " Fase " + terminal, [
+      { path: receipt.arquivo_evidencia, hash: receipt.arquivo_sha256 },
+      { path: receipt.matriz_arquivo, hash: receipt.matriz_sha256 },
+      { path: receipt.grafo_arquivo, hash: receipt.grafo_sha256 },
+    ]);
   }
   return { errors, checks, checked: items.length };
 }
