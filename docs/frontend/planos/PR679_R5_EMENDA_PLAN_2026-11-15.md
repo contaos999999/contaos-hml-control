@@ -32,7 +32,7 @@ Não declarar que75 testes anteriores provam execução Windows/M4. Conservar ev
 
 Este PLAN **emenda a proibição src/** do §7.6 do PLAN Fase3 exclusivamente para `src/test/competenciaDocumentos.test.tsx`, teste existente e sem alterar produção. Não autoriza qualquer outro src. A correção da duplicata em PLANO_ATIVO é explícita e limitada ao membro acima. Uma única emenda anterior ao BUILD fecha as cinco causas e preserva9c como ancestral do RED React; separar a correção React em branch sem esse ancestral impediria a prova causal do gate RCA.
 
-Allowlist BUILD679, exatamente10 arquivos:
+Allowlist BUILD679, exatamente12 arquivos:
 
 1. `scripts/hml/integracao-v1-fase3.mjs`: regras centrais de completude e identidade derivada.
 2. `scripts/hml/integracao-v1-fase3.test.mjs`: RED/GREEN, replay, propriedades, mutações, M4 e detector de duplicatas.
@@ -44,10 +44,22 @@ Allowlist BUILD679, exatamente10 arquivos:
 8. `docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json`: prova v2 exigida pelo gate existente, apenas o teste TSX em escopo.
 9. `docs/frontend/governanca/P0_NR_001_LEDGER.json`: aprendizagem/barreiras de NR008 com estado honesto, preservar NR009 e demais entradas.
 10. `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md`: prepend de situação atual e próxima ação; preservar histórico.
+11. `scripts/p0-rca-impact-gate.mjs`: fortalecer autorização do teste por número de PR a partir do PLAN protegido anterior; preservar todos os demais gates.
+12. `scripts/p0-rca-impact-gate.test.mjs`: RED/GREEN/negativos e mutação da nova restrição, sem reduzir cobertura existente.
 
-Esta PR de PLAN altera somente este documento, `P0_GOV_PLAN_679.json`, `PLANO_ATIVO.json` (pré-autorização do único teste e vínculo à emenda) e checkpoint. Não modifica código nem corrige ainda a duplicata que existe somente na branch679. GOV679 passa a apontar esta emenda; a revisão APPROVED e merge desta PR tornam o novo escopo eficaz, nunca a autodeclaração approved isolada.
+Esta PR de PLAN altera somente este documento, `P0_GOV_PLAN_679.json`, `PLANO_ATIVO.json` (mapa restritivo declarativo e vínculo à emenda) e checkpoint. **Não inclui o teste na allowlist geral.** O guard atual continua bloqueando sua alteração. Não modifica código nem corrige ainda a duplicata que existe somente na branch679. GOV679 passa a apontar esta emenda; a revisão APPROVED e merge desta PR tornam o novo escopo eficaz, nunca a autodeclaração approved isolada.
 
-Proibidos: componentes de produção, UI/rotas/brand/assets, routeTree, workflows/guards/proteções, dependências/locks, outros scripts, backend/Supabase/schema/RLS/RPC/Edge/Auth/Storage, execução REQUEST real, dados/usuários HML e PROD. types.ts congelado no blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`. Nenhuma redução de testes, sandbox ou Teste C. Se surgir necessidade externa aos10 arquivos, suspender BUILD e emendar previamente.
+Proibidos: componentes de produção, UI/rotas/brand/assets, routeTree, workflows/proteções, demais guards, dependências/locks, outros scripts, backend/Supabase/schema/RLS/RPC/Edge/Auth/Storage, execução REQUEST real, dados/usuários HML e PROD. A única mudança de guard permitida é o fortalecimento RCA nos dois arquivos11/12, sem exceção aos controles anteriores. types.ts congelado no blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`. Nenhuma redução de testes, sandbox ou Teste C. Se surgir necessidade externa aos12 arquivos, suspender BUILD e emendar previamente.
+
+## Achado R1 e barreira prévia ao teste
+
+Auditoria687 R1 CHANGES_REQUESTED no HEAD40e2d5c, RunId `20261115T100853645Z-40e2d5cd7c9f-08c7e432aec348c1a3a88e8c42d4d41c`, parecer SHA256 `F6124454E881003F361E101DCB43021AF45D20AF5618FB16365F76A2984D476F`. Achado Médio confirmado: o guard de frontend usa allowlist geral; GOV por PR cobre scripts, não restringe teste de aplicação. A declaração documental exclusiva679 não tinha enforcement. Causa: confusão entre autorização normativa por PR e consumo técnico global. Hipótese de GOV já limitar src descartada por leitura do gate.
+
+Correção documental atual: retirar o teste da lista global (retorno ao bloqueio original) e registrar `arquivos_restritos_por_pr` com caminho exato→679. Esse mapa ainda **não é consumido pelo guard atual** e sozinho não libera BUILD de teste. Antes de qualquer TSX, a679 implementará os arquivos11/12 sob GOV679 já integrado: carregar o mapa do PLAN protegido anterior usado pelo RCA (base anterior ao BUILD, nunca o mapa mutável do HEAD); para caminho restrito, exigir PR inteiro679, GOV679 protegido/approved e caminho presente em GOV. A permissão restrita é alternativa estrita à classificação legacy para esse caminho; ela não pode autorizar outros caminhos nem dispensar a ficha V1/RED/impacto. Mesmo se o caminho estiver na allowlist geral, outra PR ou identidade ausente continua FAIL no RCA.
+
+RED obrigatório no guard real: fixture de mapa para679 com alteração do teste em PR680/678, número ausente/string/malformado, GOV ausente/divergente/sem caminho e tentativa de remover mapa no HEAD; todos devem reprovar, sem bloquear arquivos legados não restritos. Positivo679 com GOV correspondente e ficha V1 válida; push pós-merge usa número extraído do merge commit pelo mecanismo existente. Mutante removendo a restrição deve morrer. Campo inválido aplicável falha fechado. Preservar todos os negativos atuais do RCA e executar suíte completa do guard.
+
+Só após GREEN desse fortalecimento, um commit prévio na própria679 pode inserir o teste na allowlist geral (para compatibilidade do guard frontend que procura PLAN no pai do primeiro TSX), preservando o mapa e a validação RCA. Então, em commit posterior, alterar o TSX. A baseline do RCA continua o merge-base protegido com esta emenda, que já contém o mapa. Não liberar teste em main antes dessa implementação. O novo risco de falso bloqueio em push/PR legítima recebe controles positivos e CI; nenhum workflow, guard de frontend ou proteção é alterado. R1 preservado; a remoção da ampliação global é mitigação comprovável nesta PR, enforcement será comprovado no BUILD679, não declarado pronto agora.
 
 ## Desenho, impacto e antirregressão
 

@@ -5,6 +5,8 @@
   "files": [
     "scripts/hml/integracao-v1-fase3.mjs",
     "scripts/hml/integracao-v1-fase3.test.mjs",
+    "scripts/p0-rca-impact-gate.mjs",
+    "scripts/p0-rca-impact-gate.test.mjs",
     "src/test/competenciaDocumentos.test.tsx",
     "docs/frontend/planos/PLANO_ATIVO.json",
     "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B2_DRIVERS.md",
@@ -19,7 +21,7 @@
   "plan_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/687",
   "plan_aprovacao": "Eficácia somente após review APPROVE independente autorizada e merge protegido da PR documental desta emenda no HEAD final com CI e auditoria PASS. approved não é aprovação retroativa nem substitui esses recibos.",
   "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/679",
-  "justificativa": "Correção R5 da PR679: regras centrais do livro/replay, identidade derivada, fixture M4 Windows, exceção explícita somente para teste React src/test/competenciaDocumentos.test.tsx e duplicata documental. Nenhum outro src, UI, backend, types, workflow, guard, lock ou PROD. PLAN anterior #678 e seu escopo preservados como histórico; esta emenda precisa integrar antes do novo BUILD.",
+  "justificativa": "R5 PR679: regras centrais do livro/replay, identidade derivada, M4 Windows, teste React restrito por PR e duplicata documental. Fortalecimento prévio do gate RCA apenas nos dois caminhos allowlisted; preservar controles e históricos. Teste fora da allowlist geral nesta emenda: implementar restrição679 antes de inseri-lo em commit prévio da branch679 e só depois alterar TSX. Sem produção/UI/backend/types/workflows/demais guards/locks/PROD.",
   "regras_preservadas": [
     "P0-NR-001",
     "P0-RCA-001",
