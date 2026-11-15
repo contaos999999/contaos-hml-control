@@ -363,7 +363,8 @@ export function runCase(entry) {
     ? // O parser abaixo exige TAP; o reporter padrão do Node varia por versão/ambiente.
       [
         "--test",
-        "--test-isolation=none",
+        // Alias compatível com Node22 pré-setup e Node24/26; sem retry permissivo.
+        "--experimental-test-isolation=none",
         "--test-reporter=tap",
         "--test-name-pattern=" + pat,
         entry.arquivo,
