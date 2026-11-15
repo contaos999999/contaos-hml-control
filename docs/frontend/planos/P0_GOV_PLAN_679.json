@@ -14,14 +14,16 @@
     "docs/frontend/auditorias/integracao-funcional-v1/fase3/PR679_R5_RCA_2026-11-15.md",
     "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json",
     "docs/frontend/governanca/P0_NR_001_LEDGER.json",
-    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
+    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md",
+    "scripts/frontend-scope-gate.mjs",
+    "scripts/frontend-scope-gate.test.mjs"
   ],
-  "plan_documento": "docs/frontend/planos/PR679_R5_EMENDA_PLAN_2026-11-15.md",
-  "plan_secao": "Emenda R5 completa; eficácia condicionada a CI/auditoria/review formal autorizada e merge protegido antes de BUILD",
-  "plan_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/687",
+  "plan_documento": "docs/frontend/planos/PR679_R5_1_COMPATIBILIDADE_PUSH_PLAN_2026-11-15.md",
+  "plan_secao": "Emenda R5.1 completa, complementa R5 integrada pela PR687; eficácia após CI/auditoria/review autorizada/merge antes do novo BUILD",
+  "plan_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/688",
   "plan_aprovacao": "Eficácia somente após review APPROVE independente autorizada e merge protegido da PR documental desta emenda no HEAD final com CI e auditoria PASS. approved não é aprovação retroativa nem substitui esses recibos.",
   "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/679",
-  "justificativa": "R5 PR679: regras centrais do livro/replay, identidade derivada, M4 Windows, teste React restrito por PR e duplicata documental. Fortalecimento prévio do gate RCA apenas nos dois caminhos allowlisted; preservar controles e históricos. Teste fora da allowlist geral nesta emenda: implementar restrição679 antes de inseri-lo em commit prévio da branch679 e só depois alterar TSX. Sem produção/UI/backend/types/workflows/demais guards/locks/PROD.",
+  "justificativa": "R5 preservada nos12 caminhos, mais frontend-scope-gate e sua suíte para consumir autorização restrita por PR no push e pull_request. Rootcontext atualizado antes do novo BUILD; material local com gates inválidos preservado para diagnóstico, sem publicação ou aprovação retroativa. Nenhum outro escopo, produção, backend, tipos, dependências, workflow ou proteção.",
   "regras_preservadas": [
     "P0-NR-001",
     "P0-RCA-001",
