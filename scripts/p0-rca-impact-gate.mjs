@@ -361,7 +361,13 @@ export function runCase(entry) {
   const node = entry.runner === "node";
   const args = node
     ? // O parser abaixo exige TAP; o reporter padrão do Node varia por versão/ambiente.
-      ["--test", "--test-reporter=tap", "--test-name-pattern=" + pat, entry.arquivo]
+      [
+        "--test",
+        "--test-isolation=none",
+        "--test-reporter=tap",
+        "--test-name-pattern=" + pat,
+        entry.arquivo,
+      ]
     : ["vitest", "run", entry.arquivo, "-t", pat, "--reporter=json", "--maxWorkers=2"];
   // Casos de teste não recebem credenciais usadas pelo gate de autenticidade.
   // O runner principal é a única autoridade autorizada a consultar o GitHub.
@@ -382,6 +388,9 @@ export function runCase(entry) {
   if (p.error || p.status !== 0) return false;
   const out = String(p.stdout || "");
   if (node) {
+    // O subprocesso já isola cada prova. Sem isolamento adicional por arquivo,
+    // Node não produz wrapper ok/pass1 para arquivo vazio ou zero seleção:
+    // só os testes realmente declarados podem satisfazer o parser abaixo.
     const pass = /(?:^|\n)# pass (\d+)\r?(?:\n|$)/.exec(out);
     const fail = /(?:^|\n)# fail (\d+)\r?(?:\n|$)/.exec(out);
     // Node pode retornar exit 0, "# pass 1" para o ARQUIVO inteiro mesmo

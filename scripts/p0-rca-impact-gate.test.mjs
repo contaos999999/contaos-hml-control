@@ -641,6 +641,49 @@ test("P0 RCA runner: caso skip e arquivo inteiro nao comprovam GREEN", () => {
     );
     assert.equal(runCase({ runner: "node", arquivo: path, caso: "fixture skipped" }), false);
     assert.equal(runCase({ runner: "node", arquivo: path, caso: path }), false);
+    // Usar o rótulo emitido pelo próprio TAP: em Windows ele escapa barras,
+    // enquanto no Linux coincide com o path. Comparar só caso=path dava um
+    // falso negativo acidental no Windows e deixava o wrapper passar no Linux.
+    for (const arquivo of [path, relative(process.cwd(), path), dir + "/./skip.test.mjs"]) {
+      const env = { ...process.env };
+      delete env.NODE_TEST_CONTEXT;
+      const raw = spawnSync(
+        process.execPath,
+        ["--test", "--test-reporter=tap", "--test-name-pattern=^caso inexistente$", arquivo],
+        { env, encoding: "utf8" },
+      );
+      assert.equal(raw.status, 0, raw.stderr);
+      assert.match(raw.stdout, /^1\.\.0\r?$/m);
+      const wrapper = /^# Subtest: (.+)\r?$/m.exec(raw.stdout)?.[1].trimEnd();
+      assert.ok(wrapper, raw.stdout);
+      assert.equal(runCase({ runner: "node", arquivo, caso: wrapper }), false, raw.stdout);
+    }
+  } finally {
+    const rel = relative(resolve(tmpdir()), resolve(dir));
+    assert.ok(rel && !rel.startsWith("..") && !isAbsolute(rel));
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("P0 RCA NR003: nome legitimo parecido com arquivo exige teste real sem zero selecao", () => {
+  const dir = mkdtempSync(join(tmpdir(), "rca-runner-real-"));
+  const path = join(dir, "real.test.mjs");
+  try {
+    writeFileSync(path, 'import {test} from "node:test";test("real.test.mjs", () => {});');
+    assert.equal(runCase({ runner: "node", arquivo: path, caso: "real.test.mjs" }), true);
+    assert.equal(runCase({ runner: "node", arquivo: path, caso: "inexistente" }), false);
+    writeFileSync(path, "// nenhum teste declarado\n");
+    assert.equal(runCase({ runner: "node", arquivo: path, caso: path }), false);
+    const env = { ...process.env };
+    delete env.NODE_TEST_CONTEXT;
+    const raw = spawnSync(process.execPath, ["--test", "--test-reporter=tap", path], {
+      env,
+      encoding: "utf8",
+    });
+    assert.equal(raw.status, 0, raw.stderr);
+    const wrapper = /^# Subtest: (.+)\r?$/m.exec(raw.stdout)?.[1].trimEnd();
+    assert.ok(wrapper, raw.stdout);
+    assert.equal(runCase({ runner: "node", arquivo: path, caso: wrapper }), false, raw.stdout);
   } finally {
     const rel = relative(resolve(tmpdir()), resolve(dir));
     assert.ok(rel && !rel.startsWith("..") && !isAbsolute(rel));
