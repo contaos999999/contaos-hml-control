@@ -2,6 +2,10 @@
 
 **Vigência:** aplicável no HEAD da `main` que integrar este protocolo após revisão e checks exigidos; enquanto apenas em branch/PR, permanece proposta sem vigência presumida. Não cria serviço contínuo, altera perfis Codex, amplia permissões ou modifica regras de proteção.
 
+## Fonte e autorização do titular
+
+Este protocolo implementa a instrução expressa do titular nesta sessão de15/11/2026, intitulada **CONTAOS4.1 — PROTOCOLO DEFINITIVO DE ORQUESTRAÇÃO, AUDITORIA AUTOMATIZADA E REVISÃO FORMAL**, seções1–13. Em particular, a seção7 define: “Se a PR foi aberta por `edivan5002`, indique `contaos9999` como conta revisora.” e “Se a PR foi aberta por `contaos9999`, indique `edivan5002` como conta revisora.” Para outros autores, a mesma seção exige identificação de revisor elegível segundo a governança. Esses pares são decisão expressa do titular para as duas contas utilizadas, não obrigação criada pelo agente nem alteração do ruleset; a distinção autor/revisor e demais controles permanecem. O envio formal nesta sessão recebeu posteriormente a autorização expressa “voce tem autorização para aprovar tudo nesta sessão”, condicionada à conformidade técnica e à identidade real. Essa autorização é desta sessão e não presume consentimento em sessões futuras.
+
 ## 1. Fontes e início da sessão
 
 Use o GitHub real de `contaos999999`, o repositório frontend `contaos999999/contaos-hml-control`, o repositório backend identificado nas fontes vigentes, HEADs confirmados, PRs/revisões/checks, manifestos, `AGENTS.md`, LOCK, Zero-Drift e checkpoint integrado. Relatos e memória servem apenas como pistas, nunca como prova. No início, confirme os HEADs remotos relevantes, o estado da PR e checkpoint/certificações; preserve certificados válidos e não reabra trabalho sem motivo causal.

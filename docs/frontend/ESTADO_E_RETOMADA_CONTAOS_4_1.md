@@ -1,3 +1,9 @@
+## PR682 — correção documental após auditoria R1, 15/11/2026
+
+- Auditoria R1 no HEAD1378f6bde0f16c084173ebb3c07173d252fade02/basef538d967dd974b7cd8243a3407a0736b64580db3: CHANGES_REQUESTED, ausência de fonte declarada dos pares de contas. RunId20261115T043322594Z-1378f6bde0f1-5c9cfa80201f4a35b80491c33ad25146; parecer SHA2568C7ED34AA68E8AB63992D6ACA76654BD86E00688A97C6874066E8199D0D10399, preservado.
+- Classificação NOVO: falha documental de proveniência, sem alteração técnica. Causa: transcrição resumida do protocolo omitiu a referência expressa à seção7 da instrução do titular. Correção na origem: declarar fonte, escopo e citações dos pares, preservando a regra autorizada e os controles. Impacto limitado ao protocolo/checkpoint; nenhuma regra, teste ou permissão foi enfraquecida.
+- RED: R1 não encontrou fonte no documento. GREEN documental: seção de proveniência agora referencia a decisão e suas duas regras expressas; revisão/CI e nova auditoria do HEAD corrigido ainda PENDENTES. Não converter R1 em PASS.
+
 ## Instalação3.1.3 integrada; persistência definitiva em revisão, 15/11/2026
 
 - PR680 integrada à main no merge f538d967dd974b7cd8243a3407a0736b64580db3; HEAD auditado def4d8b5b2ac95d84cd395d3729b730c438aa692. PLAN681 já integrado no5bbadb2. Cinco checks SUCCESS no HEAD auditado; controles pós-merge ainda a conferir.
