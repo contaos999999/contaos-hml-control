@@ -1,6 +1,6 @@
 # PLAN documental — persistência da orquestração automatizada ContaOS 4.1
 
-**Estado:** PLAN documental tecnicamente validado para publicar proposta por PR; eficácia após integração protegida. Não autoriza escrita na `main` nem altera AGENTS/config/perfis até integrar por PR.
+**Estado:** PLAN documental prévio de correção da governança da PR682. Validação técnica nominal proposta; eficácia somente após revisão, CI e merge protegido desta PR de PLAN. Nenhum hook ou protocolo executado por esta PR.
 
 ## Objetivo
 
@@ -8,7 +8,7 @@ Persistir em fonte versionada a instrução do titular para orquestrar reconheci
 
 ## Baseline e escopo
 
-Baseline de desenho conferido: `main@5bbadb225b52f71b1a8383f36b63e3ede9e11a2d`, após integração do PLAN #681. O `AGENTS.md` já contém um hook “Integração operacional — auditoria automatizada por PR”; o PLAN #681 (merge `5bbadb225b52f71b1a8383f36b63e3ede9e11a2d`) autoriza a instalação 3.1, não este novo protocolo. Confirmar HEAD remoto, checkpoint, fontes P0 e plano ativo na abertura da PR que executar este PLAN.
+Baseline histórico de desenho: `main@5bbadb225b52f71b1a8383f36b63e3ede9e11a2d`, após integração do PLAN #681. O `AGENTS.md` já contém um hook “Integração operacional — auditoria automatizada por PR”; o PLAN #681 (merge `5bbadb225b52f71b1a8383f36b63e3ede9e11a2d`) autoriza a instalação 3.1, não este novo protocolo. Confirmar HEAD remoto, checkpoint, fontes P0 e plano ativo na abertura da PR que executar este PLAN.
 
 ### Allowlist de BUILD
 
@@ -41,9 +41,25 @@ Exigir checks de branch atuais, Zero-Drift/P0-NR/LOCK e Teste C quando aplicáve
 
 ## Próximas ações permitidas depois da validação do PLAN
 
-1. Criar/validar o GOV_PLAN vinculado à PR futura, com estes três caminhos exatos.
+1. Publicar/validar nesta PR de PLAN683 o GOV_PLAN vinculado exclusivamente à PR de BUILD682, com os três caminhos exatos. Integrar o PLAN683 antes de reapresentar o BUILD682; este item não exige um GOV_PLAN recursivo para a própria PR683.
 2. Aplicar o hook único e adicionar protocolo/checkpoint na branch autorizada.
 3. Executar validações de escopo documental, abrir/atualizar PR e aguardar checks.
 4. Rodar auditoria independente do HEAD exato e tratar resultados.
 5. Preparar revisão formal; solicitar ao titular somente a autorização final específica para registrar a decisão.
 6. Integrar pelo fluxo protegido e confirmar checkpoint remoto.
+
+## Emenda de gate prévio — reapresentação protegida da PR682
+
+Baseline atual conferido mainf538d967dd974b7cd8243a3407a0736b64580db3, com instalação680 já integrada. Esta PR contém somente este PLAN e P0_GOV_PLAN_682.json. Não altera AGENTS, protocolo, checkpoint, perfis, controlador, workflows ou aplicação; não é BUILD. Segue o mesmo mecanismo documental prévio utilizado no PLAN681.
+
+A auditoria R3 da PR682 no HEAD30161d949eeba6dfa1d0b87c50578b8a1a955a6d emitiu CHANGES_REQUESTED porque a proposta documental afirmava exigir GOV_PLAN prévio sem comprovar sua integração. Não atribuir aprovação retroativa àquele HEAD. Causa: confundiu-se candidatura documental com o cumprimento do rito prévio que o próprio PLAN estabeleceu; as revisões anteriores não fecharam toda a classe de governança/proveniência.
+
+Correção: integrar este PLAN e o GOV_PLAN682 pela PR protegida; somente depois atualizar a branch682 com a main e reapresentar seu BUILD documental em novo commit, com checks e nova auditoria. O GOV_PLAN682 aprovado vincula exatamente AGENTS.md, protocolo MD e checkpoint MD. Nenhum manifest de certificação ou plano funcional de frontend é alterado. O PLAN pertence à main antes da reapresentação; não é um arquivo adicional de BUILD da682.
+
+Gate técnico nominal: fonte integrada681/sha5bbadb2 e snapshot normativo1504af465b45afc846458d00e5cb63513fa298ed; sem delta técnico ou visual, BRAND/IDENTIDADE VISUAL N/A. Escopo, fontes, autorização de instalação/orquestração, isolamento, revisão formal, ausência de PROD/backend/types e rollback conferidos. Esta validação nominal não é review formal nem substitui o CI/auditor/review/merge desta PR.
+
+RED documental: ausência de GOV_PLAN682 no commit-base da proposta R3. GREEN exigido antes de reapresentar: git show origin/main:docs/frontend/planos/P0_GOV_PLAN_682.json aprovado/pr_number682 com três caminhos exatos e PLAN integrado; base atualizada; diff682 limitado a esses caminhos; readback remoto, checks atuais e auditoria nova. O R3 e todos os pareceres anteriores permanecem imutáveis. Teste C visual N/A documental, nunca tratar SKIPPED como E2E. Rollback por nova PR documental, sem bypass ou reescrita.
+
+Prevenção: nenhuma futura proposta pode declarar gate prévio cumprido apenas por trazer o próprio PLAN no mesmo diff de BUILD. Primeiro conferir a existência do artefato aprovado no HEAD remoto main e a allowlist vinculada ao número real; então reapresentar o BUILD. O rito desta PR de PLAN é documental, não requer outro GOV_PLAN recursivo para si e não modifica código/hook.
+
+Rastreabilidade do R3: RunId `20261115T055430821Z-30161d949eeb-ad9ccb1fd3be4bb79717fdebefaea353`; arquivo local imutável `C:\Users\ediva\Projetos\ContaOS-4.1\auditorias\PR-682\20261115T055430821Z-30161d949eeb-ad9ccb1fd3be4bb79717fdebefaea353\parecer.md`; SHA256 `EB823593E0B12006F0DA0CE914A381B320680A397752E010E69FAEEAB0472AA9`. O parecer registra a ausência do gate no HEAD30161d9; sua existência foi verificada por hash, sem usá-lo como substituto da nova auditoria.

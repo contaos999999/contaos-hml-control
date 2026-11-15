@@ -1,3 +1,11 @@
+## PR682 reapresentada após PLAN683 integrado, 15/11/2026
+
+- PLAN683 integrado em main335cbc9ad8c0922fb15d2e48c89b30cf922cd608 antes desta reapresentação; HEAD6b73628f4d80f8375ac7f386176482501b245b88, quatro checks SUCCESS, auditoria isolada PASS, review5909679578 APPROVED por Edivan5002 no HEAD exato. Parecer SHA256528495EE91BB70FE8D57BE2F89924893B177B4E2BB8096C1B6EEFE73C7142C97, RunId20261115T073549476Z-6b73628f4d80-9f69738c059f4f50a4f6851d6686e7b9.
+- R3 da PR682 no HEAD30161d9 apontou GOV prévio ausente; o diagnóstico foi confirmado, sem aprovação retroativa. PLAN e P0_GOV_PLAN_682.json agora pertencem à main pelo merge683, com approved=true, pr_number682, plan_pr_number683 e exatamente AGENTS/protocolo/checkpoint. Esta reapresentação integra a base aprovada e mantém o PLAN da main, sem modificá-lo no BUILD.
+- Diferença final autorizada: somente os três caminhos do GOV. Nova CI/auditoria/revisão desta reapresentação ainda PENDENTES; os três pareceres anteriores permanecem preservados. Gates não foram afrouxados; não confundir PASS de683 com PASS de682.
+- Limitação operacional NOVA confirmada na3.1.3: InfoPR/validate_pr conferem a base registrada na PR sem consultar ref viva. Consulta autenticada observou PR679.base.sha20d4ad96fd1f7ec02baa3bd618532385065a729b enquanto main era f538d967dd974b7cd8243a3407a0736b64580db3. Isso demonstra lacuna de frescor, não um APPROVE/merge indevido. O orquestrador passa a conferir explicitamente a ref viva antes/depois da análise e antes de review/merge; fez essa conferência em683 com base viva igual à auditada.
+- PENDENTE antes do aceite integral do controlador: PLAN corretivo próprio, RED e correção versionada dessa classe no controlador/preparador. Não alterar3.1.3 silenciosamente nem declarar que os43 testes atuais cobrem esse caso. PR679 continua aguardando instalação e emendas de escopo; nenhuma aplicação/backend/types/PROD foi alterada.
+
 ## PR682 — revisão causal ampliada da proveniência, 15/11/2026
 
 - R2 no HEADd3c84ce3bef790c863d30fa1ddac52aa57599608: CHANGES_REQUESTED menor pelo relato de autorização desta sessão inserido no protocolo permanente. O pareamento de contas foi confirmado pela fonte original integrada; o bloqueador R1 foi fechado. R2 permanece preservado em20261115T045219383Z-d3c84ce3bef7-65204577c6b34193b8a75537d7e06e6b.
