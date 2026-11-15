@@ -56,21 +56,23 @@
       "fingerprint": "NODE_TEST_FALSE_GREEN_NO_MATCH",
       "classe": "TESTES",
       "causa_status": "CONFIRMADA",
-      "causa": "node --test pode terminar exit 0 e pass 1 com zero subtestes nomeados realmente executados ao filtrar pelo caso.",
-      "sintoma": "GREEN inexistente aceito apenas pelo código de saída e resumo agregado.",
-      "barreira": "Exigir nome do subteste e linha ok correspondente ao caso exato, além do status agregado, em runner Node isolado.",
-      "estado": "EM_MONITORAMENTO",
+      "causa": "Node com isolamento por arquivo emite wrapper sintético #Subtest/ok/pass1 mesmo sem executar teste nomeado; o nome agregado pode coincidir com caso e satisfazer o parser exato. Em Windows o TAP escapa barras e o antigo negativo caso=path passava acidentalmente; Linux expôs a coincidência. Arquivo vazio também gera wrapper e pode não emitir plano raiz1..0.",
+      "sintoma": "CI43748695221/job132917605578 em b0da740 aceitou wrapper como GREEN no segundo assert do negativo; 97PASS locais não cobriam o rótulo TAP real entre plataformas.",
+      "barreira": "No subprocesso isolado de cada prova, usar Node --test-isolation=none e --test-reporter=tap para eliminar agregação por arquivo; exigir subteste/ok exatos, pass>0/fail0 e tokens removidos. Negativos devem usar o rótulo efetivamente emitido pelo TAP, inclusive aliases, vazio, zero seleção e skip; preservar teste real com nome parecido com arquivo. Reproduzir em runtime fixado e validar CI no HEAD novo; não contar divergência de escape como negativo causal.",
+      "estado": "REINCIDENCIA",
       "origem": [
         "https://github.com/contaos999999/contaos-hml-control/pull/661",
-        "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156"
+        "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
+        "https://github.com/contaos999999/contaos-hml-control/pull/679",
+        "https://github.com/contaos999999/contaos-hml-control/actions/runs/43748695221"
       ],
-      "tentativas_ciclo": 0,
-      "revisao_causal_ampliada": false,
+      "tentativas_ciclo": 2,
+      "revisao_causal_ampliada": true,
       "prevencao": {
         "tipo": "TESTE",
         "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
         "procedimento": null,
-        "teste": "P0 RCA runner executa caso exato no Node sem vazar tokens"
+        "teste": "P0 RCA runner: caso skip e arquivo inteiro nao comprovam GREEN"
       },
       "recibo": null,
       "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo. Sujeito a novos casos de regressão, desvio semântico e avaliação operacional em futuras PRs; dedicated HML suite ainda não implementada.",
@@ -87,7 +89,36 @@
         "checkpoint_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
         "readback_url": "https://github.com/contaos999999/contaos-hml-control/blob/main/scripts/p0-rca-impact-gate.test.mjs",
         "monitoramento": "Barreira técnica integrada, testes negativos aprovados no CI. Não é prova de impossibilidade de reincidência nem de E2E HML real."
-      }
+      },
+      "diagnostico_ampliado": "15/11/2026: reincidência NR003 em PR679/b0da740 comprovada por CI real. RED portátil extrai wrapper TAP em vez de assumir path bruto. Primeira estratégia, recusar só plano raiz1..0, falhou no arquivo vazio sem node:test; novo RED causal suspendeu esse patch parcial. Segunda estratégia remove a origem do wrapper via --test-isolation=none dentro do subprocesso já isolado, sem heurística de nomes ou reporter novo. Local94dcae3: RCA57PASS, focais3PASS em Node24.22.3 e26.13.1; mutante que remove a opção morreu nos negativos filtrado e vazio (2KILLED). Histórico de PR661 permanece histórico; CI/auditoria/review/merge/readback679 e HML seguem pendentes, sem RESOLVIDO_COM_PROVA.",
+      "novos_testes": [
+        {
+          "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+          "caso": "P0 RCA runner: caso skip e arquivo inteiro nao comprovam GREEN"
+        },
+        {
+          "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+          "caso": "P0 RCA NR003: nome legitimo parecido com arquivo exige teste real sem zero selecao"
+        },
+        {
+          "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+          "caso": "P0 RCA runner executa caso exato no Node sem vazar tokens"
+        }
+      ],
+      "reincidencias": [
+        {
+          "data": "2026-11-15",
+          "prs": [
+            "#679"
+          ],
+          "refs": [
+            "b0da740b20c06c2c147be5ebb163f825381ca9b1",
+            "94dcae3f452af37d2278d96ae4cee885acec4abd"
+          ],
+          "ci_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43748695221",
+          "estado_seguinte": "REINCIDENCIA mantida; correção local57PASS/2KILLED não equivale a CI/revisão/merge/readback nem prova HML."
+        }
+      ]
     },
     {
       "id": "NR-004",
