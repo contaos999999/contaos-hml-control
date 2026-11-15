@@ -281,6 +281,40 @@
           "estado_seguinte": "REINCIDENCIA na PR #679, com novos_testes da PLAN §12.6"
         }
       ]
+    },
+    {
+      "id": "NR-009",
+      "fingerprint": "PR_BASE_SNAPSHOT_AS_LIVE_REF",
+      "classe": "FRESCOR_DA_PROVENIENCIA",
+      "causa_status": "CONFIRMADA",
+      "causa": "InfoPR/validate_pr3.1.3 comparavam baseRefOid/base.sha gravados na PR, sem consultar refs/heads/<baseRefName>; base viva podia mudar sem invalidar evidencia.",
+      "sintoma": "Base gravada679 permaneceu20d4ad96 enquanto ref viva main ja era f538d967; RED da funcao real aceitou divergencia com zero consultas de ref. Nenhum APPROVE/merge indevido foi demonstrado.",
+      "barreira": "Consultar ref viva autenticada e comparar nome/HEAD/base gravada/viva antes e depois de preparar/analisar/revisar; preservar proveniencia; bloquear erro/stale e confirmar commit_id/readback da review.",
+      "estado": "PENDENTE_PR",
+      "origem": [
+        "https://github.com/contaos999999/contaos-hml-control/pull/684",
+        "https://github.com/contaos999999/contaos-hml-control/pull/685"
+      ],
+      "tentativas_ciclo": 1,
+      "revisao_causal_ampliada": false,
+      "prevencao": {
+        "tipo": "PROCEDIMENTO",
+        "arquivo": "docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md",
+        "procedimento": "Secao6: orquestrador confere ref viva por API pre/pos analise e pre-review/merge; executar testes offline de frescor do pacote3.1.4, preservando hashes/RunId e sem reutilizar SHA/base antigos.",
+        "teste": null
+      },
+      "testes_tecnicos": [
+        {
+          "arquivo": "scripts/auditoria/test-controller.ps1",
+          "caso": "base viva stale inicial bloqueia InfoPR real"
+        },
+        {
+          "arquivo": "scripts/auditoria/test_preparation.py",
+          "caso": "test_live_base_stale_initial_rejected"
+        }
+      ],
+      "recibo": null,
+      "risco_residual": "Snapshots pre/pos nao tornam remotas as operacoes atomicas; se contexto mudar apos POST, review pode existir e exige reavaliacao sem envio duplicado. BUILD, integracao e instalacao ainda pendentes de prova."
     }
   ]
 }
