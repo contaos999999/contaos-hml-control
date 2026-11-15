@@ -2,6 +2,8 @@
 
 Estado: VALIDADO tecnicamente; eficácia condicionada a CI, auditoria independente, revisão formal especificamente autorizada e merge protegido antes do novo BUILD. Esta PR altera quatro documentos, sem código. Complementa o PLAN687 integrado7006ef6; não dispensa controles nem aprova retroativamente material local com preflight inválido.
 
+PR documental [688](https://github.com/contaos999999/contaos-hml-control/pull/688), primeiro HEAD `c426957a20af66dc5532b4810a15e149ace633fd`: quatro checks PASS, [Zero-Drift43722090815](https://github.com/contaos999999/contaos-hml-control/actions/runs/43722090815) SUCCESS com build/regressão/typecheck e rootcontext corrigido. Vinculação dessa CI no PLAN antecede o novo BUILD; o HEAD final desta vinculação requer seus próprios checks e auditoria antes da review/merge. Não é prova de sourceguard já implementado.
+
 ## Baseline e falha confirmada
 
 Main `7006ef6aa6881644f9d603797060c415799c748d`, quatro checks pertinentes pós-merge SUCCESS; PR687 PASS R2/review5910942296/merge conferidos. PR679 remota continua9c0ed0f0ddfc0fc91512dff2e290e0a8d6826c71, autoraEdivan5002. Instalação automatizada3.1.4 concluída nas PR684/686; não repeti-la.

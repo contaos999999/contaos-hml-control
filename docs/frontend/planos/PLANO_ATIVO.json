@@ -9,7 +9,7 @@
     "validado_em": "2026-11-05",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": true,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43702328082",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43722090815",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -4554,6 +4554,8 @@
     "teste_na_allowlist_geral": false,
     "context_root": "Atualizado para snapshot1504 após leitura25/25 real; histórico preservado. Gate antigo continua bloqueando teste na main até BUILD de enforcement.",
     "linhagem_build": "Reaplicar R5 em nova linhagem descendente9c após integrar esta emenda; backup local56ee7c9 preservado, sem force/rebase de histórico publicado.",
-    "ci_emenda": "PENDENTE_CI_DESTA_PR_ANTES_DE_BUILD"
+    "ci_emenda": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43722090815",
+    "ci_emenda_head": "c426957a20af66dc5532b4810a15e149ace633fd",
+    "ci_emenda_resultado": "SUCCESS e quatro checks PASS no primeiro commit documental com rootcontext corrigido; vinculação documental recebe CI/auditoria próprias antes de merge/BUILD."
   }
 }
