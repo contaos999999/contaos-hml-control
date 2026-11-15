@@ -376,6 +376,157 @@ const rejects = (r, codes = ["F3_REPORT"], o = OPT) =>
   );
 const forProducer = (r, o, fn) => r.cases.filter((c) => c.producerOrder === o).forEach(fn);
 
+// R5: o contrato pertence ao livro e ao replay, não só à cerca de rede.
+const rawSealR5 = (book, n, order, kind = "principal") =>
+  book.seal({
+    requestId: uuid(n),
+    producerOrder: order,
+    actor: "master",
+    organizationId: book.organizationF3(),
+    kind,
+  });
+const eventR5 = (op, requestId, extra = {}) => ({
+  op,
+  requestId,
+  producerOrder: null,
+  kind: null,
+  duplicateOf: null,
+  entityId: null,
+  organizationId: null,
+  ...extra,
+});
+test("F3 R5: found parcial não confirma nem entra no replay do ledger", () => {
+  for (const abandoned of [false, true]) {
+    for (const prior of [false, true]) {
+      let book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+      createOrg(book);
+      rawSealR5(book, 4, 4);
+      const steps = bindsFor(book, 4, "principal");
+      assert.equal(steps.length, 2);
+      book.bind(uuid(4), steps[0]);
+      book.uncertain(uuid(4)); // falha parcial permanece registrável
+      if (abandoned) {
+        book.reconcile(uuid(4), { found: false });
+        book.abandon(uuid(4));
+      }
+      const previous = run(1, book);
+      if (prior) book = sut.createF3IntentBook({ provenance: PROV, ledger: ledgerOf([previous]) });
+      const before = book.summary();
+      const created = book.created();
+      assert.throws(
+        () =>
+          book.reconcile(uuid(4), {
+            found: true,
+            entityId: entity(4),
+            organizationId: F3,
+          }),
+        { code: "F3_INTENT_BIND" },
+      );
+      assert.deepEqual(book.summary(), before);
+      assert.deepEqual(book.created(), created);
+      const forged = run(prior ? 2 : 1, book);
+      forged.events.push(eventR5("found", uuid(4), { entityId: entity(4), organizationId: F3 }));
+      assert.throws(() => ledgerOf(prior ? [previous, forged] : [forged]), { code: "F3_LEDGER" });
+    }
+  }
+});
+test("F3 R5: found completo e tardio preserva vínculos duráveis após resend", () => {
+  for (const afterResend of [false, true]) {
+    const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+    createOrg(book);
+    seal(book, 4, 4);
+    book.uncertain(uuid(4));
+    if (afterResend) {
+      book.reconcile(uuid(4), { found: false });
+      book.resend(uuid(4));
+      book.bind(uuid(4), BINDS.get(uuid(4))[0]); // contador corrente1, histórico completo2
+      book.uncertain(uuid(4));
+    }
+    book.reconcile(uuid(4), { found: true, entityId: entity(4), organizationId: F3 });
+    assert.equal(book.summary().requests.find((q) => q.requestId === uuid(4)).outcome, "confirmed");
+    assert.doesNotThrow(() => ledgerOf([run(1, book)]));
+  }
+});
+test("F3 R5: derived liga a mesma entidade inventory em todos os fluxos declarados", () => {
+  for (const [orderText, flow] of Object.entries(sut.F3_MUTATION_FLOWS)) {
+    const order = Number(orderText);
+    for (const [step, declared] of flow.principal.entries()) {
+      for (const [derived, inventory] of Object.entries(declared.derived)) {
+        const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+        createOrg(book);
+        // Dependências transitivas também são produzidas (contrato7 requer contratante5).
+        const origins = new Set();
+        const need = (origin) => {
+          if (origin === 2 || origins.has(origin)) return;
+          for (const st of sut.F3_MUTATION_FLOWS[origin]?.principal ?? [])
+            for (const dependency of Object.values(st.inventory)) need(dependency);
+          origins.add(origin);
+        };
+        for (const origin of Object.values(declared.inventory)) need(origin);
+        for (const origin of origins) {
+          for (const n of [origin, origin + 1000]) {
+            seal(book, n, origin, n === origin ? {} : { kind: "prerequisito" });
+            book.confirm(uuid(n), { entityId: uuid(n + 10000), organizationId: F3 });
+          }
+        }
+        rawSealR5(book, 3000 + order, order);
+        const steps = bindsFor(book, order, "principal");
+        for (let k = 0; k < step; k++) book.bind(uuid(3000 + order), steps[k]);
+        const good = steps[step];
+        const bad = structuredClone(good);
+        const sourceOrigin = declared.inventory[inventory];
+        const sourceRef = good.refs.find((r) => r.field === inventory);
+        const otherId = uuid(sourceOrigin + 10000);
+        assert.notEqual(sourceRef.entityId, otherId);
+        bad.refs.find((r) => r.field === derived).entityId = otherId;
+        const before = book.summary();
+        assert.throws(() => book.bind(uuid(3000 + order), bad), { code: "F3_VALUE_ORIGIN" });
+        assert.deepEqual(book.summary(), before);
+        const forged = run(1, book);
+        forged.events.push({ op: "bind", requestId: uuid(3000 + order), ...bad });
+        assert.throws(() => ledgerOf([forged]), { code: "F3_LEDGER" });
+        book.bind(uuid(3000 + order), good);
+        book.uncertain(uuid(3000 + order));
+        assert.doesNotThrow(() => ledgerOf([run(1, book)]));
+      }
+    }
+  }
+});
+
+// JSON.parse é usado para sintaxe; a varredura mantém um conjunto por objeto
+// antes de aceitar seu resultado last-wins. Strings escapadas viram a mesma chave.
+function strictJsonKeysR5(text) {
+  const parsed = JSON.parse(text);
+  const stack = [];
+  const token = /"(?:[^"\\]|\\.)*"|[{}\[\]]/g;
+  for (const match of text.matchAll(token)) {
+    const value = match[0];
+    if (value === "{") stack.push(new Set());
+    else if (value === "[") stack.push(null);
+    else if (value === "}" || value === "]") stack.pop();
+    else if (/^\s*:/.test(text.slice(match.index + value.length))) {
+      const key = JSON.parse(value),
+        keys = stack.at(-1);
+      if (keys.has(key)) throw new Error("DUPLICATE_JSON_MEMBER: " + key);
+      keys.add(key);
+    }
+  }
+  return parsed;
+}
+test("F3 R5: PLANO_ATIVO não perde histórico por membro JSON duplicado", async () => {
+  strictJsonKeysR5(await readFile(new URL("docs/frontend/planos/PLANO_ATIVO.json", root), "utf8"));
+});
+test("F3 R5: duplicata é por objeto, com aninhamento e chaves escapadas", () => {
+  for (const raw of ['{"x":1,"x":2}', '{"a":{"x":1,"x":2}}', '{"x":1,"\\u0078":2}'])
+    assert.throws(() => strictJsonKeysR5(raw), /DUPLICATE_JSON_MEMBER/);
+  assert.deepEqual(strictJsonKeysR5('{"a":{"x":1},"b":{"x":2},"c":[{"x":3},{"x":4}]}'), {
+    a: { x: 1 },
+    b: { x: 2 },
+    c: [{ x: 3 }, { x: 4 }],
+  });
+  assert.equal(strictJsonKeysR5('{"texto":"{ \\\"x\\\": 1 }"}').texto, '{ "x": 1 }');
+});
+
 test("F3 B2b1: relatório completo montado pelo livro valida e cumpre todos os critérios", () => {
   const report = completeReport();
   assert.equal(valid(report), true);
@@ -1500,14 +1651,38 @@ test("F3 B2b1: executor confere YAML e ledger por SHA antes do driver", async ()
 });
 
 test("F3 B2b1 RED (M4): executor só lê chaves de proveniência e não grava valor de secret", async (t) => {
-  const { mkdtemp, readFile: rf, cp, mkdir, rm } = await import("node:fs/promises");
+  const {
+    mkdtemp,
+    readFile: rf,
+    cp,
+    mkdir,
+    rm,
+    symlink,
+    lstat,
+    unlink,
+    access,
+  } = await import("node:fs/promises");
   const { tmpdir } = await import("node:os");
-  const { join } = await import("node:path");
+  const { join, resolve, relative, isAbsolute } = await import("node:path");
+  const { fileURLToPath, pathToFileURL } = await import("node:url");
   // Cópia isolada do executor e do que ele lê, para o relatório bloqueado ir a um diretório temporário.
   const dir = await mkdtemp(join(tmpdir(), "f3-env-"));
-  // A cópia inclui node_modules: sem remoção, cada execução deixava centenas de MB no disco.
-  t.after(() => rm(dir, { recursive: true, force: true }));
   const repo = new URL("../../", import.meta.url);
+  const deps = fileURLToPath(new URL("node_modules", repo));
+  const link = join(dir, "node_modules");
+  t.after(async () => {
+    const rel = relative(resolve(tmpdir()), resolve(dir));
+    assert.ok(rel && !rel.startsWith("..") && !isAbsolute(rel), "cleanup restrito ao fixture TEMP");
+    const entry = await lstat(link).catch((e) => {
+      if (e.code !== "ENOENT") throw e;
+    });
+    if (entry) {
+      assert.ok(entry.isSymbolicLink(), "não remover diretório de dependências real");
+      await unlink(link); // remover a junction, nunca percorrer seu alvo
+    }
+    await rm(dir, { recursive: true, force: true });
+    await access(deps); // dependências compartilhadas continuam presentes
+  });
   for (const rel of [
     "scripts/hml/integracao-v1-fase3.mjs",
     "scripts/hml/authenticated-visual-audit.mjs",
@@ -1520,15 +1695,9 @@ test("F3 B2b1 RED (M4): executor só lê chaves de proveniência e não grava va
     await mkdir(join(dir, rel, ".."), { recursive: true });
     await cp(new URL(rel, repo), join(dir, rel));
   }
-  await cp(new URL("node_modules", repo), join(dir, "node_modules"), {
-    recursive: true,
-    dereference: false,
-    verbatimSymlinks: true,
-  }).catch(async () => {
-    const { symlink } = await import("node:fs/promises");
-    await symlink(new URL("node_modules", repo).pathname, join(dir, "node_modules"));
-  });
-  const copy = await import(join(dir, "scripts/hml/integracao-v1-fase3.mjs"));
+  await access(deps); // ausência é diagnóstico, não instalação dentro do teste
+  await symlink(deps, link, process.platform === "win32" ? "junction" : "dir");
+  const copy = await import(pathToFileURL(join(dir, "scripts/hml/integracao-v1-fase3.mjs")).href);
   const secret = "valor-secreto-do-segundo-usuario-0001";
   const read = new Set();
   const base = {

@@ -896,6 +896,12 @@ function applyEvent(st, run, e) {
     if (!i.sendBinds || (e.op === "confirm" && steps && i.sendBinds !== steps.length))
       fail("F3_INTENT_BIND");
   }
+  // Readback não transforma envio parcial em confirmação. O histórico durável
+  // continua válido se o contador da tentativa foi zerado por um reenvio.
+  if (e.op === "found") {
+    const steps = stepsOf(i);
+    if (!i.binds.length || (steps && i.binds.length !== steps.length)) fail("F3_INTENT_BIND");
+  }
   // Log canônico: todo evento muda o estado. A releitura de uma abandonada vale uma vez por
   // execução; repeti-la seria um evento sem efeito, removível sem deixar rastro.
   if (e.op === "absent" && i.state === "abandoned" && i.rechecked) fail("F3_INTENT_STATE");
@@ -977,6 +983,11 @@ function bindIntent(st, e, i) {
             );
       if (!ok) fail("F3_FOREIGN_ORG");
       if ((ref.version !== null) !== Object.hasOwn(s.derived, ref.field)) fail("F3_VALUE_ORIGIN");
+      if (
+        Object.hasOwn(s.derived, ref.field) &&
+        e.refs.find((r) => r.field === s.derived[ref.field])?.entityId !== ref.entityId
+      )
+        fail("F3_VALUE_ORIGIN");
     }
   }
   i.binds = [...i.binds, bind];
