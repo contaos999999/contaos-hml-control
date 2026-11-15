@@ -28,6 +28,7 @@
     "aprovacao_humana_evidencia": "Solicitação expressa do titular: padronizar frontend/menu/header/Trilha e continuar implementação, registrada no checkpoint #166 comentários 6684615020 e 6684808574; plano mestre PR #223 integrado e continuidade expressa em 06/11/2026."
   },
   "arquivos_permitidos": [
+    "src/test/competenciaDocumentos.test.tsx",
     "docs/frontend/planos/P0_TRILHA_A_REFLOW_TEXTO_PUBLICO_PLAN_2026-11-08.md",
     "docs/frontend/planos/P0_TRILHA_A_REFLOW_TEXTO_PUBLICO_GATE_2026-11-08.md",
     "docs/frontend/planos/PLANO_ATIVO.json",
@@ -4504,5 +4505,25 @@
     "emenda1_pr": "#678 (autor Edivan5002), inclui P0_GOV_PLAN_679.json; BUILD-2b-2a na PR #679",
     "emenda1": "PLAN §12 (14/11/2026, R2): até 11 pré-requisitos, 39 previstas, 40 por execução, total 60; uploads dentro da ação; cinco esperas W1–W5 com prazo e códigos próprios; recuperação com novo nonce por BUILD próprio (§9 passo 6); conferência dos workers antes de cada REQUEST (§9 passo 4-A); decisão literal do titular \"Emenda completa (Recomendado)\"; levantamento campo a campo em fase3/F3_FLUXOS_PRODUTORES.md (revisão 2)",
     "emenda1_revisoes": "R1 CHANGES_REQUESTED contaos9999 review 5905890909 no HEAD 20b7ff3 (grupos I–IV Importantes, V Menor); R2 corrige por classe"
+  },
+  "emenda_pr679_r5": {
+    "plano_documento": "docs/frontend/planos/PR679_R5_EMENDA_PLAN_2026-11-15.md",
+    "build_pr": 679,
+    "status": "VALIDADO_TECNICAMENTE_EFICACIA_CONDICIONADA_A_INTEGRACAO",
+    "arquivos_fechados": [
+      "scripts/hml/integracao-v1-fase3.mjs",
+      "scripts/hml/integracao-v1-fase3.test.mjs",
+      "src/test/competenciaDocumentos.test.tsx",
+      "docs/frontend/planos/PLANO_ATIVO.json",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B2_DRIVERS.md",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase3/PR679_R5_RCA_2026-11-15.md",
+      "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json",
+      "docs/frontend/governanca/P0_NR_001_LEDGER.json",
+      "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
+    ],
+    "excecao_src": "Somente sincronização no teste competenciaDocumentos.test.tsx, sem produção; emenda explícita ao §7.6 Fase3. Allowlist histórica do mestre preservada; esta emenda não reautoriza demais caminhos para679.",
+    "ci_plano_emenda": "PENDENTE_CI_DESTA_PR_ANTES_DE_BUILD",
+    "aprovacao": "Decisão técnica nominal ADR-DEV-002; revisão formal exige autorização específica, CI/auditoria e merge protegido. Aprovação humana histórica do mestre não é alegada como aprovação da review desta emenda."
   }
 }
