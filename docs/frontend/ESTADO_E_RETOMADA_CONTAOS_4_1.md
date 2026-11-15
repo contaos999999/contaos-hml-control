@@ -1,3 +1,32 @@
+## PR682 reapresentada após PLAN683 integrado, 15/11/2026
+
+- PLAN683 integrado em main335cbc9ad8c0922fb15d2e48c89b30cf922cd608 antes desta reapresentação; HEAD6b73628f4d80f8375ac7f386176482501b245b88, quatro checks SUCCESS, auditoria isolada PASS, review5909679578 APPROVED por Edivan5002 no HEAD exato. Parecer SHA256528495EE91BB70FE8D57BE2F89924893B177B4E2BB8096C1B6EEFE73C7142C97, RunId20261115T073549476Z-6b73628f4d80-9f69738c059f4f50a4f6851d6686e7b9.
+- R3 da PR682 no HEAD30161d9 apontou GOV prévio ausente; o diagnóstico foi confirmado, sem aprovação retroativa. PLAN e P0_GOV_PLAN_682.json agora pertencem à main pelo merge683, com approved=true, pr_number682, plan_pr_number683 e exatamente AGENTS/protocolo/checkpoint. Esta reapresentação integra a base aprovada e mantém o PLAN da main, sem modificá-lo no BUILD.
+- Diferença final autorizada: somente os três caminhos do GOV. Nova CI/auditoria/revisão desta reapresentação ainda PENDENTES; os três pareceres anteriores permanecem preservados. Gates não foram afrouxados; não confundir PASS de683 com PASS de682.
+- Limitação operacional NOVA confirmada na3.1.3: InfoPR/validate_pr conferem a base registrada na PR sem consultar ref viva. Consulta autenticada observou PR679.base.sha20d4ad96fd1f7ec02baa3bd618532385065a729b enquanto main era f538d967dd974b7cd8243a3407a0736b64580db3. Isso demonstra lacuna de frescor, não um APPROVE/merge indevido. O orquestrador passa a conferir explicitamente a ref viva antes/depois da análise e antes de review/merge; fez essa conferência em683 com base viva igual à auditada.
+- PENDENTE antes do aceite integral do controlador: PLAN corretivo próprio, RED e correção versionada dessa classe no controlador/preparador. Não alterar3.1.3 silenciosamente nem declarar que os43 testes atuais cobrem esse caso. PR679 continua aguardando instalação e emendas de escopo; nenhuma aplicação/backend/types/PROD foi alterada.
+
+## PR682 — revisão causal ampliada da proveniência, 15/11/2026
+
+- R2 no HEADd3c84ce3bef790c863d30fa1ddac52aa57599608: CHANGES_REQUESTED menor pelo relato de autorização desta sessão inserido no protocolo permanente. O pareamento de contas foi confirmado pela fonte original integrada; o bloqueador R1 foi fechado. R2 permanece preservado em20261115T045219383Z-d3c84ce3bef7-65204577c6b34193b8a75537d7e06e6b.
+- Mesma classe causal de proveniência documental; não tratar como nova falha técnica nem repetir patch por sintoma. Revisão ampliada: separar a eficácia normativa proposta dos recibos históricos; a norma futura não precisa afirmar permissões de uma sessão passada. Removidos todos os relatos de autorização de sessão do protocolo; a fonte integrada681 e seus trechos verificáveis sustentam pares, confirmação e orquestração. Registros reais de review680 continuam no GitHub e no histórico, sem serem convertidos em licença futura.
+- Critério preventivo: protocolos permanentes devem citar fonte integrada/commit/seção e exigir autorização aplicável sem afirmar consentimento histórico inacessível ao auditor. Conferido o documento inteiro, inclusive autorização, identidade, merge e checkpoint; nenhum gate enfraquecido. Nova execução CI/auditoria no HEAD corrigido ainda PENDENTE.
+
+## PR682 — correção documental após auditoria R1, 15/11/2026
+
+- Auditoria R1 no HEAD1378f6bde0f16c084173ebb3c07173d252fade02/basef538d967dd974b7cd8243a3407a0736b64580db3: CHANGES_REQUESTED, ausência de fonte declarada dos pares de contas. RunId20261115T043322594Z-1378f6bde0f1-5c9cfa80201f4a35b80491c33ad25146; parecer SHA2568C7ED34AA68E8AB63992D6ACA76654BD86E00688A97C6874066E8199D0D10399, preservado.
+- Classificação NOVO: falha documental de proveniência, sem alteração técnica. Causa: transcrição resumida do protocolo omitiu a referência expressa à seção7 da instrução do titular. Correção na origem: declarar fonte, escopo e citações dos pares, preservando a regra autorizada e os controles. Impacto limitado ao protocolo/checkpoint; nenhuma regra, teste ou permissão foi enfraquecida.
+- RED: R1 não encontrou fonte no documento. GREEN documental: seção de proveniência agora referencia a decisão e suas duas regras expressas; revisão/CI e nova auditoria do HEAD corrigido ainda PENDENTES. Não converter R1 em PASS.
+
+## Instalação3.1.3 integrada; persistência definitiva em revisão, 15/11/2026
+
+- PR680 integrada à main no merge f538d967dd974b7cd8243a3407a0736b64580db3; HEAD auditado def4d8b5b2ac95d84cd395d3729b730c438aa692. PLAN681 já integrado no5bbadb2. Cinco checks SUCCESS no HEAD auditado; controles pós-merge ainda a conferir.
+- Auditor Codex/Luna separado, perfil auditor explícito, read-only, worktree contaos-auditoria limpa, exit0 e PASS. RunId20261115T042130372Z-def4d8b5b2ac-1b87ff8401fb49afb81a60b94ea68feb; SHA256 parecer D2AB3CC022E8FA77BAE9265A471FC7B5214EFF3712A05DC037843903FD61C761. LOCK types8ea7750b75fd9d76b29c36ce7613392e3ab65e19.
+- Review formal5909035276 APPROVED por Edivan5002, diferente da autora contaos9999, no HEAD auditado. Envio via conexão GitHub autenticada após autorização expressa do titular nesta sessão; CLI permaneceu contaos9999. Sem segunda auditoria humana atribuída e sem bypass.
+- Instalado controller3.1.3 SHA2563365fe38c749a62cc57426e74ebb90e16e83ad0137087c98b0bb6b0caf14643a com backups imutáveis. 43 testes offline locais e CI Windows SUCCESS. Preparar/Verificar reais concluídos. Simulação Revisar6/6: cancelar PASS, skipping, autor=revisor, hash/HEAD/base divergentes; zero envio ao GitHub. Resultados locais SHA25651E15E7FD6733E854C9AD36CC54305B236750C3892AFE19726C4F2C09670321F.
+- Perfis investigador/testador/seguranca/auditor read-only-high; implementador workspace-write-medium. Codex CLI0.169.0 autenticado ChatGPT; cinco TOMLs legíveis. Config apenas lida nesta retomada, SHA256 observado8f7c2ffe2066e397c794f05540865b14e5c052c3467c44030b8952625aec9aee. Sandbox workspace-write, on-request; rede ativa. Não alterar configurações para superar permissões.
+- PR682 propõe protocolo definitivo e hook único. PENDENTE: CI/auditoria/revisão e merge deste documento; não declarar checkpoint integrado antes do readback em main. Próxima após encerrar instalação/persistência: achados da PR679, ainda sem correção pela instalação. Certificados existentes preservados; sem backend/PROD/aplicação.
+
 ## Instalação da auditoria automatizada — BUILD3.1.3 publicado, 15/11/2026
 
 - PLAN681 integrado antes do BUILD; código e testes da instalação na PR680. Pacote local3.1.3,43 testes reais aprovados; CI e revisão deste HEAD ainda pendentes.
