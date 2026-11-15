@@ -1,3 +1,9 @@
+## Instalação da auditoria automatizada — BUILD3.1.3 publicado, 15/11/2026
+
+- PLAN681 integrado antes do BUILD; código e testes da instalação na PR680. Pacote local3.1.3,43 testes reais aprovados; CI e revisão deste HEAD ainda pendentes.
+- Instrução persistente em AGENTS preserva cinco perfis e chama Analisar em sessão separada read-only; preparação e snapshot autenticado sem exportar tokens precedem o modelo. Revisar/APPROVE continuam dependentes de autorização/confirmacão humana.
+- Aplicação/backend/types/PROD/proteções preservados. Encerrar instalação com CI/revisão/aceite/integração antes de retomar os achados da PR679. Histórico anterior abaixo.
+
 ## Instalação da auditoria automatizada — PLAN em preparação, 15/11/2026
 
 - Prioridade expressa do titular: concluir instalação antes de retomar achados da PR679. Nenhum código da aplicação foi alterado nesta tarefa.
@@ -2828,3 +2834,5 @@ Diagnóstico fechado: V111/V115light4+4PII com initialReceipt/currentReceiptFALS
 Próxima tarefa: integrarGATEr5 eaditivoPLANO_ATIVO comCI2/revisão/readback; depoisREDsource-real ref/current/histórico eAppShellmóvel, diagnóstico somente técnico de recibo/âncoras, correção causal/cleanupUI→GREEN/CI4/native18/revisão→merge/pushCI. RequestJSON7r5separado/paiBUILDexato/COMMENTcanônico relido antesmerge; r4 e anteriores consumidos. Preservar64/default208/native18/prazos/7fragmentos/privacidade/owner/R20. Texto desconhecido permanece bloqueado, sem dicionário novo nem mascaramento. Sem backend/SQL/AuthAdmin/negócio/OpenAI/deploy/PROD.
 
 API51original42596392357/art13663262831/SHA5e2177afc72b78e0a8e6109bb8795633886c8052c37a756832f616a8c5066795 eUImultiturnc999ebc9 permanecem aprovados nas origens, semrepetição. UI13 restante(paginação>20/encerramento/revalidação) exige cenário/gate/fixture/cleanuppróprios. Autorização do titular continua. Contexto extenso, semmedidorexato; seguir checkpointsemrecomeçarprovasaprovadas. Esteappend sóécheckpointintegrado apósCI/revisão/merge/readback doPRdocumental; nãoéconclusão da missão.
+
+Emenda de segurança do bootstrap: somente binários diretos Node/Bun fixados por URL/SRI e SHA256, lockfile local exato, npm ci --ignore-scripts com configurações vazias e ambiente mínimo. Nenhum lifecycle de terceiros é executado; os quatro novos negativos complementam os39 casos originais (total43). Aceite operacional da emenda ainda pendente.
