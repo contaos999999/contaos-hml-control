@@ -1,3 +1,9 @@
+## PR682 — revisão causal ampliada da proveniência, 15/11/2026
+
+- R2 no HEADd3c84ce3bef790c863d30fa1ddac52aa57599608: CHANGES_REQUESTED menor pelo relato de autorização desta sessão inserido no protocolo permanente. O pareamento de contas foi confirmado pela fonte original integrada; o bloqueador R1 foi fechado. R2 permanece preservado em20261115T045219383Z-d3c84ce3bef7-65204577c6b34193b8a75537d7e06e6b.
+- Mesma classe causal de proveniência documental; não tratar como nova falha técnica nem repetir patch por sintoma. Revisão ampliada: separar a eficácia normativa proposta dos recibos históricos; a norma futura não precisa afirmar permissões de uma sessão passada. Removidos todos os relatos de autorização de sessão do protocolo; a fonte integrada681 e seus trechos verificáveis sustentam pares, confirmação e orquestração. Registros reais de review680 continuam no GitHub e no histórico, sem serem convertidos em licença futura.
+- Critério preventivo: protocolos permanentes devem citar fonte integrada/commit/seção e exigir autorização aplicável sem afirmar consentimento histórico inacessível ao auditor. Conferido o documento inteiro, inclusive autorização, identidade, merge e checkpoint; nenhum gate enfraquecido. Nova execução CI/auditoria no HEAD corrigido ainda PENDENTE.
+
 ## PR682 — correção documental após auditoria R1, 15/11/2026
 
 - Auditoria R1 no HEAD1378f6bde0f16c084173ebb3c07173d252fade02/basef538d967dd974b7cd8243a3407a0736b64580db3: CHANGES_REQUESTED, ausência de fonte declarada dos pares de contas. RunId20261115T043322594Z-1378f6bde0f1-5c9cfa80201f4a35b80491c33ad25146; parecer SHA2568C7ED34AA68E8AB63992D6ACA76654BD86E00688A97C6874066E8199D0D10399, preservado.
