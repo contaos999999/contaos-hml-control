@@ -4,7 +4,7 @@ Fases1/2 continuamENCERRADAS/CERTIFICADAS; semreabertura. Instalação3.1.4concl
 
 Código:97guards/80F3/69ReactPASS;47arquivos1266regressãoPASS;15mutantesmortos;build/typecheck/lint/LOCKPASS;ledgerreal/fichaV1semerrors;31NRPASS. LedgerNR005/008REINCIDENCIA ebarreiradepreflight ampliada: causa/impacto/consumidores/metadados/eventos→RED→correçãocompleta→GREEN→auditoria, semretomarporremendoparcial. Artefatoscompletos emfase3/PR679_R5_RCA_2026-11-15.md; baselinedaficha155ef9b,RED9c43637544739ancestral e3casosexatosGREENNEGREGexecutados.
 
-PENDENTE: ensaiointegradoPR/push, publicarHEAD679fast-forward,CI/TesteCreal e auditoria doHEADfinal,autorização específica de revisão porcontaos9999,mergeprotegido/readback. PR679remotaainda9c atépublicação. Nãoencerrarporprovalocal. Fase3não certificada: após679 seguemdrivers/sessões2b-2b/2b-2c,REQUESTreal138casos/certificação;F4→F5→F6→F7sócomcertificadopredecessor. Missão globalV1continuaativa,HMLsomente,backend/PROD/tipos/rotas/marcapreservados. Históricoabaixo nãoéstatusatual.
+Ensaio integrado realGit de PR/push: frontend e RCA PASS emambos,14paths/1src, RED real e3casos executados por evento; merge local8279ff3, não mergeGitHub. PENDENTE: publicarHEAD679fast-forward,CI/TesteCreal e auditoria doHEADfinal,autorização específica de revisão porcontaos9999,mergeprotegido/readback. HEAD/checks remotos devem ser conferidos no GitHub após publicação. Nãoencerrarporprovalocal. Fase3não certificada: após679 seguemdrivers/sessões2b-2b/2b-2c,REQUESTreal138casos/certificação;F4→F5→F6→F7sócomcertificadopredecessor. Missão globalV1continuaativa,HMLsomente,backend/PROD/tipos/rotas/marcapreservados. Históricoabaixo nãoéstatusatual.
 
 ## Missão orquestrada V1 e leitura de evidência688, 15/11/2026
 
