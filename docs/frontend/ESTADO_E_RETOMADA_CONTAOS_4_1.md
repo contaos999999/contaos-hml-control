@@ -1,8 +1,17 @@
-## Protocolo de orquestração — proposta documental, 15/11/2026
+## Instalação3.1.3 integrada; persistência definitiva em revisão, 15/11/2026
 
-- Baseline main5bbadb225b52f71b1a8383f36b63e3ede9e11a2d. Instalação BUILD PR680/def4d8b5b2ac95d84cd395d3729b730c438aa692 com cinco checks SUCCESS e auditoria isolada em execução; integração ainda PENDENTE.
-- Esta branch propõe referência única em AGENTS e protocolo persistente conforme instrução expressa do titular. Não modifica perfis, configuração, controlador, aplicação, backend, types, PROD ou certificados. PLAN documental prévio no primeiro commit desta branch.
-- PENDENTE: checks/auditoria/revisão formal e merge desta proposta. Próxima tarefa: concluir instalação antes da PR679. Não declarar checkpoint integrado antes do readback remoto. Histórico anterior preservado abaixo.
+- PR680 integrada à main no merge f538d967dd974b7cd8243a3407a0736b64580db3; HEAD auditado def4d8b5b2ac95d84cd395d3729b730c438aa692. PLAN681 já integrado no5bbadb2. Cinco checks SUCCESS no HEAD auditado; controles pós-merge ainda a conferir.
+- Auditor Codex/Luna separado, perfil auditor explícito, read-only, worktree contaos-auditoria limpa, exit0 e PASS. RunId20261115T042130372Z-def4d8b5b2ac-1b87ff8401fb49afb81a60b94ea68feb; SHA256 parecer D2AB3CC022E8FA77BAE9265A471FC7B5214EFF3712A05DC037843903FD61C761. LOCK types8ea7750b75fd9d76b29c36ce7613392e3ab65e19.
+- Review formal5909035276 APPROVED por Edivan5002, diferente da autora contaos9999, no HEAD auditado. Envio via conexão GitHub autenticada após autorização expressa do titular nesta sessão; CLI permaneceu contaos9999. Sem segunda auditoria humana atribuída e sem bypass.
+- Instalado controller3.1.3 SHA2563365fe38c749a62cc57426e74ebb90e16e83ad0137087c98b0bb6b0caf14643a com backups imutáveis. 43 testes offline locais e CI Windows SUCCESS. Preparar/Verificar reais concluídos. Simulação Revisar6/6: cancelar PASS, skipping, autor=revisor, hash/HEAD/base divergentes; zero envio ao GitHub. Resultados locais SHA25651E15E7FD6733E854C9AD36CC54305B236750C3892AFE19726C4F2C09670321F.
+- Perfis investigador/testador/seguranca/auditor read-only-high; implementador workspace-write-medium. Codex CLI0.169.0 autenticado ChatGPT; cinco TOMLs legíveis. Config apenas lida nesta retomada, SHA256 observado8f7c2ffe2066e397c794f05540865b14e5c052c3467c44030b8952625aec9aee. Sandbox workspace-write, on-request; rede ativa. Não alterar configurações para superar permissões.
+- PR682 propõe protocolo definitivo e hook único. PENDENTE: CI/auditoria/revisão e merge deste documento; não declarar checkpoint integrado antes do readback em main. Próxima após encerrar instalação/persistência: achados da PR679, ainda sem correção pela instalação. Certificados existentes preservados; sem backend/PROD/aplicação.
+
+## Instalação da auditoria automatizada — BUILD3.1.3 publicado, 15/11/2026
+
+- PLAN681 integrado antes do BUILD; código e testes da instalação na PR680. Pacote local3.1.3,43 testes reais aprovados; CI e revisão deste HEAD ainda pendentes.
+- Instrução persistente em AGENTS preserva cinco perfis e chama Analisar em sessão separada read-only; preparação e snapshot autenticado sem exportar tokens precedem o modelo. Revisar/APPROVE continuam dependentes de autorização/confirmacão humana.
+- Aplicação/backend/types/PROD/proteções preservados. Encerrar instalação com CI/revisão/aceite/integração antes de retomar os achados da PR679. Histórico anterior abaixo.
 
 ## Instalação da auditoria automatizada — PLAN em preparação, 15/11/2026
 
@@ -2834,3 +2843,5 @@ Diagnóstico fechado: V111/V115light4+4PII com initialReceipt/currentReceiptFALS
 Próxima tarefa: integrarGATEr5 eaditivoPLANO_ATIVO comCI2/revisão/readback; depoisREDsource-real ref/current/histórico eAppShellmóvel, diagnóstico somente técnico de recibo/âncoras, correção causal/cleanupUI→GREEN/CI4/native18/revisão→merge/pushCI. RequestJSON7r5separado/paiBUILDexato/COMMENTcanônico relido antesmerge; r4 e anteriores consumidos. Preservar64/default208/native18/prazos/7fragmentos/privacidade/owner/R20. Texto desconhecido permanece bloqueado, sem dicionário novo nem mascaramento. Sem backend/SQL/AuthAdmin/negócio/OpenAI/deploy/PROD.
 
 API51original42596392357/art13663262831/SHA5e2177afc72b78e0a8e6109bb8795633886c8052c37a756832f616a8c5066795 eUImultiturnc999ebc9 permanecem aprovados nas origens, semrepetição. UI13 restante(paginação>20/encerramento/revalidação) exige cenário/gate/fixture/cleanuppróprios. Autorização do titular continua. Contexto extenso, semmedidorexato; seguir checkpointsemrecomeçarprovasaprovadas. Esteappend sóécheckpointintegrado apósCI/revisão/merge/readback doPRdocumental; nãoéconclusão da missão.
+
+Emenda de segurança do bootstrap: somente binários diretos Node/Bun fixados por URL/SRI e SHA256, lockfile local exato, npm ci --ignore-scripts com configurações vazias e ambiente mínimo. Nenhum lifecycle de terceiros é executado; os quatro novos negativos complementam os39 casos originais (total43). Aceite operacional da emenda ainda pendente.

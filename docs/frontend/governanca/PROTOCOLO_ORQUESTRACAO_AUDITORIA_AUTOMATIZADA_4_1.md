@@ -1,6 +1,6 @@
 # Protocolo persistente de orquestração e auditoria — ContaOS 4.1
 
-**Estado: proposta submetida por PR documental.** Vigência depende de revisão, checks exigidos e integração protegida à `main`, sem alegação de integração antecipada. Não cria serviço contínuo, altera perfis Codex, amplia permissões ou modifica regras de proteção.
+**Vigência:** aplicável no HEAD da `main` que integrar este protocolo após revisão e checks exigidos; enquanto apenas em branch/PR, permanece proposta sem vigência presumida. Não cria serviço contínuo, altera perfis Codex, amplia permissões ou modifica regras de proteção.
 
 ## 1. Fontes e início da sessão
 
@@ -36,7 +36,7 @@ Identifique o bloqueio e separe falhas corrigíveis de dependências externas. I
 
 ## 9. PASS e revisão formal
 
-PASS é parecer técnico automatizado, não revisão formal humana. Verifique que parecer, hash, HEAD/base, checks e PR continuam válidos. Identifique autor e conta revisora elegível; use comparação de login case-insensitive: autora `edivan5002` exige `contaos9999`; autora `contaos9999` exige `edivan5002`; outros autores exigem revisor distinto com permissão. Informe a conta necessária e peça ao titular que alterne-a se preciso. Não leia tokens nem use conta diferente da identidade efetivamente autenticada. Só após confirmar `gh api user --jq .login`, elegibilidade, integridade do parecer e HEAD/base atuais, chame `-Acao Revisar` para preparar/validar a decisão.
+PASS é parecer técnico automatizado, não revisão formal humana. Verifique que parecer, hash, HEAD/base, checks e PR continuam válidos. Identifique autor e conta revisora elegível; use comparação de login case-insensitive: autora `edivan5002` exige `contaos9999`; autora `contaos9999` exige `edivan5002`; outros autores exigem revisor distinto com permissão. Informe a conta necessária e peça ao titular que alterne-a se preciso. Não leia tokens nem use conta diferente da identidade efetivamente autenticada. Só após confirmar `gh api user --jq .login`, elegibilidade, integridade do parecer e HEAD/base atuais, chame `-Acao Revisar` para preparar/validar a decisão. Se a conta elegível já estiver disponível em conexão GitHub autenticada, pode-se usar essa integração para registrar a revisão autorizada, após confirmar a identidade real e permissões nela e repetir os mesmos gates de HEAD/base/hash/checks/reviews. Registre explicitamente esse caminho alternativo; não atribua à conta do CLI a identidade da conexão e não exporte tokens. A simulação do modo Revisar não equivale a envio formal por esse modo.
 
 Antes de enviar `APPROVE`, pare com o parecer e a decisão concreta prontos e peça autorização expressa final para registrar essa decisão formal pela conta autenticada. Sem essa autorização, cancele; jamais preencha `APROVAR` por inferência, faça impersonação ou envie `CHANGES_REQUESTED` sem autorização expressa correspondente. Após envio autorizado, confirme no GitHub que a revisão foi registrada e continua válida para o HEAD atual.
 
