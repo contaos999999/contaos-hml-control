@@ -1,0 +1,14 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 682,
+  "files": [
+    "AGENTS.md",
+    "docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md",
+    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
+  ],
+  "plan_documento": "docs/frontend/planos/PLAN_PERSISTENCIA_ORQUESTRACAO_2026-11-15.md",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/682",
+  "plan_aprovacao": "Validação técnica nominal documental; eficácia apenas após CI, auditoria, revisão e merge protegido desta PR de PLAN antes da reapresentação682. Sem aprovação retroativa do HEAD R3.",
+  "justificativa": "Protocolo/hook/checkpoint documentais somente; nenhuma aplicação, backend, PROD, types, certificado ou proteção é alterada."
+}
