@@ -151,3 +151,14 @@ Norma detalhada: `docs/frontend/ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md`. O
 - O CI executa `node --test scripts/route-tree-drift-gate.test.mjs` e `node scripts/route-tree-drift-gate.mjs` **depois da geração e antes da regressão longa**. Divergência do gerador significa FAIL; o CI não corrige, não comita e não faz push.
 - O Teste C independente repete a verificação após iniciar Vite dev e mantém o gate final de árvore de trabalho inteiramente limpa; não substituir nenhum dos dois checks ou flexibilizar o Zero-Drift.
 - Casos negativos obrigatórios: nome/ordem alterado, árvore excluída e arquivo não versionado devem retornar FAIL. Todos os demais gates de PLAN, escopo, fonte canônica, Brand v1.0, `types.ts`, segurança e CI permanecem ativos. Ver `docs/frontend/governanca/GOV_020_GERACAO_DETERMINISTICA_ROTAS_2026-11-04.md`.
+
+
+## Integração operacional — auditoria automatizada por PR
+
+Fonte/escopo: instalação autorizada pelo titular, PLAN P0_AUDITORIA_INSTALACAO_V3_1_PLAN_2026-11-15.md. Preservar os cinco perfis investigador, implementador, testador, seguranca e auditor.
+
+- Após implementação, testes, checks e abertura/atualização de PR, identificar número e HEAD/base. Conferir o controlador local `$HOME\Projetos\ContaOS-4.1\scripts\auditar-pr.ps1` e chamar `powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File <controlador> -Pr <numero> -Acao Analisar` pelo orquestrador. A chamada é uma nova execução Codex na worktree contaos-auditoria, com perfil auditor e read-only; não delegar a implementação ao auditor.
+- O controlador prepara ferramentas/dependências/evidência antes do auditor. A preparação não autoriza executar testes de escrita dentro da auditoria nem entregar secrets ao modelo. Não reduzir sandbox; evidência faltante permanece BLOCKED/NÃO VERIFICADA.
+- Aguardar a mesma execução, ler o parecer integral e conferir HEAD/base, hashes e metadata.final.json. CHANGES_REQUESTED retorna ao rito PROMPT/PLAN/RED/GREEN; BLOCKED impede certificação; PASS permite apresentar o parecer e indicar a conta revisora, sem substituir revisão formal/humana quando exigida.
+- Não executar `-Acao Revisar`, `gh pr review --approve` ou `--request-changes` sem autorização humana específica. A confirmação APROVAR/SOLICITAR não pode ser preenchida pela IA. Selecionar RunId explícito; não reutilizar relatório de outro SHA.
+- Não fazer merge pelo controlador, não alterar proteção/bypass, não reescrever histórico publicado. Preservar os protocolos existentes, LOCK, HML, segurança e Teste C aplicável. A automação depende de sessão ativa; nenhum serviço permanente ou agendamento é criado por esta instrução.

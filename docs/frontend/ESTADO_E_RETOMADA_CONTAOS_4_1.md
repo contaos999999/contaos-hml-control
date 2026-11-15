@@ -1,3 +1,11 @@
+## Instalação da auditoria automatizada — PLAN em preparação, 15/11/2026
+
+- Prioridade expressa do titular: concluir instalação antes de retomar achados da PR679. Nenhum código da aplicação foi alterado nesta tarefa.
+- Controlador local3.1.1, preparação segura e38 testes locais aprovados; revisão técnica independente Luna favorável. Preparar executado com fonte25/HEADs/hashes verificados. Isso não certifica produto nem publica review formal.
+- BUILD reservado na PR680 (draft); aguarda este PLAN protegido integrado e CI verde. Código da automação será versionado em scripts/auditoria com teste offline próprio; não usar a PR679.
+- PENDENTE: CI/integrar PLAN, publicar BUILD, CI/auditoria separada/aceite, integração protegida e checkpoint final. Nenhum APPROVE ou merge automático pelo controlador.
+- O histórico anterior permanece abaixo. Fase3 e os achados da PR679 permanecem abertos.
+
 ## Integração funcional V1: Fase 3, emenda 1 do PLAN em revisão (R2), 14/11/2026 Bahia
 
 - **PRs (autora Edivan5002, revisora contaos9999):**
