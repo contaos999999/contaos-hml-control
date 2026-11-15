@@ -1,0 +1,32 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 680,
+  "files": [
+    "scripts/auditoria/auditar-pr.ps1",
+    "scripts/auditoria/auditor-runner.py",
+    "scripts/auditoria/prepare-audit.py",
+    "scripts/auditoria/test-controller.ps1",
+    "scripts/auditoria/test_runner.py",
+    "scripts/auditoria/test_preparation.py",
+    ".github/workflows/contaos-auditoria-controller.yml",
+    "docs/frontend/governanca/INSTALACAO_AUDITORIA_V3_1_BUILD_STATUS.md",
+    "docs/frontend/auditorias/instalacao-automatizada-v3_1/MANIFEST.json",
+    "docs/frontend/auditorias/instalacao-automatizada-v3_1/REVISAO.md",
+    "docs/frontend/auditorias/instalacao-automatizada-v3_1/EVIDENCIAS.md",
+    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
+  ],
+  "plan_documento": "docs/frontend/planos/P0_AUDITORIA_INSTALACAO_V3_1_PLAN_2026-11-15.md",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/680",
+  "plan_aprovacao": "Validação técnica nominal conforme ADR-DEV-002, autorização expressa do titular para instalar, revisão técnica independente Luna documentada. Eficácia do PLAN depende de PR protegida integrada e CI verde; não é aprovação formal de review.",
+  "justificativa": "Somente automação de auditoria e CI offline; sem src/public/dependências da aplicação/backend/types/PROD. PR679 separada e não alterada.",
+  "regras_preservadas": [
+    "P0-NR-001",
+    "P0-RCA-001",
+    "P0 VERSION FIRST",
+    "ZERO-DRIFT",
+    "LOCK-TYPES",
+    "TESTE C",
+    "PROD PROIBIDO"
+  ]
+}
