@@ -9,7 +9,7 @@
     "validado_em": "2026-11-05",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": true,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42372512665",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43702328082",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -4523,7 +4523,9 @@
       "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
     ],
     "excecao_src": "Somente sincronização no teste competenciaDocumentos.test.tsx, sem produção; emenda explícita ao §7.6 Fase3. Allowlist histórica do mestre preservada; esta emenda não reautoriza demais caminhos para679.",
-    "ci_plano_emenda": "PENDENTE_CI_DESTA_PR_ANTES_DE_BUILD",
+    "ci_plano_emenda": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43702328082",
+    "ci_plano_head": "5c061350cd36a03e9bcf8a6d44ae5bdb59f138ad",
+    "ci_plano_resultado": "SUCCESS; quatro checks PASS no primeiro commit documental. Novo HEAD desta vinculação exige seus próprios checks e auditoria antes de merge/BUILD. CI histórica do mestre42372512665 preservada neste campo; sem alegar que cobre a emenda.",
     "aprovacao": "Decisão técnica nominal ADR-DEV-002; revisão formal exige autorização específica, CI/auditoria e merge protegido. Aprovação humana histórica do mestre não é alegada como aprovação da review desta emenda."
   }
 }

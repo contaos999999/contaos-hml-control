@@ -2,6 +2,8 @@
 
 Estado: VALIDADO tecnicamente. Eficácia para BUILD condicionada à integração deste PLAN com CI, auditoria independente e revisão formal autorizada. Nenhuma correção executável nesta PR documental. Não aprova retroativamente R1–R4 e não certifica a Fase3.
 
+PR documental [687](https://github.com/contaos999999/contaos-hml-control/pull/687). Primeiro commit de PLAN `5c061350cd36a03e9bcf8a6d44ae5bdb59f138ad`: quatro checks PASS; [Zero-Drift43702328082](https://github.com/contaos999999/contaos-hml-control/actions/runs/43702328082) SUCCESS com regressão completa/build/typecheck; Teste C documental sem evidência visual. Vinculação dessa CI no PLANO_ATIVO antecede qualquer BUILD; o novo HEAD que publica esta prova precisa de seus próprios checks e auditoria antes da revisão/merge. CI42372512665 do mestre é histórica e não foi usada para provar esta emenda.
+
 ## Contexto, autorização e baseline
 
 O titular autorizou concluir a instalação da auditoria automatizada e depois resolver os achados da PR679. Instalação concluída: PR684 merge `e3f42b393eeb64355e81c92e928093485608ba95`; controlador instalado3.1.4 SHA256 `9165f22dd011ae3a5aacdfd8f16eca6c0b715cec9822fc48fc16a51c7f194d91`. Recibos integrais publicados na PR686, HEAD `532597d5c45f54da26bc792e22d0880f6e66d7df`; auditoria R2 PASS RunId `20261115T093730374Z-532597d5c45f-860901f78f5046799c2e824c7a78d335`, parecer SHA256 `FB29D7AAEB630A4FB5DE08139D3F6B745CADBA2D31079E0A2668E51035EE173F`; review5910101529 APPROVED Edivan5002 após autorização específica; merge protegido `02361d2397919a3d711948294f97029aad5a5841`. Quatro checks pertinentes pós-merge SUCCESS. Recibos em `docs/frontend/auditorias/instalacao-automatizada-v3_1_4/RCA_E_EVIDENCIAS.md`. Não repetir auditorias válidas dessa instalação.

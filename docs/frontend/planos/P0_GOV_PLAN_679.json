@@ -16,7 +16,7 @@
   ],
   "plan_documento": "docs/frontend/planos/PR679_R5_EMENDA_PLAN_2026-11-15.md",
   "plan_secao": "Emenda R5 completa; eficácia condicionada a CI/auditoria/review formal autorizada e merge protegido antes de BUILD",
-  "plan_pr_url": "PENDENTE_NUMERO_DA_PR_DOCUMENTAL",
+  "plan_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/687",
   "plan_aprovacao": "Eficácia somente após review APPROVE independente autorizada e merge protegido da PR documental desta emenda no HEAD final com CI e auditoria PASS. approved não é aprovação retroativa nem substitui esses recibos.",
   "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/679",
   "justificativa": "Correção R5 da PR679: regras centrais do livro/replay, identidade derivada, fixture M4 Windows, exceção explícita somente para teste React src/test/competenciaDocumentos.test.tsx e duplicata documental. Nenhum outro src, UI, backend, types, workflow, guard, lock ou PROD. PLAN anterior #678 e seu escopo preservados como histórico; esta emenda precisa integrar antes do novo BUILD.",
