@@ -57,16 +57,17 @@
       "classe": "TESTES",
       "causa_status": "CONFIRMADA",
       "causa": "Node com isolamento por arquivo emite wrapper sintético #Subtest/ok/pass1 mesmo sem executar teste nomeado; o nome agregado pode coincidir com caso e satisfazer o parser exato. Em Windows o TAP escapa barras e o antigo negativo caso=path passava acidentalmente; Linux expôs a coincidência. Arquivo vazio também gera wrapper e pode não emitir plano raiz1..0.",
-      "sintoma": "CI43748695221/job132917605578 em b0da740 aceitou wrapper como GREEN no segundo assert do negativo; 97PASS locais não cobriam o rótulo TAP real entre plataformas.",
-      "barreira": "No subprocesso isolado de cada prova, usar Node --test-isolation=none e --test-reporter=tap para eliminar agregação por arquivo; exigir subteste/ok exatos, pass>0/fail0 e tokens removidos. Negativos devem usar o rótulo efetivamente emitido pelo TAP, inclusive aliases, vazio, zero seleção e skip; preservar teste real com nome parecido com arquivo. Reproduzir em runtime fixado e validar CI no HEAD novo; não contar divergência de escape como negativo causal.",
+      "sintoma": "CI43748695221/job132917605578 em b0da740 aceitou wrapper como GREEN no segundo assert do negativo; 97PASS locais não cobriam o rótulo TAP real entre plataformas. Reincidência de compatibilidade em CI43751659639/e00c852: dois positivos do runner false!==true antes do setup24, sob default Node22.23.5 da imagem oficial.",
+      "barreira": "No subprocesso isolado de cada prova, usar Node --experimental-test-isolation=none e --test-reporter=tap para eliminar agregação por arquivo; exigir subteste/ok exatos, pass>0/fail0 e tokens removidos. Negativos devem usar o rótulo efetivamente emitido pelo TAP, inclusive aliases, vazio, zero seleção e skip; preservar teste real com nome parecido com arquivo. Reproduzir em runtime fixado e validar CI no HEAD novo; não contar divergência de escape como negativo causal. Antes de BUILD, inventariar consumidores × eventos × runtimes efetivamente usados, inclusive gates anteriores ao setup. Provar alias único no runtime pré-setup22 e pós-setup24/26, sem retry/fallback permissivo; matriz e positivos/negativos devem passar em cada runtime aplicável.",
       "estado": "REINCIDENCIA",
       "origem": [
         "https://github.com/contaos999999/contaos-hml-control/pull/661",
         "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
         "https://github.com/contaos999999/contaos-hml-control/pull/679",
-        "https://github.com/contaos999999/contaos-hml-control/actions/runs/43748695221"
+        "https://github.com/contaos999999/contaos-hml-control/actions/runs/43748695221",
+        "https://github.com/contaos999999/contaos-hml-control/actions/runs/43751659639"
       ],
-      "tentativas_ciclo": 2,
+      "tentativas_ciclo": 3,
       "revisao_causal_ampliada": true,
       "prevencao": {
         "tipo": "TESTE",
@@ -90,7 +91,7 @@
         "readback_url": "https://github.com/contaos999999/contaos-hml-control/blob/main/scripts/p0-rca-impact-gate.test.mjs",
         "monitoramento": "Barreira técnica integrada, testes negativos aprovados no CI. Não é prova de impossibilidade de reincidência nem de E2E HML real."
       },
-      "diagnostico_ampliado": "15/11/2026: reincidência NR003 em PR679/b0da740 comprovada por CI real. RED portátil extrai wrapper TAP em vez de assumir path bruto. Primeira estratégia, recusar só plano raiz1..0, falhou no arquivo vazio sem node:test; novo RED causal suspendeu esse patch parcial. Segunda estratégia remove a origem do wrapper via --test-isolation=none dentro do subprocesso já isolado, sem heurística de nomes ou reporter novo. Local94dcae3: RCA57PASS, focais3PASS em Node24.22.3 e26.13.1; mutante que remove a opção morreu nos negativos filtrado e vazio (2KILLED). Histórico de PR661 permanece histórico; CI/auditoria/review/merge/readback679 e HML seguem pendentes, sem RESOLVIDO_COM_PROVA.",
+      "diagnostico_ampliado": "15/11/2026: reincidência NR003 em PR679/b0da740 comprovada por CI real. RED portátil extrai wrapper TAP em vez de assumir path bruto. Primeira estratégia, recusar só plano raiz1..0, falhou no arquivo vazio sem node:test; novo RED causal suspendeu esse patch parcial. Segunda estratégia remove a origem do wrapper via --test-isolation=none dentro do subprocesso já isolado, sem heurística de nomes ou reporter novo. Local94dcae3: RCA57PASS, focais3PASS em Node24.22.3 e26.13.1; mutante que remove a opção morreu nos negativos filtrado e vazio (2KILLED). Histórico de PR661 permanece histórico; CI/auditoria/review/merge/readback679 e HML seguem pendentes, sem RESOLVIDO_COM_PROVA. R2 em15/11: CI43751659639/e00c852 expôs runtime pré-setup não inventariado. Manifesto exato ubuntu22/20261111.360.2 declara Node22.23.5; binário oficial dessa versão com SHA validado reproduz bad option/exit9 para --test-isolation=none e exit0 para alias antigo. A opção foi renomeada em23.6. Alias único --experimental-test-isolation=none aceito22.23.5/24.22.3/26.13.1 elimina wrapper sem fallback. RED22 reproduziu os dois positivos falhos; GREEN57em22+57em24+3focais26,3mutantesmortos em a0968b9. EstadoREINCIDENCIA preservado; não transferir GREEN24/26 para runtime22 sem prova, nem ensaio PR/push94 para novoSHA.",
       "novos_testes": [
         {
           "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
@@ -117,6 +118,18 @@
           ],
           "ci_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43748695221",
           "estado_seguinte": "REINCIDENCIA mantida; correção local57PASS/2KILLED não equivale a CI/revisão/merge/readback nem prova HML."
+        },
+        {
+          "data": "2026-11-15",
+          "prs": [
+            "#679"
+          ],
+          "refs": [
+            "e00c8522cd7ecc189367bd47a6e5a235028e7204",
+            "a0968b90f6643d1c77ac22fb40c70d509c174f40"
+          ],
+          "ci_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43751659639",
+          "estado_seguinte": "REINCIDENCIA mantida; compatibilidade corrigida localmente em runtimes22/24/26, pendentes CI/auditoria/review/merge/readback e HML."
         }
       ]
     },
