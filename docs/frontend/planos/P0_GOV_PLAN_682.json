@@ -10,5 +10,7 @@
   "plan_documento": "docs/frontend/planos/PLAN_PERSISTENCIA_ORQUESTRACAO_2026-11-15.md",
   "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/682",
   "plan_aprovacao": "Validação técnica nominal documental; eficácia apenas após CI, auditoria, revisão e merge protegido desta PR de PLAN antes da reapresentação682. Sem aprovação retroativa do HEAD R3.",
-  "justificativa": "Protocolo/hook/checkpoint documentais somente; nenhuma aplicação, backend, PROD, types, certificado ou proteção é alterada."
+  "justificativa": "Protocolo/hook/checkpoint documentais somente; nenhuma aplicação, backend, PROD, types, certificado ou proteção é alterada.",
+  "plan_pr_number": 683,
+  "scope_explanation": "pr_number=682 identifica a PR de BUILD governada; este GOV é publicado previamente pela PR de PLAN683. approved=true representa validação técnica nominal com eficácia apenas após integração protegida da683, antes de reapresentar682."
 }

@@ -41,7 +41,7 @@ Exigir checks de branch atuais, Zero-Drift/P0-NR/LOCK e Teste C quando aplicáve
 
 ## Próximas ações permitidas depois da validação do PLAN
 
-1. Criar/validar o GOV_PLAN vinculado à PR futura, com estes três caminhos exatos.
+1. Publicar/validar nesta PR de PLAN683 o GOV_PLAN vinculado exclusivamente à PR de BUILD682, com os três caminhos exatos. Integrar o PLAN683 antes de reapresentar o BUILD682; este item não exige um GOV_PLAN recursivo para a própria PR683.
 2. Aplicar o hook único e adicionar protocolo/checkpoint na branch autorizada.
 3. Executar validações de escopo documental, abrir/atualizar PR e aguardar checks.
 4. Rodar auditoria independente do HEAD exato e tratar resultados.
@@ -61,3 +61,5 @@ Gate técnico nominal: fonte integrada681/sha5bbadb2 e snapshot normativo1504af4
 RED documental: ausência de GOV_PLAN682 no commit-base da proposta R3. GREEN exigido antes de reapresentar: git show origin/main:docs/frontend/planos/P0_GOV_PLAN_682.json aprovado/pr_number682 com três caminhos exatos e PLAN integrado; base atualizada; diff682 limitado a esses caminhos; readback remoto, checks atuais e auditoria nova. O R3 e todos os pareceres anteriores permanecem imutáveis. Teste C visual N/A documental, nunca tratar SKIPPED como E2E. Rollback por nova PR documental, sem bypass ou reescrita.
 
 Prevenção: nenhuma futura proposta pode declarar gate prévio cumprido apenas por trazer o próprio PLAN no mesmo diff de BUILD. Primeiro conferir a existência do artefato aprovado no HEAD remoto main e a allowlist vinculada ao número real; então reapresentar o BUILD. O rito desta PR de PLAN é documental, não requer outro GOV_PLAN recursivo para si e não modifica código/hook.
+
+Rastreabilidade do R3: RunId `20261115T055430821Z-30161d949eeb-ad9ccb1fd3be4bb79717fdebefaea353`; arquivo local imutável `C:\Users\ediva\Projetos\ContaOS-4.1\auditorias\PR-682\20261115T055430821Z-30161d949eeb-ad9ccb1fd3be4bb79717fdebefaea353\parecer.md`; SHA256 `EB823593E0B12006F0DA0CE914A381B320680A397752E010E69FAEEAB0472AA9`. O parecer registra a ausência do gate no HEAD30161d9; sua existência foi verificada por hash, sem usá-lo como substituto da nova auditoria.
