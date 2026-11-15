@@ -1,4 +1,4 @@
-﻿# Controller version 3.1.3 — local release; original retained in releases
+﻿# Controller version 3.1.4 — local release; original retained in releases
 # ContaOS 4.1 - auditoria Codex + revisao GitHub por conta distinta
 # Windows PowerShell 5.1+ | Nao executa merge e nao altera main
 # Modo Analisar: gera parecer tecnico em sessao Codex isolada
@@ -19,7 +19,7 @@ $Runner=Join-Path $PSScriptRoot 'auditor-runner.py'
 $Prepare=Join-Path $PSScriptRoot 'prepare-audit.py'
 $Profile=Join-Path (Join-Path $HOME '.codex') 'agents\auditor.toml'
 if($env:CODEX_HOME){$Profile=Join-Path $env:CODEX_HOME 'agents\auditor.toml'}
-$ControllerVersion='3.1.3'
+$ControllerVersion='3.1.4'
 
 
 
@@ -69,7 +69,22 @@ function InfoPR {
   $p=$raw | ConvertFrom-Json
   if($p.state -ne 'OPEN' -or $p.isDraft) { throw 'PR fechada ou draft: auditoria formal nao aplicavel.' }
   if(([string]$p.headRefOid) -notmatch '^[0-9a-f]{40}$') { throw 'HEAD invalido.' }
+  if(-not ($p.baseRefName -is [string]) -or -not $p.baseRefName -or ([string]$p.baseRefOid) -cnotmatch '^[0-9a-f]{40}$'){throw 'Base da PR invalida.'}
+  $endpoint='repos/'+$Repo+'/git/ref/heads/'+[uri]::EscapeDataString($p.baseRefName)
+  $live=(GhTexto -argsList @('api',$endpoint)) | ConvertFrom-Json
+  if($null -eq $live -or $live -is [array] -or $live.ref -cne ('refs/heads/'+$p.baseRefName) -or $live.object.type -cne 'commit' -or ([string]$live.object.sha) -cnotmatch '^[0-9a-f]{40}$'){throw 'Ref viva da base invalida.'}
+  if($live.object.sha -cne $p.baseRefOid){throw 'Base gravada da PR diverge da ref viva. Atualize a branch e reavalie.'}
+  $p | Add-Member -NotePropertyName baseLiveOid -NotePropertyValue $live.object.sha
+  $p | Add-Member -NotePropertyName baseRef -NotePropertyValue $live.ref
+  $p | Add-Member -NotePropertyName baseRefEndpoint -NotePropertyValue $endpoint
+  $p | Add-Member -NotePropertyName baseRefCheckedAt -NotePropertyValue ([DateTime]::UtcNow.ToString('o'))
   return $p
+}
+function Assert-AuditContext($expected,$actual) {
+  foreach($field in @('number','headRefOid','baseRefName','baseRefOid','baseLiveOid')){
+    if(-not $expected.$field -or -not $actual.$field -or $expected.$field -cne $actual.$field){throw "Contexto mudou ou incompleto: $field"}
+  }
+  if(-not $expected.author.login -or $expected.author.login -ine $actual.author.login){throw 'Autor mudou ou ausente.'}
 }
 # Resolve the installed CLI without changing the persistent PATH.
 if(-not (Get-Command gh -ErrorAction SilentlyContinue)){
@@ -124,11 +139,15 @@ if($Acao -in @('Analisar','Preparar')) {
       runId=(Split-Path $Pasta -Leaf); modelOverride=$ModeloAuditor;
       repo=$Repo; pr=$Pr; url=$p.url; head=$Head; base=$p.baseRefName;
       baseHead=$p.baseRefOid; author=$p.author.login; loginAtAnalysis=$inside;
+      baseLiveOid=$p.baseLiveOid; baseRef=$p.baseRef; baseRefEndpoint=$p.baseRefEndpoint; baseRefCheckedAt=$p.baseRefCheckedAt;
       auditedAt=(Get-Date).ToString('o'); state='IN_PROGRESS'
     }
     Write-NewJson (Join-Path $Pasta 'metadata.initial.json') $metadata
-    & python $Prepare --repo $Audit --output $Pasta --head $Head --base $p.baseRefOid --pr $Pr
+    & python $Prepare --repo $Audit --output $Pasta --head $Head --base $p.baseRefOid --base-name $p.baseRefName --pr $Pr
     if($LASTEXITCODE -ne 0){throw "Preparacao falhou. Evidencias preservadas em $Pasta"}
+    $preparedContext=InfoPR
+    Assert-AuditContext $p $preparedContext
+    $metadata.contextAfterPreparation=$preparedContext
     $metadata.preparationSha256=(Get-FileHash (Join-Path $Pasta 'preparation.json')).Hash
     $metadata.githubEvidenceSha256=(Get-FileHash (Join-Path $Pasta 'github-evidence.json')).Hash
     $toolRoot=Join-Path $Base 'tools\auditoria\binaries-v1\node_modules'
@@ -189,7 +208,8 @@ Impacto visual: N/A se o diff nao alterar UI; nao certificar E2E por job/step SK
     $veredito=(Get-Content -Path $Parecer -TotalCount 1).Trim()
     if($veredito -notin @('VEREDITO: PASS','VEREDITO: CHANGES_REQUESTED','VEREDITO: BLOCKED')) {throw 'Parecer sem primeira linha padronizada.'}
     $apos=InfoPR
-    if($apos.headRefOid -ne $Head -or $apos.baseRefOid -ne $p.baseRefOid){throw 'PR/base mudou durante a auditoria. Reexecutar.'}
+    Assert-AuditContext $p $apos
+    $metadata.contextAfterAnalysis=$apos
     $dirtyAfter= & git.exe status --porcelain
     if($LASTEXITCODE -ne 0 -or $dirtyAfter){throw 'Worktree alterada durante auditoria.'}
     $headAfter=((& git.exe rev-parse HEAD)|Out-String).Trim()
@@ -223,6 +243,11 @@ $m=Get-Content -Raw $Meta | ConvertFrom-Json
 if($m.state -ne 'COMPLETED' -or $m.pr -ne $Pr -or $m.head -ne $Head -or $m.baseHead -ne $p.baseRefOid){
   throw 'Parecer nao concluido ou PR/base mudou. Rode nova analise.'
 }
+if($m.repo -cne $Repo){throw 'Repositorio da evidencia divergiu.'}
+$auditedContext=[pscustomobject]@{number=$m.pr;headRefOid=$m.head;baseRefName=$m.base;baseRefOid=$m.baseHead;baseLiveOid=$m.baseLiveOid;author=[pscustomobject]@{login=$m.author}}
+Assert-AuditContext $auditedContext $p
+Assert-AuditContext $auditedContext $m.contextAfterPreparation
+Assert-AuditContext $auditedContext $m.contextAfterAnalysis
 if((Get-FileHash $Parecer -Algorithm SHA256).Hash -ne $m.reportSha256){throw 'Parecer alterado apos auditoria. Reexecutar analise.'}
 $linha=(Get-Content -Path $Parecer -TotalCount 1).Trim()
 if($linha -ne "VEREDITO: $($m.verdict)"){throw 'Veredito divergente.'}
@@ -248,16 +273,40 @@ if($m.verdict -eq 'PASS') {
   if($decisao -cne 'SOLICITAR'){Write-Host 'Cancelado.'; exit 0}
 }
 $agora=InfoPR
-if($agora.headRefOid -ne $Head -or $agora.baseRefOid -ne $m.baseHead){throw 'HEAD/base mudou antes da revisao. Reexecute auditoria.'}
+Assert-AuditContext $auditedContext $agora
 if((GhTexto -argsList @('api','user','--jq','.login')) -ne $login){throw 'Login mudou antes da revisao.'}
+if((Get-FileHash $Parecer -Algorithm SHA256).Hash -ne $m.reportSha256){throw 'Parecer mudou durante confirmacao.'}
+if($m.verdict -eq 'PASS'){
+  $checksNow=@((GhTexto -argsList @('pr','checks',"$Pr",'--repo',$Repo,'--required','--json','name,bucket')) | ConvertFrom-Json)
+  Assert-RequiredChecks $checksNow
+}
 $body="Auditoria tecnica automatizada Codex; revisao formal autorizada pela conta $login. PR #$Pr; HEAD $Head; parecer $($m.verdict). Relatorio local SHA256: $($m.reportSha256). A analise foi feita por IA em sessao isolada; nao representa revisao humana independente."
-if($m.verdict -eq 'PASS') {
-  & gh pr review $Pr --repo $Repo --approve --body $body
-} else {
+if($m.verdict -ne 'PASS') {
   $findings=Get-Content -Raw $Parecer
   $body+="`n`nAchados:`n" + $findings.Substring(0,[Math]::Min(50000,$findings.Length))
-  & gh pr review $Pr --repo $Repo --request-changes --body $body
 }
-if($LASTEXITCODE -ne 0){throw 'GitHub nao confirmou o envio do review.'}
-Write-Host 'Review enviado. Confira na pagina da PR. Nenhum merge realizado.' -ForegroundColor Green
-& gh pr view $Pr --repo $Repo --web
+$event=if($m.verdict -eq 'PASS'){'APPROVE'}else{'REQUEST_CHANGES'}
+$expectedState=if($m.verdict -eq 'PASS'){'APPROVED'}else{'CHANGES_REQUESTED'}
+$attempt=Join-Path $Pasta ('review-'+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ')+'-'+[guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $attempt -ErrorAction Stop | Out-Null
+try {
+  $request=Join-Path $attempt 'request.json'
+  Write-NewJson $request @{commit_id=$Head;event=$event;body=$body}
+  # Last context/identity observation before the POST, after all preparation.
+  Assert-AuditContext $auditedContext (InfoPR)
+  if((GhTexto -argsList @('api','user','--jq','.login')) -ine $login){throw 'Login mudou antes do POST.'}
+  $review=(GhTexto -argsList @('api','--method','POST',"repos/$Repo/pulls/$Pr/reviews",'--input',$request)) | ConvertFrom-Json
+  Write-NewJson (Join-Path $attempt 'response.json') $review
+  if(([string]$review.id) -cnotmatch '^[1-9][0-9]*$' -or $review.commit_id -cne $Head -or $review.state -cne $expectedState -or $review.user.login -ine $login){throw 'Resposta da review diverge do commit/estado/identidade esperados.'}
+  $readback=(GhTexto -argsList @('api',"repos/$Repo/pulls/$Pr/reviews/$($review.id)")) | ConvertFrom-Json
+  Write-NewJson (Join-Path $attempt 'readback.json') $readback
+  if($readback.id -ne $review.id -or $readback.commit_id -cne $Head -or $readback.state -cne $expectedState -or $readback.user.login -ine $login){throw 'Readback da review diverge do commit/estado/identidade esperados.'}
+  $postContext=InfoPR
+  Assert-AuditContext $auditedContext $postContext
+  if((GhTexto -argsList @('api','user','--jq','.login')) -ine $login){throw 'Login mudou apos POST.'}
+  Write-NewJson (Join-Path $attempt 'verified.json') @{state='VERIFIED';reviewId=$review.id;context=$postContext;login=$login;at=[DateTime]::UtcNow.ToString('o')}
+} catch {
+  Write-NewJson (Join-Path $attempt 'failure.json') @{state='FAILED';error=$_.Exception.Message;at=[DateTime]::UtcNow.ToString('o');warning='Se POST ocorreu, review pode existir; reavaliar sem repetir envio nem apagar historico.'}
+  throw
+}
+Write-Host 'Review registrada e conferida no SHA esperado. Nenhum merge realizado.' -ForegroundColor Green

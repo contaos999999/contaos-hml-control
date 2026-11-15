@@ -1,5 +1,6 @@
 """Trusted preparation outside the read-only auditor; no tokens are exported."""
 import argparse,base64,datetime,hashlib,importlib.util,json,os,pathlib,re,shutil,subprocess
+from urllib.parse import quote
 
 BUN_VERSION='1.4.4'
 NODE_VERSION='24.22.3'
@@ -52,6 +53,19 @@ def materialize_canonical(repo,names,git):
 def validate_pr(pr,head,base):
  if pr.get('state')!='OPEN' or pr.get('isDraft') or pr.get('headRefOid')!=head or pr.get('baseRefOid')!=base:
   raise ValueError('PR changed or is not eligible')
+def collect_context(pr_info,api,head,base,base_name):
+ pr=pr_info();validate_pr(pr,head,base)
+ if not isinstance(base_name,str) or not base_name or pr.get('baseRefName')!=base_name or not re.fullmatch('[0-9a-f]{40}',base):
+  raise ValueError('Base name or OID changed or is invalid')
+ endpoint='repos/'+REPO+'/git/ref/heads/'+quote(base_name,safe='')
+ live=api(endpoint)
+ if not isinstance(live,dict) or live.get('ref')!='refs/heads/'+base_name or not isinstance(live.get('object'),dict) or live['object'].get('type')!='commit' or live['object'].get('sha')!=base:
+  raise ValueError('Live base ref is malformed or differs from recorded PR base')
+ return {'pr':pr,'live':live,'endpoint':endpoint,'checkedAt':datetime.datetime.now(datetime.timezone.utc).isoformat()}
+def assert_context(before,after):
+ for key in ('number','headRefOid','baseRefOid','baseRefName','author'):
+  if not before['pr'].get(key) or before['pr'].get(key)!=after['pr'].get(key):raise ValueError('PR context changed: '+key)
+ if before['live']!=after['live']:raise ValueError('Live base changed during preparation')
 def validate_checks(checks,head):
  if checks.get('total_count')!=len(checks.get('check_runs',[])) or any(c.get('head_sha')!=head for c in checks.get('check_runs',[])):
   raise ValueError('Check snapshot incomplete or belongs to another SHA')
@@ -62,7 +76,7 @@ def actions_job(check):
 
 def main():
  ap=argparse.ArgumentParser()
- for name in ('repo','output','head','base','pr'):ap.add_argument('--'+name,required=True)
+ for name in ('repo','output','head','base','base-name','pr'):ap.add_argument('--'+name,required=True)
  a=ap.parse_args();repo=pathlib.Path(a.repo).resolve();out=pathlib.Path(a.output).resolve()
  expected=pathlib.Path.home()/'Projetos/ContaOS-4.1'
  if repo!=expected/'contaos-auditoria' or not out.is_relative_to(expected/'auditorias'):
@@ -76,7 +90,7 @@ def main():
  if git('status','--porcelain=v1').strip() or git('rev-parse','HEAD').decode().strip()!=a.head:raise ValueError('Audit worktree is dirty or has another HEAD')
  if git('hash-object','src/integrations/supabase/types.ts').decode().strip()!=LOCKED:raise ValueError('LOCK-TYPES-01 drift')
  original_types=(repo/'src/integrations/supabase/types.ts').read_bytes()
- pr=pr_info();validate_pr(pr,a.head,a.base)
+ before=collect_context(pr_info,api,a.head,a.base,a.base_name);pr=before['pr']
  evidence={'schema':'contaos.audit.preparation.v1','head':a.head,'base':a.base,'preparedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'canonicalCheckout':[]}
  evidence['canonicalCheckout']=materialize_canonical(repo,CANONICAL_FILES,git)
  tools=expected/'tools/auditoria/binaries-v1'
@@ -108,7 +122,7 @@ def main():
  subprocess.run([str(node),'-e',"require.resolve('typescript');require.resolve('vitest')"],cwd=repo,env=env,check=True,capture_output=True)
  evidence.update({'node':NODE_VERSION,'bun':BUN_VERSION,'packageSha256':digest(package_before),'lockSha256':digest(lock_before),'tools':str(tools),'toolLockSha256':digest((tools/'package-lock.json').read_bytes()),'toolPins':TOOL_PINS,'bootstrapPolicy':'npm-ci-ignore-scripts-pinned-SRI-binaries-minimal-env-empty-user-global-config'})
  checks=api('repos/'+REPO+'/commits/'+a.head+'/check-runs?per_page=100');validate_checks(checks,a.head)
- remote={'schema':'contaos.audit.github-evidence.v1','pr':pr,'actor':api('user')['login'],'collectedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'checks':checks,'jobs':[],'artifacts':{},'ruleset':api('repos/'+REPO+'/rulesets/26495643'),'reviews':api('repos/'+REPO+'/pulls/'+str(int(a.pr))+'/reviews?per_page=100')}
+ remote={'schema':'contaos.audit.github-evidence.v1','pr':pr,'contextBefore':before,'actor':api('user')['login'],'collectedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'checks':checks,'jobs':[],'artifacts':{},'ruleset':api('repos/'+REPO+'/rulesets/26495643'),'reviews':api('repos/'+REPO+'/pulls/'+str(int(a.pr))+'/reviews?per_page=100')}
  runs=set()
  for check in checks['check_runs']:
   # Check Run IDs and Actions Job IDs are distinct resources.
@@ -136,7 +150,8 @@ def main():
   if hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()!=item['blob_sha']:raise ValueError('Canonical blob mismatch')
   with (context/name).open('xb') as f:f.write(data)
   remote['canonicalSource']['documents'].append({'path':'canonical-context/'+name,'blob':item['blob_sha'],'sha256':digest(data)})
- validate_pr(pr_info(),a.head,a.base)
+ after=collect_context(pr_info,api,a.head,a.base,a.base_name);assert_context(before,after)
+ remote['contextAfter']=after
  if git('status','--porcelain=v1').strip() or (repo/'src/integrations/supabase/types.ts').read_bytes()!=original_types:raise ValueError('Tracked source changed during preparation')
  write_new_json(out/'github-evidence.json',remote)
  evidence['githubEvidenceSha256']=digest((out/'github-evidence.json').read_bytes())

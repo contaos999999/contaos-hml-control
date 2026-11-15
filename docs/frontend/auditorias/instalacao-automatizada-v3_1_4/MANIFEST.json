@@ -1,0 +1,69 @@
+{
+  "schema": "contaos.audit.installer-release.v1",
+  "version": "3.1.4",
+  "plan_pr": 685,
+  "plan_head": "a88c3b0d2511a9035de331e375b84cbb65a6090b",
+  "plan_merge_sha": "0a1c9e9bc1e51a2d16b92965b88f5116bea51591",
+  "plan_review_id": 5909914860,
+  "build_pr": 684,
+  "previous_release": "3.1.3",
+  "previous_manifest": "docs/frontend/auditorias/instalacao-automatizada-v3_1/MANIFEST.json",
+  "previous_manifest_sha256": "0ddf46446575187a1342b7d125dca87df3ed327a899e9ab84cb9d077462a931b",
+  "files": {
+    "scripts/auditoria/auditar-pr.ps1": "9165f22dd011ae3a5aacdfd8f16eca6c0b715cec9822fc48fc16a51c7f194d91",
+    "scripts/auditoria/prepare-audit.py": "fd25bb117400fffc23de9c555231001d8c7852eef7bb0cda3fa98405d69ea79c",
+    "scripts/auditoria/test-controller.ps1": "3e7761387498ba5ccc2129361b5f1d01d4c9241d7e903d3a9e5fb13bb1deda4a",
+    "scripts/auditoria/test_preparation.py": "3cf02a1333cea7b984a27f19bf2fb5c579bcada7bb88e56afe2d9d58748556e8",
+    "scripts/auditoria/auditor-runner.py": "aeef6ea8bfacaf2678ebfd693f5c8af0874c514e6f7c68753a0fdd0b49e17d8d",
+    "scripts/auditoria/test_runner.py": "9fcaaaac4416ab577f48dc36af8ca341a2523088c23f0fe5652543bc5669fa3c"
+  },
+  "hash_basis": "canonical Git blob bytes; no self-hash",
+  "tests_local": {
+    "powershell": 59,
+    "preparation": 25,
+    "runner": 7,
+    "total": 91,
+    "mutation_cases": 3,
+    "mutations_detected": 3
+  },
+  "artifacts_local": [
+    {
+      "id": "powershell-green",
+      "path": "C:\\Users\\ediva\\AppData\\Local\\Temp\\contaos-684-final-green-2752b8ceaf14464d9a4e50b5d89a8167.log",
+      "sha256": "c47a2104ac08dfe608fff505c1ac6d007c6246e85232c45baad334d9809c0a01"
+    },
+    {
+      "id": "powershell-red",
+      "path": "C:\\Users\\ediva\\AppData\\Local\\Temp\\contaos-684-red-context-20261115\\powershell-red.log",
+      "sha256": "32011b7dc8dbd6dd0210d4f04700e92be417ec2327ffc0f5db1cc9d8a68b5611"
+    },
+    {
+      "id": "review-red",
+      "path": "C:\\Users\\ediva\\AppData\\Local\\Temp\\contaos-684-red-review-valid-20261115.log",
+      "sha256": "e01344de5dea47749e598e5f81323204d97a4ae6b93b84e70ba4ca4eb3e8df05"
+    },
+    {
+      "id": "mutations",
+      "path": "C:\\Users\\ediva\\AppData\\Local\\Temp\\contaos-684-mutations-gb9e982_\\results.json",
+      "sha256": "a472a9f03a2163d2a42e7120a7c7a589af23a850c876915ffe2d77c38fc843f6"
+    },
+    {
+      "id": "preparation-green",
+      "path": "C:\\Users\\ediva\\AppData\\Local\\Temp\\contaos-684-build-evidence-p7bvwir9\\preparation-green.log",
+      "sha256": "455264ae94f16b14b1cb2ff52231b558532eee6da826943c52e82903cbdefae6"
+    },
+    {
+      "id": "runner-green",
+      "path": "C:\\Users\\ediva\\AppData\\Local\\Temp\\contaos-684-build-evidence-p7bvwir9\\runner-green.log",
+      "sha256": "3a771320915236c80759de3dfd5d44972a704b72e2e631b8baf4ce38c59cccb8"
+    }
+  ],
+  "ci_status": "PENDENTE_NESTE_BUILD",
+  "audit_status": "PENDENTE",
+  "installed": false,
+  "application_changed": false,
+  "backend_changed": false,
+  "prod_changed": false,
+  "runner_changed": false,
+  "profiles_changed": false
+}

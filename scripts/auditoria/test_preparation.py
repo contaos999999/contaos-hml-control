@@ -1,4 +1,4 @@
-import importlib.util,json,pathlib,tempfile,unittest,subprocess
+import importlib.util,json,pathlib,tempfile,unittest,subprocess,copy
 ROOT=pathlib.Path(__file__).parent
 class PreparationTests(unittest.TestCase):
  def setUp(self):
@@ -83,4 +83,53 @@ class PreparationTests(unittest.TestCase):
  def test_preparation_environment_drops_credentials_and_injection(self):
   source={'PATH':'safe-path','USERPROFILE':'safe-home','OPENAI_API_KEY':'sentinel','NPM_TOKEN':'sentinel','NODE_OPTIONS':'sentinel'}
   self.assertEqual(self.prep.preparation_environment(source),{'PATH':'safe-path','USERPROFILE':'safe-home'})
+ def context_fixture(self):
+  return ({'number':314,'state':'OPEN','isDraft':False,'headRefOid':'a'*40,'baseRefOid':'b'*40,'baseRefName':'main','author':{'login':'edivan5002'}},
+          {'ref':'refs/heads/main','object':{'type':'commit','sha':'b'*40}})
+ def collect(self,pr,ref):
+  self.paths=[]
+  def api(path):self.paths.append(path);return ref
+  return self.prep.collect_context(lambda:pr,api,'a'*40,'b'*40,'main')
+ def test_live_base_stale_initial_rejected(self):
+  pr,ref=self.context_fixture();ref['object']['sha']='c'*40
+  with self.assertRaises(ValueError):self.collect(pr,ref)
+ def test_live_base_stable_preserves_recorded_and_live_with_provenance(self):
+  pr,ref=self.context_fixture();actual=self.collect(pr,ref)
+  self.assertEqual(actual['pr']['baseRefOid'],'b'*40)
+  self.assertEqual(actual['live']['object']['sha'],'b'*40)
+  self.assertEqual(actual['endpoint'],'repos/contaos999999/contaos-hml-control/git/ref/heads/main')
+  self.assertTrue(actual['checkedAt']);self.assertEqual(self.paths,[actual['endpoint']])
+ def test_live_ref_bad_shape_or_branch_is_rejected(self):
+  for change in ('missing','list','sha','type','ref'):
+   with self.subTest(change=change):
+    pr,ref=self.context_fixture()
+    if change=='missing':ref=None
+    elif change=='list':ref=[ref]
+    elif change=='sha':ref['object']['sha']='bad'
+    elif change=='type':ref['object']['type']='tag'
+    else:ref['ref']='refs/heads/other'
+    with self.assertRaises(ValueError):self.collect(pr,ref)
+ def test_live_base_api_failure_propagates(self):
+  pr,_=self.context_fixture()
+  def api(path):raise RuntimeError('fixture404')
+  with self.assertRaises(RuntimeError):self.prep.collect_context(lambda:pr,api,'a'*40,'b'*40,'main')
+ def test_live_context_rejects_base_name_change_even_same_oid(self):
+  pr,ref=self.context_fixture();pr['baseRefName']='other';ref['ref']='refs/heads/other'
+  with self.assertRaises(ValueError):self.collect(pr,ref)
+ def test_live_context_checks_head_and_eligibility(self):
+  for key,value in [('headRefOid','c'*40),('baseRefOid','c'*40),('state','CLOSED'),('isDraft',True)]:
+   pr,ref=self.context_fixture();pr[key]=value
+   with self.subTest(key=key),self.assertRaises(ValueError):self.collect(pr,ref)
+ def test_live_context_end_detects_ref_and_author_changes(self):
+  pr,ref=self.context_fixture();before=self.collect(pr,ref)
+  for key in ('author','base'):
+   after=copy.deepcopy(before)
+   if key=='author':after['pr']['author']['login']='other'
+   else:after['live']['object']['sha']='c'*40
+   with self.subTest(key=key),self.assertRaises(ValueError):self.prep.assert_context(before,after)
+  self.prep.assert_context(before,self.collect(pr,ref))
+ def test_live_context_slash_branch_is_encoded(self):
+  pr,ref=self.context_fixture();pr['baseRefName']='release/v1';ref['ref']='refs/heads/release/v1'
+  result=self.prep.collect_context(lambda:pr,lambda path:(self.assertEqual(path,'repos/contaos999999/contaos-hml-control/git/ref/heads/release%2Fv1') or ref),'a'*40,'b'*40,'release/v1')
+  self.assertEqual(result['pr']['baseRefName'],'release/v1')
 if __name__=='__main__':unittest.main(verbosity=2)
