@@ -1,3 +1,10 @@
+## Instalação3.1.4: modos operacionais provados; recibo686 em revisão, 15/11/2026
+
+- Verificar686 PASS; Preparar686 PREPARED no instalado3.1.4, HEAD `a4cbe2bc841438c821f433feefe14e99e7d6441e`, base gravada/viva `e3f42b393eeb64355e81c92e928093485608ba95`, RunId `20261115T092749037Z-a4cbe2bc8414-3c75113e7c104eaebdf718a3a1c2be1b`. Hashes e consultas pre/pos conferidos.
+- Analisar686 real exit0/COMPLETED com controlador3.1.4/hash aprovado e auditor separado/read-only; RunId `20261115T092954885Z-a4cbe2bc8414-41bb6f3740cf4d2e95456d42612da828`. Parecer BLOCKED por evidencia local nao disponibilizada no snapshot, nao por falha de execucao. BLOCKED permanece preservado e impede merge daquele HEAD; nao e PASS.
+- Barreira NR006 aplicada: pacote integral de recibos (instalacao, negativo679, metadata Preparar/Analisar, execution e parecer BLOCKED), em base64 dos bytes originais com SHA256/size, agora versionado em `instalacao-automatizada-v3_1_4/RCA_E_EVIDENCIAS.md`. Auditor consegue verificar conteudo em memoria sem depender de caminhos TEMP. Nenhum executavel alterado.
+- PENDENTE: CI/auditoria independente do novo HEAD documental686, autorizacao especifica da review e merge protegido deste checkpoint. Instalacao fisica e operacao comprovadas; encerramento integrado somente depois desses gates. NR009 continua PENDENTE_PR, sem promocao artificial a resolvido. Depois retomar achados679, ainda sem correcao.
+
 ## Instalação3.1.4: BUILD684 integrado e bytes instalados; prova positiva pendente, 15/11/2026
 
 - PR684 integrada em `e3f42b393eeb64355e81c92e928093485608ba95`, HEAD `cae714adb122e762e441ec45b664fc13272987c8`, review5910026660 APPROVED por Edivan5002 após autorização específica, PASS independente e cinco checks SUCCESS no HEAD e pós-merge. Parecer SHA256 `C67ABCC351B9546E13A488DFD29F14AB1634B45BCE5EB0A5D1AD0570B3DE3553`.
