@@ -1,3 +1,9 @@
+## Missão orquestrada V1 e leitura de evidência688, 15/11/2026
+
+Titular determinou concluir679 com os agentes instalados e depois concluir/certificar fases3–7 até certificação global funcionalV1, com economia de tokens. Investigador confirmou679 como fundação2b-2a: ainda seguem drivers/sessões,REQUESTreal/certificadoF3, depoisF4→F5→F6→F7 com certificado predecessor. Preparo somente leitura pode paralelizar; não iniciar execução/BUILD de fases posteriores antecipadamente. Certificações anterioresF1/F2 e funcionalV1com ressalvas preservadas; não equivalem à integração global7fases. Testador conferiu rootmetadata688, sem outra incoerência estática; contrato de mapa da base/PR/push incorporado antes do novo BUILD.
+
+Auditoria688 R1 BLOCKED por evidência alegadamente fora da raiz, sem defeito confirmado no diff. Comando omitiu último caractere do RunId (8426 em vez de8426d) e retornou ObjectNotFound; restrição de leitura não foi demonstrada no caminho correto. Arquivos existentes e25fontes confirmados pelo orquestrador. R1/metadata/preparo/snapshot preservados integralmente no PLAN, com procedimento de FullName/Join-Path para nova execução conferir seus próprios bytes sem transcrição de GUID. Nada de reduzir sandbox/perfil ou promover BLOCKED a PASS. PENDENTE: CI/auditoria do novo HEAD, revisão formal688 especificamente autorizada e merge antes do novo BUILD679. Fonte local56 segue diagnóstico preservado; remoto679 continua9c.
+
 ## Situação atual — preflight R5 exige emenda de gates antes de publicar679, 15/11/2026
 
 Instalação3.1.4 concluída; PLAN687 integrado7006ef6 após PASS R2/review5910942296 autorizada/quatro checks pós-merge. PR679 remota permanece9c0ed0f0ddfc0fc91512dff2e290e0a8d6826c71. Material local118fa68/56ee7c9 preservado em backup/pr679-r5-local-56ee7c9-pre-gates:80F3+44RCA,69React,1.266regressão e sete mutantes novos mortos, mas preflight de linhagem/escopo não estava válido. Não publicado e não certificado.
