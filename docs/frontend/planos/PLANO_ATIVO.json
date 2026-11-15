@@ -9,7 +9,7 @@
     "validado_em": "2026-11-05",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": true,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43722090815",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43723693014",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -28,6 +28,7 @@
     "aprovacao_humana_evidencia": "Solicitação expressa do titular: padronizar frontend/menu/header/Trilha e continuar implementação, registrada no checkpoint #166 comentários 6684615020 e 6684808574; plano mestre PR #223 integrado e continuidade expressa em 06/11/2026."
   },
   "arquivos_permitidos": [
+    "src/test/competenciaDocumentos.test.tsx",
     "docs/frontend/planos/P0_TRILHA_A_REFLOW_TEXTO_PUBLICO_PLAN_2026-11-08.md",
     "docs/frontend/planos/P0_TRILHA_A_REFLOW_TEXTO_PUBLICO_GATE_2026-11-08.md",
     "docs/frontend/planos/PLANO_ATIVO.json",
@@ -4504,9 +4505,8 @@
     "build2b1_merge": "fb02383 (PR #658, APPROVE 5903293851); governança P0-RCA-001 V1 pela PR #663 (merge e02d466)",
     "build2b2_divisao": "incrementos revisados: 2b-2a fundação (M2, M3, M-A, runCli com livro, isolamento que encerra, cerca de mutação ligada ao livro); 2b-2b sessões MASTER/leitor, SYS04 e ADM01; 2b-2c+ produtores V102–V122; REQUEST só após o último",
     "build2b2a_branch": "build/integracao-v1-fase3-b2b2-drivers",
-    "build2b2a_revisoes": "R1 ec69e0e REQUEST_CHANGES (A-E corrigidos em af50cff); R2 af50cff REQUEST_CHANGES (C, D, E, G corrigidos; A, B e F dependem de emenda do PLAN, ver fase3/F3_FLUXOS_PRODUTORES.md)",
+    "build2b2a_revisoes": "R1 ec69e0e REQUEST_CHANGES (A-E corrigidos em af50cff); R2 af50cff REQUEST_CHANGES (C, D, E, G corrigidos; A, B e F dependem de emenda do PLAN, ver fase3/F3_FLUXOS_PRODUTORES.md); R3 CHANGES_REQUESTED contaos9999 review 5906840506 no HEAD 6b9aecf (1 Bloqueante, 3 Importantes); R4 corrige por classe: vínculo como regra do livro, origem por posição declarada no passo, TUS desde o preflight, 37 de 37 mutantes mortos; R5 reaplicada sob PLAN688 integrado155ef9b e guards novos revisados; ainda pendente CI/auditoria/review/merge679.",
     "emenda1_pr": "#678 (autor Edivan5002), inclui P0_GOV_PLAN_679.json; BUILD-2b-2a na PR #679",
-    "build2b2a_revisoes": "R3 CHANGES_REQUESTED contaos9999 review 5906840506 no HEAD 6b9aecf (1 Bloqueante, 3 Importantes); R4 corrige por classe: vínculo como regra do livro, origem por posição declarada no passo, TUS desde o preflight, 37 de 37 mutantes mortos",
     "emenda1": "PLAN §12 (14/11/2026, R2): até 11 pré-requisitos, 39 previstas, 40 por execução, total 60; uploads dentro da ação; cinco esperas W1–W5 com prazo e códigos próprios; recuperação com novo nonce por BUILD próprio (§9 passo 6); conferência dos workers antes de cada REQUEST (§9 passo 4-A); decisão literal do titular \"Emenda completa (Recomendado)\"; levantamento campo a campo em fase3/F3_FLUXOS_PRODUTORES.md (revisão 2)",
     "emenda1_revisoes": "R1 CHANGES_REQUESTED contaos9999 review 5905890909 no HEAD 20b7ff3 (grupos I–IV Importantes, V Menor); R2 corrige por classe; APPROVE contaos9999 review 5906090998 no HEAD 1bf892f com M1–M4 como obrigações; merge 20d4ad9",
     "build2b2a_pr": "#679 (autor Edivan5002); main 20d4ad9 mesclada; R3 aplica a emenda 1 aos fluxos das ordens 2 a 8 (inventário por posição, versão observada, chave da UI e bind do V106, reenvio só com chave, TUS, esperas W1–W5); barreira NR-008 por teste; limites e obrigações dos incrementos seguintes em fase3/BUILD2B2_DRIVERS.md; redesenho alternativo preservado em backup/f3-b2b2a-redesenho-r3-local (não integrado, decisão do titular \"Manter a versão remota\")"
@@ -4540,7 +4540,7 @@
   },
   "emenda_pr679_r5_1": {
     "plano_documento": "docs/frontend/planos/PR679_R5_1_COMPATIBILIDADE_PUSH_PLAN_2026-11-15.md",
-    "status": "VALIDADO_TECNICAMENTE_EFICACIA_CONDICIONADA_A_INTEGRACAO",
+    "status": "VALIDADO_INTEGRADO_155ef9b",
     "arquivos_fechados": [
       "scripts/hml/integracao-v1-fase3.mjs",
       "scripts/hml/integracao-v1-fase3.test.mjs",
@@ -4557,11 +4557,22 @@
       "scripts/frontend-scope-gate.mjs",
       "scripts/frontend-scope-gate.test.mjs"
     ],
-    "teste_na_allowlist_geral": false,
+    "teste_na_allowlist_geral": true,
     "context_root": "Atualizado para snapshot1504 após leitura25/25 real; histórico preservado. Gate antigo continua bloqueando teste na main até BUILD de enforcement.",
     "linhagem_build": "Reaplicar R5 em nova linhagem descendente9c após integrar esta emenda; backup local56ee7c9 preservado, sem force/rebase de histórico publicado.",
     "ci_emenda": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43722090815",
     "ci_emenda_head": "c426957a20af66dc5532b4810a15e149ace633fd",
-    "ci_emenda_resultado": "SUCCESS e quatro checks PASS no primeiro commit documental com rootcontext corrigido; vinculação documental recebe CI/auditoria próprias antes de merge/BUILD."
+    "ci_emenda_resultado": "SUCCESS e quatro checks PASS no primeiro commit documental com rootcontext corrigido; vinculação documental recebe CI/auditoria próprias antes de merge/BUILD.",
+    "integracao": {
+      "merge": "155ef9b594260e39fcd68f8083c42d8943c3210b",
+      "plan_head": "890788e5b2c4a4a34f3dedb09979cc4992e04dfc",
+      "review_id": 5911278859,
+      "reviewer": "Edivan5002",
+      "audit_run": "20261115T142111203Z-890788e5b2c4-ab29f9dc9aa94ab9a0574470fe5ff467",
+      "report_sha256": "E00BE868DA3CC0AD2D32E5E00DE73CB649C2C868CA05BDE841DE5D8A9D588E26",
+      "checks_pos_merge": "4 pertinentes SUCCESS",
+      "guards_head_antes_src": "ea62a0449b959947a4dcc350c7a5d283d769b194"
+    },
+    "condicao_teste": "Inclusão somente nesta branch depois de GREEN/revisão dos guards; mapa679 da base protegida prevalece em PR/push, sem concessão global a outras PRs. Este commit precede primeiro src."
   }
 }
