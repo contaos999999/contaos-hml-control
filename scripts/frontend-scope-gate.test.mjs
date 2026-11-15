@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, dirname } from "node:path";
+import { join, dirname, relative, resolve, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const gate = fileURLToPath(new URL("./frontend-scope-gate.mjs", import.meta.url));
@@ -56,6 +56,7 @@ function scenario({
   mutation = () => {},
   pr = false,
   allowlist,
+  restricted,
 }) {
   test(description, () => {
     const dir = mkdtempSync(join(tmpdir(), "contaos-gov-gate-"));
@@ -97,7 +98,8 @@ function scenario({
         },
         validacao: {
           resultado: status === "VALIDADO" ? "PASS" : "PENDENTE",
-          ci_plano_url: "https://github.com/contaos999999/contaos-hml-control/actions/runs/41732038105",
+          ci_plano_url:
+            "https://github.com/contaos999999/contaos-hml-control/actions/runs/41732038105",
           gates,
           aprovacao_humana_exigida: false,
         },
@@ -110,10 +112,65 @@ function scenario({
       put(dir, "docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json", JSON.stringify(receipt));
       put(dir, "docs/frontend/planos/PROMPT_22.md", prompt);
       put(dir, "docs/frontend/planos/PLANO_ATIVO.json", JSON.stringify(plan));
-      const before = commit(dir, "PLAN validado");
+      let before = commit(dir, "PLAN validado");
+      let protectedBase = before;
+      if (restricted) {
+        if (restricted.general) plan.arquivos_permitidos.push(path);
+        if (restricted.route) plan.arquivos_permitidos.push("src/routes/restrita.tsx");
+        plan.arquivos_restritos_por_pr = Object.hasOwn(restricted, "map")
+          ? restricted.map
+          : { [path]: 679 };
+        put(dir, "docs/frontend/planos/PLANO_ATIVO.json", JSON.stringify(plan));
+        if (restricted.gov !== null)
+          put(
+            dir,
+            "docs/frontend/planos/P0_GOV_PLAN_679.json",
+            JSON.stringify(restricted.gov || { approved: true, pr_number: 679, files: [path] }),
+          );
+        if (restricted.baseMalformedJSON)
+          put(dir, "docs/frontend/planos/PLANO_ATIVO.json", "{ JSON malformado");
+        protectedBase = commit(dir, "PLAN protegido com restricao");
+        assert.equal(
+          run("git", ["update-ref", "refs/remotes/origin/main", protectedBase], dir).status,
+          0,
+        );
+        assert.equal(run("git", ["checkout", "-qb", "restricted-feature"], dir).status, 0);
+        if (restricted.headGov)
+          put(
+            dir,
+            "docs/frontend/planos/P0_GOV_PLAN_679.json",
+            JSON.stringify({
+              approved: true,
+              pr_number: 679,
+              files: [path],
+            }),
+          );
+        if (restricted.removeMap) {
+          if (restricted.swapMap) plan.arquivos_restritos_por_pr = { [path]: 680 };
+          else if (restricted.emptyMap) plan.arquivos_restritos_por_pr = {};
+          else delete plan.arquivos_restritos_por_pr;
+          plan.arquivos_permitidos.push(path);
+          put(dir, "docs/frontend/planos/PLANO_ATIVO.json", JSON.stringify(plan));
+          commit(dir, "PLAN pai remove mapa e inclui na allowlist");
+        }
+        if (restricted.oldContext) {
+          plan.context_source_commit = "a".repeat(40);
+          put(dir, "docs/frontend/planos/PLANO_ATIVO.json", JSON.stringify(plan));
+          commit(dir, "PLAN contexto antigo");
+        }
+        before = run("git", ["rev-parse", "HEAD"], dir).stdout.trim();
+        if (restricted.sameCommit) {
+          plan.status = "SEM_PLANO_ATIVO";
+          put(dir, "docs/frontend/planos/PLANO_ATIVO.json", JSON.stringify(plan));
+          commit(dir, "pai sem PLAN validado");
+          plan.status = "VALIDADO";
+          put(dir, "docs/frontend/planos/PLANO_ATIVO.json", JSON.stringify(plan));
+        }
+      }
 
       put(dir, path, "novo conteúdo\n");
-      commit(dir, "BUILD frontend");
+      if (restricted?.route) put(dir, "src/routes/restrita.tsx", "nova rota\n");
+      commit(dir, restricted?.fake ? "Merge pull request #679 from fake" : "BUILD frontend");
       let event = "push";
       let rangeBase = before;
       if (pr) {
@@ -123,16 +180,62 @@ function scenario({
         const m = run("git", ["merge", "--no-ff", "-m", "PR merge test", "feature"], dir);
         assert.equal(m.status, 0, m.stderr);
       }
+      if (restricted) {
+        event = restricted.event || "pull_request";
+        rangeBase = protectedBase;
+        put(
+          dir,
+          "event.json",
+          JSON.stringify({
+            number: 679,
+            pull_request: { number: restricted.number === undefined ? 679 : restricted.number },
+          }),
+        );
+        if (!restricted.fake) {
+          assert.equal(run("git", ["checkout", "-q", "main"], dir).status, 0);
+          if (restricted.wrongBase) {
+            put(dir, "docs/other.md", "base avanca");
+            commit(dir, "outro commit base");
+          }
+          assert.equal(
+            run(
+              "git",
+              [
+                "merge",
+                "--no-ff",
+                "-m",
+                "Merge pull request #" + (restricted.mergeNumber || 679) + " from feature",
+                "restricted-feature",
+              ],
+              dir,
+            ).status,
+            0,
+          );
+        }
+      }
       const result = run(process.execPath, [gate], dir, {
         GITHUB_EVENT_NAME: event,
         FRONTEND_DIFF_BASE: rangeBase,
+        GITHUB_EVENT_PATH: join(dir, "event.json"),
       });
       assert.equal(
         result.status,
         expected,
         "stdout: " + result.stdout + "\nstderr: " + result.stderr,
       );
+      if (restricted && expected === 1) {
+        const reason = restricted.oldContext
+          ? /Context Gate/
+          : restricted.sameCommit
+            ? /PLAN anterior não foi VALIDADO/
+            : Object.hasOwn(restricted, "map") || restricted.baseMalformedJSON
+              ? /Mapa restritivo por PR inválido/
+              : /ARQUIVO RESTRITO POR PR SEM AUTORIZAÇÃO PROTEGIDA/;
+        assert.match(result.stderr, reason);
+      }
     } finally {
+      const rel = relative(resolve(tmpdir()), resolve(dir));
+      assert.ok(rel && !rel.startsWith("..") && !isAbsolute(rel));
       rmSync(dir, { recursive: true, force: true });
     }
   });
@@ -202,7 +305,8 @@ scenario({
   mutation: ({ plan }) => {
     plan.validacao.aprovacao_humana_exigida = true;
     plan.validacao.aprovacao_humana = "CONCEDIDA";
-    plan.validacao.aprovacao_humana_evidencia = "https://github.com/contaos999999/contaos-hml-control/issues/1";
+    plan.validacao.aprovacao_humana_evidencia =
+      "https://github.com/contaos999999/contaos-hml-control/issues/1";
   },
 });
 scenario({
@@ -228,6 +332,44 @@ scenario({
   expected: 1,
   description: "FAIL para URL antiga de CI do PLAN",
   mutation: ({ plan }) => {
-    plan.validacao.ci_plano_url = "https://github.com/contaos9999/contaos-hml-control/actions/runs/41732038105";
+    plan.validacao.ci_plano_url =
+      "https://github.com/contaos9999/contaos-hml-control/actions/runs/41732038105";
   },
+});
+
+const restrictedPath = "src/test/restrito.test.tsx";
+for (const [label, restricted, expected] of [
+  ["PR679 com teste fora da allowlist global", {}, 0],
+  ["push merge679 real com teste fora da allowlist global", { event: "push" }, 0],
+  ["PR679 preserva mapa da base quando pai e HEAD removem", { removeMap: true }, 0],
+  ["PR680 nao apaga restricao na base", { number: 680, removeMap: true }, 1],
+  ["PR680 nao recebe allowlist geral da base", { number: 680, general: true }, 1],
+  ["JSON presente malformado nao vira legado", { baseMalformedJSON: true, removeMap: true }, 1],
+  ["PR680 nao troca restricao da base", { number: 680, removeMap: true, swapMap: true }, 1],
+  ["PR680 nao esvazia restricao da base", { number: 680, removeMap: true, emptyMap: true }, 1],
+  ["PR680 citando679", { number: 680 }, 1],
+  ["PR ausente", { number: null }, 1],
+  ["PR string", { number: "679" }, 1],
+  ["PR malformada", { number: {} }, 1],
+  ["evento desconhecido", { event: "unknown" }, 1],
+  ["GOV ausente", { gov: null }, 1],
+  ["GOV somente no HEAD nao concede", { gov: null, headGov: true }, 1],
+  ["GOV nao aprovado", { gov: { approved: false, pr_number: 679, files: [restrictedPath] } }, 1],
+  ["GOV PR errada", { gov: { approved: true, pr_number: 680, files: [restrictedPath] } }, 1],
+  ["GOV sem caminho", { gov: { approved: true, pr_number: 679, files: [] } }, 1],
+  ["mapa malformado", { map: { [restrictedPath]: "679" } }, 1],
+  ["mapa nulo", { map: null }, 1],
+  ["push fake um pai", { event: "push", fake: true }, 1],
+  ["push base errada", { event: "push", wrongBase: true }, 1],
+  ["push merge680 cita679", { event: "push", mergeNumber: 680 }, 1],
+  ["contexto antigo segue bloqueado", { oldContext: true }, 1],
+  ["PLAN e src no mesmo commit seguem bloqueados", { sameCommit: true }, 1],
+])
+  scenario({ description: "restrito: " + label, path: restrictedPath, restricted, expected });
+
+scenario({
+  description: "restrito: GOV020 nao supera restricao da base",
+  path: "src/routeTree.gen.ts",
+  restricted: { number: 680, route: true },
+  expected: 1,
 });
