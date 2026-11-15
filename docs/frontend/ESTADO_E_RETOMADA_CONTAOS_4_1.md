@@ -1,3 +1,10 @@
+## Instalação3.1.4: BUILD684 integrado e bytes instalados; prova positiva pendente, 15/11/2026
+
+- PR684 integrada em `e3f42b393eeb64355e81c92e928093485608ba95`, HEAD `cae714adb122e762e441ec45b664fc13272987c8`, review5910026660 APPROVED por Edivan5002 após autorização específica, PASS independente e cinco checks SUCCESS no HEAD e pós-merge. Parecer SHA256 `C67ABCC351B9546E13A488DFD29F14AB1634B45BCE5EB0A5D1AD0570B3DE3553`.
+- Nova release local `scripts/releases/auditoria-v3_1_4-20261115`: approved/backup e metadados imutáveis. Três instalados conferidos contra bytes Git aprovados; controlador SHA256 `9165f22dd011ae3a5aacdfd8f16eca6c0b715cec9822fc48fc16a51c7f194d91`. Manifesto local final SHA256 `34E213EE0E4109E7A5CA74FC9C5179BD9F8C519680C79010767F4C4F6325924C`. Perfis/config/runner e release3.1.3 preservados.
+- Negativo real instalado: Verificar679 exit1, base gravada obsoleta rejeitada antes de auditoria. Evidências e hashes em `instalacao-automatizada-v3_1_4/RCA_E_EVIDENCIAS.md`. Não corresponde a correção dos achados679.
+- PENDENTE ao publicar: positivos Verificar/Preparar/Analisar em PR documental de base fresca, conferência dos metadados3.1.4 e integração deste checkpoint. Nenhuma declaração de instalação integral concluída até essas provas. Depois retomar os achados679 por seus PLANs/escopos próprios. NR009 permanece PENDENTE_PR; produto/backend/PROD/types intocados.
+
 ## Instalação: protocolo682 integrado, PLAN685 integrado, BUILD684 em preparação, 15/11/2026
 
 - PR682 integrada em `47434526b805deaa3edc4c170c10725bbe79f594`, após PASS R4 válido reaproveitado, review5909839419 APPROVED por Edivan5002 no HEAD `ecf468e4f0ae32e4c55eacd806b45bd56eab701b` e autorização específica do titular. Quatro checks pertinentes pós-merge SUCCESS; hook/protocolo confirmados na main. Não repetir R4 sem delta.

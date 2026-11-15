@@ -1,5 +1,17 @@
 # Auditoria automatizada3.1.4 — RCA e evidências do BUILD684
 
+## Atualização operacional1 — instalação dos bytes aprovados, 15/11/2026
+
+PR684 integrada em `e3f42b393eeb64355e81c92e928093485608ba95`, review [5910026660](https://github.com/contaos999999/contaos-hml-control/pull/684#pullrequestreview-5910026660) por Edivan5002 no HEAD `cae714adb122e762e441ec45b664fc13272987c8`, após autorização específica. Cinco checks pertinentes pós-merge SUCCESS. PASS independente RunId `20261115T090945479Z-cae714adb122-c97b90db0bf548c6985e66ee23db616f`, SHA256 `C67ABCC351B9546E13A488DFD29F14AB1634B45BCE5EB0A5D1AD0570B3DE3553`. O parecer menciona21 documentos; o snapshot contém25, todos25 hashes conferidos pelo orquestrador; o original permanece imutável.
+
+Release local nova: `C:/Users/ediva/Projetos/ContaOS-4.1/scripts/releases/auditoria-v3_1_4-20261115`, com approved/, backup/, package-manifest.json e installation.initial/final.json separados. Instalação por substituições atômicas de arquivos individuais após validar todos os originais3.1.3 e bytes Git aprovados/mesclados; nenhum perfil, config ou credencial foi alterado. `installation.final.json` estado INSTALLED_HASH_VERIFIED, SHA256 `34E213EE0E4109E7A5CA74FC9C5179BD9F8C519680C79010767F4C4F6325924C`.
+
+Hashes SHA256 instalados: controlador `9165f22dd011ae3a5aacdfd8f16eca6c0b715cec9822fc48fc16a51c7f194d91`; preparador `fd25bb117400fffc23de9c555231001d8c7852eef7bb0cda3fa98405d69ea79c`; runner preservado `aeef6ea8bfacaf2678ebfd693f5c8af0874c514e6f7c68753a0fdd0b49e17d8d`. Conferem com MANIFEST aprovado. `installed:false` no MANIFEST é o estado histórico de publicação do BUILD; esta atualização registra a instalação posterior sem reescrever aquele recibo.
+
+Prova negativa real: controlador instalado3.1.4, `-Pr679 -Acao Verificar`, exit1 por base gravada divergente da ref viva, antes de preparação/auditoria/review. Log bruto `C:/Users/ediva/AppData/Local/Temp/contaos-314-stale-pr679-a950026d6b9c4f36be23f0ff0269acc3.log`, SHA256 `68542EF257A2AB16DD4C343001D3DCA16511FAA4794D782760AC070356128BA5`. Não é falha nova nem tentativa de resolver679; é o negativo previsto de frescor.
+
+**Estado ao publicar esta atualização:** bytes instalados e negativo real comprovados; positivos Verificar/Preparar/Analisar e checkpoint integrado ainda PENDENTES. A PR deste recibo documental, baseada na main atual, servirá de alvo positivo sem mudanças de aplicação. NR009 continua PENDENTE_PR até recibos completos; não confundir instalação física com aceite integral. O histórico do BUILD abaixo permanece preservado.
+
 ## Estado e fontes
 
 BUILD local sob o [PLAN integrado pela PR685](../../planos/PLAN_AUDITORIA_BASE_VIVA_V3_1_4_2026-11-15.md) e GOV684. PLAN685 HEAD `a88c3b0d2511a9035de331e375b84cbb65a6090b`, PASS R2, review [5909914860](https://github.com/contaos999999/contaos-hml-control/pull/685#pullrequestreview-5909914860), merge `0a1c9e9bc1e51a2d16b92965b88f5116bea51591`; quatro checks pertinentes pós-merge SUCCESS. A reserva684 continha apenas sete linhas documentais; recebeu a main por merge local `73bbd206178239e8a3a9f10b2de22e23ecc2e808` antes da implementação. Nenhum histórico publicado reescrito.
