@@ -1,0 +1,28 @@
+ContaOS 4.1 - Auditoria automatizada + revisao formal por login alternado
+
+1. Coloque auditar-pr-v2.ps1 em:
+   %USERPROFILE%\Projetos\ContaOS-4.1\scripts\auditar-pr.ps1
+2. Confira instalacao de Git, gh e Codex e autenticacao do gh.
+3. Verificacao inicial:
+   powershell.exe -NoProfile -File "$HOME\Projetos\ContaOS-4.1\scripts\auditar-pr.ps1" -Pr 123 -Acao Verificar
+4. Auditoria tecnica por outra execucao Codex, read-only:
+   powershell.exe -NoProfile -File "$HOME\Projetos\ContaOS-4.1\scripts\auditar-pr.ps1" -Pr 123 -Acao Analisar
+5. Leia o parecer em Projetos\ContaOS-4.1\auditorias\PR-123\parecer.md.
+6. Alterne manualmente a conta gh para o login revisor:
+   gh auth switch --hostname github.com --user contaos9999
+   ou
+   gh auth switch --hostname github.com --user edivan5002
+7. Confira: gh api user --jq .login
+8. Para registrar revisao mediante sua confirmacao:
+   powershell.exe -NoProfile -File "$HOME\Projetos\ContaOS-4.1\scripts\auditar-pr.ps1" -Pr 123 -Acao Revisar
+9. Digite APROVAR somente com parecer PASS e evidencias conferidas; ou SOLICITAR em CHANGES_REQUESTED.
+10. Nenhum merge e feito pelo controlador.
+
+IMPORTANTE:
+- O Codex pode analisar tecnicamente de modo separado; trocar login nao produz independencia humana.
+- O script so e acionado automaticamente pelo orquestrador quando esse fluxo for implementado/testado no projeto.
+- Aprovacao formal depende das permissoes e dos controles reais do GitHub.
+- Worktree de auditoria deve estar limpa; script nao descarta alteracoes.
+- A validacao de HEAD/base detecta mudancas durante e depois da auditoria.
+- O script exige checks obrigatorios encontrados e aprovados antes de APPROVE (nao altera configuracoes do GitHub).
+- Este script foi inspecionado textualmente, mas NAO foi executado em Windows/GitHub real nesta sessao.
