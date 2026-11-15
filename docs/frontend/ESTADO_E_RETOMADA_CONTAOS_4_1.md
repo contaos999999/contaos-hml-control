@@ -1,3 +1,11 @@
+## Situação atual — código679 consolidado, verificação integrada antes de publicar, 15/11/2026
+
+Fases1/2 continuamENCERRADAS/CERTIFICADAS; semreabertura. Instalação3.1.4concluída. PLAN688R2PASS integrado155ef9b594260e39fcd68f8083c42d8943c3210b, review5911278859APPROVEDEdivan5002 autorizada,4checks pósmergeSUCCESS. Nova linhagem9c→a42→5be recebe688antesdeBUILD; ea62guards,27aPLANpréviosrc,01f3fontesreaplicados. Antiga118/56diagnóstico preservado, nãopublicado.
+
+Código:97guards/80F3/69ReactPASS;47arquivos1266regressãoPASS;15mutantesmortos;build/typecheck/lint/LOCKPASS;ledgerreal/fichaV1semerrors;31NRPASS. LedgerNR005/008REINCIDENCIA ebarreiradepreflight ampliada: causa/impacto/consumidores/metadados/eventos→RED→correçãocompleta→GREEN→auditoria, semretomarporremendoparcial. Artefatoscompletos emfase3/PR679_R5_RCA_2026-11-15.md; baselinedaficha155ef9b,RED9c43637544739ancestral e3casosexatosGREENNEGREGexecutados.
+
+PENDENTE: ensaiointegradoPR/push, publicarHEAD679fast-forward,CI/TesteCreal e auditoria doHEADfinal,autorização específica de revisão porcontaos9999,mergeprotegido/readback. PR679remotaainda9c atépublicação. Nãoencerrarporprovalocal. Fase3não certificada: após679 seguemdrivers/sessões2b-2b/2b-2c,REQUESTreal138casos/certificação;F4→F5→F6→F7sócomcertificadopredecessor. Missão globalV1continuaativa,HMLsomente,backend/PROD/tipos/rotas/marcapreservados. Históricoabaixo nãoéstatusatual.
+
 ## Missão orquestrada V1 e leitura de evidência688, 15/11/2026
 
 Titular determinou concluir679 com os agentes instalados e depois concluir/certificar fases3–7 até certificação global funcionalV1, com economia de tokens. Investigador confirmou679 como fundação2b-2a: ainda seguem drivers/sessões,REQUESTreal/certificadoF3, depoisF4→F5→F6→F7 com certificado predecessor. Preparo somente leitura pode paralelizar; não iniciar execução/BUILD de fases posteriores antecipadamente. Certificações anterioresF1/F2 e funcionalV1com ressalvas preservadas; não equivalem à integração global7fases. Testador conferiu rootmetadata688, sem outra incoerência estática; contrato de mapa da base/PR/push incorporado antes do novo BUILD.

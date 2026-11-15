@@ -134,14 +134,17 @@
       "causa_status": "CONFIRMADA",
       "causa": "Classificação por PLANO_ATIVO.prompt_id sem verificação de paths/contrato poderia isentar código V2 sob V1; scripts também escapavam.",
       "sintoma": "BUILD V2 e scripts de governança passavam sem ficha de impacto por estarem sob PLAN 75.",
-      "barreira": "Validar escopo real do diff, cobertura de arquivos de V1, PLAN de governança específico da PR, RCA e negativos para V2 sob V1.",
-      "estado": "EM_MONITORAMENTO",
+      "barreira": "Validar escopo real do diff, cobertura de arquivos de V1, PLAN de governança específico da PR, RCA e negativos para V2 sob V1. Antes de qualquer BUILD: conferir os campos consumidos no PLAN anterior contra snapshot/GOV protegidos, inventariar frontend-scope e RCA, testar PR e merge push verdadeiro e negativos de mapa removido no pai/HEAD. Qualquer FAIL suspende a ação afetada e reabre a análise do conjunto antes de novo patch. Não contar declaração textual como preflight executado.",
+      "estado": "REINCIDENCIA",
       "origem": [
         "https://github.com/contaos999999/contaos-hml-control/pull/661",
-        "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156"
+        "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
+        "https://github.com/contaos999999/contaos-hml-control/pull/679",
+        "https://github.com/contaos999999/contaos-hml-control/pull/687",
+        "https://github.com/contaos999999/contaos-hml-control/pull/688"
       ],
-      "tentativas_ciclo": 0,
-      "revisao_causal_ampliada": false,
+      "tentativas_ciclo": 2,
+      "revisao_causal_ampliada": true,
       "prevencao": {
         "tipo": "TESTE",
         "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
@@ -163,7 +166,39 @@
         "checkpoint_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
         "readback_url": "https://github.com/contaos999999/contaos-hml-control/blob/main/scripts/p0-rca-impact-gate.test.mjs",
         "monitoramento": "Barreira técnica integrada, testes negativos aprovados no CI. Não é prova de impossibilidade de reincidência nem de E2E HML real."
-      }
+      },
+      "reincidencias": [
+        {
+          "data": "2026-11-15",
+          "prs": [
+            "#679",
+            "#687",
+            "#688"
+          ],
+          "refs": [
+            "9c0ed0f",
+            "155ef9b",
+            "ea62a04",
+            "01f6a28"
+          ],
+          "estado_seguinte": "REINCIDENCIA mantida até auditoria/CI/review/merge/readback679; testes locais não são resolução integrada."
+        }
+      ],
+      "diagnostico_ampliado": " Em15/11: a validação inicial não inventariou todos os consumidores/eventos; allowlist geral não restringia teste à679, frontend não consumia mapa e rootcontext declarava5eca enquanto snapshot1504. Documentação foi tratada como se comprovasse os campos efetivamente lidos. Material118/56 não publicado preservado como diagnóstico. PLAN688 corrigiu rootack antes da reaplicação; códigoea62 usa mapa da base nos dois guards, PR/GOV exatos, dois pais/base/message no push.97testesGit/Node/negativos e10mutantes mortos, sem relaxar gates. Nova linhagem5be→ea62→27a→01f recebe PLAN antes de código/src.",
+      "novos_testes": [
+        {
+          "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+          "caso": "P0 RCA R5: caminho restrito exige PR exata mesmo na allowlist geral"
+        },
+        {
+          "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+          "caso": "P0 RCA R5: mapa protegido malformado falha fechado"
+        },
+        {
+          "arquivo": "scripts/frontend-scope-gate.test.mjs",
+          "caso": "restrito: GOV020 nao supera restricao da base"
+        }
+      ]
     },
     {
       "id": "NR-006",
@@ -201,7 +236,8 @@
         "checkpoint_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
         "readback_url": "https://github.com/contaos999999/contaos-hml-control/blob/main/scripts/p0-evidence-live-gate.test.mjs",
         "monitoramento": "Barreira técnica integrada, testes negativos aprovados no CI. Não é prova de impossibilidade de reincidência nem de E2E HML real."
-      }
+      },
+      "observacao_2026_11_15": "R1da688 foi BLOCKED, não certificado falso aprovado: auditor omitiu caractere do caminho e alegou raiz restrita sem tentativa no caminho correto. R2E00BE868... leu preparação/canônicos com mesmo perfil/sandbox. Procedimento FullName/Join-Path e recibos integrados no PLAN688; não reutilizar outro RunId/SHA ou tratar ObjectNotFound como AccessDenied."
     },
     {
       "id": "NR-007",
@@ -248,12 +284,14 @@
       "causa_status": "CONFIRMADA",
       "causa": "PR #658 na V1/Fase 3 exigiu sete rodadas por regras duplicadas, referências controladas pelo chamador e fatos observados tratados como erro.",
       "sintoma": "Retrabalho corretivo recorrente por origem causal compartilhada não atacada no primeiro ciclo.",
-      "barreira": "Aplicar replay dos eventos e guard das fontes; inventário campo a campo do fluxo de rede antes de cerca ou driver; teste que liga cada fluxo declarado no executor a uma linha do levantamento; propriedades e mutações para evitar regredir a mesma classe.",
+      "barreira": "Aplicar replay dos eventos e guard das fontes; inventário campo a campo do fluxo de rede antes de cerca ou driver; teste que liga cada fluxo declarado no executor a uma linha do levantamento; propriedades e mutações para evitar regredir a mesma classe. Revisão causal ampliada deve incluir o mecanismo de prevenção e todos os consumidores antes de retomar; proibir avanço por correção isolada ou só teste focal. Preservar F1/F2 certificadas; não promover status por documentação.",
       "estado": "REINCIDENCIA",
       "origem": [
         "https://github.com/contaos999999/contaos-hml-control/blob/main/docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B1_INFRA.md",
         "https://github.com/contaos999999/contaos-hml-control/pull/679",
-        "https://github.com/contaos999999/contaos-hml-control/pull/678#pullrequestreview-5905890909"
+        "https://github.com/contaos999999/contaos-hml-control/pull/678#pullrequestreview-5905890909",
+        "https://github.com/contaos999999/contaos-hml-control/pull/687",
+        "https://github.com/contaos999999/contaos-hml-control/pull/688"
       ],
       "tentativas_ciclo": 3,
       "revisao_causal_ampliada": true,
@@ -265,7 +303,7 @@
       },
       "recibo": null,
       "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo.",
-      "diagnostico_ampliado": "Reincidência em 14/11/2026: ciclo R1 (ec69e0e) e R2 (af50cff) do BUILD-2b-2a (#679) e R1 da emenda 1 (#678, review 5905890909) repetiram a causa da #658, desenhar cerca e PLAN antes do inventário completo do fluxo de rede. Revisão causal ampliada: levantamento campo a campo em docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md (revisão 2), com lista fechada de origens, antes de qualquer cerca ou driver (PLAN §12.5 e §12.7). R3 da #679 (review 5906840506): a regra do vínculo e do reenvio tinha ficado na cerca e por produtor; a R4 a leva ao livro como regra geral, com origem por posição declarada no passo e prova de mutação registrada (37 mutantes).",
+      "diagnostico_ampliado": "Reincidência em 14/11/2026: ciclo R1 (ec69e0e) e R2 (af50cff) do BUILD-2b-2a (#679) e R1 da emenda 1 (#678, review 5905890909) repetiram a causa da #658, desenhar cerca e PLAN antes do inventário completo do fluxo de rede. Revisão causal ampliada: levantamento campo a campo em docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md (revisão 2), com lista fechada de origens, antes de qualquer cerca ou driver (PLAN §12.5 e §12.7). R3 da #679 (review 5906840506): a regra do vínculo e do reenvio tinha ficado na cerca e por produtor; a R4 a leva ao livro como regra geral, com origem por posição declarada no passo e prova de mutação registrada (37 mutantes). Em15/11R5: causa compartilhada permaneceu em found parcial e identidade derived separada; revisão agregada fechou livro/replay/ledger e estados uncertain/abandoned/late-found. Na condução do orquestrador, correções parciais e preflight incompleto geraram novos ciclos; diretriz do titular reiterada: causa→impacto→RED→correção completa→GREEN/negativos/mutações→auditoria antes de avançar. Os grupos agora têm provas em80F3,97guards e69React, mas ficam REINCIDENCIA até integração real.",
       "reincidencias": [
         {
           "data": "2026-11-14",
@@ -289,6 +327,21 @@
             "6b9aecf"
           ],
           "estado_seguinte": "REINCIDENCIA mantida; correção por classe na R4 da #679"
+        },
+        {
+          "data": "2026-11-15",
+          "prs": [
+            "#679",
+            "#687",
+            "#688"
+          ],
+          "refs": [
+            "9c0ed0f",
+            "155ef9b",
+            "ea62a04",
+            "01f6a28"
+          ],
+          "estado_seguinte": "REINCIDENCIA mantida até auditoria/CI/review/merge/readback679; testes locais não são resolução integrada."
         }
       ],
       "novos_testes": [
@@ -307,6 +360,22 @@
         {
           "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
           "caso": "F3 R3 RED (1): o vínculo é regra do livro; removido, trocado ou ausente no reenvio, o replay recusa"
+        },
+        {
+          "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
+          "caso": "F3 R5: found parcial não confirma nem entra no replay do ledger"
+        },
+        {
+          "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
+          "caso": "F3 R5: found completo e tardio preserva vínculos duráveis após resend"
+        },
+        {
+          "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
+          "caso": "F3 R5: derived liga a mesma entidade inventory em todos os fluxos declarados"
+        },
+        {
+          "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
+          "caso": "F3 R5: PLANO_ATIVO não perde histórico por membro JSON duplicado"
         }
       ]
     },

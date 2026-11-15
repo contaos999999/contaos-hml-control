@@ -182,3 +182,7 @@ Um redesenho alternativo, com 30 fluxos, está preservado na branch `backup/f3-b
 
 - `integracao-v1-fase3.test.mjs`: 75 testes, todos verdes.
 - `eslint` e `prettier --check` limpos nos dois scripts.
+
+## R5.1 — fechamento da classe e preflight válido, 15/11/2026
+
+PLAN688 integrado155ef9b antesdecódigo; source5be→ea62→27a→01f. Guarda deambosconsumidores PR/push/mutação do mapa, livrofoundcompleto/derivedmesmaentidade, M4Windows, JSONhistórico ewaitForReact corrigidos.97guards+80F3+69React,1266regressão,15mutantesatuaisPASS. Recibos eRCA emPR679_R5_RCA_2026-11-15.md.75testes/37mutantes acima sãohistóricos; obrigações2b-2b/2b-2c/recuperação preservadas. NR005/008REINCIDENCIA atéintegração/readback. NãoécertificadoF3 nemREQUESTreal; CI/auditoria/review/merge679pendentes.

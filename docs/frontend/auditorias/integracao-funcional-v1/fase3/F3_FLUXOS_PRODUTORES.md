@@ -114,3 +114,7 @@ Um cron que roda sem falha não prova que cada item é processado, e os itens le
 
 - **C0321 (V111 → V117).** `obter_detalhe_requisito_v117` lista as evidências, o histórico e os apontamentos do requisito. Uma evidência precisa ser versão de documento da competência (`privado.registrar_revisao_v117`), e a versão de documento do contrato criada por V111 não pode ser citada. A fonte lida não mostra caminho para a V111 aparecer no detalhe do requisito. O driver de V117 confere a tela real. Se o vínculo não for visível, vale a seção 4 do PLAN: defeito classificado e PLAN de correção separado, sem adaptar o teste.
 - **Situação da competência depois da análise.** `aprovar_apresentacao` aceita `em_analise`, `em_reanalise`, `pendente_correcao` ou `rascunho`. O worker de análise roda fora do SQL lido. Se ele deixar outra situação, V119 fica `BLOCKED` com a mensagem do backend classificada, sem reenvio.
+
+## R5.1 — contrato de vínculo completo e identidade, 15/11/2026
+
+found sóconfirma comtodosbindsduráveis dofluxo; resendnãoapaga historiadotentativaanterior, partialuncertain/rejectedpermanece registrável. Cada derivedrefere exatamente aentityIddo inventorydeclaradoalémorigem/org/tipo/versão. Regrano livro/replay/ledger, nãosó nafence; negativosA/B, positivosA/A,estados/rollback/replay e80F3PASS. Fontes/produtores/orçamento/esperas/obrigações anterioresnãoalterados. RCA/recibos emPR679_R5_RCA_2026-11-15.md; execuçãoHMLF3pendente.
