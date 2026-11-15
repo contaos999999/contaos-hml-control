@@ -1,0 +1,34 @@
+name: ContaOS Auditoria Automatizada
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/auditoria/**"
+      - ".github/workflows/contaos-auditoria-controller.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/auditoria/**"
+      - ".github/workflows/contaos-auditoria-controller.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  controller-offline:
+    name: Controlador offline Windows
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Testar runner e isolamento de ambiente
+        run: python -B scripts/auditoria/test_runner.py
+      - name: Testar preparacao, proveniencia e Git real
+        run: python -B scripts/auditoria/test_preparation.py
+      - name: Testar controlador PowerShell e gates negativos
+        shell: powershell
+        run: |
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/auditoria/test-controller.ps1 -Controller scripts/auditoria/auditar-pr.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

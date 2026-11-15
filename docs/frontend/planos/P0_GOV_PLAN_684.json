@@ -1,0 +1,20 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 684,
+  "files": [
+    "scripts/auditoria/auditar-pr.ps1",
+    "scripts/auditoria/prepare-audit.py",
+    "scripts/auditoria/test-controller.ps1",
+    "scripts/auditoria/test_preparation.py",
+    "docs/frontend/governanca/AUDITORIA_BASE_VIVA_V3_1_4_BUILD_STATUS_2026-11-15.md",
+    "docs/frontend/auditorias/instalacao-automatizada-v3_1_4/RCA_E_EVIDENCIAS.md",
+    "docs/frontend/auditorias/instalacao-automatizada-v3_1_4/MANIFEST.json",
+    "docs/frontend/governanca/P0_NR_001_LEDGER.json",
+    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
+  ],
+  "plan_documento": "docs/frontend/planos/PLAN_AUDITORIA_BASE_VIVA_V3_1_4_2026-11-15.md",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/684",
+  "plan_aprovacao": "Validação técnica nominal conforme ADR-DEV-002 para concluir instalação autorizada. Eficácia somente após CI, auditoria, revisão formal autorizada e merge protegido desta PR de PLAN antes de BUILD684; não concede APPROVE automático.",
+  "justificativa": "Corrigir causa confirmada: base gravada da PR usada como ref viva. Consultas autenticadas pré/pós, contrato consistente, revisão ancorada ao SHA e testes offline. Sem aplicação, backend, types, PROD, perfis, proteções ou alteração da release3.1.3."
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "contaos.audit.installer-release.v1",
+  "version": "3.1.3",
+  "plan_pr": 681,
+  "plan_merge_sha": "5bbadb225b52f71b1a8383f36b63e3ede9e11a2d",
+  "build_pr": 680,
+  "files": {
+    "scripts/auditoria/auditar-pr.ps1": "3365fe38c749a62cc57426e74ebb90e16e83ad0137087c98b0bb6b0caf14643a",
+    "scripts/auditoria/auditor-runner.py": "aeef6ea8bfacaf2678ebfd693f5c8af0874c514e6f7c68753a0fdd0b49e17d8d",
+    "scripts/auditoria/prepare-audit.py": "9bacd615fedf0e170958c1666c4c51a74e19c6294b40fbf844c6dec13ce444ea",
+    "scripts/auditoria/test-controller.ps1": "689d07d3e5b45e926c705a82df2175dcb09a501d21638b2b7a7b812e7258d6d9",
+    "scripts/auditoria/test_runner.py": "9fcaaaac4416ab577f48dc36af8ca341a2523088c23f0fe5652543bc5669fa3c",
+    "scripts/auditoria/test_preparation.py": "561d6e5991cef5ab829e6bf340a09b397b4dc30acd57abe8b9e4a54fa9e5c107",
+    ".github/workflows/contaos-auditoria-controller.yml": "308de3432b51fe593865327a9ebba96a38d61670f94843d5099149a57ed51db1"
+  },
+  "tests_local": {
+    "powershell": 19,
+    "runner": 7,
+    "preparation": 17,
+    "total": 43
+  },
+  "ci_status": "PENDENTE_EXECUCAO_NESTE_SHA",
+  "prod_changed": false,
+  "application_changed": false,
+  "source_release_raw_sha256": {
+    "scripts/auditoria/auditar-pr.ps1": "6216a5f2af549077991ed4c88e33a0a5b32cc7fcb0d7cc99009285f248205b8b",
+    "scripts/auditoria/auditor-runner.py": "904a670fcf5eaac14b7431d612c8238f2d2c7542076e907ba85fcb0475cfadc3",
+    "scripts/auditoria/prepare-audit.py": "7396e8b4faf9b7ad90c88bdcf7ff25615e2d5c54c06ad0272d7f06925ab5c71a",
+    "scripts/auditoria/test-controller.ps1": "689d07d3e5b45e926c705a82df2175dcb09a501d21638b2b7a7b812e7258d6d9",
+    "scripts/auditoria/test_runner.py": "9fcaaaac4416ab577f48dc36af8ca341a2523088c23f0fe5652543bc5669fa3c",
+    "scripts/auditoria/test_preparation.py": "53331b52494d10b9e1fb396b5c193e9515f9ce1c0641c998b9e3a324602a8bdc"
+  },
+  "hash_basis": "canonical Git blob bytes; original3.1.2 release hashes retained only as lineage",
+  "staged_workflow_raw_sha256": "5b5262cda846cfe8c0b8083ddff00e52f4acb6cd89c8ed4a7f615a27bb9333a7",
+  "normalization": [
+    {
+      "file": "scripts/auditoria/auditar-pr.ps1",
+      "change": "remove one trailing space; Git normalizes checkout CRLF to LF",
+      "behavior_changed": false
+    }
+  ],
+  "source_release_version": "3.1.2",
+  "security_amendment": {
+    "reason": "trusted bootstrap must not execute third-party lifecycle scripts with operator credentials",
+    "changes": [
+      "direct binary npm packages only",
+      "authored exact package-lock with pinned URLs/SHA512 SRI",
+      "npm ci ignore-scripts with empty user/global config",
+      "shared minimal environment for all preparation subprocesses",
+      "verify executable SHA256 before version or use"
+    ]
+  }
+}

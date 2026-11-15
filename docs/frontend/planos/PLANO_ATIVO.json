@@ -9,7 +9,7 @@
     "validado_em": "2026-11-05",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": true,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42372512665",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43702328082",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -4510,5 +4510,32 @@
     "emenda1": "PLAN §12 (14/11/2026, R2): até 11 pré-requisitos, 39 previstas, 40 por execução, total 60; uploads dentro da ação; cinco esperas W1–W5 com prazo e códigos próprios; recuperação com novo nonce por BUILD próprio (§9 passo 6); conferência dos workers antes de cada REQUEST (§9 passo 4-A); decisão literal do titular \"Emenda completa (Recomendado)\"; levantamento campo a campo em fase3/F3_FLUXOS_PRODUTORES.md (revisão 2)",
     "emenda1_revisoes": "R1 CHANGES_REQUESTED contaos9999 review 5905890909 no HEAD 20b7ff3 (grupos I–IV Importantes, V Menor); R2 corrige por classe; APPROVE contaos9999 review 5906090998 no HEAD 1bf892f com M1–M4 como obrigações; merge 20d4ad9",
     "build2b2a_pr": "#679 (autor Edivan5002); main 20d4ad9 mesclada; R3 aplica a emenda 1 aos fluxos das ordens 2 a 8 (inventário por posição, versão observada, chave da UI e bind do V106, reenvio só com chave, TUS, esperas W1–W5); barreira NR-008 por teste; limites e obrigações dos incrementos seguintes em fase3/BUILD2B2_DRIVERS.md; redesenho alternativo preservado em backup/f3-b2b2a-redesenho-r3-local (não integrado, decisão do titular \"Manter a versão remota\")"
+  },
+  "arquivos_restritos_por_pr": {
+    "src/test/competenciaDocumentos.test.tsx": 679
+  },
+  "emenda_pr679_r5": {
+    "plano_documento": "docs/frontend/planos/PR679_R5_EMENDA_PLAN_2026-11-15.md",
+    "build_pr": 679,
+    "status": "VALIDADO_TECNICAMENTE_EFICACIA_CONDICIONADA_A_INTEGRACAO",
+    "arquivos_fechados": [
+      "scripts/hml/integracao-v1-fase3.mjs",
+      "scripts/hml/integracao-v1-fase3.test.mjs",
+      "scripts/p0-rca-impact-gate.mjs",
+      "scripts/p0-rca-impact-gate.test.mjs",
+      "src/test/competenciaDocumentos.test.tsx",
+      "docs/frontend/planos/PLANO_ATIVO.json",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B2_DRIVERS.md",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase3/PR679_R5_RCA_2026-11-15.md",
+      "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json",
+      "docs/frontend/governanca/P0_NR_001_LEDGER.json",
+      "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
+    ],
+    "excecao_src": "Teste ausente da allowlist geral nesta PR de PLAN. Antes de alterá-lo na679: fortalecer gate RCA para ler arquivos_restritos_por_pr do PLAN protegido anterior, exigir PR679 e GOV679 aprovado contendo o caminho; negativos de outra PR/identidade ausente/mapa inválido devem falhar. Só então commit prévio na própria679 pode incluir o teste na allowlist geral para o guard de frontend, sem remover a restrição do RCA. Nenhum outro src autorizado.",
+    "ci_plano_emenda": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43702328082",
+    "ci_plano_head": "5c061350cd36a03e9bcf8a6d44ae5bdb59f138ad",
+    "ci_plano_resultado": "SUCCESS; quatro checks PASS no primeiro commit documental. Novo HEAD desta vinculação exige seus próprios checks e auditoria antes de merge/BUILD. CI histórica do mestre42372512665 preservada neste campo; sem alegar que cobre a emenda.",
+    "aprovacao": "Decisão técnica nominal ADR-DEV-002; revisão formal exige autorização específica, CI/auditoria e merge protegido. Aprovação humana histórica do mestre não é alegada como aprovação da review desta emenda."
   }
 }
