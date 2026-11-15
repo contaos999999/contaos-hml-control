@@ -1,3 +1,9 @@
+## Protocolo de orquestração — proposta documental, 15/11/2026
+
+- Baseline main5bbadb225b52f71b1a8383f36b63e3ede9e11a2d. Instalação BUILD PR680/def4d8b5b2ac95d84cd395d3729b730c438aa692 com cinco checks SUCCESS e auditoria isolada em execução; integração ainda PENDENTE.
+- Esta branch propõe referência única em AGENTS e protocolo persistente conforme instrução expressa do titular. Não modifica perfis, configuração, controlador, aplicação, backend, types, PROD ou certificados. PLAN documental prévio no primeiro commit desta branch.
+- PENDENTE: checks/auditoria/revisão formal e merge desta proposta. Próxima tarefa: concluir instalação antes da PR679. Não declarar checkpoint integrado antes do readback remoto. Histórico anterior preservado abaixo.
+
 ## Instalação da auditoria automatizada — PLAN em preparação, 15/11/2026
 
 - Prioridade expressa do titular: concluir instalação antes de retomar achados da PR679. Nenhum código da aplicação foi alterado nesta tarefa.
