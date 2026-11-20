@@ -18,7 +18,7 @@
 
 **Resultado:** o mesmo agente `auditor` será o responsável institucional por fiscalizar missões. Implementadores não se autocertificam. Um **check técnico confiável** e um registro de missão protegidos verificam materialmente condições de avanço e encerramento. O auditor reporta o veredito sem assumir poderes de aprovar formalmente, mesclar por bypass ou operar PROD. Não criar sexto perfil/agente.
 
-## 3. Regras projetadas — P0-AUD-001 e P0-ABS-002
+## 3. Regras projetadas — P0-ABS-001, P0-ABS-002 e continuidade até certificação
 
 1. **Contrato imutável por revisão protegida:** `mission_id`, repositório, alvo, objetivo, escopo, critérios de aceite, checks, revisões, última etapa certificada, dependências e política de mudança/cancelamento. O contrato é consumido da `main` protegida, não da PR sob avaliação. Nunca aceitar que executor altere unilateralmente os critérios.
 2. **P0-ABS-001:** antes de retomar implementação funcional da missão atual, comprovar gate contra bypass no GitHub. Condição PASS exige testes negativos e verificação do enforcement real, não apenas texto. O gate de missão não deve ser autoavaliação privilegiada do código da própria PR.
@@ -26,10 +26,18 @@
 4. **Mission Lock:** comparar PR/repo/objetivo com contrato na base protegida; bloquear transição para missão incompatível por check requerido. Concorrência de runners de auditoria sob lock/lease com identificador de execução para evitar escrita conflitante; falha do lock nunca produz CERTIFIED.
 5. **Auditoria read-only:** reutilizar `auditar-pr.ps1` e perfil `auditor`; nenhuma escrita em código de app. Se o auditor precisar alterar o próprio mecanismo, exigir PR/PLAN e revisão de outra identidade elegível, sem autocertificação.
 6. **Certificação em duas provas:** (a) código, contrato, testes, CI, Teste C e parecer independente no SHA; (b) revisão formal quando exigida, integração protegida, readback na `main`, checks pertinentes pós-merge e checkpoint integrado. `CERTIFIED` apenas com ambas as provas aplicáveis e recibos íntegros.
-7. **Watchdog:** usar automação existente ou workflow mínimo read-only para identificar missão não certificada, ausência de progresso/heartbeat, CI parado, deriva de HEAD, falhas e falsas conclusões; produzir diagnóstico/alerta sem poderes de merge. Retomada automática local só pode ser anunciada se houver executor persistente **realmente instalado e testado**, com acesso mínimo, lease e idempotência. `schedule` GitHub é best effort, não prova de execução ininterrupta do Codex.
+7. **Watchdog:** usar automação existente ou workflow mínimo read-only para identificar missão não certificada, ausência de progresso/heartbeat, CI parado, deriva de HEAD, falhas e falsas conclusões; produzir diagnóstico/alerta sem poderes de merge. O watchdog preserva o ponto de retomada e identifica a próxima ação executável pelo controlador existente em sessão autorizada. `schedule` GitHub é best effort. Serviço residente, tarefa agendada local, criação ou alteração de credenciais e retomada autônoma exigem PLAN e autorização próprios e ficam fora desta entrega.
 8. **Antiestagnação:** após duas tentativas sem delta causal, proibir repetir o mesmo retry e exigir RCA ampliada. Não usar consumo de tokens, número de commits ou relatórios como prova de avanço. Reutilizar testes/pareceres válidos do mesmo SHA.
 9. **Independência:** o auditor é autoridade de parecer técnico, não substituto de aprovação humana específica, nem administrador do ruleset. A exigência de check obrigatório do GitHub deverá ser configurada e provada por conta autorizada, com teste negativo real. Se permissões/plano não permitirem, registrar NO-GO de enforcement, nunca declarar impossível de contornar.
 10. **Transparência:** status `BLOCKED_EXTERNAL` só com impeditivo verificável; preservar próxima ação, HEAD, checkpoints e modo de retomada. Não inventar mecanismo que possa manter a sessão viva contra o ambiente.
+
+### 3.1. Origem, frescor e ativação do check obrigatório
+
+- O contexto `ContaOS P0-ABS Mission Lock` será vinculado no ruleset `26495643` ao `integration_id` de um GitHub App autorizado e dedicado à publicação desse gate. O nome do contexto e o ID genérico do GitHub Actions não identificam um workflow confiável. Antes da ativação, comprovar o App instalado, seu ID e as permissões mínimas de publicação de status. Somente o avaliador confiável, executado de fonte protegida, pode acessar o publicador. O código sob avaliação não recebe a credencial, nem é executado com seu acesso. Sem integração autorizada e verificável, a ativação permanece `BLOCKED_EXTERNAL` e o certificado pendente. Provisionar App, credencial ou permissão fora do escopo exige PLAN e autorização específicos. [Origem e modo estrito na documentação do GitHub](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-status-checks-to-pass-before-merging).
+- A ativação também exige `strict_required_status_checks_policy=true`. Preservar os checks atuais, a exigência de PR, os métodos de merge e a proteção contra deleção e force push. Manter `bypass_actors=[]`. O modo estrito se aplica aos checks atuais e pode exigir sincronização da branch e novo CI quando a base avançar. Avaliar o impacto na fila antes da ativação.
+- O produtor lê a ref viva de `main`, o contrato nesse commit e os metadados autenticados da PR. O recibo associa repositório, PR, ramo alvo, HEAD, SHA avaliado pelo GitHub, OID da base viva, blob do contrato, origem e execução. Verificar a proveniência do SHA avaliado e que a branch inclui a base viva. Consultar HEAD e base viva novamente antes da publicação e do consumo do recibo. Mudança de contexto invalida a prova. O GitHub exige que a branch esteja atualizada mesmo se o check anterior continuar visível no mesmo HEAD. Aplicar a prevenção NR-009 contra uso da base gravada na PR como ref viva.
+- Provar que a decisão vale apenas para a PR avaliada, inclusive com outro alvo ou outra PR no mesmo SHA. Se um sucesso puder ser reutilizado para autorizar outra PR, manter a ativação em NO-GO até emenda com mecanismo de vínculo à unidade de merge. Verificar pela API o ruleset efetivo, a origem do check e o bloqueio com contexto ausente, resultado de origem diversa ou base avançada. Usar PR de prova isolada, sem tocar na #679 e sem diff de produto. Atualizar a base da PR de prova e exigir uma execução nova do produtor confiável para verificar elegibilidade.
+- Integrar o BUILD revisado com a proteção vigente antes da ativação. Comprovar a publicação confiável, aplicar a mudança administrativa autorizada e executar os negativos. O checkpoint de certificação passa pelo ruleset atualizado como PR filha prevista no contrato protegido. A #679 só é liberada depois da certificação.
 
 ## 4. PLAN técnico, escopo fechado e ordem de integração
 
@@ -58,7 +66,7 @@ Antes de BUILD, reproduzir em testes isolados as lacunas do supervisor existente
 - N02: PR divergente do contrato ativo deve FAIL, exceto sub-PR autorizada na base protegida.
 - N03: contrato adulterado na PR não pode alterar decisão do gate.
 - N04: check com SHA anterior, skipped, zero seleção ou simulação não certifica.
-- N05: mudança de HEAD/base viva invalida parecer.
+- N05: mudança de HEAD/base viva invalida parecer e recibo. Após avanço da base com HEAD da PR de prova intacto e sucesso anterior ainda visível, verificar bloqueio pelo modo estrito e exigir nova execução após atualizar a branch.
 - N06: auditor que edita mecanismo sob avaliação não pode autocertificar.
 - N07: interrupção de sessão/runner preserva estado e não gera PASS.
 - N08: duas tentativas sem delta exigem investigação causal ampliada, sem loop.
@@ -66,7 +74,7 @@ Antes de BUILD, reproduzir em testes isolados as lacunas do supervisor existente
 - N10: CANCELLED exige autoridade explícita e mantém histórico.
 - N11: ferramenta sem acesso, erro HTTP ou JSON malformado resulta NO-GO, não PASS.
 - N12: troca de branch/commit após revisão invalida evidência afetada.
-- N13: bypass de workflow/renomeação do check/rota por evento alternativo é rejeitado pela configuração efetiva.
+- N13: contexto ausente, resultado homônimo com origem diversa e resultado de outro alvo ou PR no mesmo SHA não habilitam merge. Verificar a identidade esperada e o bloqueio efetivo no GitHub, além dos testes locais.
 - N14: PR de governança não abre exceção ampla a novas PRs incompatíveis.
 
 GREEN: testes existentes do auditor, 14 negativos ou mais, status CI real da PR, Zero-Drift, P0-NR, LOCK, Teste C aplicável; lint/format compatíveis. Mutantes para predicados fundamentais de estado e conclusão. O workflow confiável deverá operar no código da branch protegida para aferir PRs, **sem checkout ou execução de código não confiável com token de escrita**. Observação: mesmo um workflow protegido recém-criado não é automaticamente um required check; verificar e exigir configuração específica do ruleset após implantação.
@@ -81,6 +89,24 @@ Rollback por PR/revert protegido e gates, sem force push, sem reduzir segurança
 
 **Auditor:** diagnosticar a missão e emitir parecer. **Orquestrador:** conduzir implementação, sub-PRs e correções. **GitHub:** executar checks/merge protegidos, guardar contrato e evidências. **Titular:** conceder autorizações específicas e cancelar/mudar contrato quando necessário.
 
-A próxima entrega é a **PR de BUILD**, iniciada somente após este PLAN integrar a main. Depois: comprovar check real e required status check no ruleset por identidade autorizada; testar casos negativos no GitHub; instalar e testar monitor/retomada possível; integrar checkpoint; retornar imediatamente à PR #679 sem repetir provas ainda válidas.
+A próxima entrega é a **PR de BUILD**, iniciada somente após este PLAN integrar a main. Depois, comprovar o check e a eficácia do ruleset pelo rito da seção 3.1, executar os negativos no GitHub, validar o watchdog somente leitura e a retomada pelo fluxo existente. Integrar o checkpoint com recibos verificáveis e emitir o certificado com parecer independente. Até lá, a missão permanece ACTIVE ou BLOCKED_EXTERNAL conforme a evidência. Após a certificação, registrar a liberação da retomada da PR #679 em fluxo posterior.
 
 **Não declarar a P0-AUD-001 instalada, o Mission Lock efetivo, o watchdog persistente ou a PR #679 certificada por causa desta PR documental.**
+
+
+## 8. Resposta à auditoria independente do PLAN
+
+O parecer `CHANGES_REQUESTED` do auditor 3.1.4 avaliou o HEAD `28aa4edd694d3b0648139d64c84ba4b1e99839b4`, base `155ef9b594260e39fcd68f8083c42d8943c3210b`, RunId `20261120T205632982Z-28aa4edd694d-cbe7473972474fafbc8db64f9a20694d` e SHA-256 do parecer `694D033C302671ED7419FA41E3D5F88765CD11EBE1382A0AC89632CD99E05D32`.
+
+| Causa e classificação | Impacto e validação |
+| --- | --- |
+| Tratar base gravada ou sucesso anterior como prova de contexto atual, CONHECIDO NR-009. Origem indefinida no PLAN, NOVO. | A seção 3.1 especifica ref viva, identidade dedicada e modo estrito. N05 e N13 cobrem base avançada, resultado homônimo e reutilização cruzada. O modo estrito afeta a fila existente e exige avaliação antes da mudança administrativa. |
+| Ausência do bloco obrigatório no próprio documento, CONHECIDO pelo precedente do PLAN 42. | Comparar o bloco abaixo com a fonte canônica §11.3 e verificar justificativa visual e decisão de economia. |
+| Redação de implantação misturava retomada local persistente com watchdog somente leitura, NOVO. | Conferir as seções 3 e 7 contra o §12 do protocolo. N07 verifica preservação do estado durante interrupção e impede falso PASS. |
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+Marca: ContaOS Brand v1.0 / BRAND-01; ler 19_IDENTIDADE_VISUAL_OFICIAL_BRAND_1_0.md e 20_PROMPT_000_BRAND_01.md para qualquer alteração frontend. Preservar assets oficiais, ContaOSMarca, Design System e tokens (REUTILIZAR > ESTENDER > CRIAR), componentes e estados; sem hardcodes, redesign ou bibliotecas paralelas. PLAN deve informar baseline visual, riscos e matriz de aceite; BUILD deve manter consistência; TESTE/TESTE C devem provar 1440/1280/768/390 nos temas claro/escuro, acessibilidade, marca e estados, sem alterações durante Teste C. Se prompt não envolver frontend, declarar impacto visual N/A justificado e garantir ausência de alteração visual.
+Economia Lovable: checar turno/estado/commit antes de enviar; usar GitHub e Supabase diretamente quando possível; consolidar instruções; executar o menor delta; reutilizar testes/evidências válidos; não reenviar turno pendente nem duplicar builds/scans; nunca pular aprovação humana obrigatória, TDD, segurança, CI, Zero-Drift, fidelidade ao PRD, validação visual ou Teste C separado.
+Entregar evidências e classificar: IDENTIDADE VISUAL PASS/FAIL/NÃO VERIFICADO/N/A; ECONOMIA LOVABLE CONFORME/NÃO CONFORME; ZERO-DRIFT PASS/FAIL. Sem prova não declarar PASS.
+
+`impacto_visual: N/A`. O PLAN é documental e a allowlist candidata se limita à governança, auditoria e workflows. Baseline visual, componentes, tokens, estados e matriz BRAND-01 de 1440/1280/768/390 px em claro e escuro são N/A neste escopo. A triagem do Teste C deve comprovar ausência de mudanças visuais. Qualquer alteração futura de UI requer PLAN próprio e matriz aplicável. O trabalho usa GitHub e ferramentas locais, com Lovable reservado à sincronização e visualização quando necessárias.
