@@ -2,6 +2,15 @@
 
 Escopo da emenda é o PLAN integrado na #689 e o manifesto executável da #690. A emenda autoriza somente a adaptação expressa abaixo após integração protegida. A autorização do titular para a missão foi registrada por `Edivan5002` na #691. A ativação no GitHub continua condicionada à prova operacional em fila isolada, seguida de validação na `main`. [Autorização do titular](https://github.com/contaos999999/contaos-hml-control/pull/691#pullrequestreview-5999899046)
 
+## Tratamento das duas ressalvas da #689
+
+| Ressalva comprovada | Condição aplicável ao BUILD | Condição aplicável à ativação |
+| --- | --- | --- |
+| O guard exige manifesto anterior protegido | Integrar esta PR, depois verificar o arquivo e os campos reais em `origin/main`. Testar o guard atual com a allowlist exata, a PR errada, um caminho extra e ausência de manifesto. Sem readback, nenhum código da #690. | Preservar as mesmas verificações na fila. |
+| Revogação pode ocorrer entre o status do App e o merge | Implementar e testar o software com a publicação desativada por padrão. O código pode ser integrado sob a proteção vigente depois da revisão e CI. O manifesto não habilita App, credenciais ou ruleset. | Provar uma barreira nativa que impeça o merge na revogação descrita, além da origem exclusiva do App. A decisão `ativacao_autorizada: false` deste manifesto permanece válida durante o BUILD. Sem novo recibo autorizado de ativação e prova real, manter publicação e novo ruleset desativados. |
+
+O manifesto é consumido pelo guard somente para delimitar arquivos e vincular a PR. Campos adicionais registram a decisão. O bloqueio de ativação deve estar no contrato do supervisor, na indisponibilidade das credenciais privilegiadas e na etapa administrativa separada. O software inicial só gera diagnóstico. Não considerar o campo `approved` deste JSON como autorização operacional de publicação. A instalação somente será certificada depois da prova da fila e do ruleset efetivos. [Aprovação documental da #689](https://github.com/contaos999999/contaos-hml-control/pull/689#pullrequestreview-5999759560)
+
 ## Causas levantadas e consumidores atuais
 
 1. `merge_group` é um evento distinto de PR/push. Os três contextos requeridos atuais não são produzidos para ele. Zero-Drift invoca o Teste C reutilizável. P0-NR tem workflow separado. Sem inscrição de ambos, uma fila com os contextos já exigidos trava.
