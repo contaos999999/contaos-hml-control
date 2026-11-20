@@ -1,0 +1,114 @@
+{
+  "schema": "contaos.p0.v1-scope-proof.v2",
+  "versao": "V1",
+  "prompt_id": "75",
+  "baseline": {
+    "frontend_sha": "155ef9b594260e39fcd68f8083c42d8943c3210b",
+    "backend_sha": "1504af465b45afc846458d00e5cb63513fa298ed"
+  },
+  "escopo": [
+    {
+      "arquivo": "src/test/competenciaDocumentos.test.tsx",
+      "versao": "V1",
+      "justificativa": "Correção somente da sincronização de asserção no teste V1-15/V1-10; nenhum componente de produção alterado."
+    }
+  ],
+  "itens": [
+    {
+      "id": "RCA-679-R5-REACT",
+      "tipo": "CORRECAO",
+      "reproducao": {
+        "confirmada": true,
+        "sintoma": "CI9c encontra alerta anterior após paginação já sem opção selecionada.",
+        "esperado": "Aguardar conclusão do efeito que reinicia envio antes de afirmar remoção do erro.",
+        "observado": "Query síncrona ainda encontra alerta do envio anterior;1265 PASS/1FAIL.",
+        "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43637544739"
+      },
+      "causa": {
+        "status": "CONFIRMADA",
+        "descricao": "Select sem opção visível já retorna vazio antes de o useEffect/reiniciarEnvio concluir atualização do alerta. O teste confunde esse estado intermediário com conclusão do efeito.",
+        "evidencias": [
+          "CI43637544739 no ancestral9c, competenciaDocumentos.test.tsx:766; logs autenticados conferidos.",
+          "UploadDropzone reinicia vínculo/tipo/tentativa no efeito; teste aguardava somente select vazio."
+        ],
+        "hipoteses_descartadas": [
+          "Não há prova de defeito no componente ou backend; alteração limitada a waitFor.",
+          "Não é autorização para remover assert de erro, contagem de RPC/upload ou chave nova."
+        ]
+      },
+      "solucao": {
+        "descricao": "Aguardar remoção do alerta anterior com waitFor existente; preservar vínculo/tipo/tentativa e todas as asserções.",
+        "rollback": "PR de revert do único waitFor com testes e revisão; sem alteração de dados.",
+        "arquivos": [
+          "src/test/competenciaDocumentos.test.tsx"
+        ]
+      },
+      "impacto": {
+        "dependencias": [
+          "Teste V1-15 paginação/requisito",
+          "Uploader V1-10 compartilhado",
+          "Efeito reiniciarEnvio"
+        ],
+        "versoes_afetadas": [
+          "V1"
+        ],
+        "riscos": [
+          {
+            "risco": "Mascarar repetição de upload ou reaproveitar vínculo/chave anterior.",
+            "teste_preventivo": {
+              "id": "GREEN-V115-PAGINACAO",
+              "runner": "vitest",
+              "arquivo": "src/test/competenciaDocumentos.test.tsx",
+              "caso": "V1-15 envio reutiliza uploader V1-10 paginação remove requisito selecionado: reseta vínculo, tipo e tentativa antes de enviar"
+            }
+          },
+          {
+            "risco": "Permitir upload inválido ou quebrar retry idempotente.",
+            "teste_preventivo": {
+              "id": "NEG-V115-UPLOAD",
+              "runner": "vitest",
+              "arquivo": "src/test/competenciaDocumentos.test.tsx",
+              "caso": "V1-15 envio reutiliza uploader V1-10 arquivo inválido usa validação V1-10 e não chama Edge"
+            }
+          }
+        ]
+      },
+      "testes": {
+        "red": [
+          {
+            "id": "RED-V115-CI",
+            "runner": "vitest",
+            "arquivo": "src/test/competenciaDocumentos.test.tsx",
+            "caso": "paginação remove requisito selecionado: reseta vínculo, tipo e tentativa antes de enviar",
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43637544739",
+            "run_sha": "9c0ed0f0ddfc0fc91512dff2e290e0a8d6826c71"
+          }
+        ],
+        "green": [
+          {
+            "id": "GREEN-V115-PAGINACAO",
+            "runner": "vitest",
+            "arquivo": "src/test/competenciaDocumentos.test.tsx",
+            "caso": "V1-15 envio reutiliza uploader V1-10 paginação remove requisito selecionado: reseta vínculo, tipo e tentativa antes de enviar"
+          }
+        ],
+        "negativos": [
+          {
+            "id": "NEG-V115-UPLOAD",
+            "runner": "vitest",
+            "arquivo": "src/test/competenciaDocumentos.test.tsx",
+            "caso": "V1-15 envio reutiliza uploader V1-10 arquivo inválido usa validação V1-10 e não chama Edge"
+          }
+        ],
+        "regressao": [
+          {
+            "id": "REG-V115-RETRY",
+            "runner": "vitest",
+            "arquivo": "src/test/competenciaDocumentos.test.tsx",
+            "caso": "V1-15 envio reutiliza uploader V1-10 erro na criação: retry manual reutiliza a mesma chave e não reenvia bytes"
+          }
+        ]
+      }
+    }
+  ]
+}

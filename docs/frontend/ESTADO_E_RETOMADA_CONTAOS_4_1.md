@@ -1,3 +1,11 @@
+## Situação atual — código679 consolidado, verificação integrada antes de publicar, 15/11/2026
+
+Fases1/2 continuamENCERRADAS/CERTIFICADAS; semreabertura. Instalação3.1.4concluída. PLAN688R2PASS integrado155ef9b594260e39fcd68f8083c42d8943c3210b, review5911278859APPROVEDEdivan5002 autorizada,4checks pósmergeSUCCESS. Nova linhagem9c→a42→5be recebe688antesdeBUILD; ea62guards,27aPLANpréviosrc,01f3fontesreaplicados. Antiga118/56diagnóstico preservado, nãopublicado.
+
+Código:97guards/80F3/69ReactPASS;47arquivos1266regressãoPASS;15mutantesmortos;build/typecheck/lint/LOCKPASS;ledgerreal/fichaV1semerrors;31NRPASS. LedgerNR005/008REINCIDENCIA ebarreiradepreflight ampliada: causa/impacto/consumidores/metadados/eventos→RED→correçãocompleta→GREEN→auditoria, semretomarporremendoparcial. Artefatoscompletos emfase3/PR679_R5_RCA_2026-11-15.md; baselinedaficha155ef9b,RED9c43637544739ancestral e3casosexatosGREENNEGREGexecutados.
+
+Ensaio integrado realGit de PR/push: frontend e RCA PASS emambos,14paths/1src, RED real e3casos executados por evento; merge local8279ff3, não mergeGitHub. PENDENTE: publicarHEAD679fast-forward,CI/TesteCreal e auditoria doHEADfinal,autorização específica de revisão porcontaos9999,mergeprotegido/readback. HEAD/checks remotos devem ser conferidos no GitHub após publicação. Nãoencerrarporprovalocal. Fase3não certificada: após679 seguemdrivers/sessões2b-2b/2b-2c,REQUESTreal138casos/certificação;F4→F5→F6→F7sócomcertificadopredecessor. Missão globalV1continuaativa,HMLsomente,backend/PROD/tipos/rotas/marcapreservados. Históricoabaixo nãoéstatusatual.
+
 ## Missão orquestrada V1 e leitura de evidência688, 15/11/2026
 
 Titular determinou concluir679 com os agentes instalados e depois concluir/certificar fases3–7 até certificação global funcionalV1, com economia de tokens. Investigador confirmou679 como fundação2b-2a: ainda seguem drivers/sessões,REQUESTreal/certificadoF3, depoisF4→F5→F6→F7 com certificado predecessor. Preparo somente leitura pode paralelizar; não iniciar execução/BUILD de fases posteriores antecipadamente. Certificações anterioresF1/F2 e funcionalV1com ressalvas preservadas; não equivalem à integração global7fases. Testador conferiu rootmetadata688, sem outra incoerência estática; contrato de mapa da base/PR/push incorporado antes do novo BUILD.
@@ -86,7 +94,30 @@ R1 da PR687 CHANGES_REQUESTED: allowlist global não restringia o teste à679. E
 - PENDENTE: CI/integrar PLAN, publicar BUILD, CI/auditoria separada/aceite, integração protegida e checkpoint final. Nenhum APPROVE ou merge automático pelo controlador.
 - O histórico anterior permanece abaixo. Fase3 e os achados da PR679 permanecem abertos.
 
-## Integração funcional V1: Fase 3, emenda 1 do PLAN em revisão (R2), 14/11/2026 Bahia
+## Integração funcional V1: Fase 3, BUILD-2b-2a recebe a emenda, 14/11/2026 Bahia
+
+- **#679 com a main `20d4ad9`.** A main entrou por merge. Os três conflitos previstos foram resolvidos assim:
+  - `F3_FLUXOS_PRODUTORES.md` adota a revisão 2 da main (blob `52930cf`);
+  - `PLANO_ATIVO.json` preserva as chaves das duas branches;
+  - este checkpoint mantém os dois blocos.
+- **R3 da #679 (14/11, tarde).** Duas sessões trabalharam no redesenho ao mesmo tempo. Uma enviou 12 commits (`f544530` a `5254040`, autor Edivan5002) com a emenda aplicada aos fluxos das ordens 2 a 8. A outra tinha um redesenho local de 30 fluxos, não enviado. O titular decidiu: "Manter a versão remota". O redesenho alternativo está preservado em `backup/f3-b2b2a-redesenho-r3-local` e não foi integrado.
+- **Acrescentado sobre a versão remota:** levantamento revisão 3 (M1 e M4), teste da barreira do NR-008, NR-008 em `REINCIDENCIA` com `novos_testes` (§12.7) e `BUILD2B2_DRIVERS.md` reescrito, com os limites deste incremento e as obrigações dos seguintes.
+- **R3 da #679:** CHANGES_REQUESTED, contaos9999, review 5906840506, no HEAD `6b9aecf` (CI verde nesse HEAD; suíte F3 69/69). Quatro causas:
+  1. **Bloqueante:** o vínculo (`bind`) e o reenvio com o mesmo corpo estão na cerca, não no livro; o `bind` pode ser removido do relatório sem o validador perceber (regressão do log canônico do 2b-1).
+  2. **Importante:** o passo do fluxo não declara a origem por posição; há `if` por produtor, posições `inventario` sem tipo nas ordens 4 e 5 e barreira do NR-008 só por ordem e tipo.
+  3. **Importante:** 16 de 38 mutantes sobrevivem; o TUS não é reconhecido no preflight OPTIONS.
+  4. **Importante:** o documento afirma mais que o código (oito pontos).
+- **R4 da #679:** as quatro classes foram corrigidas na própria branch.
+  1. O vínculo (`bind`) virou regra geral do livro: corpo, vagas e referências por passo, selo e vínculo numa transação, reenvio só com vínculo idêntico, desfecho só com vínculo, e o resumo expõe o hash dos vínculos.
+  2. O passo declara `inventory` e `derived` (ADM01 e V102 inclusive). Um verificador único usa a regra do livro, toda recusa de origem congela, e não há `if` por produtor. A barreira do NR-008 lê a linha inteira do levantamento.
+  3. O TUS é bloqueado desde o preflight. Prova de mutação: 37 de 37 mutantes mortos, registrada em `BUILD2B2_DRIVERS.md`.
+  4. O documento cita teste e mutante para cada regra, e os limites têm critério de aceite.
+- **Verificação local da R4:** suíte F3 com 75 de 75; `eslint` e `prettier` limpos; gates P0-NR-001 e de ordem por versão PASS.
+- **Próximo:** nova revisão independente da #679, publicada pela contaos9999. Com APPROVE: merge, readback e 2b-2b, com `P0_GOV_PLAN` próprio.
+- **Regra de reversão do NR-008 (M3):** se a #679 for fechada sem merge, a PR que registrar o fechamento devolve o NR-008 a `REINCIDENCIA`, ou a `EM_MONITORAMENTO` com a prevenção anterior verificável.
+- **Fase 3:** EM EXECUÇÃO.
+
+## Integração funcional V1: Fase 3, emenda 1 do PLAN integrada, 14/11/2026 Bahia
 
 - **PRs (autora Edivan5002, revisora contaos9999):**
   - emenda 1 do PLAN: #678;
@@ -108,6 +139,18 @@ R1 da PR687 CHANGES_REQUESTED: allowlist global não restringia o teste à679. E
   - cerca tipada pela lista fechada e evento de vínculo;
   - testes da §12.6.
 - **Desvio registrado:** os commits `0dc9e60` e `20b7ff3` da #678 saíram com autor git `contaos9999`, a identidade revisora, em vez do padrão `Claude` das PRs anteriores. O histórico não foi reescrito (sem force push), e os commits seguintes voltaram ao padrão. O conteúdo foi revisado de forma independente.
+## Integração funcional V1: Fase 3, BUILD-2b-2a em revisão, 14/11/2026 Bahia (histórico da R1 e da R2; os números deste bloco são anteriores à emenda 1)
+
+- **BUILD-2b-2 em incrementos.** O titular pediu a execução integral ("Execute integralmente"). O levantamento mostrou que o BUILD-2b-2 tem o porte do preparador da Trilha A, por isso sai em PRs revisadas: 2b-2a (fundação), 2b-2b (sessões do MASTER e do `leitor`, SYS04 e ADM01) e 2b-2c em diante (produtores V102 a V122). Nenhum REQUEST antes do último incremento. O detalhe está em `fase3/BUILD2B2_DRIVERS.md`.
+- **2b-2a, branch `build/integracao-v1-fase3-b2b2-drivers`:**
+  - obrigações M2, M3 e M-A cumpridas;
+  - `runCli` cria o livro depois do ledger e o passa ao relatório parcial;
+  - `assertIsolation` encerra a execução com `F3_ISOLATION_BREACH`;
+  - nova cerca de mutação ligada ao livro, que classifica por destino e método, compara o corpo pela forma canônica com vagas e aceita só referências do inventário; fluxos declarados para SYS04, ADM01, V102 e V106;
+  - 50 testes verdes, com propriedade da cerca e sete mutações detectadas; o ledger não mudou (SHA `1d402a1a…`).
+- **Revisão R1 (HEAD `ec69e0e`):** REQUEST_CHANGES com quatro grupos Maiores (A a D) e um Menor (E). Todos foram corrigidos por classe na R2. A correção revelou um vazamento de diretório temporário no teste M4 do 2b-1, que enchia o disco; também foi corrigido.
+- **Revisão R2 (HEAD `af50cff`):** REQUEST_CHANGES. C, D, E e G foram corrigidos; 55 testes verdes; 14 de 15 mutantes derrubam a suíte. A e B (origem dos UUIDs e reenvio) têm a mesma causa raiz das rodadas anteriores: cerca desenhada antes do fluxo dos produtores. O levantamento em `fase3/F3_FLUXOS_PRODUTORES.md` mostra que o PLAN precisa de emenda: pelo menos 8 pré-requisitos contra 5, pelo menos 36 intenções contra 30 por execução, e uploads sem regra.
+- **Próximo:** decisão do titular sobre a emenda do PLAN e sobre a leitura autorizada das pré-condições do backend; depois, redesenho único da cerca, nova revisão e merge do 2b-2a.
 - **Fase 3:** EM EXECUÇÃO.
 
 ## Integração funcional V1: Fase 3, BUILD-2b-1 integrado, 14/11/2026 Bahia
@@ -2910,3 +2953,13 @@ Próxima tarefa: integrarGATEr5 eaditivoPLANO_ATIVO comCI2/revisão/readback; de
 API51original42596392357/art13663262831/SHA5e2177afc72b78e0a8e6109bb8795633886c8052c37a756832f616a8c5066795 eUImultiturnc999ebc9 permanecem aprovados nas origens, semrepetição. UI13 restante(paginação>20/encerramento/revalidação) exige cenário/gate/fixture/cleanuppróprios. Autorização do titular continua. Contexto extenso, semmedidorexato; seguir checkpointsemrecomeçarprovasaprovadas. Esteappend sóécheckpointintegrado apósCI/revisão/merge/readback doPRdocumental; nãoéconclusão da missão.
 
 Emenda de segurança do bootstrap: somente binários diretos Node/Bun fixados por URL/SRI e SHA256, lockfile local exato, npm ci --ignore-scripts com configurações vazias e ambiente mínimo. Nenhum lifecycle de terceiros é executado; os quatro novos negativos complementam os39 casos originais (total43). Aceite operacional da emenda ainda pendente.
+
+## PR679 — NR003 reincidente, correção local94dcae3, 15/11/2026
+
+HEAD local94dcae3f452af37d2278d96ae4cee885acec4abd; HEAD remoto observadob0da740b20c06c2c147be5ebb163f825381ca9b1; base155ef9b594260e39fcd68f8083c42d8943c3210b. CI43748695221/job132917605578 revelou wrapper Node aceito como caso real em Linux; o antigo negativo Windows passava por escape de path. RCA ampliada cobriu wrapper/aliases, filtro vazio, arquivo sem testes, skip e nome legítimo. Correção elimina o wrapper interno com --test-isolation=none no subprocesso isolado. RCA57PASS/0FAIL/0SKIP e2mutantesKILLED nos bytes atuais; focais3PASS Node24 e26; lint/formato/diff/LOCK PASS. Recibos/hash em PR679_R5_RCA_2026-11-15.md; ledgerNR003 permanece REINCIDENCIA. CI/TesteC do novoHEAD, auditoria/review/merge/readback e HML pendentes. F1/F2 certificadas preservadas; integração global V1 pendente. Sem REQUEST, backend, PROD ou repetição das suítes aprovadas. Próxima tarefa: publicar por fluxo autorizado, verificar CI e revisão independente do novoHEAD; só registrar integração após prova real.
+
+Ensaio adicional do orquestrador: merge LOCAL389330abdd4708541bf1d4da18fc3c07da0ff7ba, pais155/94; frontend e RCA PASS em PR/push, cada RCA com REDGitHub real e3casos executados. Recibos na emenda RCA. Não representa integração GitHub nem HML.
+
+## PR679 — NR003 R2 runtime pré-setup, 15/11/2026
+
+Fonte locala0968b90f6643d1c77ac22fb40c70d509c174f40, remoto observadoe00c8522cd7ecc189367bd47a6e5a235028e7204, base155ef9b594260e39fcd68f8083c42d8943c3210b. CI43751659639 revelou alias CLI indisponível no Node22.23.5 padrão anterior ao setup24; binário oficial com SHA validado confirmou exit9. Alias único --experimental-test-isolation=none comprovado22/24/26, sem fallback e sem wrapper. RCA57PASSem22+57PASSem24,3focaisPASSem26,3mutantesKILLED; recibos/hashes na emendaRCA. NR003REINCIDENCIA/tentativa3: inventariar consumidores×eventos×runtimes antesBUILD. CI/TesteC/auditoria/review/merge/readback e HML pendentes; F1/F2 certificadas preservadas; integração globalV1pendente. Nenhuma suiteapp/REQUEST/backend/PROD repetida. Próximo: CI e revisão independente do novoHEAD, sem presumir integração.
