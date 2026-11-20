@@ -1,3 +1,7 @@
+## P0-AUD-UNIVERSAL-001 — PLAN integrado, 20/11/2026
+
+A PR #689 integrou o PLAN documental na main no merge 3ee94171f2fc4cbec2e2d2b6f9efad88fc8ec9ff, HEAD e2ad6157613b98f1f92144e970507c8987dc3907. Revisão 5999759560 de Edivan5002 aprovada por decisão expressa do titular, com o parecer técnico CHANGES_REQUESTED preservado. O BUILD requer primeiro o manifesto de governança específico integrado em main. A ativação requer prova de proteção contra revogação da revisão durante a fila. A PR de BUILD começa em rascunho documental para reservar o número usado pelo manifesto. Certificação e liberação da PR #679 pendentes.
+
 ## Missão orquestrada V1 e leitura de evidência688, 15/11/2026
 
 Titular determinou concluir679 com os agentes instalados e depois concluir/certificar fases3–7 até certificação global funcionalV1, com economia de tokens. Investigador confirmou679 como fundação2b-2a: ainda seguem drivers/sessões,REQUESTreal/certificadoF3, depoisF4→F5→F6→F7 com certificado predecessor. Preparo somente leitura pode paralelizar; não iniciar execução/BUILD de fases posteriores antecipadamente. Certificações anterioresF1/F2 e funcionalV1com ressalvas preservadas; não equivalem à integração global7fases. Testador conferiu rootmetadata688, sem outra incoerência estática; contrato de mapa da base/PR/push incorporado antes do novo BUILD.
