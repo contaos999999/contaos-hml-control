@@ -808,6 +808,18 @@ const FULL_PROTOCOL_51_FALSIFICATION_SUBCASES=[
 FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_51_FALSIFICATION_SUBCASES.map(([id,pattern])=>({
   id:"S5.1:NR-005-FALSIFICACAO:"+id,file:"rca",pattern
 })));
+// Explicit constituent proofs for WDG-02. The stall and inactivity
+// thresholds are evaluated on both sides of 7200 s / 86400 s, not by title.
+const FULL_PROTOCOL_WDG02_SUBCASES=[
+  ["FALHA_CI","test_watchdog_failure_ci_blocks"],
+  ["CHECKS_AUSENTES","test_watchdog_missing_checks_not_pass"],
+  ["STALL_EXATO_2H","test_watchdog_stall_exact_two_hour_boundary"],
+  ["INATIVIDADE_EXATA_24H","test_watchdog_inactivity_exact_24_hour_boundary"],
+  ["DIAGNOSTICO_SEM_AUTORIDADE","test_watchdog_valid_diagnosis_never_certifies"],
+];
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_WDG02_SUBCASES.map(([id,pattern])=>({
+  id:"S5.1:WDG02-PROGRESSO:"+id,file:"python",pattern
+})));
 const FULL_PROTOCOL_52_RULES=[
   ["Pré-integração NR-005","rca","NR-005 pull_request bloqueia manifesto"],
   ["Fila NR-009/N13","queue","N13 removed merge queue entry during readback"],
@@ -884,8 +896,8 @@ FULL_PROTOCOL_CASES.push(...[
 // even when all existing names and tests remain green.
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
-  python:"f5b4b7b9583ebeb7222339b46ff871920d07949a",
-  rca:"10b51d0823a5f05bc4fb3b8e7f423d466ba8499e",
+  python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
+  rca:"1778ed806fa30dbaa53ad2fc2dfc73ae89dfcfab",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
