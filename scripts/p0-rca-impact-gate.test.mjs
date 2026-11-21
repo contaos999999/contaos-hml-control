@@ -1209,7 +1209,13 @@ test("P0 PLAN protected ten mission rules require ten distinct BUILD witnesses",
   for(const id of required){
     const row=coverage.rows.find(x=>x.id===id);
     assert.ok(row,"protected PLAN rule missing from normative evidence: "+id);
-    assert.equal(row.scope,"BUILD");
+    const activation=new Set(["02","04","09"]);
+    const independent=new Set(["05","06"]);
+    const n=id.slice(-2);
+    const expected=activation.has(n)?"BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL":
+      independent.has(n)?"BUILD_NEGATIVE_PROOF_INDEPENDENT_AUDIT_EXTERNAL":"BUILD";
+    assert.equal(row.scope,expected,
+      "PLAN §3 rule "+n+" must not be counted as operational certification");
     assert.equal(row.status,"TEST_DECLARED_NOT_EXECUTED");
   }
   assert.equal(new Set(required).size,10);
