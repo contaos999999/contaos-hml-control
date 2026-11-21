@@ -685,13 +685,18 @@ export async function verifyAssistantPrecertInGithub({
     "show", base + ":docs/frontend/planos/P0_GOV_PLAN_690.json",
   ], {encoding: "utf8", timeout: 15000})),
 } = {}) {
-  if (env.GITHUB_EVENT_NAME !== "pull_request" ||
+  const manual = env.GITHUB_EVENT_NAME === "workflow_dispatch";
+  if (!["pull_request", "workflow_dispatch"].includes(env.GITHUB_EVENT_NAME) ||
+      (manual && (env.GITHUB_REF !== "refs/heads/build/p0-abs-fiscal-universal" ||
+        !validSha(env.GITHUB_SHA))) ||
       env.GITHUB_REPOSITORY !== REPO ||
       env.INPUT_PREAUDIT_PR !== "690" ||
       !validSha(env.INPUT_PREAUDIT_HEAD) ||
-      !validSha(env.INPUT_PREAUDIT_BASE) || !token)
-    throw Error("precert exige evento PR #690, HEAD/base e token de leitura");
-  const number = 690, head = env.INPUT_PREAUDIT_HEAD, base = env.INPUT_PREAUDIT_BASE;
+      (!manual && !validSha(env.INPUT_PREAUDIT_BASE)) || !token)
+    throw Error("precert exige PR #690 ou despacho autenticado no HEAD da branch, token read-only");
+  const number = 690, head = env.INPUT_PREAUDIT_HEAD;
+  if (manual && head !== env.GITHUB_SHA)
+    throw Error("despacho nao coincide com checkout HEAD da branch");
   const [pr, main, files, comments, checks] = await Promise.all([
     api("/repos/" + REPO + "/pulls/" + number),
     api("/repos/" + REPO + "/git/ref/heads/main"),
@@ -699,6 +704,8 @@ export async function verifyAssistantPrecertInGithub({
     list("/repos/" + REPO + "/issues/" + number + "/comments"),
     api("/repos/" + REPO + "/commits/" + head + "/check-runs?per_page=100"),
   ]);
+  const base = manual ? pr?.base?.sha : env.INPUT_PREAUDIT_BASE;
+  if (!validSha(base)) throw Error("base PR nao autenticada no despacho");
   if (!Array.isArray(files) || !Array.isArray(comments) ||
       !Array.isArray(checks?.check_runs) || checks.total_count !== checks.check_runs.length)
     throw Error("API de diff/parecer/checks incompleta");
