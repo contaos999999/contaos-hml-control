@@ -1259,6 +1259,63 @@ export function verifySemanticSourceClaims(inventory,claims){
     note:"Even a structurally complete self-report needs authenticated LIVE counterproof and independent contradiction."};
 }
 
+
+/** Exhaustive seven-axis REVIEW WORKLIST over authenticated source spans.
+ * A populated placeholder is never construed as an interpreted rule or proof.
+ */
+export function buildSevenAxisSemanticBacklog(inventory){
+  const slots=(inventory?.lines||[]).map(row=>({
+    source_id:row.id,path:row.path,blob:row.blob,line:row.line,
+    text_sha256:row.text_sha256,
+    axes:Object.fromEntries(SEMANTIC_AXES.map(axis=>[axis,{
+      status:"UNPROVEN",proof:null,negative_witness:null,
+      independent_contradiction:null}])),
+    mentioned_rules:[...new Set((row.text.match(/\\b(?:N(?:0[1-9]|1[0-7])(?:\\([a-f]\\))?|NR-00[569]|P0-ABS-00[12])\\b/gi)||[]))],
+    semantic_status:"INCONCLUSIVE"
+  }));
+  const pairs=[];
+  for(const row of slots){
+    for(let i=0;i<row.mentioned_rules.length;i++)
+      for(let j=i+1;j<row.mentioned_rules.length;j++)
+        pairs.push({source_id:row.source_id,a:row.mentioned_rules[i],
+          b:row.mentioned_rules[j],status:"INTERACTION_UNPROVEN"});
+  }
+  const issues=[...(inventory?.issues||[])];
+  if(!inventory?.inventory_verified)issues.push("SEMANTIC_SOURCE_NOT_VERIFIED");
+  if(slots.length!==inventory?.lines?.length||
+     slots.some(row=>SEMANTIC_AXES.some(a=>row.axes[a]?.status!=="UNPROVEN")))
+    issues.push("SEMANTIC_SEVEN_AXIS_WORKLIST_INCOMPLETE");
+  return {schema:"contaos.semantic-seven-axis-backlog.v1",
+    source_lines:slots.length,axes_per_source:SEMANTIC_AXES.length,
+    axis_slots:slots.length*SEMANTIC_AXES.length,rows:slots,
+    co_mentioned_interactions:pairs,issues,
+    worklist_verified:issues.length===0,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+export function validateSevenAxisSemanticBacklog(inventory,backlog){
+  const issues=[...(backlog?.issues||[])];
+  const expected=new Map((inventory?.lines||[]).map(row=>[row.id,row]));
+  const observed=new Set();
+  if(!inventory?.inventory_verified||!backlog?.worklist_verified)
+    issues.push("SEMANTIC_WORKLIST_SOURCE_UNVERIFIED");
+  for(const row of backlog?.rows||[]){
+    const src=expected.get(row.source_id);
+    if(!src||observed.has(row.source_id)||
+       row.path!==src.path||row.blob!==src.blob||
+       row.line!==src.line||row.text_sha256!==src.text_sha256)
+      issues.push("SEMANTIC_WORKLIST_INVALID_SOURCE: "+row.source_id);
+    observed.add(row.source_id);
+    if(SEMANTIC_AXES.some(axis=>!Object.prototype.hasOwnProperty.call(
+        row.axes||{},axis)))
+      issues.push("SEMANTIC_WORKLIST_MISSING_AXIS: "+row.source_id);
+  }
+  if(observed.size!==expected.size||backlog?.axis_slots!==expected.size*7)
+    issues.push("SEMANTIC_WORKLIST_MISSING_SOURCE_OR_SLOT");
+  return {worklist_complete:issues.length===0,
+    missing_sources:[...expected.keys()].filter(id=>!observed.has(id)),
+    issues,semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+
 export function auditNormativeSemanticCompleteness(matrix,claims={}){
   const rows=Array.isArray(matrix?.rows)?matrix.rows:[];
   const issues=[];
@@ -2148,6 +2205,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) ===
         anchors:inventory.lines.map(({id,path,blob,line,text_sha256})=>
           ({id,path,blob,line,text_sha256})),
         issues:inventory.issues,source_verified:inventory.inventory_verified,
+        axis_backlog:buildSevenAxisSemanticBacklog(inventory),
         semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
       console.log(JSON.stringify(result));
       if(!result.source_verified)process.exitCode=1;
