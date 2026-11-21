@@ -51,6 +51,13 @@ export function validateWitnessContents(w,receipt) {
   if(!w.rules.every(r=>axes.every(name=>r.axes?.[name]?.status==='PASS' && /^[a-f0-9]{64}$/i.test(r.axes[name].evidence_sha256||'')))) return false;
   if(!w.pairs.every(p=>axes.every(name=>p.axes?.[name]?.status==='PASS' && /^[a-f0-9]{64}$/i.test(p.axes[name].evidence_sha256||'')))) return false;
   if(![...w.clauses,...w.rules,...w.pairs].every(item=>axes.every(name=>{const x=item.axes[name],e=evidenceById.get(x.evidence_ref);return e && e.subject_id===item.id && e.axis===name && e.sha256.toLowerCase()===x.evidence_sha256.toLowerCase();}))) return false;
+  if(!Array.isArray(w.normative_inventory) || !w.normative_inventory.length || !w.normative_source || typeof w.normative_source.sha256!=='string' || !/^[a-f0-9]{64}$/i.test(w.normative_source.sha256)) return false;
+  const inventory=w.normative_inventory;
+  if(new Set(inventory.map(x=>x.id)).size!==inventory.length || inventory.some(x=>!['clause','rule','pair'].includes(x.kind) || typeof x.id!=='string' || !x.id || !x.source_ref)) return false;
+  for(const [kind,items] of [['clause',w.clauses],['rule',w.rules],['pair',w.pairs]]) {
+    const expected=new Set(inventory.filter(x=>x.kind===kind).map(x=>x.id));
+    if(expected.size!==items.length || items.some(x=>!expected.has(x.id))) return false;
+  }
   if(!Array.isArray(w.axes) || w.axes.length!==7 || !axes.every(name=>w.axes.some(a=>a.name===name && a.status==='PASS' && Array.isArray(a.witness_ids) && a.witness_ids.length>0 && a.witness_ids.every(id=>w.clauses.some(c=>c.id===id))))) return false;
   return true;
 }
