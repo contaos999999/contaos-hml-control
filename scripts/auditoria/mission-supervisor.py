@@ -207,9 +207,12 @@ def evaluate(contract, evidence):
                 and receipt.get("independent_audit_pass") is True
                 and receipt.get("review_approved") is True):
             note("N01", "mission marked CERTIFIED without both proofs")
-        if issues:
-            status = "BLOCKED_EXTERNAL"
-        return {"state": status, "eligible": False, "certified": not issues, "issues": issues}
+        # Este avaliador recebe JSON, não verifica assinaturas/API ou readback
+        # em origem privilegiada. Mesmo o recibo estruturalmente perfeito não
+        # é prova e jamais autoriza liberação da missão.
+        note("N01", "offline evidence is not a trusted certification receipt")
+        return {"state": "BLOCKED_EXTERNAL", "eligible": False,
+                "certified": False, "authoritative": False, "issues": issues}
 
     # BUILD is deliberately diagnostic only: never issue merge-worthy PASS.
     note("N16", "activation_authorized=false: diagnostic only, no App status")
@@ -217,6 +220,7 @@ def evaluate(contract, evidence):
         "state": "BLOCKED_EXTERNAL" if issues else status,
         "eligible": False,
         "certified": False,
+        "authoritative": False,
         "issues": issues,
     }
 
