@@ -146,6 +146,7 @@ export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.en
     const reviewerEvents=Array.isArray(reviews)?reviews.filter(x=>x.user?.login?.toLowerCase()===receipt.reviewer_login.toLowerCase() && ['APPROVED','CHANGES_REQUESTED','DISMISSED'].includes(x.state)).sort((a,b)=>new Date(a.submitted_at||0)-new Date(b.submitted_at||0)):[];
     const latestReview=reviewerEvents.at(-1);
     if (!latestReview || latestReview.state!=='APPROVED' || latestReview.commit_id!==receipt.head || latestReview.user?.login===pr.user?.login) issues.push('INDEPENDENT_REVIEW_NOT_VERIFIED');
+    if (!latestReview || receipt.second_read?.review_id!==latestReview.id || receipt.second_read?.commit_sha!==latestReview.commit_id || receipt.second_read?.reviewer?.toLowerCase()!==latestReview.user?.login?.toLowerCase() || receipt.reviewer_login.toLowerCase()!==latestReview.user?.login?.toLowerCase()) issues.push('SECOND_READ_GITHUB_MISMATCH');
     if (plan.path!==`docs/frontend/planos/P0_GOV_PLAN_${receipt.pr_number}.json` || !plan.sha || !plan.content) issues.push('PROTECTED_PLAN_NOT_FOUND');
     else {
       const decoded=Buffer.from(plan.content.replace(/\s/g,''),'base64').toString('utf8');
