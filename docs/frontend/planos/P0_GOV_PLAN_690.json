@@ -1,0 +1,32 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 690,
+  "files": [
+    "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md",
+    "docs/frontend/governanca/MISSAO_ATIVA_4_1.json",
+    "scripts/auditoria/mission-supervisor.py",
+    "scripts/auditoria/test_mission_supervisor.py",
+    ".github/workflows/contaos-auditoria-controller.yml",
+    ".github/workflows/contaos-missao-auditoria.yml",
+    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md",
+    ".github/workflows/contaos-frontend-zero-drift.yml",
+    ".github/workflows/contaos-teste-c-independente.yml",
+    ".github/workflows/p0-nr001-anti-recurrence.yml",
+    "scripts/ci/merge-group-context.mjs",
+    "scripts/ci/merge-group-context.test.mjs",
+    "scripts/p0-rca-impact-gate.mjs",
+    "scripts/p0-rca-impact-gate.test.mjs"
+  ],
+  "plan_documento": "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/690",
+  "plan_base_sha": "3ee94171f2fc4cbec2e2d2b6f9efad88fc8ec9ff",
+  "plan_blob": "9d037a37df8ae177f7f02123932e0ca60e7e3f81",
+  "plan_aprovacao": "Validação nominal do escopo de implementação (após merge deste documento em main), limitada ao BUILD da #690 com ativação desabilitada. A emenda fecha as condições de arquitetura e a prova necessária para liberar a ativação.",
+  "justificativa": "Implementar contrato protegido, supervisor e watchdog no fluxo existente. Executar N01–N17 no escopo aplicável com RED/GREEN, testes de mutação e CI. A ativação da fila, a adaptação de guards existentes e a publicação privilegiada requerem a emenda prevista no PLAN e seus ensaios. Não altera #679, frontend, backend, PROD ou types.ts.",
+  "emenda_fila": "docs/frontend/planos/EMENDA_P0_ABS_FILA_REVISAO_690_2026-11-20.md",
+  "decisao_titular": "https://github.com/contaos999999/contaos-hml-control/pull/691#pullrequestreview-5999963428",
+  "aprovacao_limite": "BUILD de código/testes sem ativação do publicador. O manifesto autoriza somente o diff da #690. O rollback, a origem confiável, a revisão nativa e a prova na fila são condições de ativação separadas.",
+  "ativacao_autorizada": false,
+  "full_diff": true
+}
