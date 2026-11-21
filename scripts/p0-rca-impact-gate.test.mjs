@@ -776,6 +776,39 @@ test("P0 NR-006 review rerun: newer Windows job failed or pending blocks previou
   }
 });
 
+
+test("P0 NR-006: visual ZIP from old Teste C job cannot survive newer attempt",()=>{
+  const f=paReviewRerunFixture();
+  f.checkRuns.push({id:992,
+    name:"Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+    head_sha:PA_HEAD,app:{id:15368},status:"completed",conclusion:"success",
+    details_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/779/job/992"});
+  const stale=paCheck(f);
+  assert.equal(stale.pass,false,JSON.stringify(stale));
+  assert.match(stale.issues.join(" "),/artefato/);
+  f.record.artifact={...f.record.artifact,id:9002,job_id:992,run_id:779,run_attempt:2};
+  f.artifact={...f.artifact,id:9002,workflow_run:{head_sha:PA_HEAD,id:779},
+    name:"contaos-teste-c-779-2"};
+  f.testCJob={...f.testCJob,id:992,run_id:779};
+  f.testCRun={...f.testCRun,id:779,run_attempt:2};
+  f.testCAttemptJobs={total_count:1,jobs:[{id:992,run_id:779,conclusion:"success"}]};
+  setPaRecord(f);
+  assert.equal(paCheck(f).pass,true,JSON.stringify(paCheck(f)));
+});
+test("P0 NR-006: newer Teste C pending or failed must block prior visual receipt",()=>{
+  for(const status of ["queued","completed"]){
+    const f=paReviewRerunFixture();
+    f.checkRuns.push({id:992,
+      name:"Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+      head_sha:PA_HEAD,app:{id:15368},status,
+      conclusion:status==="queued"?null:"failure",
+      details_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/779/job/992"});
+    const out=paCheck(f);
+    assert.equal(out.pass,false,JSON.stringify(out));
+    assert.equal(out.release,"NO_GO");
+  }
+});
+
 test("P0 NR-006 RED: newer green cannot launder failed recorded historical causal job",()=>{
   const f=paReviewRerunFixture({prior:"failure"});
   assert.equal(paCheck(f).pass,false);
