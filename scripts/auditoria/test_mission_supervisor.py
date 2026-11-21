@@ -31,6 +31,7 @@ def contract():
         "target": {"pr": 679, "head": H, "branch": "main"},
         "allowed_dependencies": [690],
         "dependency_heads": {"690": H},
+        "last_proven": {"merge_sha": H, "verified": True},
         "activation_authorized": False,
         "requirements": {"required_checks": list(mod.REQUIRED)},
         "immutable_plan": {
