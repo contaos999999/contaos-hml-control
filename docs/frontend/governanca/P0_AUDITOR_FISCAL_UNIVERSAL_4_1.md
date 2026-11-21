@@ -176,16 +176,6 @@ Esta regra complementa a seção 5.3 e prevalece para cada novo HEAD do BUILD #6
 
 **Precedência:** proibições expressas de ativação, requisitos do PLAN protegido, autorização do titular e segurança fail-closed sempre prevalecem. As regras posteriores mais específicas de §5.5 e §5.6 esclarecem a forma de executar a pré-auditoria e não dispensam a auditoria independente. Este capítulo não concede autorização administrativa adicional nem altera o manifesto protegido.
 
-## 6. Implantação, rollback e continuidade
-
-1. Esta PR implementa código de diagnóstico, testes offline e adaptação de compatibilidade à fila **sem ativação**, com CI e revisão técnica independente de código.
-2. A integração via PR protegida preserva a história anterior; não editar `src/`, `public/`, backend, PROD, `types.ts` ou dependências.
-3. Se um guard precisar de outro arquivo fora dos 14 caminhos, interromper a alteração e solicitar emenda de allowlist; nunca criar exceção ampla.
-4. Caso os testes de fila ou revogação falhem, registrar causa e manter o check privilegiado desabilitado, sem alterar proteções existentes.
-5. Após merge protegido e readback, registrar HEAD, blobs, checks, evidências e próxima tarefa no checkpoint oficial. Certificação depende das provas efetivas e não da presença deste documento.
-
-**Zero-Drift:** identidade visual N/A, por não alterar telas, componentes, rotas ou marca. Economia Lovable: uso de GitHub e CI, sem alterações de interface.
-
 ## 5.7. Prova de completude semântica: fontes reais, relações e contraditório
 
 **GATE SEPARADO DO BUILD, NÃO SATISFEITO.** O PLAN protegido (blob `9d037a37df8ae177f7f02123932e0ca60e7e3f81`) contém 145 linhas físicas e 87 trechos de conteúdo sob o inventário textual; a emenda protegida (blob `cba58ceb1f88fa6774ccf1ce1661ac9f5a942c1b`) contém 69 linhas físicas e 31 trechos. Assim, **118 trechos-fonte** precisam ser reconciliados com **137 identificadores normativos** anteriormente fixados; as contagens representam unidades de naturezas diferentes e não demonstram cobertura mútua. Um trecho pode produzir mais de uma regra; uma regra pode ter várias fontes. Nenhum destes números pode justificar `SEMANTIC_COMPLETENESS=PASS`.
@@ -212,3 +202,13 @@ Esta regra complementa a seção 5.3 e prevalece para cada novo HEAD do BUILD #6
 **Status interpretativo desta primeira matriz:** identificadas relações e expectativas; **nenhuma linha obtém PASS sem confrontar testemunha positiva, contraprova executada, a fonte LIVE exata e o parecer independente**. Para a certificação integral ainda se exige a análise de todos os trechos e identificadores, incluindo relações de ordem superior, não apenas estas dez interações exemplificadas.
 
 **Decisão vinculante:** `SEMANTIC_COMPLETENESS=INCONCLUSIVE`; `MERGE=NO_GO`; `ACTIVATION=NO_GO`. O CI de origem documental pode passar sem que a completude semântica passe. A auditoria independente deve contraditar a matriz e o conjunto de casos, sem reaproveitar a autodeclaração do implementador como prova independente.
+
+## 6. Implantação, rollback e continuidade
+
+1. Esta PR implementa código de diagnóstico, testes offline e adaptação de compatibilidade à fila **sem ativação**, com CI e revisão técnica independente de código.
+2. A integração via PR protegida preserva a história anterior; não editar `src/`, `public/`, backend, PROD, `types.ts` ou dependências.
+3. Se um guard precisar de outro arquivo fora dos 14 caminhos, interromper a alteração e solicitar emenda de allowlist; nunca criar exceção ampla.
+4. Caso os testes de fila ou revogação falhem, registrar causa e manter o check privilegiado desabilitado, sem alterar proteções existentes.
+5. Após merge protegido e readback, registrar HEAD, blobs, checks, evidências e próxima tarefa no checkpoint oficial. Certificação depende das provas efetivas e não da presença deste documento.
+
+**Zero-Drift:** identidade visual N/A, por não alterar telas, componentes, rotas ou marca. Economia Lovable: uso de GitHub e CI, sem alterações de interface.
