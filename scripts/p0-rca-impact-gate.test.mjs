@@ -848,10 +848,13 @@ test("P0 adversarial upload labeled Teste C is not Playwright proof",()=>{
   assert.equal(paCheck(f).pass,false);
 });
 
-async function paLiveVerification({mutateReadback,manual=false}={}) {
+async function paLiveVerification({mutateReadback,manual=false,pending=false}={}) {
   const f=paFixture();
+  if(pending){f.checkRuns[0].status="in_progress";f.checkRuns[0].conclusion=null;f.comments=[];}
   let commentsRead=0, checksRead=0, reviewsRead=0, prReads=0, artifactReads=0;
+  const observedPaths=[];
   const fakeApi=async path=>{
+    observedPaths.push(path);
     if(path.endsWith("/pulls/690")) {prReads++;const pr=structuredClone(f.pr);if(prReads===2 && mutateReadback==="draft") pr.draft=true;return pr;}
     if(path.endsWith("/git/ref/heads/main")) return {object:{sha:PA_BASE}};
     if(path.endsWith("/commits/"+PA_HEAD+"/check-runs?per_page=100")){
@@ -895,7 +898,7 @@ async function paLiveVerification({mutateReadback,manual=false}={}) {
     }
     throw Error("unmocked GitHub list "+path);
   };
-  return verifyAssistantPrecertInGithub({
+  const outcome=await verifyAssistantPrecertInGithub({
     token:"fixture-only",api:fakeApi,list:fakeList,
     baseManifest:()=>f.manifest,
     env:{GITHUB_EVENT_NAME:manual?"workflow_dispatch":"pull_request",
@@ -904,6 +907,9 @@ async function paLiveVerification({mutateReadback,manual=false}={}) {
       GITHUB_REPOSITORY:"contaos999999/contaos-hml-control",
       INPUT_PREAUDIT_PR:"690",INPUT_PREAUDIT_HEAD:PA_HEAD,INPUT_PREAUDIT_BASE:manual?"":PA_BASE},
   });
+  if(pending) outcome.provenanceCalls=observedPaths.filter(p=>
+    /\/actions\/(artifacts|jobs|runs)\//.test(p)).length;
+  return outcome;
 }
 test("P0 adversarial GitHub live verified snapshot can release precert only",async()=>{
   const o=await paLiveVerification();
@@ -962,6 +968,15 @@ test("P0 V2 negative: no auto PASS from legacy 8 dimensions",()=>{
     assert.equal(paCheck(f).pass,false);
     assert.match(paCheck(f).issues.join(" "),/parecer V2/);
   }
+});
+
+test("P0 V2 NR-006 avoid API storm while current CI or comment is incomplete",async()=>{
+  const result=await paLiveVerification({pending:true});
+  assert.equal(result.pass,false);
+  assert.equal(result.release,"NO_GO");
+  assert.equal(result.provenanceCalls,0,"no Actions GET before required CI and receipt");
+  assert.match(result.issues.join(" "),/check obrigatorio ainda nao pronto/);
+  assert.match(result.issues.join(" "),/parecer estruturado V2/);
 });
 
 test("P0 V2 live consumer dispatch verifies current PR rather than stale CI verdict",async()=>{
