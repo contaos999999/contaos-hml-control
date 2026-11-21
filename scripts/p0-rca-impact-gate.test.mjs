@@ -1115,6 +1115,36 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
 });
 
 
+test("P0 META_PROTOCOL vacuous passed witness with unchanged name never proves semantics",()=>{
+  const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
+  const tests={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
+    rca:readFileSync("scripts/p0-rca-impact-gate.test.mjs","utf8"),
+    queue:readFileSync("scripts/ci/merge-group-context.test.mjs","utf8")};
+  const source=readFileSync("scripts/p0-rca-impact-gate.mjs","utf8");
+  const workflow=readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8");
+  const manifest={full_diff:true,ativacao_autorizada:false,files:[...PA_FILES]};
+  const args={protocol,tests,source,workflow,manifest,
+    mission:{activation_authorized:false},paths:[...PA_FILES]};
+  const baseline=auditFullProtocolCoverage(args);
+  assert.equal(baseline.verdict,"COVERAGE_MAPPED_NOT_EXECUTED",JSON.stringify(baseline.issues));
+  const exact=[
+    "    def test_N17_revoked_specific_authorization_cannot_pass(self):",
+    "        e = evidence(); e[\"owner_authorization\"][\"revoked\"] = True",
+    "        self.assertIn(\"N17\", codes(mod.evaluate(contract(), e)))",
+  ].join("\\n");
+  assert.ok(tests.python.includes(exact),"expected reviewed source of witness");
+  const substituted=tests.python.replace(exact,[
+    "    def test_N17_revoked_specific_authorization_cannot_pass(self):",
+    "        pass  # Name kept, assertion removed: vacuous successful test",
+  ].join("\\n"));
+  assert.notEqual(substituted,tests.python);
+  const result=auditFullProtocolCoverage({...args,tests:{...tests,python:substituted}});
+  assert.equal(result.verdict,"CHANGES_REQUESTED",
+    "a renamed or assertion-free witness must invalidate the reviewed proof");
+  assert.ok(result.issues.some(x=>x.includes("SEMANTIC_SOURCE_BLOB")),
+    JSON.stringify(result.issues));
+});
+
 test("P0 META_PROTOCOL root obligations must reject omitted or added clauses",()=>{
   const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
   const tests={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
