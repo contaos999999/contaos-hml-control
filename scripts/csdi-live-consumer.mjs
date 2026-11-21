@@ -27,12 +27,15 @@ function readWitnessArchive(zip) {
   if(decoded.length!==uncompressed) throw Error('ZIP_SIZE_MISMATCH');
   return {bytes:decoded,witnesses:JSON.parse(decoded.toString('utf8'))};
 }
-function validateWitnessContents(w,receipt) {
+export function validateWitnessContents(w,receipt) {
   if(!w || w.schema!=='contaos.csdi.witnesses.v1' || w.head!==receipt.head || w.base!==receipt.base) return false;
   const axes=['literal','systematic','teleological','temporal','security','operational','adversarial'];
   if(!Array.isArray(w.clauses) || w.clauses.length!==receipt.coverage.clauses_total || !Array.isArray(w.rules) || w.rules.length!==receipt.coverage.rules_total || !Array.isArray(w.pairs) || w.pairs.length!==receipt.coverage.pairs_total) return false;
-  const unique=(arr)=>new Set(arr.map(x=>x.id)).size===arr.length && arr.every(x=>typeof x.id==='string' && x.id.length>0 && x.status==='PASS' && typeof x.evidence_ref==='string' && x.evidence_ref.length>0);
+  const unique=(arr)=>new Set(arr.map(x=>x.id)).size===arr.length && arr.every(x=>typeof x.id==='string' && x.id.length>0 && x.status==='PASS' && typeof x.evidence_ref==='string' && x.evidence_ref.length>0 && /^[a-f0-9]{64}$/i.test(x.evidence_sha256||''));
   if(!unique(w.clauses) || !unique(w.rules) || !unique(w.pairs)) return false;
+  if(!w.clauses.every(c=>axes.every(name=>c.axes?.[name]?.status==='PASS' && /^[a-f0-9]{64}$/i.test(c.axes[name].evidence_sha256||'')))) return false;
+  if(!w.rules.every(r=>axes.every(name=>r.axes?.[name]?.status==='PASS' && /^[a-f0-9]{64}$/i.test(r.axes[name].evidence_sha256||'')))) return false;
+  if(!w.pairs.every(p=>axes.every(name=>p.axes?.[name]?.status==='PASS' && /^[a-f0-9]{64}$/i.test(p.axes[name].evidence_sha256||'')))) return false;
   if(!Array.isArray(w.axes) || w.axes.length!==7 || !axes.every(name=>w.axes.some(a=>a.name===name && a.status==='PASS' && Array.isArray(a.witness_ids) && a.witness_ids.length>0 && a.witness_ids.every(id=>w.clauses.some(c=>c.id===id))))) return false;
   return true;
 }
