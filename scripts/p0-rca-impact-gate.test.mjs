@@ -724,6 +724,52 @@ const setPaRecord = (f) => {
   f.comments[0].body="<!-- "+ASSISTANT_PREAUDIT_MARKER+"\n"+
     JSON.stringify(f.record)+"\n-->";
 };
+
+// P0-ABS NR-006 RED for the actual PR #690 review-triggered workflow
+// duplicate: historical validations reject a perfectly valid second run.
+function paReviewRerunFixture({state="success", prior="success"}={}){
+  const f=paFixture();
+  const priorCheck=f.checkRuns.find(x=>x.name===ADVERSARIAL_V2_CHECK_NAME);
+  priorCheck.started_at="2026-11-21T12:20:00Z";
+  priorCheck.conclusion=prior;
+  f.v2Job.conclusion=prior;
+  f.reviews=[{id:80,commit_id:PA_HEAD,user:{login:"Edivan5002"},
+    state:"COMMENTED",submitted_at:"2026-11-21T12:30:00Z"}];
+  const next={...structuredClone(priorCheck),
+    id:990,started_at:"2026-11-21T12:35:00Z",
+    status:state==="queued"?"queued":"completed",
+    conclusion:state==="queued"?null:state,
+    details_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/778/job/990"};
+  f.checkRuns.push(next);
+  f.newV2Job={...structuredClone(f.v2Job),id:990,run_id:778,
+    status:state==="queued"?"queued":"completed",
+    conclusion:state==="queued"?null:state};
+  return f;
+}
+test("P0 NR-006 RED: COMMENTED starts second successful V2 run on unchanged HEAD",()=>{
+  const f=paReviewRerunFixture();
+  assert.equal(paCheck(f).pass,true,
+    "new successful review-triggered run must not poison legitimate same-HEAD precert");
+});
+test("P0 NR-006 RED: most recent failed or queued V2 check defeats older PASS",()=>{
+  for(const state of ["queued","failure"]){
+    const f=paReviewRerunFixture({state});
+    const z=paCheck(f);
+    assert.equal(z.pass,false,state);
+    assert.equal(z.release,"NO_GO");
+  }
+});
+test("P0 NR-006 RED: newer green cannot launder failed recorded historical causal job",()=>{
+  const f=paReviewRerunFixture({prior:"failure"});
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 NR-006 RED: review veto overrides both successful runs on same HEAD",()=>{
+  const f=paReviewRerunFixture();
+  f.reviews.push({id:81,commit_id:PA_HEAD,user:{login:"Edivan5002"},
+    state:"CHANGES_REQUESTED",submitted_at:"2026-11-21T12:40:00Z"});
+  assert.equal(paCheck(f).pass,false);
+});
+
 test("P0 PA positive: recorded assistant PASS exact HEAD/base with 5 CI and visual artifact permits precert only",()=>{
   const f=paFixture(),result=paCheck(f);
   assert.equal(result.pass,true);
@@ -848,8 +894,8 @@ test("P0 adversarial upload labeled Teste C is not Playwright proof",()=>{
   assert.equal(paCheck(f).pass,false);
 });
 
-async function paLiveVerification({mutateReadback,manual=false,pending=false}={}) {
-  const f=paFixture();
+async function paLiveVerification({mutateReadback,manual=false,pending=false,extraV2=null}={}) {
+  const f=extraV2?paReviewRerunFixture({state:extraV2}):paFixture();
   if(pending){f.checkRuns[0].status="in_progress";f.checkRuns[0].conclusion=null;f.comments=[];}
   let commentsRead=0, checksRead=0, reviewsRead=0, prReads=0, artifactReads=0;
   const observedPaths=[];
@@ -861,11 +907,13 @@ async function paLiveVerification({mutateReadback,manual=false,pending=false}={}
       checksRead++;
       const runs=structuredClone(f.checkRuns);
       if(checksRead===2 && mutateReadback==="checks") runs[0].conclusion="failure";
+      if(checksRead===2 && mutateReadback==="newV2fail") runs.find(x=>x.id===990).conclusion="failure";
       return {total_count:runs.length,check_runs:runs};
     }
     if(path.endsWith("/actions/artifacts/9001")) {artifactReads++;const art=structuredClone(f.artifact);if(artifactReads===2 && mutateReadback==="artifact") art.expired=true;return art;}
     if(path.endsWith("/actions/jobs/888")) return f.testCJob;
     if(path.endsWith("/actions/jobs/889")) return f.v2Job;
+    if(path.endsWith("/actions/jobs/990")) return f.newV2Job;
     for(const [i,id] of [44880700882,44880711676].entries()){
       if(path.endsWith("/actions/runs/"+id)) return f.redProvenance[i].run;
       if(path.endsWith("/actions/runs/"+id+"/jobs?per_page=100")) return f.redProvenance[i].jobs;
@@ -968,6 +1016,22 @@ test("P0 V2 negative: no auto PASS from legacy 8 dimensions",()=>{
     assert.equal(paCheck(f).pass,false);
     assert.match(paCheck(f).issues.join(" "),/parecer V2/);
   }
+});
+
+test("P0 NR-006 RED live: native COMMENTED rerun with 2 green jobs can release",async()=>{
+  const out=await paLiveVerification({extraV2:"success"});
+  assert.equal(out.pass,true,JSON.stringify(out));
+  assert.equal(out.release,"PRE_CERTIFICATION_ONLY");
+});
+test("P0 NR-006 RED live: pending latest rerun must not reuse old passing job",async()=>{
+  const out=await paLiveVerification({extraV2:"queued"});
+  assert.equal(out.pass,false);
+  assert.equal(out.release,"NO_GO");
+});
+test("P0 NR-006 RED live: changed newer check at readback revokes green",async()=>{
+  const out=await paLiveVerification({extraV2:"success",mutateReadback:"newV2fail"});
+  assert.equal(out.pass,false);
+  assert.equal(out.release,"NO_GO");
 });
 
 test("P0 V2 API rate 403 is transient only with authenticated reset and remaining zero",()=>{
