@@ -614,6 +614,10 @@ export function validateAssistantPrecertRelease({
           !Number.isSafeInteger(attempt) || attempt <= 0 ||
           !Number.isSafeInteger(jobId) || jobId <= 0 ||
           artifact?.workflow_run?.id !== runId ||
+          // GitHub artifacts expose the *run*, but not the attempt.
+          // The upload action binds both IDs to its canonical artifact name.
+          artifact?.name !== "contaos-teste-c-" + runId + "-" + attempt ||
+          artifact?.name !== "contaos-teste-c-" + testCRun?.id + "-" + testCRun?.run_attempt ||
           testCJob?.id !== jobId ||
           testCJob?.run_id !== runId ||
           testCRun?.id !== runId ||
