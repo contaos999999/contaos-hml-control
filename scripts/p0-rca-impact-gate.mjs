@@ -667,6 +667,9 @@ export function validateAssistantPrecertRelease({
           run?.head_sha === expectedHead ||
           !validSha(run?.head_sha) ||
           run?.event !== "pull_request" ||
+          run?.head_branch !== "build/p0-abs-fiscal-universal" ||
+          !Array.isArray(run?.pull_requests) ||
+          !run.pull_requests.some(pr=>pr?.number===690) ||
           run?.path !== ".github/workflows/contaos-auditoria-controller.yml" ||
           run?.status !== "completed" || run?.conclusion !== "failure" ||
           !Array.isArray(jobs?.jobs) ||
