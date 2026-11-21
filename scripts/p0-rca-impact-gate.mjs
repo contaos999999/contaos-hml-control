@@ -1263,6 +1263,53 @@ export function verifySemanticSourceClaims(inventory,claims){
 /** Exhaustive seven-axis REVIEW WORKLIST over authenticated source spans.
  * A populated placeholder is never construed as an interpreted rule or proof.
  */
+
+/**
+ * Lossless candidate sentence partition: every byte of every protected
+ * source span appears exactly once. This is NOT normative atomization:
+ * sentences can still contain multiple duties/conditions and require review.
+ */
+export function inventorySemanticSentenceCandidates(inventory){
+  const candidates=[];const issues=[...(inventory?.issues||[])];
+  if(!inventory?.inventory_verified)issues.push("SEMANTIC_ATOMS_SOURCE_NOT_VERIFIED");
+  for(const row of inventory?.lines||[]){
+    const text=row.text;
+    if(typeof text!=="string"||!text.length){issues.push("SEMANTIC_ATOM_EMPTY_SOURCE");continue;}
+    const boundaries=[];const re=/[.!?]\\s+(?=[A-ZÀ-Ú0-9])/g;
+    for(const match of text.matchAll(re)){
+      if(match.index<4&&/^\\s*\\d+[.]\\s/.test(text))continue;
+      boundaries.push(match.index+match[0].length);
+    }
+    const ends=[...boundaries,text.length];let start=0;const pieces=[];
+    for(const end of ends){
+      const segment=text.slice(start,end);
+      if(!segment){issues.push("SEMANTIC_ATOM_EMPTY_SEGMENT");continue;}
+      const idx=pieces.length+1;
+      const id="ATOM-"+createHash("sha256")
+        .update(row.id+"\\0"+start+"\\0"+segment).digest("hex").slice(0,24);
+      pieces.push(segment);
+      candidates.push({id,source_id:row.id,path:row.path,line:row.line,
+        blob:row.blob,start,end,
+        text_sha256:createHash("sha256").update(segment).digest("hex"),
+        status:"UNREVIEWED",axes_unproven:SEMANTIC_AXES.length});
+      start=end;
+    }
+    if(pieces.join("")!==text||start!==text.length)
+      issues.push("SEMANTIC_ATOM_LOSSY_SPLIT: "+row.id);
+  }
+  const summaryDigest=createHash("sha256")
+    .update(candidates.map(x=>x.id+"|"+x.text_sha256).join("\\n"))
+    .digest("hex");
+  if(new Set(candidates.map(x=>x.id)).size!==candidates.length)
+    issues.push("SEMANTIC_ATOM_DUPLICATE_ID");
+  return {schema:"contaos.semantic-sentence-candidates.v1",
+    candidate_count:candidates.length,unreviewed:candidates.length,
+    source_span_count:inventory?.lines?.length||0,
+    candidates,inventory_sha256:summaryDigest,issues,
+    partition_verified:issues.length===0,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+
 export function buildSevenAxisSemanticBacklog(inventory){
   const slots=(inventory?.lines||[]).map(row=>({
     source_id:row.id,path:row.path,blob:row.blob,line:row.line,
@@ -2289,6 +2336,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) ===
           ({id,path,blob,line,text_sha256})),
         issues:inventory.issues,source_verified:inventory.inventory_verified,
         axis_backlog:buildSevenAxisSemanticBacklog(inventory),
+        sentence_candidates:inventorySemanticSentenceCandidates(inventory),
         semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
       console.log(JSON.stringify(result));
       if(!result.source_verified)process.exitCode=1;
