@@ -32,3 +32,13 @@ jobs:
           set -e
           test "$rc" -eq 2
           grep -q '"verdict":"BLOCKED"' /tmp/csdi-blocked.json
+
+      - name: Verify LIVE consumer fails closed without authenticated receipt
+        shell: bash
+        run: |
+          set +e
+          node scripts/csdi-live-consumer.mjs /nonexistent/csdi-receipt.json > /tmp/csdi-live-blocked.json
+          rc=$?
+          set -e
+          test "$rc" -eq 2
+          grep -q '"verdict":"BLOCKED"' /tmp/csdi-live-blocked.json
