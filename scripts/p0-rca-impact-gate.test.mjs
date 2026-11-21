@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, buildSevenAxisSemanticBacklog, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2001,6 +2001,29 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   assert.ok(out.lines.every(x=>x.line>0 && x.text_sha256.length===64));
   assert.equal(out.semantic_completeness,"INCONCLUSIVE");
   assert.equal(out.release,"NO_GO");
+  const sentenceInventory=inventorySemanticSentenceCandidates(out);
+  assert.equal(sentenceInventory.partition_verified,true);
+  assert.ok(sentenceInventory.candidate_count>out.lines.length);
+  assert.equal(sentenceInventory.candidate_count,sentenceInventory.unreviewed);
+  assert.equal(sentenceInventory.semantic_completeness,"INCONCLUSIVE");
+  assert.match(sentenceInventory.inventory_sha256,/^[a-f0-9]{64}$/);
+  const bySource=new Map(out.lines.map(x=>[x.id,x]));
+  for(const source of out.lines){
+    const chunks=sentenceInventory.candidates.filter(x=>x.source_id===source.id);
+    assert.ok(chunks.length>=1);
+    let cursor=0;
+    for(const chunk of chunks){
+      assert.equal(chunk.start,cursor);
+      assert.equal(chunk.blob,source.blob);
+      assert.equal(chunk.line,source.line);
+      assert.equal(chunk.status,"UNREVIEWED");
+      cursor=chunk.end;
+    }
+    assert.equal(cursor,source.text.length);
+  }
+  const forged=inventorySemanticSentenceCandidates({...out,inventory_verified:false});
+  assert.equal(forged.partition_verified,false);
+  assert.equal(forged.release,"NO_GO");
   const backlog=buildSevenAxisSemanticBacklog(out);
   assert.equal(backlog.axis_slots,826,"every one of the 118 spans needs seven individual axes");
   assert.equal(backlog.rows.length,118);
