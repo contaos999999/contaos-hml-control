@@ -785,6 +785,100 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
     rows,external:FULL_PROTOCOL_EXTERNAL.map(x=>({requirement:x,status:"BLOCKED_EXTERNAL_FOR_ACTIVATION"})),
     issues};
 }
+// Full execution happens in an isolated subprocess with credentials removed.
+// A matching title in source is NEVER an authorization proof.
+export function attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha}={}){
+  const issues=[...(coverage?.issues||[])];
+  const rows=[];
+  if(!validSha(head)||!validSha(base)||!validSha(checkoutSha))
+    issues.push("EXECUTION: SHA/base/checkout invalidos");
+  if(coverage?.verdict!=="COVERAGE_MAPPED_NOT_EXECUTED")
+    issues.push("EXECUTION: contrato incompleto ou nao mapeado");
+  const suiteKeys=["python","rca","queue"];
+  for(const key of suiteKeys){
+    const suite=suites?.[key];
+    if(!suite || suite.exitCode!==0 || !suite.passed ||
+        !Number.isSafeInteger(suite.executed)||suite.executed<1 ||
+        !(suite.outputSha256||"").match(/^[a-f0-9]{64}$/) ||
+        !Array.isArray(suite.successfulNames) ||
+        suite.successfulNames.length!==suite.executed ||
+        new Set(suite.successfulNames).size!==suite.successfulNames.length)
+      issues.push("EXECUTION: suite nao comprovada integralmente: "+key);
+  }
+  for(const row of coverage?.rows||[]){
+    if(!row.source){
+      rows.push({...row,execution:row.status==="STRUCTURAL_WITNESS"?
+        "STRUCTURAL_CHECK_ONLY":"UNPROVEN"});
+      if(row.status!=="STRUCTURAL_WITNESS")
+        issues.push("EXECUTION: controle sem testemunha: "+row.id);
+      continue;
+    }
+    const item=FULL_PROTOCOL_CASES.find(x=>x.id===row.id);
+    const suite=item&&suites?.[item.file];
+    const matches=Array.isArray(suite?.successfulNames)?
+      suite.successfulNames.filter(x=>x.includes(item.pattern)):[];
+    const good=suite?.passed===true && suite?.exitCode===0 &&
+      row.status==="TEST_DECLARED_NOT_EXECUTED" && matches.length>=1;
+    rows.push({...row,execution:good?"EXECUTED_PASS":"UNPROVEN",
+      suite:item?.file||null,matchedTests:matches,
+      outputSha256:suite?.outputSha256||null});
+    if(!good)issues.push("EXECUTION: requisito sem teste executado PASS: "+row.id);
+  }
+  return {schema:"contaos.full-protocol-executed.v2",
+    verdict:issues.length?"CHANGES_REQUESTED":"EXECUTED_PASS_FOR_BUILD_ONLY",
+    head,base,checkoutSha,requirements:rows.length,
+    executed:rows.filter(x=>x.execution==="EXECUTED_PASS").length,
+    structural:rows.filter(x=>x.execution==="STRUCTURAL_CHECK_ONLY").length,
+    rows,external:coverage?.external||[],issues,
+    suites:Object.fromEntries(suiteKeys.map(k=>[k,suites?.[k]?{
+      exitCode:suites[k].exitCode,executed:suites[k].executed,
+      outputSha256:suites[k].outputSha256,passed:suites[k].passed
+    }:null]))};
+}
+export function parseFullProtocolSuiteResult(key,result){
+  const output=(result?.stdout||"")+"\n"+(result?.stderr||"");
+  const outputSha256=createHash("sha256").update(output).digest("hex");
+  let successfulNames=[],executed=0,passed=false;
+  if(key==="python"){
+    successfulNames=[...output.matchAll(/^\s*(test_[A-Za-z0-9_]+) \(/gm)].map(x=>x[1]);
+    const n=/Ran (\d+) tests? in /m.exec(output);
+    executed=n?Number(n[1]):0;
+    passed=result?.status===0 && executed>0 &&
+      successfulNames.length===executed && /(?:^|\n)OK\s*(?:\n|$)/.test(output) &&
+      !/\b(?:FAILED|ERROR|FAIL) \(/.test(output);
+  }else{
+    successfulNames=[...output.matchAll(/^ok \d+ - (.+)$/gm)].map(x=>x[1].trim());
+    const n=/# tests (\d+)/.exec(output);
+    const passCount=/# pass (\d+)/.exec(output);
+    executed=n?Number(n[1]):0;
+    passed=result?.status===0 && executed>0 &&
+      successfulNames.length===executed &&
+      Number(passCount?.[1])===executed &&
+      /^# fail 0$/m.test(output) && /^# skipped 0$/m.test(output) &&
+      /^# cancelled 0$/m.test(output) && !/^not ok /m.test(output);
+  }
+  return {exitCode:result?.status??null,passed,executed,
+    successfulNames,outputSha256,
+    diagnostic:passed?null:output.slice(-1200)};
+}
+function runFullProtocolSuites(){
+  const definitions=[
+    ["python","python",["-B","scripts/auditoria/test_mission_supervisor.py"]],
+    ["rca",process.execPath,["--test","--test-reporter=tap",
+      "scripts/p0-rca-impact-gate.test.mjs"]],
+    ["queue",process.execPath,["--test","--test-reporter=tap",
+      "scripts/ci/merge-group-context.test.mjs"]],
+  ];
+  const safeEnv={...process.env,GITHUB_TOKEN:"",
+    CONTAOS_CANONICAL_READ_TOKEN:"",GH_TOKEN:"",GITHUB_PAT:""};
+  return Object.fromEntries(definitions.map(([key,bin,args])=>{
+    const result=spawnSync(bin,args,{encoding:"utf8",env:safeEnv,
+      timeout:180000,maxBuffer:12*1024*1024});
+    const parsed=parseFullProtocolSuiteResult(key,result);
+    if(result.error)parsed.diagnostic=String(result.error.message).slice(0,180);
+    return [key,parsed];
+  }));
+}
 function fullProtocolAuditFromCheckout(){
   const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
   const mission=JSON.parse(readFileSync("docs/frontend/governanca/MISSAO_ATIVA_4_1.json","utf8"));
@@ -799,7 +893,19 @@ function fullProtocolAuditFromCheckout(){
     ":docs/frontend/planos/P0_GOV_PLAN_690.json"],{encoding:"utf8",timeout:15000}));
   const paths=execFileSync("git",["diff","--name-only",base,"HEAD"],
     {encoding:"utf8",timeout:15000}).trim().split("\n").filter(Boolean);
-  return auditFullProtocolCoverage({protocol,tests,mission,workflow,source,manifest,paths});
+  const coverage=auditFullProtocolCoverage({protocol,tests,mission,workflow,source,manifest,paths});
+  const checkoutSha=execFileSync("git",["rev-parse","HEAD"],
+    {encoding:"utf8",timeout:15000}).trim();
+  const head=process.env.INPUT_PREAUDIT_HEAD ||
+    execFileSync("git",["rev-parse","HEAD^2"],
+      {encoding:"utf8",timeout:15000}).trim();
+  if(!validSha(head)||!validSha(checkoutSha)||
+      (checkoutSha!==head &&
+        execFileSync("git",["rev-parse","HEAD^2"],
+          {encoding:"utf8",timeout:15000}).trim()!==head))
+    throw Error("full protocol: checkout/head mismatch");
+  const suites=runFullProtocolSuites();
+  return attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha});
 }
 
 export function parseAssistantPreaudit(body) {
@@ -1413,7 +1519,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) ===
     try{
       const audit=fullProtocolAuditFromCheckout();
       console.log(JSON.stringify(audit));
-      if(audit.verdict!=="COVERAGE_READY_FOR_EXECUTION")process.exitCode=1;
+      if(audit.verdict!=="EXECUTED_PASS_FOR_BUILD_ONLY")process.exitCode=1;
     }catch(e){console.error("P0 FULL_PROTOCOL BLOCKED: "+e.message);process.exitCode=1;}
   } else if (process.argv.includes("--verify-assistant-preaudit")) {
     verifyAssistantPrecertInGithub().then(result => {
