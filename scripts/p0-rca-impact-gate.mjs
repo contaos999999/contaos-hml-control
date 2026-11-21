@@ -930,7 +930,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="25801fdbeb0efef78600961fb394b33c8747f01a";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"f643dd59dea6de18e79f50b03528e1245c65f021",
+  rca:"e38479e95ccb27b2b4aee2031b9826e206d1cb3f",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -2629,6 +2629,11 @@ if (process.argv[1] && fileURLToPath(import.meta.url) ===
         axis_backlog:buildSevenAxisSemanticBacklog(inventory),
         sentence_candidates:inventorySemanticSentenceCandidates(inventory),
         reverse_coverage:auditSemanticReverseCoverage(inventory,buildSevenAxisSemanticBacklog(inventory)),
+        semantic_release_gate:await assessSemanticCompletenessGate({inventory,
+          worklist:buildSevenAxisSemanticBacklog(inventory),
+          sentenceInventory:inventorySemanticSentenceCandidates(inventory),
+          reverseCoverage:auditSemanticReverseCoverage(inventory,buildSevenAxisSemanticBacklog(inventory)),
+          head:git("rev-parse","HEAD")}),
         semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
       console.log(JSON.stringify(result));
       if(!result.source_verified)process.exitCode=1;
