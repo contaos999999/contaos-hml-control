@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -1986,5 +1986,52 @@ test("P0 V2 RED source cannot be arbitrary failed workflow",()=>{
   ]){const f=paFixture();mutate(f);
     const o=paCheck(f);assert.equal(o.pass,false);
     assert.match(o.issues.join(" "),/RED nao vinculado/);
+  }
+});
+
+
+test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehensive line inventory remains NO_GO",()=>{
+  const snapshots=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES).map(
+    ([path,blob])=>[path,{content:readFileSync(path,"utf8"),blob}]));
+  const out=inventoryProtectedSemanticLines(snapshots);
+  assert.deepEqual(out.issues,[]);
+  assert.equal(out.inventory_verified,true);
+  assert.ok(out.lines.length>137,"do not let 137 manually selected IDs hide unmapped prose");
+  assert.equal(new Set(out.lines.map(x=>x.id)).size,out.lines.length);
+  assert.ok(out.lines.every(x=>x.line>0 && x.text_sha256.length===64));
+  assert.equal(out.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(out.release,"NO_GO");
+  for(const [label,change] of [
+    ["missing source",s=>delete s[Object.keys(s)[0]]],
+    ["changed word",s=>{const p=Object.keys(s)[0];s[p].content+="\\nINJECTED RULE";}],
+    ["falsified blob",s=>{const p=Object.keys(s)[1];s[p].blob="a".repeat(40);}],
+    ["unknown source",s=>{s["injected.md"]={content:"test",blob:"x"};}],
+  ]){
+    const mutation=structuredClone(snapshots);change(mutation);
+    const rejected=inventoryProtectedSemanticLines(mutation);
+    assert.ok(rejected.issues.length>0,label);
+    assert.equal(rejected.inventory_verified,false,label);
+    assert.equal(rejected.release,"NO_GO",label);
+  }
+  const one=out.lines[0];
+  const base={source_id:one.id,path:one.path,blob:one.blob,line:one.line,
+    text_sha256:one.text_sha256,axes:{},negative_witnesses:[],
+    independent_review:null};
+  const incomplete=verifySemanticSourceClaims(out,[base]);
+  assert.equal(incomplete.verdict,"INCONCLUSIVE");
+  assert.ok(incomplete.issues.some(x=>x.includes("UNPROVEN_AXES")));
+  assert.ok(incomplete.issues.some(x=>x.includes("NO_EXECUTED_COUNTERPROOF")));
+  assert.ok(incomplete.issues.some(x=>x.includes("NO_INDEPENDENT_REVIEW")));
+  assert.equal(incomplete.unmapped.length,out.lines.length-1);
+  for(const mutation of [
+    [{...base,line:one.line+1}],
+    [{...base,text_sha256:"a".repeat(64)}],
+    [base,base],
+    [{...base,source_id:"SRC-UNRECOGNIZED"}],
+  ]){
+    const check=verifySemanticSourceClaims(out,mutation);
+    assert.ok(check.issues.length>0);
+    assert.equal(check.verdict,"INCONCLUSIVE");
+    assert.equal(check.release,"NO_GO");
   }
 });
