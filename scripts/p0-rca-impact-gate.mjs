@@ -1270,7 +1270,7 @@ export function buildSevenAxisSemanticBacklog(inventory){
     axes:Object.fromEntries(SEMANTIC_AXES.map(axis=>[axis,{
       status:"UNPROVEN",proof:null,negative_witness:null,
       independent_contradiction:null}])),
-    mentioned_rules:[...new Set((row.text.match(/\\b(?:N(?:0[1-9]|1[0-7])(?:\\([a-f]\\))?|NR-00[569]|P0-ABS-00[12])\\b/gi)||[]))],
+    mentioned_rules:[...new Set((row.text.match(/\b(?:N(?:0[1-9]|1[0-7])(?:\([a-f]\))?|NR-00[569]|P0-ABS-00[12])\b/gi)||[]))],
     semantic_status:"INCONCLUSIVE"
   }));
   const pairs=[];
