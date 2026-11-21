@@ -921,6 +921,33 @@ test("P0 FULL_PROTOCOL watchdog read-only permissions and hosted runner",()=>{
       /runs-on: ubuntu-22\.04/.test(bad) &&
       /persist-credentials: false/.test(bad)),"mutant must violate a security invariant");
 });
+test("P0 META_PROTOCOL six predecessor checks plus own gate no cycle",()=>{
+  const gate="P0-ABS Preauditoria Assistente (precert apenas)";
+  const expected=[
+    "ContaOS Frontend Zero-Drift",
+    "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+    "ContaOS P0-NR-001 Integridade e Provas",
+    "protect-types",
+    "Controlador offline Windows",
+  ];
+  assert.deepEqual([...PRECERT_REQUIRED_CHECKS],expected);
+  assert.equal(PRECERT_REQUIRED_CHECKS.length,5);
+  assert.equal(PRECERT_REQUIRED_CHECKS.includes("Controlador offline Windows"),true);
+  const prerequisites=[...PRECERT_REQUIRED_CHECKS,ADVERSARIAL_V2_CHECK_NAME];
+  assert.equal(prerequisites.length,6);
+  assert.equal(new Set(prerequisites).size,6);
+  assert.equal(prerequisites.includes(gate),false,
+    "a gate may not require its own output to be green before running");
+  const f=paFixture();
+  assert.ok(prerequisites.every(name=>f.checkRuns.some(x=>x.name===name)));
+  assert.equal(f.checkRuns.some(x=>x.name===gate),false);
+  const result=paCheck(f);
+  assert.equal(result.pass,true,"valid predecessor proof permits the gate to reach PASS");
+  assert.equal(result.release,"PRE_CERTIFICATION_ONLY");
+  // Seven contexts are observed AFTER the gate itself returns success.
+  assert.equal(prerequisites.length+1,7);
+});
+
 test("P0 FULL_PROTOCOL global checks bound to exact HEAD and issuer",()=>{
   const f=paFixture();
   const req=[...PRECERT_REQUIRED_CHECKS,ADVERSARIAL_V2_CHECK_NAME];
