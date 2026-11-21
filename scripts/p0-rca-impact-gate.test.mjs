@@ -2004,6 +2004,15 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   const backlog=buildSevenAxisSemanticBacklog(out);
   assert.equal(backlog.axis_slots,826,"every one of the 118 spans needs seven individual axes");
   assert.equal(backlog.rows.length,118);
+  assert.equal(backlog.normative_rule_count,137);
+  assert.equal(backlog.normative_axis_slots,959);
+  assert.equal(backlog.anchored_normative_rules,10);
+  assert.equal(backlog.unlinked_normative_rules,127);
+  for(let n=1;n<=10;n++){
+    const rule=backlog.normative_rules.find(x=>x.rule_id==="PLAN-S3-"+String(n).padStart(2,"0"));
+    assert.ok(rule);
+    assert.equal(rule.source_links.length,1);
+  }
   assert.equal(backlog.semantic_completeness,"INCONCLUSIVE");
   assert.deepEqual(validateSevenAxisSemanticBacklog(out,backlog).issues,[]);
   for(const mutant of [
@@ -2012,6 +2021,10 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
     x=>x.rows[0].line++,
     x=>x.rows.push(structuredClone(x.rows[0])),
     x=>x.axis_slots=825,
+    x=>x.normative_rules.pop(),
+    x=>x.normative_rules[0].source_links=[],
+    x=>delete x.normative_rules[0].axes.authority,
+    x=>x.normative_axis_slots=958,
   ]){
     const changed=structuredClone(backlog);mutant(changed);
     const checked=validateSevenAxisSemanticBacklog(out,changed);
