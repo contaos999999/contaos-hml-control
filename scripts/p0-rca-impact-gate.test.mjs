@@ -2200,3 +2200,71 @@ test("P0 SEMANTIC COMPLETENESS requires authenticated 137/381/118/9316 evidence;
   assert.ok(badPairs.issues.includes("SEMANTIC_PAIR_UNKNOWN_OR_DUPLICATE"));
   assert.equal(badPairs.release,"NO_GO");
 });
+
+
+test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication or independence",async()=>{
+  // Entirely SYNTHETIC contract fixture, NEVER an actual semantic audit.
+  const snapshots=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES)
+    .map(([path,blob])=>[path,{content:readFileSync(path,"utf8"),blob}]));
+  const inventory=inventoryProtectedSemanticLines(snapshots);
+  const worklist=buildSevenAxisSemanticBacklog(inventory);
+  const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
+  const reverseCoverage=auditSemanticReverseCoverage(inventory,worklist);
+  const head="f5de50d3a5106caea62a5fbcf423299436bfdcc9";
+  const independent={head,review_id:72652,author:"implementer",
+    reviewer:"independent-auditor",state:"APPROVED",
+    scope:"FULL_SEMANTIC_CORPUS"};
+  const axes={authority:{actor:"authorized reviewer",source:"protected PLAN"},
+    antecedent:{event:"head transition",source:"protected PLAN"},
+    outcomes:{positive:{decision:"allow qualified review",source:"PLAN"},
+      negative:{decision:"fail closed",source:"PLAN"}},
+    interactions:{clauses:["PLAN","EMENDA"],counterexample:"revoked review still green"},
+    live:{source:"authenticated job",url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head},
+    revocation:{trigger:"new head",source:"PLAN"},
+    boundary:{phase:"BUILD",external:"activation separate"}};
+  const proof=id=>({id,head,
+    interpretation:"Synthetic fixture statement, not a substantive legal interpretation.",
+    counterexample:"Synthetic contradictory case, not executed evidence.",
+    witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head},
+    independent_review_id:independent.review_id});
+  const rules=worklist.normative_rules.map(x=>({
+    ...proof(x.rule_id),rule_id:x.rule_id,axes}));
+  const sentences=sentenceInventory.candidates.map(x=>({
+    ...proof(x.id),classification:"NORMATIVE",source_id:x.source_id,
+    text_sha256:x.text_sha256,axes}));
+  const sources=inventory.lines.map(x=>({
+    ...proof(x.id),source_id:x.id,text_sha256:x.text_sha256,blob:x.blob}));
+  const interactions=[];
+  for(let i=0;i<worklist.normative_rules.length;i++)
+    for(let j=i+1;j<worklist.normative_rules.length;j++){
+      const pair_id=worklist.normative_rules[i].rule_id+"|"+
+        worklist.normative_rules[j].rule_id;
+      interactions.push({...proof(pair_id),pair_id,decision:"NONINTERACTING"});
+    }
+  const input={inventory,worklist,sentenceInventory,reverseCoverage,
+    head,independent,rules,sentences,sources,interactions};
+  const withoutExternal=await assessSemanticCompletenessGate(input);
+  assert.equal(withoutExternal.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(withoutExternal.release,"NO_GO");
+  assert.ok(withoutExternal.issues.includes("SEMANTIC_AUTHENTICATED_CONTRADICTION_MISSING"));
+  let witnessCalls=0;
+  const fakeReview=await assessSemanticCompletenessGate({...input,
+    authenticateIndependent:async()=>false,
+    authenticateWitness:async()=>{witnessCalls++;return true;}});
+  assert.equal(fakeReview.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(witnessCalls,0,"failed independent audit cannot consume witnesses");
+  const fakeWitness=await assessSemanticCompletenessGate({...input,
+    authenticateIndependent:async()=>true,
+    authenticateWitness:async()=>{witnessCalls++;return false;}});
+  assert.equal(fakeWitness.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(witnessCalls,1);
+  // Unit contract only. Callback mock intentionally cannot be installed
+  // by production. This asserts the engine is not a permanently hardcoded
+  // INCONCLUSIVE predicate, NOT that the supplied synthetic facts are true.
+  const fixturePass=await assessSemanticCompletenessGate({...input,
+    authenticateIndependent:async()=>true,
+    authenticateWitness:async()=>true});
+  assert.equal(fixturePass.semantic_completeness,"PASS");
+  assert.equal(fixturePass.release,"SEMANTIC_REVIEW_CERTIFIED_ONLY");
+  assert.deepEqual(fixturePass.issues,[]);
+});
