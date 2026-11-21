@@ -691,7 +691,7 @@ function paFixture() {
     id:name.includes("Teste C")?888:(name===ADVERSARIAL_V2_CHECK_NAME?889:100+i), name, head_sha:PA_HEAD, app:{id:15368},
     details_url:name.includes("Teste C") ? "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/888" :
       name===ADVERSARIAL_V2_CHECK_NAME ? "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/889" :
-      "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/100",
+      "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/"+(100+i),
     status:"completed",conclusion:"success",
   })),
   artifact:{id:9001,name:"contaos-teste-c-777-1",digest:PA_DIGEST,expired:false,
@@ -741,7 +741,8 @@ function paReviewRerunFixture({state="success", prior="success"}={}){
     conclusion:state==="queued"?null:state,
     details_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/778/job/990"};
   f.checkRuns.push(next);
-  f.newV2Job={...structuredClone(f.v2Job),id:990,run_id:778,
+  f.receiptV2Job=structuredClone(f.v2Job);
+  f.v2Job={...structuredClone(f.v2Job),id:990,run_id:778,
     status:state==="queued"?"queued":"completed",
     conclusion:state==="queued"?null:state};
   return f;
@@ -763,6 +764,21 @@ test("P0 NR-006 RED: newer green cannot launder failed recorded historical causa
   const f=paReviewRerunFixture({prior:"failure"});
   assert.equal(paCheck(f).pass,false);
 });
+
+test("P0 NR-006 fail-closed: duplicate V2 check forged App/ID/URL cannot release",()=>{
+  for(const mutate of [
+    f=>f.checkRuns.find(x=>x.id===990).app.id=999,
+    f=>f.checkRuns.find(x=>x.id===990).details_url="https://example.test/evil",
+    f=>f.checkRuns.find(x=>x.id===990).id=889,
+    f=>f.checkRuns.find(x=>x.id===990).head_sha="f".repeat(40),
+    f=>f.v2Job.steps.find(x=>x.name==="P0 V2 LAYER 01").conclusion="failure",
+    f=>f.receiptV2Job.steps.find(x=>x.name==="P0 V2 CAUSAL_RED artifact_attempt").conclusion="failure",
+  ]){const f=paReviewRerunFixture();mutate(f);
+    const verdict=paCheck(f);assert.equal(verdict.pass,false,JSON.stringify(verdict));
+    assert.equal(verdict.release,"NO_GO");
+  }
+});
+
 test("P0 NR-006 RED: review veto overrides both successful runs on same HEAD",()=>{
   const f=paReviewRerunFixture();
   f.reviews.push({id:81,commit_id:PA_HEAD,user:{login:"Edivan5002"},
@@ -912,8 +928,8 @@ async function paLiveVerification({mutateReadback,manual=false,pending=false,ext
     }
     if(path.endsWith("/actions/artifacts/9001")) {artifactReads++;const art=structuredClone(f.artifact);if(artifactReads===2 && mutateReadback==="artifact") art.expired=true;return art;}
     if(path.endsWith("/actions/jobs/888")) return f.testCJob;
-    if(path.endsWith("/actions/jobs/889")) return f.v2Job;
-    if(path.endsWith("/actions/jobs/990")) return f.newV2Job;
+    if(path.endsWith("/actions/jobs/889")) return f.receiptV2Job??f.v2Job;
+    if(path.endsWith("/actions/jobs/990")) return f.v2Job;
     for(const [i,id] of [44880700882,44880711676].entries()){
       if(path.endsWith("/actions/runs/"+id)) return f.redProvenance[i].run;
       if(path.endsWith("/actions/runs/"+id+"/jobs?per_page=100")) return f.redProvenance[i].jobs;
