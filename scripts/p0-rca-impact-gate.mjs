@@ -1554,6 +1554,20 @@ export function validateSevenAxisSemanticBacklog(inventory,backlog){
  * Deliberately reports a non-releasable gap, including gaps not recognized
  * by the 137-item forward inventory.
  */
+
+const SEMANTIC_GAP_REVIEW_CATEGORIES=Object.freeze({
+  PLAN:Object.freeze({
+    3:"SCOPE_AND_STAGE",7:"LIVE_BASE_FRESHNESS",8:"INITIAL_MISSION_CONTEXT",
+    9:"AUDITOR_PROFILE_AND_METHOD",10:"WORKFLOW_BASELINE",
+    11:"PROTECTION_AND_REVIEW_AUTHORITY",12:"NORMATIVE_REFERENCE_DEPENDENCIES",
+    13:"FORBIDDEN_SCOPE",17:"UNCERTIFIED_BASELINE_GAP",
+    19:"AUDITOR_ROLE_AND_INDEPENDENCE",89:"RED_GREEN_SECURITY_GATES",
+    117:"AUDIT_TABLE_HEADER",123:"ZERO_DRIFT_HEADER",
+    128:"VISUAL_SCOPE_AND_TEST_C",133:"HISTORICAL_AUDIT_RECORD",
+    141:"HISTORICAL_AUDIT_RECORD"
+  }),
+  EMENDA:Object.freeze({7:"AMENDMENT_TABLE_HEADER",63:"ZERO_DRIFT_HEADER"})
+});
 export function auditSemanticReverseCoverage(inventory,worklist){
   const issues=[...(inventory?.issues||[]),...(worklist?.issues||[])];
   const byId=new Map((inventory?.lines||[]).map(row=>[row.id,row]));
@@ -1574,6 +1588,17 @@ export function auditSemanticReverseCoverage(inventory,worklist){
       source_id:row.id,path:row.path,blob:row.blob,
       line:row.line,text_sha256:row.text_sha256
     }));
+  const triaged=uncovered.map(row=>{
+    const collection=row.path.includes("/EMENDA_")?"EMENDA":"PLAN";
+    const category=SEMANTIC_GAP_REVIEW_CATEGORIES[collection][row.line]||null;
+    return {...row,category,
+      assessment:"REQUIRES_INDEPENDENT_SEMANTIC_REVIEW",
+      semantic_evidence:null,negative_witness:null};
+  });
+  if(triaged.some(row=>!row.category))
+    issues.push("SEMANTIC_REVERSE_UNCLASSIFIED_SOURCE_GAP");
+  // Classification is triage only. Never convert a content obligation into
+  // N/A or reduce the uncovered count without a source-bound review.
   const covered=[...references.entries()].filter(([,links])=>links.length).length;
   const extraUnproved=(worklist?.normative_rules||[]).filter(rule=>
     rule.rule_verdict!=="PASS"||Object.values(rule.axes||{})
@@ -1588,7 +1613,7 @@ export function auditSemanticReverseCoverage(inventory,worklist){
   // Never infer semantic PASS from a lack of uncovered lines.
   return {schema:"contaos.semantic-reverse-coverage.v1",
     source_count:byId.size,covered_source_count:covered,
-    uncovered_source_count:uncovered.length,uncovered,
+    uncovered_source_count:uncovered.length,uncovered:triaged,
     rule_count:worklist?.normative_rules?.length||0,
     unproven_rule_count:extraUnproved,invalid,issues,
     traceability_complete:uncovered.length===0&&invalid.length===0,
