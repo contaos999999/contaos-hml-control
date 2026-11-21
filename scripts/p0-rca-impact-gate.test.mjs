@@ -11,7 +11,8 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   ASSISTANT_PREAUDIT_MARKER, ASSISTANT_PREAUDIT_CRITERIA,
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
-  parseAssistantPreaudit, verifyAssistantPrecertInGithub } from "./p0-rca-impact-gate.mjs";
+  parseAssistantPreaudit, verifyAssistantPrecertInGithub,
+  auditFullProtocolCoverage, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -707,7 +708,8 @@ function paFixture() {
       conclusion:"failure"}]}]},
   })),
   v2Job:{id:889,run_id:777,head_sha:PA_HEAD,status:"completed",conclusion:"success",
-    steps:[...ADVERSARIAL_V2_STEP_NAMES,...ADVERSARIAL_V2_CAUSAL_CASES.map(x=>
+    steps:["P0 FULL_PROTOCOL matriz integral e testemunhas executaveis",
+      ...ADVERSARIAL_V2_STEP_NAMES,...ADVERSARIAL_V2_CAUSAL_CASES.map(x=>
       "P0 V2 CAUSAL_RED "+x.case_id)].map(name=>({name,status:"completed",conclusion:"success"}))},
   testCJob:{id:888,run_id:777,head_sha:PA_HEAD,
     status:"completed",conclusion:"success",
@@ -833,6 +835,81 @@ test("P0 NR-006 RED: review veto overrides both successful runs on same HEAD",()
   f.reviews.push({id:81,commit_id:PA_HEAD,user:{login:"Edivan5002"},
     state:"CHANGES_REQUESTED",submitted_at:"2026-11-21T12:40:00Z"});
   assert.equal(paCheck(f).pass,false);
+});
+
+
+test("P0 FULL_PROTOCOL origin: exact workflow/run/attempt cannot be replaced by names",()=>{
+  const check={id:991,name:"Controlador offline Windows",head_sha:PA_HEAD,
+    app:{id:15368},details_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/778/job/991"};
+  const job={id:991,run_id:778,head_sha:PA_HEAD,name:check.name,
+    status:"completed",conclusion:"success"};
+  const run={id:778,head_sha:PA_HEAD,head_branch:"build/p0-abs-fiscal-universal",
+    path:".github/workflows/contaos-auditoria-controller.yml",
+    event:"pull_request_review",run_attempt:2,status:"completed",conclusion:"success",
+    pull_requests:[{number:690,head:{sha:PA_HEAD},base:{sha:PA_BASE}}]};
+  const attemptJobs={total_count:1,jobs:[structuredClone(job)]};
+  const args={check,job,run,attemptJobs,head:PA_HEAD,base:PA_BASE,workflow:run.path};
+  assert.equal(verifyPrecertRunOrigin(args),true);
+  const mutators=[
+    x=>x.run.path=".github/workflows/other.yml",
+    x=>x.run.event="push",
+    x=>x.run.head_branch="other",
+    x=>x.run.pull_requests[0].number=679,
+    x=>x.run.pull_requests[0].base.sha="f".repeat(40),
+    x=>x.run.run_attempt=0,
+    x=>x.run.conclusion="failure",
+    x=>x.job.run_id=777,
+    x=>x.attemptJobs.jobs[0].id=900,
+    x=>x.attemptJobs.total_count=2,
+    x=>x.check.app.id=9999,
+  ];
+  for(const mutate of mutators){
+    const f=structuredClone(args);mutate(f);
+    assert.equal(verifyPrecertRunOrigin(f),false,JSON.stringify(f));
+  }
+  const inProgress=structuredClone(args);inProgress.run.status="in_progress";
+  inProgress.run.conclusion=null;
+  assert.equal(verifyPrecertRunOrigin(inProgress),true,
+    "parent run may still run preaudit after current job succeeded");
+});
+test("P0 FULL_PROTOCOL terminal checks never wait; pending checks never PASS",()=>{
+  const f=paFixture(), name=ADVERSARIAL_V2_CHECK_NAME;
+  assert.equal(classifyPrecertReadiness(f.checkRuns,name,PA_HEAD).state,"READY");
+  for(const conclusion of ["failure","cancelled","skipped","neutral","timed_out"]){
+    const bad=structuredClone(f.checkRuns);
+    const target=bad.find(x=>x.name===name);
+    target.status="completed";target.conclusion=conclusion;
+    assert.equal(classifyPrecertReadiness(bad,name,PA_HEAD).state,"TERMINAL");
+  }
+  const queued=structuredClone(f.checkRuns);
+  const latest=queued.find(x=>x.name===name);
+  latest.status="queued";latest.conclusion=null;
+  assert.equal(classifyPrecertReadiness(queued,name,PA_HEAD).state,"PENDING");
+});
+test("P0 FULL_PROTOCOL matrix is fail-closed for absent N17 and missing critical control",()=>{
+  const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
+  const tests={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
+    rca:readFileSync("scripts/p0-rca-impact-gate.test.mjs","utf8"),
+    queue:readFileSync("scripts/ci/merge-group-context.test.mjs","utf8")};
+  const source=readFileSync("scripts/p0-rca-impact-gate.mjs","utf8");
+  const workflow=readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8");
+  const manifest={full_diff:true,ativacao_autorizada:false,files:[...PA_FILES]};
+  const fixture={protocol,tests,source,workflow,manifest,
+    mission:{activation_authorized:false},paths:[...PA_FILES]};
+  const ok=auditFullProtocolCoverage(fixture);
+  assert.equal(ok.verdict,"COVERAGE_READY_FOR_EXECUTION",JSON.stringify(ok.issues));
+  assert.ok(ok.requirements>=55,"integral protocol matrix not just old findings");
+  const missing=auditFullProtocolCoverage({...fixture,tests:{...tests,
+    python:tests.python.replaceAll("test_N17_","test_NEUTRALIZED_")}});
+  assert.equal(missing.verdict,"CHANGES_REQUESTED");
+  assert.ok(missing.issues.some(x=>x.includes("N17")));
+  const omitted=auditFullProtocolCoverage({...fixture,
+    source:source.replaceAll("downloadPrecertArtifactDigest","OMITTED_ZIP")});
+  assert.equal(omitted.verdict,"CHANGES_REQUESTED");
+  assert.ok(omitted.issues.some(x=>x.includes("ZIP_REAL_BYTES")));
+  const unauthorized=auditFullProtocolCoverage({...fixture,
+    mission:{activation_authorized:true}});
+  assert.equal(unauthorized.verdict,"CHANGES_REQUESTED");
 });
 
 test("P0 PA positive: recorded assistant PASS exact HEAD/base with 5 CI and visual artifact permits precert only",()=>{
@@ -1013,6 +1090,8 @@ async function paLiveVerification({mutateReadback,manual=false,pending=false,ext
   };
   const outcome=await verifyAssistantPrecertInGithub({
     token:"fixture-only",api:fakeApi,list:fakeList,
+    originVerify:async()=>true,
+    zipDigest:async()=>({digest:f.artifact.digest,bytes:1024}),
     baseManifest:()=>f.manifest,
     env:{GITHUB_EVENT_NAME:manual?"workflow_dispatch":"pull_request",
       GITHUB_REF:manual?"refs/heads/build/p0-abs-fiscal-universal":"refs/pull/690/merge",
