@@ -839,6 +839,15 @@ function gitBlobId(content){
   return createHash("sha1").update(header).update(bytes).digest("hex");
 }
 
+// Normative BUILD tests prove NO-GO behavior for future activation, not
+// that a dedicated App, live merge queue or third-party N17(c) ran.
+const ACTIVATION_ONLY_PROTOCOL_IDS=new Set([
+  "S3-N17C-THIRD-AUTHOR","S3-N17C-TWO-APPROVALS","S3-N17C-EXTERNAL",
+  "S4-APP-ONLY","S4-ENTRY-SHA-BASE","S4-GROUP-REVALIDATE",
+  "S5-QUEUE-SINGLE-PR","S5-REVOCATION","S5-NO-WEAK-PROVIDER",
+  "S5-ADMIN-AUTH","S5-RULESET-READBACK",
+]);
+
 const FULL_PROTOCOL_EXTERNAL=[
   "N17(c): autoria terceira e duas aprovacoes elegiveis em fila real",
   "HML: sessao autenticada e isolamento RLS/tenant",
@@ -908,6 +917,8 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
         .map(m=>m[1]||m[2]):[];
     const ok=names.some(name=>name.includes(item.pattern));
     rows.push({id:item.id,status:ok?"TEST_DECLARED_NOT_EXECUTED":"MISSING_TEST",
+      scope:ACTIVATION_ONLY_PROTOCOL_IDS.has(item.id)?
+        "BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL":"BUILD",
       source:PROTOCOL_FULL_AUDIT_FILES[item.file],witness:item.pattern});
     if(!ok)issues.push("Protocolo sem caso executavel: "+item.id+" / "+item.pattern);
   }
@@ -1003,7 +1014,9 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
       suite.successfulNames.filter(x=>x.includes(item.pattern)):[];
     const good=suite?.passed===true && suite?.exitCode===0 &&
       row.status==="TEST_DECLARED_NOT_EXECUTED" && matches.length>=1;
-    rows.push({...row,execution:good?"EXECUTED_PASS":"UNPROVEN",
+    rows.push({...row,execution:good?
+      (row.scope==="BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL"?
+        "BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED":"EXECUTED_PASS"):"UNPROVEN",
       suite:item?.file||null,matchedTests:matches,
       outputSha256:suite?.outputSha256||null});
     if(!good)issues.push("EXECUTION: requisito sem teste executado PASS: "+row.id);
@@ -1012,8 +1025,12 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
     verdict:issues.length?"CHANGES_REQUESTED":"EXECUTED_PASS_FOR_BUILD_ONLY",
     head,base,checkoutSha,requirements:rows.length,
     executed:rows.filter(x=>x.execution==="EXECUTED_PASS").length,
+    activationBlocked:rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED").length,
     structural:rows.filter(x=>x.execution==="STRUCTURAL_CHECK_ONLY").length,
-    rows,external:coverage?.external||[],issues,
+    rows,external:[...(coverage?.external||[]),
+      ...rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED")
+        .map(x=>({requirement:x.id,status:"BLOCKED_EXTERNAL_FOR_ACTIVATION",
+          negativeBuildTest:x.matchedTests?.[0]||null}))],issues,
     suites:Object.fromEntries(suiteKeys.map(k=>[k,suites?.[k]?{
       exitCode:suites[k].exitCode,executed:suites[k].executed,
       outputSha256:suites[k].outputSha256,passed:suites[k].passed,diagnostic:suites[k].passed?null:suites[k].diagnostic
