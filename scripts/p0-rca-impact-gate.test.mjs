@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus } from "./p0-rca-impact-gate.mjs";
+import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -137,6 +137,25 @@ test("NR-005 parser rejeita nome com quebra de linha", () => {
 });
 test("NR-005 parser rejeita status não previsto", () => {
   assert.throws(() => parseFullDiffNameStatus("Z\0docs/a.md\0"), /tipo de diff/);
+});
+test("NR-005 push documental sem associacao de PR e FAIL", () => {
+  assert.throws(() => uniquePrAssociation([]), /PR autenticada unica/);
+});
+test("NR-005 PR ambigua ou numero falsificado e FAIL", () => {
+  assert.throws(() => uniquePrAssociation([{number:690},{number:691}]), /PR autenticada unica/);
+  assert.throws(() => uniquePrAssociation([{number:"690"}]), /PR autenticada unica/);
+  assert.equal(uniquePrAssociation([{number:690}]), 690);
+});
+test("NR-005 mudanca de modo T nao e omitida do diff", () => {
+  assert.deepEqual(parseFullDiffNameStatus("T\0scripts/ci/m.js\0"), ["scripts/ci/m.js"]);
+});
+test("NR-005 symlink e gitlink proibidos no BUILD autorizado", () => {
+  const p="scripts/ci/m.js",hash="a".repeat(40);
+  assert.equal(safeTreeEntry("100644 blob "+hash+"\t"+p+"\0",p), true);
+  assert.equal(safeTreeEntry("100755 blob "+hash+"\t"+p+"\0",p), true);
+  assert.equal(safeTreeEntry("120000 blob "+hash+"\t"+p+"\0",p), false);
+  assert.equal(safeTreeEntry("160000 commit "+hash+"\t"+p+"\0",p), false);
+  assert.equal(safeTreeEntry("",p), true);
 });
 const files690 = [
   "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md",

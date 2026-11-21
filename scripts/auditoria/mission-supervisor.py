@@ -107,11 +107,10 @@ def evaluate(contract, evidence):
     note = lambda code, message: issues.append({"code": code, "detail": message})
     status = contract["state"]
     if status == "CANCELLED_BY_OWNER":
-        receipt = contract["cancellation_receipt"]
-        if receipt.get("owner_authorized") is True and nonempty(receipt.get("decision_id")):
-            return {"state": status, "eligible": False, "certified": False, "issues": []}
-        note("N10", "cancellation without authenticated owner receipt")
-        return {"state": "BLOCKED_EXTERNAL", "eligible": False, "certified": False, "issues": issues}
+        # A cancellation claim in an untrusted JSON cannot confer authority.
+        note("N10", "offline receipt cannot authenticate cancellation by owner")
+        return {"state": "BLOCKED_EXTERNAL", "eligible": False, "certified": False,
+                "authoritative": False, "issues": issues}
 
     if evidence.get("repo") != contract["repo"]:
         note("N02", "repository outside mission contract")
@@ -179,7 +178,7 @@ def evaluate(contract, evidence):
         auth = evidence["owner_authorization"]
         if (auth.get("head") != evidence.get("head") or
             auth.get("base") != evidence.get("live_base") or
-            auth.get("review_id") != (review or {}).get("id") or
+            auth.get("review_id") != (review.get("id") if isinstance(review, dict) else None) or
             auth.get("revoked") is not False):
             note("N17", "authorization stale or revoked")
     audit = evidence.get("independent_audit")

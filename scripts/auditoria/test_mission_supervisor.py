@@ -195,12 +195,14 @@ class MissionSupervisorTests(unittest.TestCase):
         c["cancellation_receipt"] = {"owner_authorized": False}
         self.assertEqual(mod.evaluate(c, evidence())["state"], "BLOCKED_EXTERNAL")
 
-    def test_N10_authentic_cancellation_not_certification(self):
+    def test_N10_unverified_json_receipt_cannot_cancel_mission(self):
         c = contract(); c["state"] = "CANCELLED_BY_OWNER"
         c["cancellation_receipt"] = {"owner_authorized": True, "decision_id": "decision-123"}
         o = mod.evaluate(c, evidence())
-        self.assertEqual(o["state"], "CANCELLED_BY_OWNER")
+        self.assertEqual(o["state"], "BLOCKED_EXTERNAL")
+        self.assertIn("N10", codes(o))
         self.assertFalse(o["certified"])
+        self.assertFalse(o["authoritative"])
 
     def test_N11_missing_tool_blocked(self):
         e = evidence(); e["tooling"] = "unavailable"
@@ -259,6 +261,10 @@ class MissionSupervisorTests(unittest.TestCase):
     def test_N17_second_approval_not_proxy_for_revoked_auth(self):
         e = evidence(); e["review"]["second_eligible_approval"] = True
         e["owner_authorization"]["revoked"] = True
+        self.assertIn("N17", codes(mod.evaluate(contract(), e)))
+
+    def test_N17_malformed_review_cannot_be_approved(self):
+        e = evidence(); e["review"] = ["APPROVED"]
         self.assertIn("N17", codes(mod.evaluate(contract(), e)))
 
     def test_N17_missing_review_not_equivalent_to_pass(self):

@@ -332,9 +332,21 @@ export function parseFullDiffNameStatus(raw) {
   }
   return [...new Set(paths)];
 }
+export function uniquePrAssociation(list) {
+  if (!Array.isArray(list) || list.length !== 1 ||
+      !Number.isSafeInteger(list[0]?.number) || list[0].number < 1)
+    throw new Error("push sem PR autenticada unica, inclusive diff documental");
+  return list[0].number;
+}
+export function safeTreeEntry(raw, path) {
+  if (raw === "") return true; // Deleted path still checked against allowlist.
+  if (typeof raw !== "string") return false;
+  const m = /^(100644|100755) blob [0-9a-f]{40}\t([^\0]+)\0$/.exec(raw);
+  return Boolean(m && m[2] === path);
+}
 function fullDiffPaths(base, head) {
   const raw = execFileSync("git",
-    ["diff", "--name-status", "-z", "--find-renames", "--diff-filter=ACMRD", base, head],
+    ["diff", "--name-status", "-z", "--find-renames", "--diff-filter=ACMRTD", base, head],
     { encoding: "utf8", timeout: 20000 });
   return parseFullDiffNameStatus(raw);
 }
@@ -388,14 +400,9 @@ async function resolvePrContext(event, base, head, changed, token) {
       throw new Error("push/HEAD/base não comprovados");
     const list = await http("/repos/" + REPO + "/commits/" + payload.after + "/pulls", token);
     if (!Array.isArray(list)) throw new Error("associação autenticada de PR indisponível");
-    if (list.length === 0) {
-      // Uma alteração do BUILD não pode alegar N/A sem resolver a PR.
-      if (changed.some((p) => /mission-supervisor|merge-group-context|P0_AUDITOR_FISCAL_UNIVERSAL|MISSAO_ATIVA_4_1/.test(p)))
-        throw new Error("push do BUILD sem PR comprovada");
-      return { number: null, manifestBase: base };
-    }
-    if (list.length !== 1) throw new Error("push associado a PRs ambíguas");
-    const pr = await http("/repos/" + REPO + "/pulls/" + list[0].number, token);
+    // Branch protection requires a PR even for a docs-only push. Never N/A.
+    const associated = uniquePrAssociation(list);
+    const pr = await http("/repos/" + REPO + "/pulls/" + associated, token);
     const parents = git("rev-list", "--parents", "-n", "1", "HEAD").split(/\s+/);
     if (pr.merged_at == null || pr.base?.ref !== "main" ||
         pr.merge_commit_sha !== payload.after ||
@@ -418,7 +425,7 @@ function changes() {
     try { head = git("rev-parse", "HEAD^2"); } catch { head = "HEAD"; }
     base = git("merge-base", base, head);
   }
-  return { base, head, changed: git("diff", "--name-only", "--diff-filter=ACMRD", base, head).split("\n").filter(Boolean) };
+  return { base, head, changed: git("diff", "--name-only", "--diff-filter=ACMRTD", base, head).split("\n").filter(Boolean) };
 }
 async function http(path, token, raw = false) {
   if (!token) throw new Error("token de leitura indisponível.");
@@ -503,6 +510,12 @@ async function main() {
         } catch { throw new Error("PLAN #690 não antecede base protegida"); }
       }
       if (governancePlan?.full_diff === true) {
+        for (const path of fullPaths) {
+          const mode = execFileSync("git", ["ls-tree", "-z", head, "--", path],
+            {encoding:"utf8", timeout:20000});
+          if (!safeTreeEntry(mode, path))
+            throw new Error("full_diff inclui symlink/gitlink ou modo inseguro: "+path);
+        }
         const remotePaths = await githubPrFiles(prNumber, githubToken);
         if (!setEqual(fullPaths, remotePaths))
           throw new Error("full_diff local difere da lista paginada GitHub PR " + prNumber);
