@@ -743,8 +743,9 @@ export function validateAssistantPrecertRelease({
         record.artifact.id <= 0 || !/^sha256:[0-9a-f]{64}$/.test(record.artifact.digest || ""))
       add("parecer sem recibo de artefato visual");
     else {
-      const testC = checkRuns?.find(x =>
-        x?.name === "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente");
+      const testC=latestPrecertCheck(checkRuns,
+        "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        expectedHead);
       const runId = record.artifact.run_id;
       const attempt = record.artifact.run_attempt;
       const jobId = record.artifact.job_id;
