@@ -42,7 +42,7 @@ export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.en
     if (!Array.isArray(reviews) || !reviews.some(x=>x.user?.login?.toLowerCase()===receipt.reviewer_login.toLowerCase() && x.state==='APPROVED' && x.commit_id===receipt.head && x.user?.login!==pr.user?.login)) issues.push('INDEPENDENT_REVIEW_NOT_VERIFIED');
     if (plan.path!==`docs/frontend/planos/P0_GOV_PLAN_${receipt.pr_number}.json` || !plan.sha || !plan.content) issues.push('PROTECTED_PLAN_NOT_FOUND');
     else {
-      const decoded=Buffer.from(plan.content.replace(/\\s/g,''),'base64').toString('utf8');
+      const decoded=Buffer.from(plan.content.replace(/\s/g,''),'base64').toString('utf8');
       const parsed=JSON.parse(decoded);
       if(parsed.approved!==true || parsed.pr_number!==receipt.pr_number || parsed.ativacao_autorizada!==false || !parsed.files?.includes('scripts/csdi-live-consumer.mjs')) issues.push('PROTECTED_PLAN_SCOPE_MISMATCH');
     }
