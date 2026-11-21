@@ -376,6 +376,7 @@ def assess_watchdog(contract, data, now):
                                  "action": "REOPEN_OR_REPLAN_CLOSED_PR",
                                  "detail": "closed without merge; no resume for review"})
         if number == contract["target"]["pr"] and item["head_sha"] != contract["target"]["head"]:
+            all_required_complete = False
             findings.append({"code": "N05", "pr": number, "action": "REVALIDATE_HEAD"})
         if number in contract["allowed_dependencies"] and item["head_sha"] != contract["dependency_heads"][str(number)]:
             all_required_complete = False
