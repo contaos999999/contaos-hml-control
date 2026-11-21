@@ -770,6 +770,24 @@ const FULL_PROTOCOL_CRITICAL_TESTS=[
 ];
 FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_CRITICAL_TESTS);
 
+// The protected PLAN #689 is normative, not merely a hash of arbitrary bytes.
+// Its ten numbered mission rules each require their own executed BUILD witness.
+// Rules concerning actual privileged enforcement remain future external NO-GO.
+const FULL_PROTOCOL_PLAN_CORE_RULES=Object.freeze([
+  ["01","python","test_N03_changed_contract_source_rejected"],
+  ["02","rca","P0 FULL_PROTOCOL matrix is fail-closed for absent N17"],
+  ["03","python","test_N01_active_cannot_certify_from_reports"],
+  ["04","python","test_N09_simultaneous_lease_conflict_rejected"],
+  ["05","rca","P0 META_PROTOCOL auditor-only hosted runner and no visual source drift"],
+  ["06","python","test_N01_certified_without_real_receipts_is_rejected"],
+  ["07","python","test_watchdog_stalled_ci_blocks"],
+  ["08","python","test_N08_retry_without_delta_rejected"],
+  ["09","python","test_N06_author_cannot_review_own_work"],
+  ["10","python","test_N11_missing_tool_blocked"],
+]);
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_PLAN_CORE_RULES.map(([number,file,pattern])=>({
+  id:"PLAN-S3-RULE-"+number,file,pattern
+})));
 const FULL_PROTOCOL_51_GATES=[
   ["NR-005 / documentos comuns","rca","NR-005 checkpoint documental em PR posterior"],
   ["NR-005 / BUILD válido","rca","P0 PRE-AUDIT PR head/base avançada"],
@@ -897,7 +915,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"e9787acdf905e8dbe2fade4e349bb3720fa50345",
+  rca:"0afe77ad28859afed7d29a80fa08f408e4fe6659",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
