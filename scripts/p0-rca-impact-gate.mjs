@@ -505,6 +505,16 @@ export async function resolvePrContext(event, base, head, changed, token, eventB
       if (parents.length !== 3 || parents[0] !== payload.after ||
           parents[1] !== payload.before || parents[2] !== pr.head?.sha)
         throw new Error("merge da #690 não comprovado por pais/HEAD protegidos");
+      // Same names/modes are not sufficient: each merged blob must equal
+      // the exact audited PR HEAD blob, including renames and deletions.
+      for (const path of changed) {
+        const gitBlob = (rev) => {
+          try { return gitFn("rev-parse", rev + ":" + path); }
+          catch { return null; }
+        };
+        if (gitBlob(payload.after) !== gitBlob(pr.head.sha))
+          throw new Error("NR-005 conteúdo da árvore integrada difere do HEAD da PR: " + path);
+      }
     }
     return { number: pr.number, manifestBase: payload.before, ordinaryDocument: classified === "REGULAR_PR" && !changed.some(codeFile) };
   }
@@ -542,7 +552,7 @@ export function parseAssistantPreaudit(body) {
 }
 export function validateAssistantPrecertRelease({
   pr, currentMain, manifest, paths, comments, checkRuns, artifact,
-  expectedHead, expectedBase,
+  testCJob, expectedHead, expectedBase,
 } = {}) {
   const issues = [];
   const add = (reason) => issues.push(reason);
@@ -590,11 +600,33 @@ export function validateAssistantPrecertRelease({
     if (!record.artifact || !Number.isSafeInteger(record.artifact.id) ||
         record.artifact.id <= 0 || !/^sha256:[0-9a-f]{64}$/.test(record.artifact.digest || ""))
       add("parecer sem recibo de artefato visual");
-    else if (record.artifact.id !== artifact?.id ||
-        record.artifact.digest !== artifact?.digest ||
-        artifact?.expired === true ||
-        artifact?.workflow_run?.head_sha !== expectedHead)
-      add("artefato visual não confere com API no HEAD");
+    else {
+      const testC = checkRuns?.find(x =>
+        x?.name === "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente");
+      const runId = record.artifact.run_id;
+      const attempt = record.artifact.run_attempt;
+      const jobId = record.artifact.job_id;
+      if (record.artifact.id !== artifact?.id ||
+          record.artifact.digest !== artifact?.digest ||
+          artifact?.expired === true ||
+          artifact?.workflow_run?.head_sha !== expectedHead ||
+          !Number.isSafeInteger(runId) || runId <= 0 ||
+          !Number.isSafeInteger(attempt) || attempt <= 0 ||
+          !Number.isSafeInteger(jobId) || jobId <= 0 ||
+          artifact?.workflow_run?.id !== runId ||
+          testCJob?.id !== jobId ||
+          testCJob?.run_id !== runId ||
+          testCJob?.run_attempt !== attempt ||
+          testCJob?.head_sha !== expectedHead ||
+          testCJob?.status !== "completed" ||
+          testCJob?.conclusion !== "success" ||
+          !Array.isArray(testCJob?.steps) ||
+          !testCJob.steps.some(x => x?.conclusion === "success" &&
+            /playwright|teste c/i.test(x?.name || "")) ||
+          !testC?.details_url?.includes("/actions/runs/" + runId + "/") ||
+          !testC?.details_url?.endsWith("/job/" + jobId))
+        add("artefato sem vínculo autenticado ao run/attempt/job Playwright do check Teste C");
+    }
   }
   return {pass: issues.length === 0, verdict: issues.length ? "BLOCKED" : "PASS",
     release: issues.length === 0 ? "PRE_CERTIFICATION_ONLY" : "NO_GO",
@@ -644,24 +676,34 @@ export async function verifyAssistantPrecertInGithub({
   const artifact = Number.isSafeInteger(record?.artifact?.id) &&
     record.artifact.id > 0 ?
     await api("/repos/" + REPO + "/actions/artifacts/" + record.artifact.id) : null;
+  const runId = record?.artifact?.run_id;
+  const jobId = record?.artifact?.job_id;
+  const testCJob = Number.isSafeInteger(runId) && runId > 0 &&
+    Number.isSafeInteger(jobId) && jobId > 0 ?
+    await api("/repos/" + REPO + "/actions/jobs/" + jobId) : null;
   const manifest = baseManifest(base);
   // Original and destination paths of renamed files must both be authorized.
   const paths = files.flatMap(x => x?.status === "renamed" ?
     [x.previous_filename, x.filename] : [x?.filename]);
   const result = validateAssistantPrecertRelease({
     pr, currentMain: main?.object?.sha, manifest, paths,
-    comments, checkRuns: checks.check_runs, artifact,
+    comments, checkRuns: checks.check_runs, artifact, testCJob,
     expectedHead: head, expectedBase: base,
   });
   // Fail closed if the PR advances between check collection and decision.
-  const [latestPr, latestMain] = await Promise.all([
+  const [latestPr, latestMain, latestComments, latestChecks] = await Promise.all([
     api("/repos/" + REPO + "/pulls/" + number),
     api("/repos/" + REPO + "/git/ref/heads/main"),
+    list("/repos/" + REPO + "/issues/" + number + "/comments"),
+    api("/repos/" + REPO + "/commits/" + head + "/check-runs?per_page=100"),
   ]);
   if (latestPr?.head?.sha !== head || latestPr?.base?.sha !== base ||
       latestPr?.state !== pr?.state ||
-      latestMain?.object?.sha !== base)
-    result.issues.push("HEAD/base/PR changed during pre-cert readback");
+      latestMain?.object?.sha !== base ||
+      JSON.stringify(latestComments) !== JSON.stringify(comments) ||
+      latestChecks?.total_count !== latestChecks?.check_runs?.length ||
+      JSON.stringify(latestChecks?.check_runs) !== JSON.stringify(checks.check_runs))
+    result.issues.push("HEAD/base/parecer/checks changed during pre-cert readback");
   result.pass = result.issues.length === 0;
   result.verdict = result.pass ? "PASS" : "BLOCKED";
   result.release = result.pass ? "PRE_CERTIFICATION_ONLY" : "NO_GO";
