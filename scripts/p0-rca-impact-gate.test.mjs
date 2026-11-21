@@ -1003,6 +1003,38 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
   assert.equal(attestFullProtocolExecutions(coverage,suites,mismatched).verdict,"CHANGES_REQUESTED");
 });
 
+
+test("P0 META_PROTOCOL root obligations must reject omitted or added clauses",()=>{
+  const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
+  const tests={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
+    rca:readFileSync("scripts/p0-rca-impact-gate.test.mjs","utf8"),
+    queue:readFileSync("scripts/ci/merge-group-context.test.mjs","utf8")};
+  const source=readFileSync("scripts/p0-rca-impact-gate.mjs","utf8");
+  const workflow=readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8");
+  const manifest={full_diff:true,ativacao_autorizada:false,files:[...PA_FILES]};
+  const args={protocol,tests,source,workflow,manifest,
+    mission:{activation_authorized:false},paths:[...PA_FILES]};
+  const valid=auditFullProtocolCoverage(args);
+  assert.equal(valid.verdict,"COVERAGE_MAPPED_NOT_EXECUTED",JSON.stringify(valid.issues));
+  assert.ok(valid.requirements>=180);
+  const fragments=[
+    ["não aprova PR, não publica status e não executa merge","pode aprovar PR"],
+    ["NO-GO"+String.fromCharCode(96)+" de ativação: independente","PASS de ativação: independente"],
+    ["N17(c)=BLOCKED_EXTERNAL","N17(c)=PASS"],
+    ["revogação de autorização mesmo após","revogação dispensada mesmo após"],
+    ["não editar "+String.fromCharCode(96)+"src/","pode editar src/"],
+  ];
+  const mutants=fragments.map(([a,b])=>protocol.replace(a,b));
+  mutants.push(protocol+"\nNova obrigação administrativa ainda não cadastrada.");
+  for(const candidate of mutants){
+    assert.notEqual(candidate,protocol);
+    const result=auditFullProtocolCoverage({...args,protocol:candidate});
+    assert.equal(result.verdict,"CHANGES_REQUESTED");
+    assert.ok(result.issues.some(x=>x.startsWith("META_PROTOCOL:")),
+      JSON.stringify(result.issues));
+  }
+});
+
 test("P0 FULL_PROTOCOL matrix is fail-closed for absent N17 and missing critical control",()=>{
   const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
   const tests={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
