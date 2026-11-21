@@ -34,8 +34,11 @@ export function verifyMergeGroup({ event, entry, pull, liveBase, repo = REPO,
     reject("head_ref invalid/not current checkout");
   if (checkoutSha !== head || !isSha(checkoutSha))
     reject("checkout not group head SHA");
+  // Only valid Github GraphQL queue states which can be actively checked.
+  // QUEUED/LOCKED and especially UNMERGEABLE are not evidence of an
+  // active checks_requested group; unknown future values fail closed.
   if (!entry || typeof entry !== "object" || !nonempty(entry.id) ||
-      !nonempty(entry.state) || ["MERGED", "REMOVED", "DEQUEUED"].includes(entry.state))
+      !["AWAITING_CHECKS", "MERGEABLE"].includes(entry.state))
     reject("merge queue entry missing/inactive");
   if (!pull || pull.number !== hint || pull.baseRefName !== "main" ||
       !isSha(pull.headRefOid))

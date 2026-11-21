@@ -58,6 +58,22 @@ test("N05 base avançada bloqueia mesmo se ancestral", () =>
   check((f) => { f.liveBase = C; }, /group base/));
 test("N13 grupo removido é FAIL", () =>
   check((f) => { f.entry.state = "REMOVED"; }, /inactive/));
+test("N13 UNMERGEABLE nunca autoriza checks_requested", () =>
+  check((f) => { f.entry.state = "UNMERGEABLE"; }, /inactive/));
+test("N13 entrada QUEUED nao prova grupo ativo", () =>
+  check((f) => { f.entry.state = "QUEUED"; }, /inactive/));
+test("N13 entrada LOCKED nao prova grupo ativo", () =>
+  check((f) => { f.entry.state = "LOCKED"; }, /inactive/));
+test("N13 MERGEABLE ainda exige SHA e arvore exatos", () => {
+  const f = build();
+  f.entry.state = "MERGEABLE";
+  assert.equal(verifyMergeGroup(f).valid, true);
+  f.observedTree = C;
+  assert.equal(verifyMergeGroup(f).valid, false);
+});
+test("N13 estado inesperado falha fechado", () =>
+  check((f) => { f.entry.state = "UNKNOWN_FUTURE"; }, /inactive/));
+
 test("N13 entry sem baseCommit impede associação", () =>
   check((f) => { f.entry.baseCommit = null; }, /entry\/base\/head/));
 test("N13 entry headCommit stale impede associação", () =>
