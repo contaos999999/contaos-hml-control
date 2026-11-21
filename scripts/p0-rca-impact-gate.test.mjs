@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, buildSevenAxisSemanticBacklog, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2001,6 +2001,23 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   assert.ok(out.lines.every(x=>x.line>0 && x.text_sha256.length===64));
   assert.equal(out.semantic_completeness,"INCONCLUSIVE");
   assert.equal(out.release,"NO_GO");
+  const backlog=buildSevenAxisSemanticBacklog(out);
+  assert.equal(backlog.axis_slots,826,"every one of the 118 spans needs seven individual axes");
+  assert.equal(backlog.rows.length,118);
+  assert.equal(backlog.semantic_completeness,"INCONCLUSIVE");
+  assert.deepEqual(validateSevenAxisSemanticBacklog(out,backlog).issues,[]);
+  for(const mutant of [
+    x=>x.rows.pop(),
+    x=>delete x.rows[0].axes.authority,
+    x=>x.rows[0].line++,
+    x=>x.rows.push(structuredClone(x.rows[0])),
+    x=>x.axis_slots=825,
+  ]){
+    const changed=structuredClone(backlog);mutant(changed);
+    const checked=validateSevenAxisSemanticBacklog(out,changed);
+    assert.ok(checked.issues.length>0,"incomplete or false seven-axis worklist rejected");
+    assert.equal(checked.semantic_completeness,"INCONCLUSIVE");
+  }
   for(const [label,change] of [
     ["missing source",s=>delete s[Object.keys(s)[0]]],
     ["changed word",s=>{const p=Object.keys(s)[0];s[p].content+="\\nINJECTED RULE";}],
