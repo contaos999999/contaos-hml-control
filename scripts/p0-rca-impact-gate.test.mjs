@@ -1069,7 +1069,8 @@ async function paLiveVerification({mutateReadback,manual=false,pending=false,ext
     if(path.endsWith("/pulls/690/reviews")){
       reviewsRead++;
       const reviews=structuredClone(f.reviews);
-      if(reviewsRead===2 && mutateReadback==="reviews")
+      if((reviewsRead===2 && mutateReadback==="reviews") ||
+         (reviewsRead===3 && mutateReadback==="postZipReview"))
         reviews.push({id:81,commit_id:PA_HEAD,user:{login:"Edivan5002"},
           state:"CHANGES_REQUESTED",submitted_at:"2026-11-21T21:00:00Z"});
       return reviews;
@@ -1091,7 +1092,11 @@ async function paLiveVerification({mutateReadback,manual=false,pending=false,ext
   const outcome=await verifyAssistantPrecertInGithub({
     token:"fixture-only",api:fakeApi,list:fakeList,
     originVerify:async()=>true,
-    zipDigest:async()=>({digest:f.artifact.digest,bytes:1024}),
+    zipDigest:async()=>{
+      if(mutateReadback==="zipMissing")throw Error("404 missing ZIP");
+      if(mutateReadback==="zipMismatch")return {digest:"sha256:"+"f".repeat(64),bytes:1024};
+      return {digest:f.artifact.digest,bytes:1024};
+    },
     baseManifest:()=>f.manifest,
     env:{GITHUB_EVENT_NAME:manual?"workflow_dispatch":"pull_request",
       GITHUB_REF:manual?"refs/heads/build/p0-abs-fiscal-universal":"refs/pull/690/merge",
@@ -1107,6 +1112,20 @@ test("P0 adversarial GitHub live verified snapshot can release precert only",asy
   const o=await paLiveVerification();
   assert.equal(o.pass,true,JSON.stringify(o));
   assert.equal(o.release,"PRE_CERTIFICATION_ONLY");
+});
+test("P0 FULL_PROTOCOL ZIP mismatch and missing ZIP cannot certify",async()=>{
+  for(const scenario of ["zipMismatch","zipMissing"]){
+    const o=await paLiveVerification({mutateReadback:scenario});
+    assert.equal(o.pass,false,scenario);
+    assert.equal(o.release,"NO_GO",scenario);
+    assert.match(o.issues.join(" "),/ZIP:/,scenario);
+  }
+});
+test("P0 FULL_PROTOCOL late veto after ZIP bytes must fail final authorization readback",async()=>{
+  const o=await paLiveVerification({mutateReadback:"postZipReview"});
+  assert.equal(o.pass,false,JSON.stringify(o));
+  assert.equal(o.release,"NO_GO");
+  assert.match(o.issues.join(" "),/POST_ZIP_READBACK/);
 });
 test("P0 adversarial new CHANGES_REQUESTED during async API collection blocks",async()=>{
   const o=await paLiveVerification({mutateReadback:"comments"});
