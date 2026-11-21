@@ -1174,6 +1174,19 @@ test("P0 PLAN protected ten mission rules require ten distinct BUILD witnesses",
     assert.equal(row.status,"TEST_DECLARED_NOT_EXECUTED");
   }
   assert.equal(new Set(required).size,10);
+  const activationIds=[
+    "PLAN-S3.1-APP-IDENTITY","PLAN-S3.1-QUEUE",
+    "PLAN-S3.1-STATUS-API","PLAN-S3.1-GROUP-AUTH",
+    "PLAN-S3.1-OWNER-REVIEW","PLAN-S3.1-LIVE-TRIAL",
+    "PLAN-S3.1-ADMIN-AUTH",
+  ];
+  for(const id of activationIds){
+    const row=coverage.rows.find(x=>x.id===id);
+    assert.ok(row,"protected PLAN 3.1 activation obligation omitted: "+id);
+    assert.equal(row.scope,"BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL",
+      "a synthetic negative cannot be represented as real activation");
+    assert.equal(row.status,"TEST_DECLARED_NOT_EXECUTED");
+  }
 });
 
 test("P0 META_PROTOCOL vacuous passed witness with unchanged name never proves semantics",()=>{
