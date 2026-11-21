@@ -12,14 +12,17 @@ function readWitnessArchive(zip) {
   const eocd=zip.lastIndexOf(Buffer.from([0x50,0x4b,0x05,0x06]));
   if(eocd<0 || eocd+22>zip.length) throw Error('ZIP_EOCD_MISSING');
   const count=zip.readUInt16LE(eocd+10), offset=zip.readUInt32LE(eocd+16);
-  if(count!==1 || count>100 || offset>=zip.length) throw Error('ZIP_ENTRY_COUNT_INVALID');
+  if(zip.readUInt16LE(eocd+4)!==0 || zip.readUInt16LE(eocd+6)!==0 || zip.readUInt16LE(eocd+8)!==1 || count!==1 || offset>=zip.length) throw Error('ZIP_ENTRY_COUNT_INVALID');
   if(zip.readUInt32LE(offset)!==0x02014b50) throw Error('ZIP_CENTRAL_INVALID');
-  const method=zip.readUInt16LE(offset+10), compressed=zip.readUInt32LE(offset+20), uncompressed=zip.readUInt32LE(offset+24);
+  const flags=zip.readUInt16LE(offset+8), method=zip.readUInt16LE(offset+10), compressed=zip.readUInt32LE(offset+20), uncompressed=zip.readUInt32LE(offset+24);
+  if(flags & 0x1 || flags & 0x40 || flags & 0x2000) throw Error('ZIP_UNSUPPORTED_FLAGS');
   const nameLen=zip.readUInt16LE(offset+28), extraLen=zip.readUInt16LE(offset+30), commentLen=zip.readUInt16LE(offset+32);
   const name=zip.subarray(offset+46,offset+46+nameLen).toString('utf8');
   if(name!=='csdi-witnesses.json' || extraLen>4096 || commentLen>4096 || uncompressed>5*1024*1024 || compressed>5*1024*1024 || ![0,8].includes(method)) throw Error('ZIP_WITNESS_INVALID');
   const local=zip.readUInt32LE(offset+42);
   if(local+30>zip.length || zip.readUInt32LE(local)!==0x04034b50) throw Error('ZIP_LOCAL_INVALID');
+  if(zip.readUInt16LE(local+8)!==method || zip.readUInt16LE(local+6)!==flags) throw Error('ZIP_HEADER_MISMATCH');
+  if(zip.subarray(local+30,local+30+zip.readUInt16LE(local+26)).toString('utf8')!==name) throw Error('ZIP_FILENAME_MISMATCH');
   const start=local+30+zip.readUInt16LE(local+26)+zip.readUInt16LE(local+28);
   if(start+compressed>zip.length) throw Error('ZIP_DATA_TRUNCATED');
   const payload=zip.subarray(start,start+compressed);
@@ -78,6 +81,7 @@ export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.en
     const artifact=Array.isArray(artifacts.artifacts) ? artifacts.artifacts.find(a=>a.id===receipt.github_artifact_id && a.workflow_run?.id===receipt.github_run_id && !a.expired && a.size_in_bytes>0) : null;
     if (!artifact) issues.push('ARTIFACT_NOT_VERIFIED');
     else {
+      if(artifact.size_in_bytes>100*1024*1024) throw Error('ARTIFACT_SIZE_LIMIT');
       const archive=await fetchImpl(`https://api.github.com/repos/${repository}/actions/artifacts/${receipt.github_artifact_id}/zip`,{headers,redirect:'follow'});
       if (!archive.ok) issues.push('ARTIFACT_DOWNLOAD_FAILED');
       else {
