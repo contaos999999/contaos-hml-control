@@ -37,6 +37,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
@@ -61,9 +63,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: P0 V2 CAUSAL_RED watchdog_postmerge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -B scripts/auditoria/test_mission_supervisor.py MissionSupervisorTests.test_v2_causal_watchdog_historical_red_then_green
+      - name: P0 V2 CAUSAL_RED artifact_attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 CAUSAL_RED artifact_attempt:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-causal-artifact.tap
+          grep -Fqx '# pass 1' /tmp/p0-causal-artifact.tap
+          grep -Fqx '# fail 0' /tmp/p0-causal-artifact.tap
+      - name: P0 V2 CAUSAL_RED review_comment
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 CAUSAL_RED review_comment:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-causal-review.tap
+          grep -Fqx '# pass 1' /tmp/p0-causal-review.tap
+          grep -Fqx '# fail 0' /tmp/p0-causal-review.tap
       - name: P0 V2 LAYER 01
         shell: bash
         run: |
