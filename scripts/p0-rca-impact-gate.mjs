@@ -598,7 +598,8 @@ const v2AttestedJob=(check, job, head)=>
   check.details_url==="https://github.com/"+REPO+"/actions/runs/"+
     job.run_id+"/job/"+job.id &&
   Array.isArray(job.steps) &&
-  [...ADVERSARIAL_V2_STEP_NAMES,
+  ["P0 FULL_PROTOCOL matriz integral e testemunhas executaveis",
+    ...ADVERSARIAL_V2_STEP_NAMES,
     ...ADVERSARIAL_V2_CAUSAL_CASES.map(x=>"P0 V2 CAUSAL_RED "+x.case_id)]
     .every(name=>job.steps.filter(step=>step?.name===name &&
       step.status==="completed" && step.conclusion==="success").length===1);
