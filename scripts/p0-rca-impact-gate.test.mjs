@@ -825,7 +825,7 @@ test("P0 adversarial upload labeled Teste C is not Playwright proof",()=>{
   assert.equal(paCheck(f).pass,false);
 });
 
-async function paLiveVerification({mutateReadback}={}) {
+async function paLiveVerification({mutateReadback,manual=false}={}) {
   const f=paFixture();
   let commentsRead=0, checksRead=0;
   const fakeApi=async path=>{
@@ -862,8 +862,11 @@ async function paLiveVerification({mutateReadback}={}) {
   return verifyAssistantPrecertInGithub({
     token:"fixture-only",api:fakeApi,list:fakeList,
     baseManifest:()=>f.manifest,
-    env:{GITHUB_EVENT_NAME:"pull_request",GITHUB_REPOSITORY:"contaos999999/contaos-hml-control",
-      INPUT_PREAUDIT_PR:"690",INPUT_PREAUDIT_HEAD:PA_HEAD,INPUT_PREAUDIT_BASE:PA_BASE},
+    env:{GITHUB_EVENT_NAME:manual?"workflow_dispatch":"pull_request",
+      GITHUB_REF:manual?"refs/heads/build/p0-abs-fiscal-universal":"refs/pull/690/merge",
+      GITHUB_SHA:PA_HEAD,
+      GITHUB_REPOSITORY:"contaos999999/contaos-hml-control",
+      INPUT_PREAUDIT_PR:"690",INPUT_PREAUDIT_HEAD:PA_HEAD,INPUT_PREAUDIT_BASE:manual?"":PA_BASE},
   });
 }
 test("P0 adversarial GitHub live verified snapshot can release precert only",async()=>{
@@ -923,4 +926,12 @@ test("P0 V2 negative: no auto PASS from legacy 8 dimensions",()=>{
     assert.equal(paCheck(f).pass,false);
     assert.match(paCheck(f).issues.join(" "),/parecer V2/);
   }
+});
+
+test("P0 V2 live consumer dispatch verifies current PR rather than stale CI verdict",async()=>{
+  const valid=await paLiveVerification({manual:true});
+  assert.equal(valid.pass,true,JSON.stringify(valid));
+  const revoked=await paLiveVerification({manual:true,mutateReadback:"comments"});
+  assert.equal(revoked.pass,false);
+  assert.equal(revoked.release,"NO_GO");
 });
