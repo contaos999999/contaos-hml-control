@@ -842,9 +842,9 @@ test("P0 adversarial upload labeled Teste C is not Playwright proof",()=>{
 
 async function paLiveVerification({mutateReadback,manual=false}={}) {
   const f=paFixture();
-  let commentsRead=0, checksRead=0, reviewsRead=0;
+  let commentsRead=0, checksRead=0, reviewsRead=0, prReads=0, artifactReads=0;
   const fakeApi=async path=>{
-    if(path.endsWith("/pulls/690")) return f.pr;
+    if(path.endsWith("/pulls/690")) {prReads++;const pr=structuredClone(f.pr);if(prReads===2 && mutateReadback==="draft") pr.draft=true;return pr;}
     if(path.endsWith("/git/ref/heads/main")) return {object:{sha:PA_BASE}};
     if(path.endsWith("/commits/"+PA_HEAD+"/check-runs?per_page=100")){
       checksRead++;
@@ -852,7 +852,7 @@ async function paLiveVerification({mutateReadback,manual=false}={}) {
       if(checksRead===2 && mutateReadback==="checks") runs[0].conclusion="failure";
       return {total_count:runs.length,check_runs:runs};
     }
-    if(path.endsWith("/actions/artifacts/9001")) return f.artifact;
+    if(path.endsWith("/actions/artifacts/9001")) {artifactReads++;const art=structuredClone(f.artifact);if(artifactReads===2 && mutateReadback==="artifact") art.expired=true;return art;}
     if(path.endsWith("/actions/jobs/888")) return f.testCJob;
     if(path.endsWith("/actions/jobs/889")) return f.v2Job;
     for(const [i,id] of [44880700882,44880711676].entries()){
@@ -975,6 +975,36 @@ test("P0 V2 formal veto submitted while API reads must invalidate",async()=>{
   const f=await paLiveVerification({mutateReadback:"reviews"});
   assert.equal(f.pass,false);
   assert.match(f.issues.join(" "),/changed during pre-cert/);
+});
+
+
+test("P0 V2 RED NR-006: COMMENTED must not supersede CHANGES_REQUESTED",()=>{
+  const f=paFixture();
+  f.reviews=[
+    {id:50,commit_id:PA_HEAD,user:{login:"independent"},state:"CHANGES_REQUESTED",submitted_at:"2026-11-21T12:00:00Z"},
+    {id:51,commit_id:PA_HEAD,user:{login:"independent"},state:"COMMENTED",submitted_at:"2026-11-21T13:00:00Z"},
+  ];
+  assert.equal(paCheck(f).pass,false,"COMMENTED must not clear formal veto");
+});
+test("P0 V2 RED NR-006: APPROVED or DISMISSED are explicit decision transitions",()=>{
+  for(const resolution of ["APPROVED","DISMISSED"]){
+    const f=paFixture();f.reviews=[
+      {id:50,commit_id:PA_HEAD,user:{login:"independent"},state:"CHANGES_REQUESTED",submitted_at:"2026-11-21T12:00:00Z"},
+      {id:51,commit_id:PA_HEAD,user:{login:"independent"},state:"COMMENTED",submitted_at:"2026-11-21T12:30:00Z"},
+      {id:52,commit_id:PA_HEAD,user:{login:"independent"},state:resolution,submitted_at:"2026-11-21T13:00:00Z"},
+    ];
+    assert.equal(paCheck(f).pass,true,resolution);
+  }
+});
+test("P0 V2 RED NR-006: draft flipping during readback must revoke",async()=>{
+  const result=await paLiveVerification({mutateReadback:"draft"});
+  assert.equal(result.pass,false);
+  assert.equal(result.release,"NO_GO");
+});
+test("P0 V2 RED NR-006: artifact expires between reads must revoke",async()=>{
+  const result=await paLiveVerification({mutateReadback:"artifact"});
+  assert.equal(result.pass,false);
+  assert.equal(result.release,"NO_GO");
 });
 
 // Executable adversarial V2: one independently reported CI step per layer/lens.
