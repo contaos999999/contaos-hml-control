@@ -1059,6 +1059,15 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
   assert.ok(valid.external.every(x=>[
     "BLOCKED_EXTERNAL_FOR_ACTIVATION","BLOCKED_EXTERNAL_FOR_INDEPENDENT_AUDIT"
   ].includes(x.status)));
+  // A successful test with the expected words embedded later in its title
+  // is NOT the canonical executable witness for that requirement.
+  // Prevent a generic or unrelated test name from laundering multiple gates.
+  const forgedNames=structuredClone(suites);
+  for(const suite of Object.values(forgedNames)){
+    suite.successfulNames=suite.successfulNames.map(name=>"UNRELATED TEST: "+name);
+  }
+  assert.equal(attestFullProtocolExecutions(coverage,forgedNames,target).verdict,
+    "CHANGES_REQUESTED","substring-only witness must not certify BUILD");
   const noTest=structuredClone(suites);
   noTest.queue.successfulNames=noTest.queue.successfulNames.filter(x=>!x.includes("N13 prova git real"));
   noTest.queue.executed=noTest.queue.successfulNames.length;
