@@ -1031,8 +1031,10 @@ export async function verifyAssistantPrecertInGithub({
   const pending=readiness.filter(x=>x.state==="PENDING");
   if(terminal.length||pending.length||record?.head!==head||record?.base!==base||
       record?.verdict!=="PASS"){
+    const missingRecord=!record||record.head!==head||record.base!==base;
+    const rejectedRecord=!missingRecord&&record.verdict!=="PASS";
     return {pass:false,verdict:"BLOCKED",release:"NO_GO",head,base,
-      waitable:terminal.length===0 && pending.length>0,
+      waitable:terminal.length===0&&!rejectedRecord&&(pending.length>0||missingRecord),
       issues:[
         ...terminal.map(x=>"FALHA_TERMINAL: "+x.name+": "+x.reason),
         ...pending.map(x=>"PENDENTE: "+x.name+": "+x.reason),
@@ -1162,6 +1164,7 @@ export async function verifyAssistantPrecertInGithub({
   }
 
   result.pass = result.issues.length === 0;
+  result.waitable = false; // all post-preflight failures are terminal
   result.verdict = result.pass ? "PASS" : "BLOCKED";
   result.release = result.pass ? "PRE_CERTIFICATION_ONLY" : "NO_GO";
   return result;
