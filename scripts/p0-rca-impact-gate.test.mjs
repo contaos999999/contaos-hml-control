@@ -990,7 +990,15 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
   const target={head:PA_HEAD,base:PA_BASE,checkoutSha:PA_HEAD};
   const valid=attestFullProtocolExecutions(coverage,suites,target);
   assert.equal(valid.verdict,"EXECUTED_PASS_FOR_BUILD_ONLY",JSON.stringify(valid.issues));
-  assert.equal(valid.rows.filter(x=>x.source&&x.execution!=="EXECUTED_PASS").length,0);
+  assert.equal(valid.rows.filter(x=>x.source&&x.scope!=="BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL"&&
+    x.execution!=="EXECUTED_PASS").length,0);
+  const activation=valid.rows.filter(x=>x.scope==="BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL");
+  assert.ok(activation.length>=11,"privileged activation is never certified by synthetic tests");
+  assert.ok(activation.every(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED"));
+  assert.equal(valid.activationBlocked,activation.length);
+  assert.equal(valid.executed+valid.activationBlocked,valid.requirements);
+  assert.ok(activation.every(x=>valid.external.some(e=>e.requirement===x.id &&
+    e.status==="BLOCKED_EXTERNAL_FOR_ACTIVATION")));
   assert.ok(valid.external.length>=4);
   assert.ok(valid.external.every(x=>x.status==="BLOCKED_EXTERNAL_FOR_ACTIVATION"));
   const noTest=structuredClone(suites);
