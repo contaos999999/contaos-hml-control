@@ -306,8 +306,9 @@ class MissionSupervisorTests(unittest.TestCase):
     def test_watchdog_drift_head_blocks(self):
         data = self.watchdog_data()
         data[0]["head_sha"] = C
-        self.assertEqual(mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")["next_action"],
-                         "REVALIDATE_HEAD")
+        obj = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(obj["next_action"], "REVALIDATE_HEAD")
+        self.assertFalse(obj["required_checks_complete"])
 
     def test_watchdog_failure_ci_blocks(self):
         data = self.watchdog_data()
