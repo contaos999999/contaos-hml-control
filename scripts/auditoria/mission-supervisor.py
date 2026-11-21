@@ -69,6 +69,11 @@ def check_contract(contract):
         raise InvalidEvidence("dependencies invalid")
     if contract.get("activation_authorized") is not False:
         raise InvalidEvidence("privileged activation must remain disabled in BUILD")
+    checkpoint = contract.get("last_proven")
+    if (not isinstance(checkpoint, dict) or
+            not sha(checkpoint.get("merge_sha")) or
+            checkpoint.get("verified") is not True):
+        raise InvalidEvidence("N05: protected main checkpoint not verified")
     plan = contract.get("immutable_plan")
     if (not isinstance(plan, dict)
             or plan.get("path") != "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md"
@@ -247,8 +252,8 @@ def iso_time(value):
 def collect_watchdog(contract, api_get, expected_main):
     """Collect read-only Github evidence, binding checks to live PR HEADs."""
     check_contract(contract)
-    if not sha(expected_main):
-        raise InvalidEvidence("N03: main SHA absent")
+    if not sha(expected_main) or expected_main != contract["last_proven"]["merge_sha"]:
+        raise InvalidEvidence("N05: live main does not match protected checkpoint")
     def main_oid():
         live = api_get("/git/ref/heads/main")
         if not isinstance(live, dict) or live.get("object", {}).get("sha") != expected_main:
@@ -376,10 +381,11 @@ def assess_watchdog(contract, data, now):
             all_required_complete = False
             findings.append({"code": "N05", "pr": number, "action": "REVALIDATE_HEAD",
                              "detail": "dependency HEAD differs from protected mission pin"})
-        if not sha(item.get("base_sha")):
+        if (not sha(item.get("base_sha")) or
+                item["base_sha"] != contract["last_proven"]["merge_sha"]):
             all_required_complete = False
             findings.append({"code": "N05", "pr": number, "action": "REVALIDATE_HEAD",
-                             "detail": "PR base SHA not verified"})
+                             "detail": "PR base SHA differs from protected main checkpoint"})
         checks = item.get("checks")
         if not isinstance(checks, list) or any(not isinstance(x, dict) for x in checks):
             raise InvalidEvidence("N04: invalid check observations")
