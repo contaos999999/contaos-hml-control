@@ -956,3 +956,27 @@ test("P0 V2 formal veto submitted while API reads must invalidate",async()=>{
   assert.equal(f.pass,false);
   assert.match(f.issues.join(" "),/changed during pre-cert/);
 });
+
+// Executable adversarial V2: one independently reported CI step per layer/lens.
+test("P0 V2 LAYER 01: Frozen HEAD and base",async()=>{const f=paFixture(); assert.equal(paCheck(f).pass,true); f.currentMain="f".repeat(40); assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LAYER 02: Blind contract reconstruction",async()=>{const f=paFixture(); f.manifest.files[1]="src/rogue.ts"; assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LAYER 03: Threat and state mapping",async()=>{const f=paFixture(); f.pr.merged=true; assert.equal(paCheck(f).pass,false); f.pr.merged=false; f.pr.state="closed"; assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LAYER 04: Novel adversarial attacks",async()=>{const f=paFixture(); f.artifact.name="contaos-teste-c-777-2"; assert.equal(paCheck(f).pass,false); f.artifact.name="contaos-teste-c-777-1"; f.artifact.workflow_run.id=776; assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LAYER 05: RED origin evidence",async()=>{const f=paFixture(); f.record.adversarial_v2.red_runs=[]; setPaRecord(f); assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LAYER 06: GREEN negative regression",async()=>{const f=paFixture(); f.checkRuns[0].conclusion="failure"; assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LAYER 07: Lifecycle and postdecision revocation",async()=>{const f=paFixture(); f.reviews=[{id:900,commit_id:PA_HEAD,user:{login:"independent"},state:"CHANGES_REQUESTED",submitted_at:"2026-11-21T15:00:00Z"}]; assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LAYER 08: Full diff and integrations",async()=>{const f=paFixture(); f.paths.push("scripts/hidden.mjs"); assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LAYER 09: Meta-audit detects fabricated coverage",async()=>{const f=paFixture(); f.record.adversarial_v2.meta_audit="NOT_PROVEN"; setPaRecord(f); assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LAYER 10: Live gate on exact decision",async()=>{const v=await paLiveVerification({manual:true,mutateReadback:"reviews"}); assert.equal(v.pass,false); assert.equal(v.release,"NO_GO");});
+test("P0 V2 LENS security: Privilege boundary",async()=>{const f=paFixture();f.manifest.ativacao_autorizada=true;assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LENS provenance: Run attempt provenance",async()=>{const f=paFixture();f.artifact.name="contaos-teste-c-777-0";assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LENS concurrency: Readback race",async()=>{const v=await paLiveVerification({mutateReadback:"checks"});assert.equal(v.pass,false);});
+test("P0 V2 LENS lifecycle: Late review veto",async()=>{const v=await paLiveVerification({manual:true,mutateReadback:"reviews"});assert.equal(v.pass,false);});
+test("P0 V2 LENS state_machine: Inconsistent state",async()=>{const f=paFixture();f.pr.merged=true;f.pr.state="open";assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LENS integration: Artifact and job binding",async()=>{const f=paFixture();f.testCAttemptJobs.jobs[0].id=999;assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LENS resilience: Partial paginated API",async()=>{const f=paFixture();f.testCAttemptJobs.total_count=3;assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LENS governance: Independent veto",async()=>{const f=paFixture();f.reviews=[{id:9,commit_id:PA_HEAD,user:{login:"independent"},state:"CHANGES_REQUESTED",submitted_at:"2026-11-21T15:00:00Z"}];assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LENS supply_chain: Foreign check issuer",async()=>{const f=paFixture();f.checkRuns[0].app.id=999;assert.equal(paCheck(f).pass,false);});
+test("P0 V2 LENS legitimate_regression: Preserve success path",async()=>{const f=paFixture();assert.equal(paCheck(f).pass,true);const v=await paLiveVerification();assert.equal(v.pass,true);});
+test("P0 V2 LENS observability: Do not conceal failure",async()=>{const f=paFixture();f.testCRun.conclusion="failure";const out=paCheck(f);assert.equal(out.pass,false);assert.ok(out.issues.length>0);});
+test("P0 V2 LENS operational_environment: Different workflow context",async()=>{const f=paFixture();f.testCRun.path=".github/workflows/unrelated.yml";assert.equal(paCheck(f).pass,false);});
