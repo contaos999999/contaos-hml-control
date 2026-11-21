@@ -36,9 +36,21 @@ export function validateWitnessContents(w,receipt) {
   if(!Array.isArray(w.clauses) || w.clauses.length!==receipt.coverage.clauses_total || !Array.isArray(w.rules) || w.rules.length!==receipt.coverage.rules_total || !Array.isArray(w.pairs) || w.pairs.length!==receipt.coverage.pairs_total) return false;
   const unique=(arr)=>new Set(arr.map(x=>x.id)).size===arr.length && arr.every(x=>typeof x.id==='string' && x.id.length>0 && x.status==='PASS' && typeof x.evidence_ref==='string' && x.evidence_ref.length>0 && /^[a-f0-9]{64}$/i.test(x.evidence_sha256||''));
   if(!unique(w.clauses) || !unique(w.rules) || !unique(w.pairs)) return false;
+  // A digest declared by the witness is not evidence unless recomputed from
+  // the canonical payload and linked to the exact normative item.
+  if(!Array.isArray(w.evidence) || !w.evidence.length) return false;
+  const evidenceById=new Map();
+  for(const e of w.evidence){
+    if(typeof e?.id!=='string' || evidenceById.has(e.id) || typeof e?.payload!=='string' || !e.payload || typeof e?.sha256!=='string') return false;
+    if(createHash('sha256').update(e.payload,'utf8').digest('hex')!==e.sha256.toLowerCase()) return false;
+    evidenceById.set(e.id,e);
+  }
+  const hasEvidence=(item)=>{const e=evidenceById.get(item.evidence_ref);return e && e.sha256.toLowerCase()===item.evidence_sha256.toLowerCase() && e.subject_id===item.id;};
+  if(![...w.clauses,...w.rules,...w.pairs].every(hasEvidence)) return false;
   if(!w.clauses.every(c=>axes.every(name=>c.axes?.[name]?.status==='PASS' && /^[a-f0-9]{64}$/i.test(c.axes[name].evidence_sha256||'')))) return false;
   if(!w.rules.every(r=>axes.every(name=>r.axes?.[name]?.status==='PASS' && /^[a-f0-9]{64}$/i.test(r.axes[name].evidence_sha256||'')))) return false;
   if(!w.pairs.every(p=>axes.every(name=>p.axes?.[name]?.status==='PASS' && /^[a-f0-9]{64}$/i.test(p.axes[name].evidence_sha256||'')))) return false;
+  if(![...w.clauses,...w.rules,...w.pairs].every(item=>axes.every(name=>{const x=item.axes[name],e=evidenceById.get(x.evidence_ref);return e && e.subject_id===item.id && e.axis===name && e.sha256.toLowerCase()===x.evidence_sha256.toLowerCase();}))) return false;
   if(!Array.isArray(w.axes) || w.axes.length!==7 || !axes.every(name=>w.axes.some(a=>a.name===name && a.status==='PASS' && Array.isArray(a.witness_ids) && a.witness_ids.length>0 && a.witness_ids.every(id=>w.clauses.some(c=>c.id===id))))) return false;
   return true;
 }
