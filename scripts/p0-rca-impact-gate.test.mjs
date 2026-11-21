@@ -1196,6 +1196,33 @@ test("P0 §5.6 semantic completeness never inherits PASS from executable matrix"
   assert.equal(candidate.release,"NO_GO");
   assert.equal(candidate.reviewRequired,true,
     "self-authored seven-field attestations cannot replace independent review");
+  const closedIds=[
+    ...[["S3",10],["S31",9],["S4",14],["S5",18],["S6",6],
+      ["S7",3],["S8",7],["S9",2],["S10",2]].flatMap(([section,count])=>
+      Array.from({length:count},(_,i)=>"PLAN-"+section+"-"+
+        String(i+1).padStart(2,"0"))),
+    ...Array.from({length:29},(_,i)=>"EMENDA-"+String(i+1).padStart(2,"0")),
+    ...Array.from({length:24},(_,i)=>"PLAN-S31-ATOM-A"+String(i+1).padStart(2,"0")),
+    ...Array.from({length:7},(_,i)=>"PLAN-S6-RECOVERY-R"+String(i+1).padStart(2,"0")),
+    ...["A","B","C","D","E","F"].map(x=>"EMENDA-N17-"+x),
+  ];
+  assert.equal(closedIds.length,137);
+  const closedMatrix={verdict:"EXECUTED_PASS_FOR_BUILD_ONLY",
+    rows:closedIds.map(id=>({id,execution:"EXECUTED_PASS"}))};
+  const selfClaims=Object.fromEntries(closedIds.map(id=>[id,fields]));
+  const selfAttested=auditNormativeSemanticCompleteness(closedMatrix,selfClaims);
+  assert.equal(selfAttested.sourceComplete,true);
+  assert.equal(selfAttested.sourceUnmapped.length,0);
+  assert.equal(selfAttested.unproven,0);
+  assert.equal(selfAttested.verdict,"INCONCLUSIVE",
+    "137 perfect self-reports still cannot impersonate an independent auditor");
+  assert.equal(selfAttested.reviewRequired,true);
+  assert.equal(selfAttested.release,"NO_GO");
+  const lost=auditNormativeSemanticCompleteness({
+    ...closedMatrix,rows:closedMatrix.rows.slice(1)},selfClaims);
+  assert.equal(lost.sourceComplete,false,"dropping one protected source must fail closed");
+  assert.equal(lost.sourceUnmapped.length,1);
+  assert.equal(lost.verdict,"INCONCLUSIVE");
   for(const missing of Object.keys(fields)){
     const mutant={...fields};delete mutant[missing];
     const result=auditNormativeSemanticCompleteness(matrix,{
