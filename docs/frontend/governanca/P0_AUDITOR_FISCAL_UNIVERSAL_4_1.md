@@ -118,6 +118,22 @@ O implementador submete a PR #690 a uma **pré-auditoria técnica executada pelo
 
 **Fronteira administrativa:** reinserir o runner Windows com perfil gh local ou criar App/status de missão, novo required check, fila e ruleset depende de controle externo comprovado e autorização separada. Mesmo integrado à main, o watchdog agendado é best effort e somente leitura. N17(c) permanece NO-GO para ativação até ensaio isolado com terceiro autor e duas aprovações elegíveis.
 
+## 5.4. Prioridade Zero: auditoria adversarial obrigatória, não mero autoteste
+
+Esta regra complementa a seção 5.3 e prevalece para cada novo HEAD do BUILD #690. O assistente implementador é responsável por uma **segunda análise deliberadamente cética**, sem presumir correção por CI verde. A pré-auditoria interna não é independente da equipe que implementou e não pode declarar a revisão formal do auditor externo.
+
+1. **Inventário inicial:** congelar o HEAD/base da PR, o HEAD protegido da main, os 14 caminhos reais, os blobs Git, o manifesto e as condições de NO-GO. Fazer matriz de estados para PR, grupos de merge, workflows e jobs. Uma evidência anterior só serve ao novo HEAD se provar identidade e vigência.
+2. **RED reproduzível:** para cada defeito e nova hipótese adversarial, executar cenário que falha na revisão vulnerável. Registrar o teste, o log e o run/commit de origem. Não usar uma simples alegação de que "falharia".
+3. **Correção causal:** tratar a causa no produtor, no verificador e no consumidor da evidência, inclusive concorrência e dependências, mantendo permissões mínimas. Emendas ao teste não podem reduzir a segurança do código.
+4. **GREEN e negativos adversariais:** cobrir sucesso legítimo e falhas por HEAD/base divergentes, blobs e caminhos iguais com conteúdos diferentes, parecer posterior, run/attempt/job estranho, artifact de outro contexto, download/cache stale, check duplicado, escopo adulterado, token/App inválido, falha de API/paginação e estado skipped/neutral/failure. Incluir mutações e regressão dos contratos N01–N17.
+5. **Segunda leitura do diff 14/14:** reexaminar integralmente scripts, workflows, contratos, documentação e testes, com lentes de identidade, autenticação, invariantes, TOCTOU, confiança em dados externos, revogação, segurança do runner, rollback e cobertura. Produzir achados novos mesmo quando o CI passa.
+6. **Repetição:** qualquer resultado diferente de PASS no escopo executável requer nova correção, novas evidências e nova pré-auditoria sobre o HEAD resultante. É proibido converter BLOCKED/CHANGES_REQUESTED em PASS por alteração de critério ou dispensa silenciosa.
+7. **Liberação:** somente registrar PASS quando os cinco checks obrigatórios estiverem success no HEAD exato, com logs verificados, Teste C autenticado até run/attempt/job/step/artefato, matriz completa e readback vivo da PR/main/comentários/checks. O PASS permite exclusivamente a pré-certificação interna; revisão Codex, review nativo, merge e ativação mantêm gates próprios.
+
+**Prova RED adicional após o parecer externo de 21/11:** workflow `44878619684`, controlador Windows, teste `test_watchdog_adversarial_offline_base_drift_is_not_active`: retornou `ACTIVE` em vez de `BLOCKED_EXTERNAL`. A implementação passou a vincular a base ao `last_proven.merge_sha` protegido, tanto na coleta quanto na avaliação. O CI no HEAD final e readback continuam necessários. Outro teste de consistência exige `required_checks_complete=false` com HEAD alvo divergente. Todos os testes devem isolar suas fixtures; um teste que modifica listas globais não é evidência de cobertura válida.
+
+**Limitações não dispensáveis:** teste sintético não prova ativação da fila real; screenshot Playwright não prova sessão HML autenticada se o log a declarou não verificada; relatório do assistente não é parecer independente; CI verde não autoriza PROD, backend, revogação, N17(c) nem merge. Registrar `BLOCKED_EXTERNAL` quando uma prova exigir terceiro autor, credencial administrativa ou ambiente não disponível.
+
 ## 6. Implantação, rollback e continuidade
 
 1. Esta PR implementa código de diagnóstico, testes offline e adaptação de compatibilidade à fila **sem ativação**, com CI e revisão técnica independente de código.
