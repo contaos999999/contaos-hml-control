@@ -1156,6 +1156,26 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
 });
 
 
+test("P0 PLAN protected ten mission rules require ten distinct BUILD witnesses",()=>{
+  const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
+  const tests={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
+    rca:readFileSync("scripts/p0-rca-impact-gate.test.mjs","utf8"),
+    queue:readFileSync("scripts/ci/merge-group-context.test.mjs","utf8")};
+  const source=readFileSync("scripts/p0-rca-impact-gate.mjs","utf8");
+  const workflow=readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8");
+  const manifest={full_diff:true,ativacao_autorizada:false,files:[...PA_FILES]};
+  const coverage=auditFullProtocolCoverage({protocol,tests,source,workflow,manifest,
+    mission:{activation_authorized:false},paths:[...PA_FILES]});
+  const required=Array.from({length:10},(_,i)=>"PLAN-S3-RULE-"+String(i+1).padStart(2,"0"));
+  for(const id of required){
+    const row=coverage.rows.find(x=>x.id===id);
+    assert.ok(row,"protected PLAN rule missing from normative evidence: "+id);
+    assert.equal(row.scope,"BUILD");
+    assert.equal(row.status,"TEST_DECLARED_NOT_EXECUTED");
+  }
+  assert.equal(new Set(required).size,10);
+});
+
 test("P0 META_PROTOCOL vacuous passed witness with unchanged name never proves semantics",()=>{
   const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
   const tests={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
