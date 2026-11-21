@@ -525,11 +525,18 @@ export async function resolvePrContext(event, base, head, changed, token, eventB
 // It is NOT an independent Codex PASS, a Github review, a mission certificate,
 // or authorization to merge. Its evidence is a Github-authenticated PR comment
 // tied to one exact HEAD and base and separately cross-checked against CI.
-export const ASSISTANT_PREAUDIT_MARKER = "CONTAOS_ASSISTANT_PREAUDIT_V1";
+export const ASSISTANT_PREAUDIT_MARKER = "CONTAOS_ASSISTANT_PREAUDIT_V2";
 export const ASSISTANT_PREAUDIT_CRITERIA = Object.freeze([
   "scope_and_manifest", "root_causes", "event_provenance",
   "negative_tests", "regression_integration", "security_boundaries",
   "check_and_artifact_provenance", "limitations_and_next_gates",
+  "legitimate_state_transitions", "relational_provenance",
+  "post_decision_revocation", "blind_diff_and_meta_audit",
+]);
+export const ADVERSARIAL_V2_LENSES = Object.freeze([
+  "security", "provenance", "concurrency", "lifecycle", "state_machine",
+  "integration", "resilience", "governance", "supply_chain",
+  "legitimate_regression", "observability", "operational_environment",
 ]);
 export const PRECERT_REQUIRED_CHECKS = Object.freeze([
   "ContaOS Frontend Zero-Drift",
@@ -587,7 +594,7 @@ export function validateAssistantPrecertRelease({
   const record = parseAssistantPreaudit(last?.body);
   if (!last || !record) add("parecer do assistente ausente/inválido na PR");
   else {
-    if (record.schema !== "contaos.assistant-preaudit.v1" ||
+    if (record.schema !== "contaos.assistant-preaudit.v2" ||
         record.kind !== "ASSISTANT_PREAUDIT_NOT_INDEPENDENT" ||
         record.verdict !== "PASS" || record.pr !== 690 ||
         record.head !== expectedHead || record.base !== expectedBase ||
@@ -595,8 +602,17 @@ export function validateAssistantPrecertRelease({
         typeof record.report !== "string" || record.report.length < 400 ||
         !/^[0-9a-f]{64}$/.test(record.report_sha256 || "") ||
         record.report_sha256 !== preauditHash(record.report) ||
-        !ASSISTANT_PREAUDIT_CRITERIA.every(x => record.criteria?.[x] === "PASS"))
-      add("último parecer não é PASS íntegro no HEAD/base e matriz completos");
+        !ASSISTANT_PREAUDIT_CRITERIA.every(x => record.criteria?.[x] === "PASS") ||
+        record.adversarial_v2?.head !== expectedHead ||
+        record.adversarial_v2?.base !== expectedBase ||
+        record.adversarial_v2?.second_pass !== "PASS" ||
+        record.adversarial_v2?.meta_audit !== "PASS" ||
+        record.adversarial_v2?.red_green !== "PASS" ||
+        !ADVERSARIAL_V2_LENSES.every(x => record.adversarial_v2?.lenses?.[x] === "PASS") ||
+        !Array.isArray(record.adversarial_v2?.red_runs) ||
+        record.adversarial_v2.red_runs.length < 1 ||
+        !record.adversarial_v2.red_runs.every(x => Number.isSafeInteger(x) && x > 0))
+      add("último parecer V2 não comprova matriz adversarial, RED/GREEN e segunda leitura no HEAD/base");
     if (!record.artifact || !Number.isSafeInteger(record.artifact.id) ||
         record.artifact.id <= 0 || !/^sha256:[0-9a-f]{64}$/.test(record.artifact.digest || ""))
       add("parecer sem recibo de artefato visual");
