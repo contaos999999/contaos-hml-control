@@ -1131,12 +1131,12 @@ test("P0 META_PROTOCOL vacuous passed witness with unchanged name never proves s
     "    def test_N17_revoked_specific_authorization_cannot_pass(self):",
     "        e = evidence(); e[\"owner_authorization\"][\"revoked\"] = True",
     "        self.assertIn(\"N17\", codes(mod.evaluate(contract(), e)))",
-  ].join("\\n");
+  ].join("\n");
   assert.ok(tests.python.includes(exact),"expected reviewed source of witness");
   const substituted=tests.python.replace(exact,[
     "    def test_N17_revoked_specific_authorization_cannot_pass(self):",
     "        pass  # Name kept, assertion removed: vacuous successful test",
-  ].join("\\n"));
+  ].join("\n"));
   assert.notEqual(substituted,tests.python);
   const result=auditFullProtocolCoverage({...args,tests:{...tests,python:substituted}});
   assert.equal(result.verdict,"CHANGES_REQUESTED",
