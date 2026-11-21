@@ -776,7 +776,7 @@ const FULL_PROTOCOL_51_GATES=[
   ["NR-005 / falsificações","rca","NR-005 manifesto de outra PR"],
   ["NR-009 / base avançada","python","test_NR009_live_older_target_base"],
   ["Node 24 / testes","rca","P0 RCA runner executa caso exato"],
-  ["Segurança runner / N06","rca","P0 META_PROTOCOL auditor-only hosted runner and no visual source drift"],
+  ["Segurança runner / N06","rca","P0 META_PROTOCOL every active workflow excludes self-hosted auditor execution"],
   ["Segurança Actions","rca","P0 FULL_PROTOCOL watchdog read-only permissions"],
   ["WDG-01 / origem","python","test_watchdog_readonly_collects_target_and_dependency"],
   ["WDG-02 / progresso","python","test_watchdog_stalled_ci_blocks"],
@@ -871,7 +871,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"f5b4b7b9583ebeb7222339b46ff871920d07949a",
-  rca:"e0865969137b9cd628bac2c65c7788580664f7c3",
+  rca:"ad9f247e26ea0ad494148e2a9ad3ae659d2b5ddd",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
