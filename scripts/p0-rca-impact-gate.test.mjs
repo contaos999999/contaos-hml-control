@@ -981,19 +981,19 @@ test("P0 META_PROTOCOL auditor-only hosted runner and no visual source drift",()
 
 test("P0 META_PROTOCOL every active workflow excludes self-hosted auditor execution",()=>{
   const directory=".github/workflows";
-  const names=readdirSync(directory).filter(x=>/\\.ya?ml$/.test(x)).sort();
+  const names=readdirSync(directory).filter(x=>/\.ya?ml$/.test(x)).sort();
   assert.ok(names.includes("contaos-auditoria-controller.yml"));
   assert.ok(names.includes("contaos-missao-auditoria.yml"));
   assert.ok(names.length>=2);
   for(const name of names){
     const source=readFileSync(join(directory,name),"utf8");
-    assert.doesNotMatch(source,/\\bself-hosted\\b/i,
+    assert.doesNotMatch(source,/\bself-hosted\b/i,
       "self-hosted runner requires separate authenticated isolation: "+name);
   }
   // An intentionally poisoned workflow must be rejected even when not one
   // of the two auditor workflow filenames used by the earlier fixture.
-  const adversarial="name: unrelated\\njobs:\\n  audit:\\n    runs-on: [self-hosted, Linux]\\n";
-  assert.match(adversarial,/\\bself-hosted\\b/i);
+  const adversarial="name: unrelated\njobs:\n  audit:\n    runs-on: [self-hosted, Linux]\n";
+  assert.match(adversarial,/\bself-hosted\b/i);
 });
 
 test("P0 META_PROTOCOL six predecessor checks plus own gate no cycle",()=>{
