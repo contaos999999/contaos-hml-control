@@ -663,6 +663,123 @@ export async function downloadPrecertArtifactDigest(id,token){
   return {digest:"sha256:"+hasher.digest("hex"),bytes:total};
 }
 
+
+const PROTOCOL_FULL_AUDIT_FILES=Object.freeze({
+  python:"scripts/auditoria/test_mission_supervisor.py",
+  rca:"scripts/p0-rca-impact-gate.test.mjs",
+  queue:"scripts/ci/merge-group-context.test.mjs",
+});
+const FULL_PROTOCOL_CASES=[
+  ...Array.from({length:17},(_,i)=>({id:"N"+String(i+1).padStart(2,"0"),
+    file:"python",pattern:"test_N"+String(i+1).padStart(2,"0")+"_"})),
+  {id:"NR-005-IDENTITY",file:"rca",pattern:"NR-005 manifesto"},
+  {id:"NR-005-RENAME",file:"rca",pattern:"NR-005 renomeação"},
+  {id:"NR-005-MODE",file:"rca",pattern:"NR-005 chmod"},
+  {id:"NR-005-SCHEMA",file:"rca",pattern:"NR-005 schema"},
+  {id:"NR-006-VETO",file:"rca",pattern:"P0 V2 RED NR-006: COMMENTED"},
+  {id:"NR-006-RETRY",file:"rca",pattern:"P0 NR-006 RED: most recent failed"},
+  {id:"NR-006-ARTIFACT",file:"rca",pattern:"P0 NR-006: visual ZIP"},
+  {id:"NR-009-BASE",file:"python",pattern:"test_NR009_live_older_target_base"},
+  {id:"WDG-01-ORIGIN",file:"python",pattern:"test_N03_changed_contract_source"},
+  {id:"WDG-02-PROGRESS",file:"python",pattern:"test_watchdog_closed_without_merge"},
+  {id:"WDG-03-TERMINAL",file:"python",pattern:"test_N10_unverified_json_receipt"},
+  {id:"WDG-04-CHECKS",file:"python",pattern:"test_N04_duplicate_name"},
+  {id:"WDG-05-PROVENANCE",file:"python",pattern:"test_N13_wrong_check_integration"},
+  {id:"WDG-06-READBACK",file:"python",pattern:"test_watchdog_rejects_merge_state_changed"},
+  {id:"WDG-07-REST",file:"rca",pattern:"P0 V2 API rate 403"},
+  {id:"QUEUE-N13-REAL-GIT",file:"queue",pattern:"N13 prova git real"},
+  {id:"QUEUE-N13-LIVE",file:"queue",pattern:"N13 real resolver rejects removed queue ref"},
+  {id:"QUEUE-N05-BASE",file:"queue",pattern:"N05 base avançada"},
+  {id:"QUEUE-N17-REVOCATION",file:"python",pattern:"test_N17_revoked_specific_authorization"},
+  {id:"PR-CHECK-VETO",file:"rca",pattern:"P0 V2 formal independent review veto"},
+  {id:"PR-CHECK-READBACK",file:"rca",pattern:"P0 V2 RED NR-006: draft flipping"},
+  {id:"PR-CHECK-ARTIFACT",file:"rca",pattern:"P0 V2 RED: stale ZIP"},
+  {id:"PR-CHECK-RED-CAUSAL",file:"rca",pattern:"P0 V2 CAUSAL_RED artifact_attempt"},
+  ...Array.from({length:10},(_,i)=>({id:"V2-LAYER-"+String(i+1).padStart(2,"0"),
+    file:"rca",pattern:"P0 V2 LAYER "+String(i+1).padStart(2,"0")+":"})),
+  ...["security","provenance","concurrency","lifecycle","state_machine",
+    "integration","resilience","governance","supply_chain",
+    "legitimate_regression","observability","operational_environment"]
+    .map(n=>({id:"V2-LENS-"+n,file:"rca",pattern:"P0 V2 LENS "+n+":"})),
+];
+const FULL_PROTOCOL_EXTERNAL=[
+  "N17(c): autoria terceira e duas aprovacoes elegiveis em fila real",
+  "HML: sessao autenticada e isolamento RLS/tenant",
+  "App dedicado: identidade privilegiada, autorizacao e revogacao",
+  "PROD: autorizacao titular, ruleset e readback integrado",
+];
+export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
+    source,manifest,paths}={}){
+  const issues=[];
+  const rows=[];
+  const expectedSections=["## 1.","## 2.","## 3.","## 4.","## 5.",
+    "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 6."];
+  for(const section of expectedSections)
+    if(!protocol?.includes(section))issues.push("Secao do protocolo ausente: "+section);
+  for(const item of FULL_PROTOCOL_CASES){
+    const code=tests?.[item.file];
+    // Search only declared test names, never arbitrary mentions in comments.
+    const names=typeof code==="string"?
+      [...code.matchAll(/(?:test\(["']([^"'\n]+)|def (test_[A-Za-z0-9_]+)\()/g)]
+        .map(m=>m[1]||m[2]):[];
+    const ok=names.some(name=>name.includes(item.pattern));
+    rows.push({id:item.id,status:ok?"NAMED_TEST_PRESENT":"MISSING_TEST",
+      source:PROTOCOL_FULL_AUDIT_FILES[item.file],witness:item.pattern});
+    if(!ok)issues.push("Protocolo sem caso executavel: "+item.id+" / "+item.pattern);
+  }
+  if(new Set(FULL_PROTOCOL_CASES.map(x=>x.id)).size!==FULL_PROTOCOL_CASES.length)
+    issues.push("IDs de matriz repetidos");
+  const critical=[
+    ["CHECK_WORKFLOW_RUN_ATTEMPT",source?.includes("verifyPrecertRunOrigin")],
+    ["ZIP_REAL_BYTES",source?.includes("downloadPrecertArtifactDigest")],
+    ["FAILURE_TERMINAL",source?.includes("classifyPrecertReadiness")],
+    ["FINAL_LIVE_READBACK",source?.includes("latestChecks")&&
+      source?.includes("latestReviews")&&source?.includes("latestArtifact")],
+    ["IMMUTABLE_MANIFEST",source?.includes("assertImmutableP0Governance")],
+    ["REVIEW_VETO",source?.includes("CHANGES_REQUESTED")],
+    ["PR_ORIGIN_AUTH",source?.includes("resolvePrContext")],
+    ["ACTIVATION_DISABLED",mission?.activation_authorized===false &&
+      manifest?.ativacao_autorizada===false],
+    ["MANDATED_FULL_DIFF",manifest?.full_diff===true &&
+      Array.isArray(paths)&&paths.length===14 &&
+      new Set(paths).size===14 &&
+      manifest.files?.length===14&&
+      paths.every(x=>manifest.files.includes(x))],
+    ["CONTROLLER_READ_ONLY",workflow?.includes("pull-requests: read") &&
+      workflow?.includes("actions: read") && !/pull-requests:\s*write/.test(workflow)],
+    ["NO_SELF_CERTIFICATION",protocol?.includes("não substitui") &&
+      protocol?.includes("pré-certificação interna")],
+  ];
+  for(const [id,ok] of critical){
+    rows.push({id,status:ok?"STRUCTURAL_WITNESS":"MISSING_WITNESS"});
+    if(!ok)issues.push("Controle critico sem testemunha: "+id);
+  }
+  if(!protocol?.includes("BLOCKED_EXTERNAL")||
+      !protocol.includes("N17(c)"))
+    issues.push("Fronteiras externas e N17(c) ausentes do protocolo");
+  return {schema:"contaos.full-protocol-preaudit.v1",
+    verdict:issues.length?"CHANGES_REQUESTED":"COVERAGE_READY_FOR_EXECUTION",
+    requirements:rows.length,covered:rows.filter(x=>!x.status.startsWith("MISSING")).length,
+    rows,external:FULL_PROTOCOL_EXTERNAL.map(x=>({requirement:x,status:"BLOCKED_EXTERNAL_FOR_ACTIVATION"})),
+    issues};
+}
+function fullProtocolAuditFromCheckout(){
+  const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
+  const mission=JSON.parse(readFileSync("docs/frontend/governanca/MISSAO_ATIVA_4_1.json","utf8"));
+  const workflow=readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8");
+  const source=readFileSync("scripts/p0-rca-impact-gate.mjs","utf8");
+  const tests=Object.fromEntries(Object.entries(PROTOCOL_FULL_AUDIT_FILES)
+    .map(([key,path])=>[key,readFileSync(path,"utf8")]));
+  // Read the signed-off manifesto from protected base, never from PR worktree.
+  const base=String(process.env.INPUT_PREAUDIT_BASE||"e007c4bad8f2c66c489c55e4752b71bb19c5ced0");
+  if(!validSha(base))throw Error("full protocol: invalid protected base");
+  const manifest=JSON.parse(execFileSync("git",["show",base+
+    ":docs/frontend/planos/P0_GOV_PLAN_690.json"],{encoding:"utf8",timeout:15000}));
+  const paths=execFileSync("git",["diff","--name-only",base,"HEAD"],
+    {encoding:"utf8",timeout:15000}).trim().split("\n").filter(Boolean);
+  return auditFullProtocolCoverage({protocol,tests,mission,workflow,source,manifest,paths});
+}
+
 export function parseAssistantPreaudit(body) {
   if (typeof body !== "string") return null;
   const re = new RegExp("<!-- " + ASSISTANT_PREAUDIT_MARKER + "\\s*\\n([\\s\\S]*?)\\n-->", "g");
@@ -1227,7 +1344,13 @@ async function main() {
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) ===
   fileURLToPath(new URL("file://" + process.argv[1]))) {
-  if (process.argv.includes("--verify-assistant-preaudit")) {
+  if (process.argv.includes("--audit-full-protocol")) {
+    try{
+      const audit=fullProtocolAuditFromCheckout();
+      console.log(JSON.stringify(audit));
+      if(audit.verdict!=="COVERAGE_READY_FOR_EXECUTION")process.exitCode=1;
+    }catch(e){console.error("P0 FULL_PROTOCOL BLOCKED: "+e.message);process.exitCode=1;}
+  } else if (process.argv.includes("--verify-assistant-preaudit")) {
     verifyAssistantPrecertInGithub().then(result => {
       console.log(JSON.stringify(result));
       if (!result.pass) process.exitCode = 1;
