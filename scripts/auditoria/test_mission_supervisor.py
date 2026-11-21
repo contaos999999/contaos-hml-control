@@ -365,6 +365,31 @@ class MissionSupervisorTests(unittest.TestCase):
         self.assertEqual(mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")["next_action"],
                          "INVESTIGATE_CI_STALL")
 
+    def test_watchdog_stall_exact_two_hour_boundary(self):
+        data = self.watchdog_data()
+        data[1]["checks"][0].update(status="in_progress", conclusion=None,
+                                   started_at="2026-11-21T11:00:00Z")
+        before = mod.assess_watchdog(contract(), data, "2026-11-21T12:59:59Z")
+        at = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        before_actions = [x["action"] for x in before["issues"]]
+        at_actions = [x["action"] for x in at["issues"]]
+        self.assertNotIn("INVESTIGATE_CI_STALL", before_actions)
+        self.assertIn("WAIT_REQUIRED_CHECKS", before_actions)
+        self.assertIn("INVESTIGATE_CI_STALL", at_actions)
+        self.assertFalse(at["certified"])
+        self.assertFalse(at["authoritative_for_merge"])
+
+    def test_watchdog_inactivity_exact_24_hour_boundary(self):
+        data = self.watchdog_data("2026-11-20T13:00:00Z")
+        before = mod.assess_watchdog(contract(), data, "2026-11-21T12:59:59Z")
+        at = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertNotIn("INVESTIGATE_NO_PROGRESS",
+                         [x["action"] for x in before["issues"]])
+        self.assertIn("INVESTIGATE_NO_PROGRESS",
+                      [x["action"] for x in at["issues"]])
+        self.assertFalse(at["certified"])
+        self.assertFalse(at["authoritative_for_merge"])
+
     def test_watchdog_no_progress_alerts(self):
         data = self.watchdog_data("2026-11-18T12:00:00Z")
         self.assertEqual(mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")["next_action"],
