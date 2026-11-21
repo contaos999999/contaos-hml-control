@@ -1064,6 +1064,39 @@ function runFullProtocolSuites(){
     return [key,parsed];
   }));
 }
+// The PLAN #689 and queue amendment #691 are protected normative inputs.
+// A green test matrix cannot replace or invent their source or soften their
+// BUILD-vs-activation boundary.
+export function attestProtectedNormativeSources({manifest,plan,amendment}={}){
+  const issues=[];
+  if(manifest?.schema!=="contaos.p0.gov-plan.v1" ||
+    manifest?.approved!==true || manifest?.pr_number!==690 ||
+    manifest?.ativacao_autorizada!==false ||
+    manifest?.plan_documento!=="docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md" ||
+    manifest?.emenda_fila!=="docs/frontend/planos/EMENDA_P0_ABS_FILA_REVISAO_690_2026-11-20.md")
+    issues.push("NORMATIVE: manifesto protegido nao autentica PLAN/emenda/ativacao");
+  if(typeof plan!=="string" || gitBlobId(plan)!=="9d037a37df8ae177f7f02123932e0ca60e7e3f81" ||
+    manifest?.plan_blob!=="9d037a37df8ae177f7f02123932e0ca60e7e3f81")
+    issues.push("NORMATIVE: PLAN #689 sem blob imutavel de origem");
+  if(typeof amendment!=="string" || gitBlobId(amendment)!=="cba58ceb1f88fa6774ccf1ce1661ac9f5a942c1b")
+    issues.push("NORMATIVE: emenda #691 sem blob imutavel de origem");
+  for(const [id,source,words] of [
+    ["BUILD-SEPARATE-ACTIVATION",amendment,"ativacao_autorizada: false"],
+    ["BUILD-MANIFEST-ALLOWLIST",amendment,"manifesto"],
+    ["N17C-THIRD-PARTY",amendment,"autoria terceira"],
+    ["N17C-REVIEWERS",amendment,"contaos9999"],
+    ["MISSION-LOCK-DEDICATED-APP",plan,"GitHub App"],
+    ["TWO-STAGE-REVIEW",plan,"Certificação em duas provas"],
+    ["NO-UNTRUSTED-PUBLISHING",plan,"sem checkout ou execução de código não confiável"],
+  ])if(typeof source!=="string" || !source.includes(words))
+    issues.push("NORMATIVE: regra incorporada ausente "+id);
+  return {schema:"contaos.protected-normative-sources.v1",
+    verdict:issues.length?"CHANGES_REQUESTED":"PASS",
+    planBlob:typeof plan==="string"?gitBlobId(plan):null,
+    amendmentBlob:typeof amendment==="string"?gitBlobId(amendment):null,
+    activationAuthorized:false,issues};
+}
+
 function fullProtocolAuditFromCheckout(){
   const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
   const mission=JSON.parse(readFileSync("docs/frontend/governanca/MISSAO_ATIVA_4_1.json","utf8"));
@@ -1076,6 +1109,12 @@ function fullProtocolAuditFromCheckout(){
   if(!validSha(base))throw Error("full protocol: invalid protected base");
   const manifest=JSON.parse(execFileSync("git",["show",base+
     ":docs/frontend/planos/P0_GOV_PLAN_690.json"],{encoding:"utf8",timeout:15000}));
+  const plan=execFileSync("git",["show",base+":"+
+    manifest.plan_documento],{encoding:"utf8",timeout:15000});
+  const amendment=execFileSync("git",["show",base+":"+
+    manifest.emenda_fila],{encoding:"utf8",timeout:15000});
+  const normative=attestProtectedNormativeSources({manifest,plan,amendment});
+  if(normative.verdict!=="PASS")throw Error(normative.issues.join("; "));
   const paths=execFileSync("git",["diff","--name-only",base,"HEAD"],
     {encoding:"utf8",timeout:15000}).trim().split("\n").filter(Boolean);
   const coverage=auditFullProtocolCoverage({protocol,tests,mission,workflow,source,manifest,paths});
