@@ -62,6 +62,19 @@ export function validateWitnessContents(w,receipt) {
   return true;
 }
 
+export async function verifyNormativeSource(source,{fetchImpl=fetch,token}={}) {
+  if(!source || !/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/.test(source.repository||'') || !/^[a-f0-9]{40}$/i.test(source.commit||'') || !/^[a-f0-9]{64}$/i.test(source.sha256||'') || typeof source.path!=='string' || !/^[a-zA-Z0-9_./-]+$/.test(source.path) || source.path.includes('..') || !token) return false;
+  const url=`https://api.github.com/repos/${source.repository}/contents/${source.path}?ref=${source.commit}`;
+  try {
+    const response=await fetchImpl(url,{headers:{Authorization:`Bearer ${token}`,Accept:'application/vnd.github+json'},redirect:'error'});
+    if(!response.ok) return false;
+    const file=await response.json();
+    if(file.type!=='file' || file.path!==source.path || file.encoding!=='base64' || typeof file.content!=='string') return false;
+    const bytes=Buffer.from(file.content.replace(/\\s/g,''),'base64');
+    return createHash('sha256').update(bytes).digest('hex')===source.sha256.toLowerCase();
+  }catch{return false;}
+}
+
 export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.env.GITHUB_TOKEN,repository=process.env.GITHUB_REPOSITORY}={}) {
   const structural=validateCSDI(receipt);
   const issues=[...structural.issues];
@@ -117,6 +130,7 @@ export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.en
             const digest=createHash('sha256').update(witnessBytes).digest('hex');
             if(digest!==receipt.evidence_sha256.toLowerCase()) issues.push('WITNESS_BYTES_DIGEST_MISMATCH');
             if(!validateWitnessContents(witnesses,receipt)) issues.push('WITNESS_CONTENT_INCOMPLETE');
+            if(!await verifyNormativeSource(witnesses.normative_source,{fetchImpl,token})) issues.push('NORMATIVE_SOURCE_NOT_AUTHENTICATED');
           } catch {issues.push('WITNESS_ARCHIVE_UNREADABLE');}
         }
       }
