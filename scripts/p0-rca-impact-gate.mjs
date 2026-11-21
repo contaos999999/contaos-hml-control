@@ -1385,6 +1385,57 @@ export function buildSevenAxisSemanticBacklog(inventory){
     // Verification is ONLY of physical position against the protected blob.
     // It cannot establish atomic meaning, entailment, or semantic PASS.
   }
+
+  const semanticSentences=inventorySemanticSentenceCandidates(inventory);
+  const atomOrdinalTargets=[
+    [36,1],[36,3],[36,4],[36,5],[36,6],[37,2],[37,4],[37,6],
+    [38,1],[38,3],[38,4],[40,2],[40,3],[40,5],[40,6],
+    [41,1],[41,2],[42,2],[42,5],[42,6],[44,2],[44,6],[45,2],[46,4]
+  ];
+  const recoveryOrdinalTargets=[
+    [97,1],[97,2],[99,1],[99,2],[100,1],[101,2],[102,1]
+  ];
+  const atomize=(row,source,selection)=>{
+    if(!source||!selection)return false;
+    const [line,ordinal]=selection;
+    const segments=(semanticSentences.candidates||[])
+      .filter(x=>x.path===source.path&&x.line===line);
+    const item=segments[ordinal-1];
+    if(!item||item.source_id!==source.id)return false;
+    row.source_links=[source.id];
+    row.source_link_level="TEXT_SEGMENT_VERIFIED";
+    row.source_atom={id:item.id,start:item.start,end:item.end,
+      text_sha256:item.text_sha256,line,blob:source.blob,path:source.path};
+    return true;
+  };
+  for(const row of normative_rules.filter(x=>x.source_link_level==="PROVISIONAL_ONLY")){
+    const atom=/^PLAN-S31-ATOM-A(\\d{2})$/.exec(row.rule_id);
+    const recovery=/^PLAN-S6-RECOVERY-R(\\d{2})$/.exec(row.rule_id);
+    const n17=/^EMENDA-N17-([A-F])$/.exec(row.rule_id);
+    if(atom||recovery){
+      const target=atom?atomOrdinalTargets[Number(atom[1])-1]:
+        recoveryOrdinalTargets[Number(recovery[1])-1];
+      const source=(inventory?.lines||[]).find(x=>x.path===planPath&&x.line===target?.[0]);
+      atomize(row,source,target);
+    }else if(n17){
+      const source=(inventory?.lines||[]).find(x=>x.path===amendmentPath&&x.line===51);
+      const found=source?[...source.text.matchAll(/\\(([a-f])\\)/g)]:[];
+      const idx="ABCDEF".indexOf(n17[1]);
+      const mark=found[idx];
+      if(mark&&mark[1]===n17[1].toLowerCase()){
+        const end=found[idx+1]?.index??source.text.length;
+        const phrase=source.text.slice(mark.index,end);
+        row.source_links=[source.id];
+        row.source_link_level="TEXT_SEGMENT_VERIFIED";
+        row.source_atom={id:"N17-"+n17[1],start:mark.index,end,
+          text_sha256:createHash("sha256").update(phrase).digest("hex"),
+          line:51,blob:source.blob,path:source.path};
+      }
+    }
+  }
+  const atomicVerified=normative_rules.filter(row=>
+    row.source_link_level==="TEXT_SEGMENT_VERIFIED").length;
+
   const provisional_count=normative_rules.filter(row=>
     row.source_link_level==="PROVISIONAL_ONLY").length;
   const positional_count=normative_rules.filter(row=>
@@ -1400,7 +1451,7 @@ export function buildSevenAxisSemanticBacklog(inventory){
   const linked_count=normative_rules.filter(row=>row.source_links.length).length;
   const issues=[...(inventory?.issues||[])];
   if(!inventory?.inventory_verified)issues.push("SEMANTIC_SOURCE_NOT_VERIFIED");
-  if(normative_rules.length!==137||linked_count!==100||provisional_count!==37||positional_count!==90)issues.push("SEMANTIC_NORMATIVE_RULE_LINKAGE_INCOMPLETE");
+  if(normative_rules.length!==137||linked_count!==137||provisional_count!==0||positional_count!==90||atomicVerified!==37)issues.push("SEMANTIC_NORMATIVE_RULE_LINKAGE_INCOMPLETE");
   if(slots.length!==inventory?.lines?.length||
      slots.some(row=>SEMANTIC_AXES.some(a=>row.axes[a]?.status!=="UNPROVEN")))
     issues.push("SEMANTIC_SEVEN_AXIS_WORKLIST_INCOMPLETE");
@@ -1409,7 +1460,7 @@ export function buildSevenAxisSemanticBacklog(inventory){
     normative_axis_slots:normative_rules.length*SEMANTIC_AXES.length,
     anchored_normative_rules:linked_count,unlinked_normative_rules:normative_rules.length-linked_count,
     provisionally_located_rules:provisional_count,
-    positionally_verified_rules:positional_count,
+    positionally_verified_rules:positional_count,segment_located_rules:atomicVerified,
     all_possible_rule_pairs:pairCount,untriaged_rule_pairs:pairCount,
     pair_inventory_sha256:pairDigest,
     source_lines:slots.length,axes_per_source:SEMANTIC_AXES.length,
