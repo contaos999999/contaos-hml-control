@@ -1163,6 +1163,37 @@ export async function verifyAssistantPrecertInGithub({
     }catch(e){result.issues.push("ZIP: download/readback falhou: "+e.message);}
   }
 
+  // ZIP download can outlast the preceding readback. Revoke on any change
+  // occurring WHILE bytes are read or producer-run provenance is collected.
+  // This is the actual last read of the authorization surface.
+  if(result.issues.length===0){
+    try{
+      const [endPr,endMain,endComments,endReviews,endChecks,endArtifact]=await Promise.all([
+        api("/repos/"+REPO+"/pulls/"+number),
+        api("/repos/"+REPO+"/git/ref/heads/main"),
+        list("/repos/"+REPO+"/issues/"+number+"/comments"),
+        list("/repos/"+REPO+"/pulls/"+number+"/reviews"),
+        api("/repos/"+REPO+"/commits/"+head+"/check-runs?per_page=100"),
+        api("/repos/"+REPO+"/actions/artifacts/"+artifact.id),
+      ]);
+      if(endPr?.head?.sha!==head || endPr?.base?.sha!==base ||
+          endPr.state!==pr.state || endPr.draft!==false ||
+          endPr.merged!==false || endMain?.object?.sha!==base ||
+          JSON.stringify(endComments)!==JSON.stringify(comments) ||
+          JSON.stringify(endReviews)!==JSON.stringify(reviews) ||
+          endChecks?.total_count!==endChecks?.check_runs?.length ||
+          JSON.stringify(endChecks?.check_runs)!==JSON.stringify(checks.check_runs) ||
+          endArtifact?.id!==artifact.id || endArtifact?.expired!==false ||
+          endArtifact?.digest!==artifact.digest ||
+          endArtifact?.name!==artifact.name ||
+          endArtifact?.workflow_run?.id!==artifact.workflow_run?.id ||
+          endArtifact?.workflow_run?.head_sha!==head)
+        result.issues.push("POST_ZIP_READBACK: autorizacao/revisoes/checks/artefato mudaram durante prova");
+    }catch(e){
+      result.issues.push("POST_ZIP_READBACK: prova GitHub indisponivel: "+e.message);
+    }
+  }
+
   result.pass = result.issues.length === 0;
   result.waitable = false; // all post-preflight failures are terminal
   result.verdict = result.pass ? "PASS" : "BLOCKED";
