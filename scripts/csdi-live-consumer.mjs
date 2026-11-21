@@ -58,6 +58,8 @@ export function validateWitnessContents(w,receipt) {
   if(![...w.clauses,...w.rules,...w.pairs].every(item=>axes.every(name=>{const x=item.axes[name],e=evidenceById.get(x.evidence_ref);return e && e.subject_id===item.id && e.axis===name && e.sha256.toLowerCase()===x.evidence_sha256.toLowerCase();}))) return false;
   if(!Array.isArray(w.normative_inventory) || !w.normative_inventory.length || !w.normative_source || typeof w.normative_source.sha256!=='string' || !/^[a-f0-9]{64}$/i.test(w.normative_source.sha256)) return false;
   const inventory=w.normative_inventory;
+  // A source digest without immutable repository, commit and path is not provenance.
+  if(!/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/.test(w.normative_source.repository||'') || !/^[a-f0-9]{40}$/i.test(w.normative_source.commit||'') || typeof w.normative_source.path!=='string' || !/^[a-zA-Z0-9_./-]+$/.test(w.normative_source.path) || w.normative_source.path.includes('..')) return false;
   if(inventory.some(x=>!x || typeof x!=='object') || new Set(inventory.map(x=>x.id)).size!==inventory.length || inventory.some(x=>!['clause','rule','pair'].includes(x.kind) || typeof x.id!=='string' || !x.id || !x.source_ref)) return false;
   for(const [kind,items] of [['clause',w.clauses],['rule',w.rules],['pair',w.pairs]]) {
     const expected=new Set(inventory.filter(x=>x.kind===kind).map(x=>x.id));
