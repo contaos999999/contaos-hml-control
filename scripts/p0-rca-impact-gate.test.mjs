@@ -652,7 +652,7 @@ function paFixture() {
     run_id:"PA-690-AUD-001", report:PA_REPORT,
     report_sha256:createHash("sha256").update(PA_REPORT).digest("hex"),
     criteria:Object.fromEntries(ASSISTANT_PREAUDIT_CRITERIA.map(x=>[x,"PASS"])),
-    artifact:{id:9001,digest:PA_DIGEST},
+    artifact:{id:9001,digest:PA_DIGEST,run_id:777,run_attempt:1,job_id:888},
   };
   const comment={id:17,user:{login:"contaos9999"},
     body:"PRÉ-AUDITORIA DO ASSISTENTE\n\n<!-- "+
@@ -667,10 +667,14 @@ function paFixture() {
   paths:[...PA_FILES],comments:[comment],
   checkRuns:PRECERT_REQUIRED_CHECKS.map((name,i)=>({
     id:100+i, name, head_sha:PA_HEAD, app:{id:15368},
+    details_url:name.includes("Teste C") ? "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/888" : "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/100",
     status:"completed",conclusion:"success",
   })),
   artifact:{id:9001,digest:PA_DIGEST,expired:false,
-    workflow_run:{head_sha:PA_HEAD}},
+    workflow_run:{head_sha:PA_HEAD,id:777}},
+  testCJob:{id:888,run_id:777,run_attempt:1,head_sha:PA_HEAD,
+    status:"completed",conclusion:"success",
+    steps:[{name:"Playwright Teste C",conclusion:"success"}]},
   expectedHead:PA_HEAD,expectedBase:PA_BASE};
 }
 const paCheck = (fixture) => validateAssistantPrecertRelease(fixture);
@@ -762,5 +766,20 @@ test("P0 PA PR merged/draft or main moved is not open pre-cert snapshot",()=>{
 test("P0 PA last structured verdict is authoritative, never PASS substring",()=>{
   const f=paFixture();f.comments[0].body="PASS, check verde, liberado manualmente";
   assert.equal(parseAssistantPreaudit(f.comments[0].body),null);
+  assert.equal(paCheck(f).pass,false);
+});
+
+test("P0 PA foreign run artifact on same SHA must block",()=>{
+  const f=paFixture();f.artifact.workflow_run.id=12345;
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA foreign run attempt or job must block",()=>{
+  for (const key of ["run_attempt","job_id"]) {
+    const f=paFixture();f.record.artifact[key]=99;
+    setPaRecord(f);assert.equal(paCheck(f).pass,false,key);
+  }
+});
+test("P0 PA missing Playwright execution step must block",()=>{
+  const f=paFixture();f.testCJob.steps=[{name:"upload",conclusion:"success"}];
   assert.equal(paCheck(f).pass,false);
 });
