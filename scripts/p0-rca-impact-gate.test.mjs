@@ -1125,6 +1125,24 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
   }
   assert.equal(attestFullProtocolExecutions(coverage,forgedNames,target).verdict,
     "CHANGES_REQUESTED","substring-only witness must not certify BUILD");
+  // A composite section MUST have its complete constituent evidence.
+  // A green last layer or last lens cannot stand in for the whole obligation.
+  const cases=[
+    ["S5.5:Dez camadas, sempre na ordem","rca","P0 V2 LAYER 01:"],
+    ["S5.5:Doze perspectivas obrigatórias","rca","P0 V2 LENS security:"],
+    ["S5-EVENT-MATRIX","rca","P0 PRE-AUDIT push da #690"],
+  ];
+  for(const [id,key,prefix] of cases){
+    const missing=structuredClone(suites);
+    const orig=missing[key].successfulNames.length;
+    missing[key].successfulNames=missing[key].successfulNames.filter(x=>!x.startsWith(prefix));
+    assert.ok(missing[key].successfulNames.length<orig,"fixture must remove an executed test");
+    missing[key].executed=missing[key].successfulNames.length;
+    const decision=attestFullProtocolExecutions(coverage,missing,target);
+    assert.equal(decision.rows.find(x=>x.id===id)?.execution,"UNPROVEN",
+      "compound obligation "+id+" cannot inherit PASS from a partial set");
+    assert.equal(decision.verdict,"CHANGES_REQUESTED");
+  }
   const noTest=structuredClone(suites);
   noTest.queue.successfulNames=noTest.queue.successfulNames.filter(x=>!x.includes("N13 prova git real"));
   noTest.queue.executed=noTest.queue.successfulNames.length;
