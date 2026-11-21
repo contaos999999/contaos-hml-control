@@ -1129,7 +1129,8 @@ function fullProtocolAuditFromCheckout(){
           {encoding:"utf8",timeout:15000}).trim()!==head))
     throw Error("full protocol: checkout/head mismatch");
   const suites=runFullProtocolSuites();
-  return attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha});
+  return {...attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha}),
+    normative_sources:normative};
 }
 
 export function parseAssistantPreaudit(body) {
