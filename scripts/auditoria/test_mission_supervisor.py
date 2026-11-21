@@ -285,7 +285,7 @@ class MissionSupervisorTests(unittest.TestCase):
 
     def watchdog_data(self, when="2026-11-21T12:00:00Z"):
         return [
-            {"repo": mod.REPO, "number": n, "head_sha": H, "state": "open",
+            {"repo": mod.REPO, "number": n, "head_sha": H, "state": "open", "merged": False,
              "updated_at": when, "checks": [
                  {"id": i + 100, "name": name, "head_sha": H,
                   "integration_id": 15368, "status": "completed",
@@ -356,7 +356,7 @@ class MissionSupervisorTests(unittest.TestCase):
                 n = int(path.split("/")[-1])
                 return {"number": n, "base": {"ref": "main"},
                         "head": {"sha": H}, "updated_at": "2026-11-21T12:00:00Z",
-                        "state": "open"}
+                        "state": "open", "merged": False}
             if path.startswith("/commits/"):
                 return {"total_count": 1, "check_runs": [
                     {"id": 100, "name": "test", "head_sha": H, "app": {"id": 15368},
@@ -374,7 +374,7 @@ class MissionSupervisorTests(unittest.TestCase):
                 return {"object": {"sha": H}}
             if path.startswith("/pulls/"):
                 return {"number": int(path.split("/")[-1]), "base": {"ref": "main"},
-                        "head": {"sha": H}, "state": "open",
+                        "head": {"sha": H}, "state": "open", "merged": False,
                         "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 101, "check_runs": []}
         with self.assertRaises(mod.InvalidEvidence):
@@ -450,7 +450,7 @@ class MissionSupervisorTests(unittest.TestCase):
             if path.startswith("/pulls/"):
                 n = int(path.split("/")[-1])
                 return {"number": n, "base": {"ref": "main"}, "head": {"sha": H},
-                        "state": "open", "updated_at": "2026-11-21T12:00:00Z"}
+                        "state": "open", "merged": False, "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 1, "check_runs": [{
                 "id": 4, "name": "test", "head_sha": H, "app": {},
                 "status": "completed", "conclusion": "success",
@@ -465,7 +465,7 @@ class MissionSupervisorTests(unittest.TestCase):
             if path.startswith("/pulls/"):
                 n = int(path.split("/")[-1])
                 return {"number": n, "base": {"ref": "main"}, "head": {"sha": H},
-                        "state": "open", "updated_at": "2026-11-21T12:00:00Z"}
+                        "state": "open", "merged": False, "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 1, "check_runs": [{
                 "id": 4, "name": "test", "head_sha": C, "app": {"id": 15368},
                 "status": "completed", "conclusion": "success",
@@ -480,7 +480,7 @@ class MissionSupervisorTests(unittest.TestCase):
             if path.startswith("/pulls/"):
                 n = int(path.split("/")[-1])
                 return {"number": n, "base": {"ref": "main"}, "head": {"sha": H},
-                        "state": "open", "updated_at": "2026-11-21T12:00:00Z"}
+                        "state": "open", "merged": False, "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 2, "check_runs": [{
                 "id": 4, "name": "test", "head_sha": H, "app": {"id": 15368},
                 "status": "completed", "conclusion": "success",
@@ -498,7 +498,7 @@ class MissionSupervisorTests(unittest.TestCase):
                 n = int(path.split("/")[-1])
                 return {"number": n, "base": {"ref": "main"},
                         "head": {"sha": C if calls[path] == 2 else H},
-                        "state": "open", "updated_at": "2026-11-21T12:00:00Z"}
+                        "state": "open", "merged": False, "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 0, "check_runs": []}
         with self.assertRaises(mod.InvalidEvidence):
             mod.collect_watchdog(contract(), fake_api, H)
@@ -519,7 +519,7 @@ class MissionSupervisorTests(unittest.TestCase):
             elif route.startswith("/pulls/"):
                 n = int(route.split("/")[-1])
                 data = {"number": n, "base": {"ref": "main"},
-                        "head": {"sha": H}, "state": "open",
+                        "head": {"sha": H}, "state": "open", "merged": False,
                         "updated_at": now}
             elif route.startswith("/commits/"):
                 data = {"total_count": len(checks), "check_runs": checks}
@@ -537,6 +537,113 @@ class MissionSupervisorTests(unittest.TestCase):
         self.assertEqual(o["state"], "ACTIVE")
         self.assertEqual(o["next_action"], "REVIEW_INDEPENDENT_AUDIT_AND_CI")
         self.assertFalse(o["certified"])
+
+
+    def test_watchdog_required_app_id_matches_protected_ruleset(self):
+        self.assertEqual(mod.EXPECTED_REQUIRED_CHECK_INTEGRATION_ID, 15368)
+        data = self.watchdog_data()
+        data[1]["checks"][0]["integration_id"] = 424242
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(o["next_action"], "VERIFY_CHECK_PROVENANCE")
+        self.assertFalse(o["required_checks_complete"])
+        self.assertEqual(o["state"], "BLOCKED_EXTERNAL")
+        self.assertFalse(o["certified"])
+
+    def test_watchdog_all_three_same_name_wrong_app_never_ready(self):
+        data = self.watchdog_data()
+        for check in data[1]["checks"]:
+            check["integration_id"] = 424242
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(o["next_action"], "VERIFY_CHECK_PROVENANCE")
+        self.assertFalse(o["required_checks_complete"])
+
+    def test_watchdog_foreign_app_only_on_optional_check_does_not_replace_required(self):
+        data = self.watchdog_data()
+        data[1]["checks"].append({
+            "id": 987, "name": "optional provenance check", "head_sha": H,
+            "integration_id": 424242, "status": "completed", "conclusion": "success",
+            "started_at": "2026-11-21T12:00:00Z",
+        })
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertTrue(o["required_checks_complete"])
+        self.assertEqual(o["state"], "ACTIVE")
+        self.assertFalse(o["certified"])
+
+    def test_watchdog_closed_without_merge_never_prompts_review(self):
+        data = self.watchdog_data()
+        data[1]["state"] = "closed"
+        data[1]["merged"] = False
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(o["state"], "BLOCKED_EXTERNAL")
+        self.assertEqual(o["next_action"], "REOPEN_OR_REPLAN_CLOSED_PR")
+        self.assertFalse(o["certified"])
+        self.assertFalse(o["eligible"])
+
+    def test_watchdog_merged_pr_requires_readback_not_new_review(self):
+        data = self.watchdog_data()
+        data[1].update(
+            state="closed", merged=True, merged_at="2026-11-21T12:00:00Z",
+            merge_commit_sha=B,
+        )
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(o["next_action"], "VERIFY_POST_MERGE_READBACK")
+        self.assertEqual(o["state"], "BLOCKED_EXTERNAL")
+        self.assertTrue(o["required_checks_complete"])
+        self.assertTrue(o["observed_prs"][1]["merged"])
+        self.assertFalse(o["certified"])
+
+    def test_watchdog_merged_pr_without_commit_is_invalid_evidence(self):
+        data = self.watchdog_data()
+        data[1].update(state="closed", merged=True,
+                       merged_at="2026-11-21T12:00:00Z")
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+
+    def test_watchdog_open_merged_contradiction_is_invalid(self):
+        data = self.watchdog_data()
+        data[1]["merged"] = True
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+
+    def test_watchdog_merged_at_in_future_is_invalid(self):
+        data = self.watchdog_data()
+        data[1].update(state="closed", merged=True, merged_at="2026-11-22T12:00:00Z",
+                       merge_commit_sha=B)
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+
+    def test_watchdog_collects_proven_merge_state_with_sha_and_date(self):
+        def fake_api(path):
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": H}}
+            if path.startswith("/pulls/"):
+                n = int(path.split("/")[-1])
+                return {"number": n, "base": {"ref": "main"},
+                        "head": {"sha": H}, "updated_at": "2026-11-21T12:00:00Z",
+                        "state": "closed", "merged": True, "merge_commit_sha": B,
+                        "merged_at": "2026-11-21T12:00:00Z"}
+            return {"total_count": 0, "check_runs": []}
+        data = mod.collect_watchdog(contract(), fake_api, H)
+        self.assertTrue(all(x["merged"] for x in data))
+        self.assertTrue(all(x["merge_commit_sha"] == B for x in data))
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(o["next_action"], "VERIFY_POST_MERGE_READBACK")
+
+    def test_watchdog_rejects_merge_state_changed_during_collection(self):
+        calls = {}
+        def fake_api(path):
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": H}}
+            if path.startswith("/pulls/"):
+                calls[path] = calls.get(path, 0) + 1
+                n = int(path.split("/")[-1])
+                return {"number": n, "base": {"ref": "main"},
+                        "head": {"sha": H}, "updated_at": "2026-11-21T12:00:00Z",
+                        "state": "closed" if calls[path] > 1 else "open",
+                        "merged": False}
+            return {"total_count": 0, "check_runs": []}
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.collect_watchdog(contract(), fake_api, H)
 
     def test_cli_blocked_diagnostic_never_signals_ci_pass(self):
         with tempfile.TemporaryDirectory() as d:

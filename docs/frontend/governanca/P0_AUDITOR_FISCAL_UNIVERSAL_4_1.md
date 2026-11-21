@@ -86,6 +86,18 @@ A ativação e a configuração administrativa requerem autorização separada d
 
 **Condição de aceite dos três achados da auditoria do HEAD 09bf546:** a execução das provas negativas deve incluir manutenção posterior do checkpoint e dos workflows por PR de identidade distinta da #690, checklist dos três required checks com apenas protect-types, contratos terminalmente falsificados, manifesto de schema inválido, chmod e mode change em renomeação. Os casos puramente simulados não substituem API/CI de HEAD real. O diagnóstico pode estar BLOCKED_EXTERNAL e o workflow continuar tecnicamente verde apenas se o relatório preservar a falta de prontidão, nunca emitir PASS de missão.
 
+## 5.2. Matriz de prevenção das quatro regressões encontradas no HEAD 502710a
+
+**Pré-integração NR-005:** o manifesto protegido `docs/frontend/planos/P0_GOV_PLAN_690.json` não pode ser modificado, renomeado ou removido por qualquer PR posterior. O guard verifica o `full_diff` incluindo os dois lados de renomeações **antes** da resolução da PR e **antes** do retorno N/A, nos eventos `pull_request`, `merge_group` e `push`. Documentos comuns fora desse caminho preservam o rito documental original. A validação pura do RCA também não retorna N/A para o manifesto alterado.
+
+**Fila NR-009/N13:** a identidade do checkout vem de `git rev-parse HEAD` e `HEAD^{tree}` reais. `GITHUB_SHA`/`GITHUB_REF` são atributos do evento e devem coincidir com o checkout real. A ref temporária viva `gh-readonly-queue/main/pr-*` é consultada via API; HTTP 404, SHA diferente, grupo removido, mudança de HEAD/árvore ou estado `QUEUED`, `LOCKED`, `UNMERGEABLE` falham fechados. Conferir novamente GraphQL da entrada/PR, ref do grupo, `main` e HEAD local ao final evita aceitar deriva durante a coleta. Isso não ativa nem publica status privilegiado da fila.
+
+**Origem N04/N13:** somente checks obrigatórios emitidos por `integration_id=15368` (valor confirmado no ruleset ativo `26495643` em 21/11/2026) contam como válidos. Check homônimo de outra App ou duplicado não integra `required_checks_complete`. Conferir id, SHA atual, status `completed/success` e os três nomes completos. Mudança futura do ruleset exige novo readback e autorização, não admissão dinâmica de emissor arbitrário.
+
+**Ciclo de vida:** preservar `state`, `merged`, `merged_at` e `merge_commit_sha`. PR fechada sem merge indica `REOPEN_OR_REPLAN_CLOSED_PR`; PR efetivamente integrada no GitHub indica `VERIFY_POST_MERGE_READBACK`. Ambos impedem a ação de revisão como próximo passo e não constituem `CERTIFIED`, mesmo com checks verdes. Dados ausentes ou contraditórios falham fechados. Readback da `main` é operação distinta.
+
+**Regressão obrigatória:** executar novos casos nas três suítes Node/Python, incluindo Git temporário, e cinco checks no mesmo HEAD, preservando testes anteriores, estado `skipped`, limitações HML e provas reais de API. Não iniciar auditoria independente antes de a matriz integral estar comprovada.
+
 **Critério de congelamento:** não publicar melhorias cosméticas nem reenviar auditoria sem delta causal. Falha nova exige causa raiz, teste negativo, correção e regressão no mesmo HEAD. Preflight verde não elimina possibilidade de novo achado, nem altera o dever de auditoria independente de código.
 
 **Fronteira administrativa:** reinserir o runner Windows com perfil gh local ou criar App/status de missão, novo required check, fila e ruleset depende de controle externo comprovado e autorização separada. Mesmo integrado à main, o watchdog agendado é best effort e somente leitura. N17(c) permanece NO-GO para ativação até ensaio isolado com terceiro autor e duas aprovações elegíveis.

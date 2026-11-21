@@ -20,6 +20,9 @@ SHA = re.compile(r"^[0-9a-f]{40}$")
 REPO = "contaos999999/contaos-hml-control"
 STATES = {"ACTIVE", "BLOCKED_EXTERNAL", "CANCELLED_BY_OWNER", "CERTIFIED"}
 OUTCOMES = {"success", "failure", "error", "pending", "skipped", "neutral", "cancelled"}
+# Snapshot of active protected ruleset #26495643; update requires a new
+# authorized ruleset readback, never acceptance of an arbitrary App ID.
+EXPECTED_REQUIRED_CHECK_INTEGRATION_ID = 15368
 REQUIRED = (
     "ContaOS Frontend Zero-Drift",
     "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
@@ -251,8 +254,17 @@ def collect_watchdog(contract, api_get, expected_main):
     for number in [contract["target"]["pr"], *contract["allowed_dependencies"]]:
         pr = api_get("/pulls/" + str(number))
         if (not isinstance(pr, dict) or pr.get("number") != number or
-                pr.get("base", {}).get("ref") != "main"):
-            raise InvalidEvidence("N02: wrong PR or base")
+                pr.get("base", {}).get("ref") != "main" or
+                pr.get("state") not in ("open", "closed") or
+                type(pr.get("merged")) is not bool):
+            raise InvalidEvidence("N02: wrong PR/base/merge state")
+        if pr["state"] == "open" and pr["merged"]:
+            raise InvalidEvidence("N13: open PR cannot already be merged")
+        if pr["merged"] and (
+                pr["state"] != "closed" or
+                not sha(pr.get("merge_commit_sha")) or
+                not isinstance(pr.get("merged_at"), str)):
+            raise InvalidEvidence("N13: merged PR without merge SHA/time")
         head = pr.get("head", {}).get("sha")
         if not sha(head):
             raise InvalidEvidence("N05: missing PR HEAD")
@@ -284,11 +296,18 @@ def collect_watchdog(contract, api_get, expected_main):
         if (not isinstance(current, dict) or current.get("number") != number or
                 current.get("head", {}).get("sha") != head or
                 current.get("base", {}).get("ref") != "main" or
-                current.get("updated_at") != pr.get("updated_at")):
-            raise InvalidEvidence("N05: PR changed during check collection")
+                current.get("updated_at") != pr.get("updated_at") or
+                current.get("state") != pr.get("state") or
+                current.get("merged") is not pr.get("merged") or
+                current.get("merged_at") != pr.get("merged_at") or
+                current.get("merge_commit_sha") != pr.get("merge_commit_sha")):
+            raise InvalidEvidence("N05: PR/merge state changed during check collection")
         data.append({
             "repo": REPO, "number": number, "head_sha": head,
             "updated_at": pr.get("updated_at"), "state": pr.get("state"),
+            "merged": pr["merged"],
+            "merged_at": pr.get("merged_at"),
+            "merge_commit_sha": pr.get("merge_commit_sha"),
             "checks": observed,
         })
     main_oid()
@@ -320,11 +339,30 @@ def assess_watchdog(contract, data, now):
     for item in data:
         number = item["number"]
         if (item.get("repo") != REPO or not sha(item.get("head_sha")) or
-                item.get("state") not in ("open", "closed")):
-            raise InvalidEvidence("N02: untrusted PR observation")
+                item.get("state") not in ("open", "closed") or
+                type(item.get("merged")) is not bool):
+            raise InvalidEvidence("N02: untrusted PR/merge observation")
+        if item["state"] == "open" and item["merged"]:
+            raise InvalidEvidence("N13: contradictory open/merged PR")
+        if item["merged"] and item["state"] != "closed":
+            raise InvalidEvidence("N13: contradictory merged PR state")
         updated = iso_time(item.get("updated_at"))
         if updated > clock:
             raise InvalidEvidence("N07: future observation")
+        if item["state"] == "closed":
+            if item["merged"]:
+                if not sha(item.get("merge_commit_sha")) or not item.get("merged_at"):
+                    raise InvalidEvidence("N13: merged PR missing commit/time")
+                merged_at = iso_time(item["merged_at"])
+                if merged_at > clock:
+                    raise InvalidEvidence("N07: future merge timestamp")
+                findings.append({"code": "N05", "pr": number,
+                                 "action": "VERIFY_POST_MERGE_READBACK",
+                                 "detail": "merged PR needs protected main/checkpoint verification"})
+            else:
+                findings.append({"code": "N02", "pr": number,
+                                 "action": "REOPEN_OR_REPLAN_CLOSED_PR",
+                                 "detail": "closed without merge; no resume for review"})
         if number == contract["target"]["pr"] and item["head_sha"] != contract["target"]["head"]:
             findings.append({"code": "N05", "pr": number, "action": "REVALIDATE_HEAD"})
         checks = item.get("checks")
@@ -352,6 +390,11 @@ def assess_watchdog(contract, data, now):
                                  "detail": "missing or ambiguous " + expected})
                 continue
             selected = matching[0]
+            if selected.get("integration_id") != EXPECTED_REQUIRED_CHECK_INTEGRATION_ID:
+                all_required_complete = False
+                findings.append({"code": "N13", "pr": number,
+                                 "action": "VERIFY_CHECK_PROVENANCE",
+                                 "detail": "required check App ID mismatch: " + expected})
             if (selected.get("status") != "completed" or
                     selected.get("conclusion") != "success"):
                 all_required_complete = False
@@ -378,7 +421,8 @@ def assess_watchdog(contract, data, now):
             findings.append({"code": "N08", "pr": number, "action": "INVESTIGATE_NO_PROGRESS"})
     rank = {
         "VERIFY_CERTIFICATION_RECEIPT": 0, "VERIFY_OWNER_CANCELLATION": 0,
-        "REVALIDATE_HEAD": 1, "VERIFY_CHECK_PROVENANCE": 2,
+        "REOPEN_OR_REPLAN_CLOSED_PR": 1, "VERIFY_POST_MERGE_READBACK": 1,
+        "REVALIDATE_HEAD": 2, "VERIFY_CHECK_PROVENANCE": 3,
         "FIX_FAILED_CI": 3, "VERIFY_MISSING_CI": 4,
         "VERIFY_REQUIRED_CHECKS": 4, "REEXECUTE_REQUIRED_CHECKS": 4,
         "INVESTIGATE_CI_STALL": 5,
@@ -393,7 +437,12 @@ def assess_watchdog(contract, data, now):
         "certified": False, "eligible": False, "authoritative_for_merge": False,
         "activation_authorized": False, "issues": findings,
         "next_action": findings[0]["action"] if findings else "REVIEW_INDEPENDENT_AUDIT_AND_CI",
-        "observed_prs": [{"number": x["number"], "head": x["head_sha"]} for x in data],
+        "observed_prs": [
+            {"number": x["number"], "head": x["head_sha"],
+             "state": x["state"], "merged": x["merged"],
+             "merge_commit_sha": x.get("merge_commit_sha")}
+            for x in data
+        ],
     }
 
 

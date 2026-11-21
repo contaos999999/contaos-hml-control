@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry, resolvePrContext, verifyRawFullDiffModes, classifyProtectedPush } from "./p0-rca-impact-gate.mjs";
+import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry, resolvePrContext, verifyRawFullDiffModes, classifyProtectedPush,
+  assertImmutableP0Governance, IMMUTABLE_P0_690_MANIFEST } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -421,6 +422,45 @@ test("NR-005 adição/exclusão mantêm modos regulares", () => {
     ":100644 000000 "+a+" "+zeros+" D\0"+q+"\0";
   assert.equal(verifyRawFullDiffModes(raw,[p,q]),true);
 });
+
+test("NR-005 pull_request bloqueia manifesto #690 ANTES de N/A documental", () => {
+  assert.throws(() => assertImmutableP0Governance([IMMUTABLE_P0_690_MANIFEST],
+    "pull_request"), /imutável em pull_request antes de integrar/);
+  const report = check(null, [IMMUTABLE_P0_690_MANIFEST], "75", [],
+    {prNumber:701,governancePlan:null});
+  assert.match(report.errors.join(" "), /manifesto protegido #690 imutável/);
+});
+test("NR-005 merge_group bloqueia manifesto protegido ANTES de admissão na fila", () => {
+  assert.throws(() => assertImmutableP0Governance([IMMUTABLE_P0_690_MANIFEST],
+    "merge_group"), /imutável em merge_group antes de integrar/);
+  const report=check(null,[IMMUTABLE_P0_690_MANIFEST],"75",[],
+    {prNumber:701,governancePlan:null});
+  assert.ok(report.errors.length>0);
+});
+test("NR-005 push também bloqueia manifesto para não depender do último gate", () => {
+  assert.throws(() => assertImmutableP0Governance([IMMUTABLE_P0_690_MANIFEST],
+    "push"), /imutável em push antes de integrar/);
+});
+test("NR-005 renomeação do manifesto para outro nome é interceptada no full_diff", () => {
+  const report=check(null,["docs/frontend/planos/PLANO_COMUM.md"],"75",[],{
+    prNumber:701,
+    fullDiffPaths:[IMMUTABLE_P0_690_MANIFEST,"docs/frontend/planos/PLANO_COMUM.md"],
+  });
+  assert.match(report.errors.join(" "), /manifesto protegido #690 imutável/);
+});
+test("NR-005 documentação comum não herda bloqueio do manifesto protegido", () => {
+  const doc="docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md";
+  for(const event of ["pull_request","push","merge_group"])
+    assert.equal(assertImmutableP0Governance([doc],event),true);
+  assert.deepEqual(check(null,[doc],"75",[],{prNumber:701}).errors,[]);
+});
+test("NR-005 manifesto é bloqueado mesmo quando número da PR é #690", () => {
+  const report=check(null,[IMMUTABLE_P0_690_MANIFEST],"75",[],{
+    prNumber:690,governancePlan:manifest690(),fullDiffPaths:[IMMUTABLE_P0_690_MANIFEST],
+  });
+  assert.match(report.errors.join(" "), /manifesto protegido #690 imutável/);
+});
+
 test("P0 RCA — falta relatório no diff BUILD V2 falha", () => {
   mustFail(null, /sem ficha RCA/);
 });

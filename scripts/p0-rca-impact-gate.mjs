@@ -43,6 +43,12 @@ export function validateRcaImpact({
 }) {
   const errors = [];
   const err = (msg) => errors.push("P0 RCA: " + msg);
+  // Fail before any documentary N/A, even without a PLAN for this PR.
+  try {
+    assertImmutableP0Governance(
+      [...changed, ...(Array.isArray(fullDiffPaths) ? fullDiffPaths : [])],
+      "validation");
+  } catch (error) { err(error.message); }
   const id = String(planId || "").padStart(2, "0");
   let version = Object.keys(RANGES).find((v) => RANGES[v].includes(id));
   // NR-005: valida o diff INTEIRO antes de filtrar codigo ou documentos.
@@ -368,6 +374,16 @@ export function verifyRawFullDiffModes(raw, expectedPaths) {
     throw new Error("NR-005 modo raw difere de full_diff");
   return true;
 }
+export const IMMUTABLE_P0_690_MANIFEST =
+  "docs/frontend/planos/P0_GOV_PLAN_690.json";
+export function assertImmutableP0Governance(paths, event) {
+  if (!Array.isArray(paths) || paths.some(p => typeof p !== "string"))
+    throw new Error("NR-005 full diff de manifesto protegido ausente");
+  if (paths.includes(IMMUTABLE_P0_690_MANIFEST))
+    throw new Error("NR-005 manifesto protegido #690 imutável em " +
+      String(event || "evento não informado") + " antes de integrar");
+  return true; // Does not alter documentary N/A for unrelated documents.
+}
 export function classifyProtectedPush(number, changed, manifestPresent) {
   if (!Array.isArray(changed)) throw new Error("NR-005 diff invalido");
   if (number === 690) return "BUILD_690";
@@ -553,9 +569,12 @@ async function main() {
   let fullPaths = null;
   const event = String(process.env.GITHUB_EVENT_NAME || "");
   try {
+    // The immutable protected PLAN manifest must be guarded at the earliest
+    // pre-merge event, before PR resolution or a potential documentary N/A.
+    fullPaths = fullDiffPaths(base, head);
+    assertImmutableP0Governance(fullPaths, event);
     const resolved = await resolvePrContext(event, base, head, changed, githubToken, eventBase);
     prNumber = resolved.number;
-    fullPaths = fullDiffPaths(base, head);
     if (prNumber) {
       const planPath = "docs/frontend/planos/P0_GOV_PLAN_" + prNumber + ".json";
       let approved = null;

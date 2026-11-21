@@ -16,6 +16,7 @@ export function extractHint(ref) {
 
 export function verifyMergeGroup({ event, entry, pull, liveBase, repo = REPO,
   checkoutSha, gitParents = [], observedTree = null, expectedTree = null,
+  checkoutTree = null, liveHeadRefSha = null, eventSha = null,
   checkoutRef } = {}) {
   const issues = [];
   const reject = (x) => issues.push(x);
@@ -34,6 +35,12 @@ export function verifyMergeGroup({ event, entry, pull, liveBase, repo = REPO,
     reject("head_ref invalid/not current checkout");
   if (checkoutSha !== head || !isSha(checkoutSha))
     reject("checkout not group head SHA");
+  if (eventSha !== head || !isSha(eventSha))
+    reject("GITHUB_SHA event identity differs from the group");
+  if (liveHeadRefSha !== head || !isSha(liveHeadRefSha))
+    reject("live queue ref removed, stale or not authenticated");
+  if (!isSha(checkoutTree) || checkoutTree !== observedTree)
+    reject("actual checkout tree does not match the authenticated group tree");
   // Only valid Github GraphQL queue states which can be actively checked.
   // QUEUED/LOCKED and especially UNMERGEABLE are not evidence of an
   // active checks_requested group; unknown future values fail closed.
@@ -88,12 +95,15 @@ async function github(path, token, post = null) {
 }
 const git = (...a) => execFileSync("git", a, { encoding: "utf8", timeout: 15000 }).trim();
 
-export async function resolveEventContext({ env = process.env, http = github, gitFn = git } = {}) {
+export async function resolveEventContext({
+  env = process.env, http = github, gitFn = git,
+  readEvent = () => JSON.parse(readFileSync(env.GITHUB_EVENT_PATH, "utf8")),
+} = {}) {
   if (env.GITHUB_EVENT_NAME !== "merge_group")
     fail("not a merge_group event");
   if (!env.GITHUB_EVENT_PATH || !env.GITHUB_TOKEN)
     fail("event payload or read-only token absent");
-  const event = JSON.parse(readFileSync(env.GITHUB_EVENT_PATH, "utf8"));
+  const event = readEvent();
   const hint = extractHint(event?.merge_group?.head_ref);
   if (!hint) fail("PR hint absent: cannot resolve authenticated PR");
   const query = [
@@ -105,18 +115,29 @@ export async function resolveEventContext({ env = process.env, http = github, gi
     "id state baseCommit{oid} headCommit{oid} pullRequest{number}",
     "}}}}",
   ].join(" ");
-  const [gql, live] = await Promise.all([
+  const queueRefPath = "/repos/" + REPO + "/git/ref/" +
+    event.merge_group.head_ref.slice("refs/".length);
+  const [gql, live, liveGroupRef] = await Promise.all([
     http("/graphql", env.GITHUB_TOKEN, {
       query, variables: { owner: "contaos999999", name: "contaos-hml-control", number: hint },
     }),
     http("/repos/" + REPO + "/git/ref/heads/main", env.GITHUB_TOKEN),
+    http(queueRefPath, env.GITHUB_TOKEN),
   ]);
+  // A removed queue branch must return a failing API call. A cached event
+  // ref or an existing commit object never proves a group remains active.
+  if (liveGroupRef?.ref !== event.merge_group.head_ref ||
+      liveGroupRef?.object?.type !== "commit" ||
+      liveGroupRef?.object?.sha !== event.merge_group.head_sha)
+    fail("live merge group ref absent, removed or moved");
   if (gql?.errors?.length || !gql?.data?.repository?.pullRequest)
     fail("GraphQL PR/entry unavailable or ambiguous");
   const pull = gql.data.repository.pullRequest;
   const entry = pull.mergeQueueEntry;
   const h = event.merge_group.head_sha, b = event.merge_group.base_sha;
-  const parents = gitFn("show", "-s", "--format=%P", h).split(/\s+/).filter(Boolean);
+  const checkoutSha = gitFn("rev-parse", "HEAD");
+  const checkoutTree = gitFn("rev-parse", "HEAD^{tree}");
+  const parents = gitFn("show", "-s", "--format=%P", "HEAD").split(/\s+/).filter(Boolean);
   // git merge-tree recomputes the actual merge tree for the *one* PR.
   // Unlike rev-list, this does not confuse commits with PRs.
   // If merge-tree conflicts or repo objects are absent, fail closed.
@@ -129,10 +150,39 @@ export async function resolveEventContext({ env = process.env, http = github, gi
   const observedTree = gitFn("rev-parse", h + "^{tree}");
   const result = verifyMergeGroup({
     event, entry, pull, liveBase: live?.object?.sha, repo: env.GITHUB_REPOSITORY,
-    checkoutSha: env.GITHUB_SHA, checkoutRef: env.GITHUB_REF,
+    checkoutSha, checkoutTree, checkoutRef: env.GITHUB_REF,
+    liveHeadRefSha: liveGroupRef.object.sha, eventSha: env.GITHUB_SHA,
     gitParents: parents, observedTree, expectedTree,
   });
   if (!result.valid) fail(result.issues.join("; "));
+  // Catch queue removal or base movement during the local Git verification.
+  const [endGroupRef, endBaseRef, endGql] = await Promise.all([
+    http(queueRefPath, env.GITHUB_TOKEN),
+    http("/repos/" + REPO + "/git/ref/heads/main", env.GITHUB_TOKEN),
+    http("/graphql", env.GITHUB_TOKEN, {
+      query, variables: { owner: "contaos999999", name: "contaos-hml-control", number: hint },
+    }),
+  ]);
+  const endPull = endGql?.data?.repository?.pullRequest;
+  const endEntry = endPull?.mergeQueueEntry;
+  if (endGql?.errors?.length || !endEntry ||
+      endEntry.id !== entry.id ||
+      !["AWAITING_CHECKS", "MERGEABLE"].includes(endEntry.state) ||
+      endPull?.number !== pull.number ||
+      endPull?.headRefOid !== pull.headRefOid ||
+      endPull?.baseRefName !== pull.baseRefName ||
+      endEntry?.baseCommit?.oid !== b ||
+      endEntry?.headCommit?.oid !== h ||
+      endEntry?.pullRequest?.number !== pull.number)
+    fail("merge queue entry removed, changed or PR moved during readback");
+  if (endGroupRef?.ref !== event.merge_group.head_ref ||
+      endGroupRef?.object?.type !== "commit" ||
+      endGroupRef?.object?.sha !== h ||
+      endBaseRef?.object?.sha !== b)
+    fail("merge group ref/base changed during authenticated readback");
+  if (gitFn("rev-parse", "HEAD") !== h ||
+      gitFn("rev-parse", "HEAD^{tree}") !== observedTree)
+    fail("checked-out HEAD/tree drifted during validation");
   return result;
 }
 export async function main({ env = process.env, http = github, gitFn = git } = {}) {
