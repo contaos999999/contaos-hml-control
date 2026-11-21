@@ -203,6 +203,36 @@ Esta regra complementa a seção 5.3 e prevalece para cada novo HEAD do BUILD #6
 
 **Decisão vinculante:** `SEMANTIC_COMPLETENESS=INCONCLUSIVE`; `MERGE=NO_GO`; `ACTIVATION=NO_GO`. O CI de origem documental pode passar sem que a completude semântica passe. A auditoria independente deve contraditar a matriz e o conjunto de casos, sem reaproveitar a autodeclaração do implementador como prova independente.
 
+
+## 5.8. Contraditório de fonte inversa: 18 trechos fora dos 137 vínculos de obrigação
+
+**Achado executado:** `auditSemanticReverseCoverage()` identificou 100/118 trechos protegidos com ao menos um ID de regra vinculado e **18/118 sem regra diretamente associada**. Os 137 IDs de regra continuam com E1–E7 em `UNPROVEN`. O inventário reverso foi executado no [job adversarial V2, run 44933974415](https://github.com/contaos999999/contaos-hml-control/actions/runs/44933974415/job/136936485405), com texto-fonte, caminho, blob, linha e hash. Cobertura textual não é cobertura interpretativa. As categorias abaixo não dispensam análise independente nem produzem `N/A` automaticamente.
+
+A tabela de revisão contém: **A** autoridade responsável, **P** precondição, **D** decisão positiva e negativa, **I** interação de regras, **E** evidência e contraprova exigida, **R** revogação/frescor, **F** fronteira de estágio. Todos os apontamentos possuem o estado `REQUIRES_INDEPENDENT_SEMANTIC_REVIEW`; um teste sintético do BUILD não substitui a contraprova LIVE quando a norma a exige.
+
+| Fonte/linha | A / P / D (interpretação a contraditar) | I (interação) | E (prova e negativo discriminante pendentes) | R / F |
+| --- | --- | --- | --- | --- |
+| PLAN 3 | Titular autoriza rito; PLAN originalmente documental; publicação sozinha não produz eficácia. | PLAN §3 × §7 × emenda §59 | Ensaio em que documento/CI verde sem revisão/merge/readback continua NO-GO. | Troca de HEAD invalida recibo; BUILD ≠ ativação |
+| PLAN 7 | Auditor consulta a ref viva antes do BUILD; baseline de elaboração é só histórico. | NR-009 × N05 | Comparar base previamente registrada contra ref real avançada com HEAD de PR imutável. | Revalidar base a cada decisão; pré-BUILD |
+| PLAN 8 | PR #679 é alvo inicial, não prova de Fase 3; implementador não a libera por PR filha. | §3 CERTIFIED × N01 × N14 | PR #690 verde e #679 ainda não certificada deve permanecer bloqueada. | HEAD e contrato da #679 vivos; certificação independente |
+| PLAN 9 | Auditor existente tem perfil e métodos prescritos, sem novo agente ou alteração não revisada. | §3 auditor read-only × N06 | Novo agente ou executor com escrita em app não pode substituir auditor original. | Fonte/hashes protegidos; BUILD |
+| PLAN 10 | Workflows do baseline servem de contexto, não de eficácia do novo Mission Lock. | §3.1 App × N13 | Checks existentes verdes sem status do App não concedem certificado do gate futuro. | Revisitar contextos e ruleset vivos; ativação externa |
+| PLAN 11 | Proteção GitHub atual e autorizações específicas são diferentes; zero aprovação *nativa obrigatória* não dispensa review normativa. | N17 × §3.1 × ruleset | Cenário com três checks verdes, zero exigência nativa e review normativa ausente deve NO-GO. | Review dismissal/revogação; merge/ativação |
+| PLAN 12 | Fontes institucionais e governança são dependências, não autorização tácita; backend só é consultado, não alterado. | Zero-Drift × PRIORIDADE ZERO × PLAN | Fonte obrigatória ausente ou backend alterado sob BUILD frontend deve FAIL. | Revisar ref protegida; escopo BUILD |
+| PLAN 13 | Sem Lovable BUILD, PROD/backend, refactor de app ou alteração de types.ts por este escopo. | Allowlist §4 × NR-005 | Mutação proibida com demais testes verdes deve rejeitar PR. | Revalidar diff integral; BUILD |
+| PLAN 17 | Lacuna de fiscalização de missão é distinta de prova de bypass do ruleset; não inferir ataque consumado. | P0-ABS-001 × P0-ABS-002 | Relatório de sessão concluída sem checkpoint protegido permanece ACTIVE, sem rotular bypass histórico. | Estado persistente; diagnóstico |
+| PLAN 19 | Auditor emite parecer; não concede autorização humana, aprovação própria, merge ou operação PROD. | §3 independência × N06 × N17 | Avaliação técnica PASS sem autorização titular/review elegível deve bloquear. | Revogação de autorização e review; certificação/ativação |
+| PLAN 89 | RED e GREEN exigem testes negativos reais, CI, Teste C e credencial isolada do código candidato. | N01–N17 × GitHub App × §3.1 | Teste negativo faltante ou token privilegiado no checkout candidato deve FAIL apesar do CI unitário verde. | Testes no HEAD e reexecuções legítimas; BUILD e ativação |
+| PLAN 117 | Cabeçalho de matriz histórica deve permanecer associado às linhas subsequentes; conteúdo isolado não é norma de liberação. | PLAN §8 × provas históricas | Classificação contextual verificada por auditor, sem excluir as linhas da revisão. | Proveniência de documento; histórico |
+| PLAN 123 | Título de Zero-Drift remete às exigências imediatamente abaixo, não a exceção irrestrita. | PLAN §8 × BRAND-01 | Alteração de UI com `impacto_visual: N/A` indevido deve FAIL. | Diff real; BUILD |
+| PLAN 128 | N/A visual só para o escopo documental/governança; Teste C deve verificar ausência de impacto visual. | NR-005 × Zero-Drift × Teste C | Arquivo de UI extra + N/A visual declarado não pode passar. | Revalidar 14 caminhos e CHECKs; BUILD |
+| PLAN 133 | Segundo parecer histórico `CHANGES_REQUESTED` não autoriza atribuir PASS ao HEAD posterior. | NR-009 × revisão formal | Reutilizar relatório de HEAD diferente como certificado vigente deve FAIL. | Revalidação SHA; histórico |
+| PLAN 141 | Terceiro parecer histórico continua prova documental limitada à época. | N05 × N12 | Reaproveitamento como aprovação do BUILD atual deve FAIL. | HEAD e review correntes; histórico |
+| EMENDA 7 | Cabeçalho de ressalvas separa obrigações BUILD e ativação; colunas não podem ser mescladas. | §3.1 × emenda §9–10 | PASS de teste do publicador não prova status exigido em fila real. | Gate administrativo; ativação |
+| EMENDA 63 | Cabeçalho Zero-Drift vincula exigências das linhas 64–66, sem dispensar teste visual sob diff de produto. | Emenda §22–25 × Teste C | Diff visual real com triagem N/A indevida deve FAIL. | Diff do HEAD; BUILD |
+
+**Condição de certificação:** qualquer resultado desta tabela exige ligação com regras e fonte exata, sete eixos expressos em proposições completas, contraprova negativa executada (run/job/HEAD/logs), verificação de precedência e revisão independente de autoria. Evidência não produzida conserva `INCONCLUSIVE`, inclusive para itens históricos ou cabeçalhos. As 381 sentenças candidatas e as 9.316 combinações de pares continuam sujeitas a decisão individual justificável; não se atribui `PASS` a elas por exaustividade aritmética.
+
 ## 6. Implantação, rollback e continuidade
 
 1. Esta PR implementa código de diagnóstico, testes offline e adaptação de compatibilidade à fila **sem ativação**, com CI e revisão técnica independente de código.
