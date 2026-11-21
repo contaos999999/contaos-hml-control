@@ -16,6 +16,8 @@ on:
       - "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md"
       - "docs/frontend/governanca/MISSAO_ATIVA_4_1.json"
       - "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
+  pull_request_review:
+    types: [submitted, dismissed, edited]
   push:
     branches: [main]
     paths:
@@ -54,7 +56,7 @@ jobs:
   # This is an assistant-authored pre-audit, never the independent Codex review.
   assistant-preaudit-gate:
     name: P0-ABS Preauditoria Assistente (precert apenas)
-    if: (github.event_name == 'pull_request' && github.event.pull_request.number == 690) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/build/p0-abs-fiscal-universal')
+    if: ((github.event_name == 'pull_request' || github.event_name == 'pull_request_review') && github.event.pull_request.number == 690) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/build/p0-abs-fiscal-universal')
     needs: controller-offline
     runs-on: ubuntu-22.04
     timeout-minutes: 25
