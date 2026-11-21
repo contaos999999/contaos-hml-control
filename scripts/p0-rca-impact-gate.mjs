@@ -909,6 +909,21 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
 }
 // Full execution happens in an isolated subprocess with credentials removed.
 // A matching title in source is NEVER an authorization proof.
+
+const FULL_PROTOCOL_STRUCTURAL_TO_EXECUTED=Object.freeze({
+  CHECK_WORKFLOW_RUN_ATTEMPT:"AUTH-CHECK-WORKFLOW-RUN-ATTEMPT",
+  ZIP_REAL_BYTES:"AUTH-ZIP-BYTES",
+  FAILURE_TERMINAL:"AUTH-FAILURE-TERMINAL",
+  FINAL_LIVE_READBACK:"AUTH-FINAL-POST-ZIP-READBACK",
+  IMMUTABLE_MANIFEST:"AUTH-MANIFEST-IMMUTABLE",
+  REVIEW_VETO:"AUTH-NATIVE-VETO",
+  PR_ORIGIN_AUTH:"AUTH-PR-IDENTITY",
+  ACTIVATION_DISABLED:"AUTH-NO-ACTIVATION",
+  MANDATED_FULL_DIFF:"AUTH-FULL-DIFF-MODE",
+  CONTROLLER_READ_ONLY:"AUTH-READONLY-PERMISSIONS",
+  NO_SELF_CERTIFICATION:"AUTH-NO-SELF-CERTIFY",
+});
+
 export function attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha}={}){
   const issues=[...(coverage?.issues||[])];
   const rows=[];
@@ -929,10 +944,17 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
   }
   for(const row of coverage?.rows||[]){
     if(!row.source){
-      rows.push({...row,execution:row.status==="STRUCTURAL_WITNESS"?
-        "STRUCTURAL_CHECK_ONLY":"UNPROVEN"});
-      if(row.status!=="STRUCTURAL_WITNESS")
-        issues.push("EXECUTION: controle sem testemunha: "+row.id);
+      const witnessId=FULL_PROTOCOL_STRUCTURAL_TO_EXECUTED[row.id];
+      const witness=FULL_PROTOCOL_CASES.find(x=>x.id===witnessId);
+      const suite=witness&&suites?.[witness.file];
+      const matches=witness&&Array.isArray(suite?.successfulNames)?
+        suite.successfulNames.filter(x=>x.includes(witness.pattern)):[];
+      const valid=row.status==="STRUCTURAL_WITNESS" && !!witnessId &&
+        suite?.passed===true && suite.exitCode===0 && matches.length>0;
+      rows.push({...row,execution:valid?"EXECUTED_PASS":"UNPROVEN",
+        executableWitness:witnessId||null,matchedTests:matches,
+        outputSha256:suite?.outputSha256||null});
+      if(!valid)issues.push("EXECUTION: controle estrutural sem teste real PASS: "+row.id);
       continue;
     }
     const item=FULL_PROTOCOL_CASES.find(x=>x.id===row.id);
