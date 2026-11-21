@@ -59,6 +59,11 @@ def check_contract(contract):
         raise InvalidEvidence("dependencies invalid")
     if contract.get("activation_authorized") is not False:
         raise InvalidEvidence("privileged activation must remain disabled in BUILD")
+    plan = contract.get("immutable_plan")
+    if (not isinstance(plan, dict)
+            or plan.get("path") != "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md"
+            or not sha(plan.get("blob"))):
+        raise InvalidEvidence("protected PLAN blob missing"
     if not isinstance(contract.get("requirements"), dict):
         raise InvalidEvidence("requirements missing")
     required = contract["requirements"].get("required_checks")
@@ -120,10 +125,11 @@ def evaluate(contract, evidence):
         note("N05", "base advanced or not authenticated")
     if evidence.get("head") != evidence.get("live_head"):
         note("N05", "head drift")
-    if evidence.get("contract_source") != "protected-main" or evidence.get("contract_blob") != contract.get("blob"):
-        note("N03", "contract not bound to protected main blob")
-    if not sha(contract.get("blob")):
-        note("N03", "invalid protected contract blob")
+    if (evidence.get("contract_source") != "protected-main"
+            or evidence.get("plan_blob") != contract["immutable_plan"]["blob"]
+            or not sha(evidence.get("contract_blob"))
+            or evidence.get("contract_integrity_verified") is not True):
+        note("N03", "protected main contract/PLAN provenance not verified")
     if evidence.get("tooling") == "unavailable":
         note("N11", "tool/API unavailable")
     if evidence.get("attempts_without_delta", 0) >= 2:
