@@ -1669,6 +1669,23 @@ async function assessSemanticGate({
   }
   if(interactions.length!==pairs.length||normalized.size!==pairs.length)
     fail("SEMANTIC_9316_PAIRS_UNADJUDICATED");
+  // An identical narrative reused for distinct normative obligations is not
+  // clause-by-clause adjudication. Reject boilerplate before LIVE auth.
+  const allClaims=[...rules,...sentences,...sources,...interactions];
+  for(const field of ["interpretation","counterexample"]){
+    const owners=new Map();
+    for(const claim of allClaims){
+      const value=typeof claim?.[field]==="string"?
+        claim[field].trim().replace(/\\s+/g," ").toLowerCase():null;
+      if(!value)continue;
+      const previous=owners.get(value);
+      if(previous&&previous!==claim.id){
+        fail("SEMANTIC_REUSED_"+field.toUpperCase()+": "+previous+" / "+claim.id);
+        break;
+      }
+      owners.set(value,claim.id);
+    }
+  }
   const proofOk=(p,id)=>!!p&&p.head===head&&
     typeof p.interpretation==="string"&&p.interpretation.trim().length>=35&&
     typeof p.counterexample==="string"&&p.counterexample.trim().length>=25&&
