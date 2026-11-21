@@ -79,12 +79,14 @@ def validate_checks(checks, expected_sha, names=REQUIRED, app_ids=None):
     failures = []
     if not isinstance(checks, list):
         return ["N04: required checks missing"]
+    if any(not isinstance(c, dict) for c in checks):
+        failures.append("N04: malformed check entry")
     counts = Counter(c.get("name") for c in checks if isinstance(c, dict))
     for name in names:
         if counts[name] != 1:
             failures.append("N04: check missing/ambiguous " + name)
             continue
-        c = next(c for c in checks if c.get("name") == name)
+        c = next(c for c in checks if isinstance(c, dict) and c.get("name") == name)
         if c.get("sha") != expected_sha or not sha(c.get("sha")):
             failures.append("N04: stale SHA " + name)
         if c.get("conclusion") != "success" or c.get("status") != "completed":
@@ -132,7 +134,9 @@ def evaluate(contract, evidence):
         note("N03", "protected main contract/PLAN provenance not verified")
     if evidence.get("tooling") == "unavailable":
         note("N11", "tool/API unavailable")
-    if evidence.get("attempts_without_delta", 0) >= 2:
+    if type(evidence.get("attempts_without_delta", 0)) is not int:
+        note("N08", "attempt counter malformed")
+    elif evidence.get("attempts_without_delta", 0) >= 2:
         note("N08", "same attempt repeated without cause correction")
     if evidence.get("lock_conflict") is True:
         note("N09", "concurrent lease conflict")
@@ -178,14 +182,18 @@ def evaluate(contract, evidence):
             auth.get("review_id") != (review or {}).get("id") or
             auth.get("revoked") is not False):
             note("N17", "authorization stale or revoked")
-    if not evidence.get("independent_audit", {}).get("verified_pass"):
+    audit = evidence.get("independent_audit")
+    if not isinstance(audit, dict) or not audit.get("verified_pass"):
         note("N06", "no independent PASS evidence for code BUILD")
-    elif evidence["independent_audit"].get("head") != evidence.get("head"):
+    elif audit.get("head") != evidence.get("head"):
         note("N12", "independent audit stale")
-    if evidence.get("publisher", {}).get("available") is False:
+    published = evidence.get("publisher")
+    if not isinstance(published, dict):
+        published = {}
+        note("N11", "publisher evidence malformed")
+    if published.get("available") is False:
         note("N15", "trusted publisher unavailable")
     if event == "merge_group":
-        published = evidence.get("publisher", {})
         if published.get("sha") != candidate_sha or published.get("state") != "success":
             note("N16", "fresh GitHub App group status absent")
         if not published.get("verified_origin"):
