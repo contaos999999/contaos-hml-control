@@ -672,7 +672,7 @@ function paFixture() {
       repo:{full_name:"contaos999999/contaos-hml-control"}},
   },currentMain:PA_BASE,
   manifest:{schema:"contaos.p0.gov-plan.v1",approved:true,pr_number:690,
-    full_diff:true,ativacao_autorizada:false,files:PA_FILES},
+    full_diff:true,ativacao_autorizada:false,files:[...PA_FILES]},
   paths:[...PA_FILES],comments:[comment],
   checkRuns:PRECERT_REQUIRED_CHECKS.map((name,i)=>({
     id:name.includes("Teste C")?888:100+i, name, head_sha:PA_HEAD, app:{id:15368},
@@ -869,10 +869,20 @@ test("P0 adversarial GitHub live verified snapshot can release precert only",asy
 test("P0 adversarial new CHANGES_REQUESTED during async API collection blocks",async()=>{
   const o=await paLiveVerification({mutateReadback:"comments"});
   assert.equal(o.pass,false);
+  assert.match(o.issues.join(" "),/parecer\/checks changed/);
   assert.equal(o.release,"NO_GO");
 });
 test("P0 adversarial required CI changes during async API collection blocks",async()=>{
   const o=await paLiveVerification({mutateReadback:"checks"});
   assert.equal(o.pass,false);
+  assert.match(o.issues.join(" "),/parecer\/checks changed/);
   assert.equal(o.release,"NO_GO");
+});
+
+test("P0 fixture isolation: prior hostile mutation cannot poison later positive",()=>{
+  const hostile=paFixture();
+  hostile.manifest.files[0]="docs/frontend/planos/P0_GOV_PLAN_690.json";
+  const independent=paFixture();
+  assert.equal(independent.manifest.files[0],PA_FILES[0]);
+  assert.equal(paCheck(independent).pass,true);
 });
