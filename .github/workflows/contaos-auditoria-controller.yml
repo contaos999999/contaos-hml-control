@@ -5,6 +5,17 @@ on:
     paths:
       - "scripts/auditoria/**"
       - ".github/workflows/contaos-auditoria-controller.yml"
+      - ".github/workflows/contaos-missao-auditoria.yml"
+      - ".github/workflows/contaos-frontend-zero-drift.yml"
+      - ".github/workflows/contaos-teste-c-independente.yml"
+      - ".github/workflows/p0-nr001-anti-recurrence.yml"
+      - "scripts/ci/merge-group-context.mjs"
+      - "scripts/ci/merge-group-context.test.mjs"
+      - "scripts/p0-rca-impact-gate.mjs"
+      - "scripts/p0-rca-impact-gate.test.mjs"
+      - "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md"
+      - "docs/frontend/governanca/MISSAO_ATIVA_4_1.json"
+      - "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
   push:
     branches: [main]
     paths:
@@ -13,6 +24,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  checks: read
+  actions: read
+  pull-requests: read
+  issues: read
 jobs:
   controller-offline:
     name: Controlador offline Windows
@@ -34,3 +49,44 @@ jobs:
         run: |
           powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/auditoria/test-controller.ps1 -Controller scripts/auditoria/auditar-pr.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  # Separate non-required gate for release of the INTERNAL pre-certification.
+  # This is an assistant-authored pre-audit, never the independent Codex review.
+  assistant-preaudit-gate:
+    name: P0-ABS Preauditoria Assistente (precert apenas)
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 690
+    needs: controller-offline
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout da PR para verificador sem credenciais persistentes
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verificar PASS assistente registrado e CI no HEAD exato
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          INPUT_PREAUDIT_PR: "690"
+          INPUT_PREAUDIT_HEAD: ${{ github.event.pull_request.head.sha }}
+          INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          echo "PRÉ-CERTIFICAÇÃO BLOQUEADA até parecer PASS do assistente."
+          for attempt in $(seq 1 24); do
+            if node scripts/p0-rca-impact-gate.mjs --verify-assistant-preaudit; then
+              echo "P0 ASSISTENTE PASS autenticado. PRÉ-CERTIFICAÇÃO INTERNA LIBERADA."
+              echo "AUDITORIA INDEPENDENTE, APPROVED, MERGE e ATIVAÇÃO continuam pendentes."
+              exit 0
+            fi
+            if [ "$attempt" -eq 24 ]; then
+              echo "CHANGES_REQUESTED/BLOCKED: sem PASS íntegro neste HEAD."
+              exit 1
+            fi
+            sleep 45
+          done

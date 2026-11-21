@@ -2,7 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry, resolvePrContext, verifyRawFullDiffModes, classifyProtectedPush,
-  assertImmutableP0Governance, IMMUTABLE_P0_690_MANIFEST } from "./p0-rca-impact-gate.mjs";
+  assertImmutableP0Governance, IMMUTABLE_P0_690_MANIFEST,
+  ASSISTANT_PREAUDIT_MARKER, ASSISTANT_PREAUDIT_CRITERIA,
+  PRECERT_REQUIRED_CHECKS, validateAssistantPrecertRelease,
+  parseAssistantPreaudit } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -632,4 +635,132 @@ test("P0 RCA runner executa caso exato no Node sem vazar tokens", () => {
     if (beforeNorm === undefined) delete process.env.CONTAOS_CANONICAL_READ_TOKEN;
     else process.env.CONTAOS_CANONICAL_READ_TOKEN = beforeNorm;
   }
+});
+
+
+const PA_HEAD = "1".repeat(40), PA_BASE = "2".repeat(40);
+const PA_FILES = Array.from({length:14},(_,i) => "docs/frontend/approved-"+i+".md");
+const PA_REPORT = "Escopo fechado nos 14 arquivos, base viva e checks autenticados; ".repeat(10) +
+  "Inspeção de causa raiz, eventos PR/push/fila, testes negativos, regressão, " +
+  "proveniência de artifacts, controles de segurança e NO-GO de ativação.";
+const PA_DIGEST = "sha256:"+"3".repeat(64);
+function paFixture() {
+  const record={
+    schema:"contaos.assistant-preaudit.v1",
+    kind:"ASSISTANT_PREAUDIT_NOT_INDEPENDENT",
+    verdict:"PASS",pr:690,head:PA_HEAD,base:PA_BASE,
+    run_id:"PA-690-AUD-001", report:PA_REPORT,
+    report_sha256:createHash("sha256").update(PA_REPORT).digest("hex"),
+    criteria:Object.fromEntries(ASSISTANT_PREAUDIT_CRITERIA.map(x=>[x,"PASS"])),
+    artifact:{id:9001,digest:PA_DIGEST},
+  };
+  const comment={id:17,user:{login:"contaos9999"},
+    body:"PRÉ-AUDITORIA DO ASSISTENTE\n\n<!-- "+
+      ASSISTANT_PREAUDIT_MARKER+"\n"+JSON.stringify(record)+"\n-->"};
+  return {record, pr:{
+    number:690,state:"open",merged:false,draft:false,
+    head:{sha:PA_HEAD},base:{sha:PA_BASE,ref:"main",
+      repo:{full_name:"contaos999999/contaos-hml-control"}},
+  },currentMain:PA_BASE,
+  manifest:{schema:"contaos.p0.gov-plan.v1",approved:true,pr_number:690,
+    full_diff:true,ativacao_autorizada:false,files:PA_FILES},
+  paths:[...PA_FILES],comments:[comment],
+  checkRuns:PRECERT_REQUIRED_CHECKS.map((name,i)=>({
+    id:100+i, name, head_sha:PA_HEAD, app:{id:15368},
+    status:"completed",conclusion:"success",
+  })),
+  artifact:{id:9001,digest:PA_DIGEST,expired:false,
+    workflow_run:{head_sha:PA_HEAD}},
+  expectedHead:PA_HEAD,expectedBase:PA_BASE};
+}
+const paCheck = (fixture) => validateAssistantPrecertRelease(fixture);
+const setPaRecord = (f) => {
+  f.comments[0].body="<!-- "+ASSISTANT_PREAUDIT_MARKER+"\n"+
+    JSON.stringify(f.record)+"\n-->";
+};
+test("P0 PA positive: recorded assistant PASS exact HEAD/base with 5 CI and visual artifact permits precert only",()=>{
+  const f=paFixture(),result=paCheck(f);
+  assert.equal(result.pass,true);
+  assert.equal(result.verdict,"PASS");
+  assert.equal(result.release,"PRE_CERTIFICATION_ONLY");
+});
+test("P0 PA no assistant verdict means BLOCKED despite 5/5 CI",()=>{
+  const f=paFixture(); f.comments=[];
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA CHANGES_REQUESTED after PASS supersedes old record",()=>{
+  const f=paFixture();const second=structuredClone(f.comments[0]);
+  second.id=18;const payload={...f.record,verdict:"CHANGES_REQUESTED"};
+  second.body="<!-- "+ASSISTANT_PREAUDIT_MARKER+"\n"+JSON.stringify(payload)+"\n-->";
+  f.comments.push(second);assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA author is validated by GitHub, not by the body",()=>{
+  const f=paFixture();f.comments[0].user.login="unexpected-author";
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA stale HEAD or stale base invalidates PASS immediately",()=>{
+  for(const key of ["expectedHead","expectedBase"]){
+    const f=paFixture();f[key]="f".repeat(40);
+    assert.equal(paCheck(f).pass,false,key);
+  }
+});
+test("P0 PA manifesto full diff must match exactly all 14 paths",()=>{
+  const f=paFixture();f.paths.push("scripts/unauthorized.mjs");
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA protected manifest mutated by PR cannot be accepted",()=>{
+  const f=paFixture();f.paths[0]="docs/frontend/planos/P0_GOV_PLAN_690.json";
+  f.manifest.files[0]=f.paths[0];
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA missing/duplicate required CI never releases precert",()=>{
+  for(const mutator of [
+    f=>f.checkRuns.pop(),
+    f=>f.checkRuns.push({...f.checkRuns[0],id:999}),
+  ]){
+    const f=paFixture();mutator(f);assert.equal(paCheck(f).pass,false);
+  }
+});
+test("P0 PA check with foreign App is not GitHub Actions check",()=>{
+  const f=paFixture();f.checkRuns[0].app.id=987;
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA neutral/skipped check is not success",()=>{
+  for(const conclusion of ["neutral","skipped","failure"]){
+    const f=paFixture();f.checkRuns[0].conclusion=conclusion;
+    assert.equal(paCheck(f).pass,false);
+  }
+});
+test("P0 PA check with old SHA or missing id cannot certify same HEAD",()=>{
+  const f=paFixture();f.checkRuns[0].head_sha="f".repeat(40);
+  assert.equal(paCheck(f).pass,false);
+  f.checkRuns[0].head_sha=PA_HEAD;f.checkRuns[0].id=null;
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA altered report cannot pass SHA256 evidence",()=>{
+  const f=paFixture();f.record.report+="altered after report hash";
+  setPaRecord(f);assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA incomplete criteria do not pass even with correct hash",()=>{
+  const f=paFixture();f.record.criteria.negative_tests="NOT_EXECUTED";
+  setPaRecord(f);assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA artifact digest and HEAD must match GitHub API",()=>{
+  const f=paFixture();f.artifact.digest="sha256:"+"e".repeat(64);
+  assert.equal(paCheck(f).pass,false);
+  f.artifact.digest=PA_DIGEST;f.artifact.workflow_run.head_sha="c".repeat(40);
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA PR merged/draft or main moved is not open pre-cert snapshot",()=>{
+  for(const property of ["merged","draft"]){
+    const f=paFixture();f.pr[property]=true;
+    assert.equal(paCheck(f).pass,false);
+  }
+  const f=paFixture();f.currentMain="f".repeat(40);
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 PA last structured verdict is authoritative, never PASS substring",()=>{
+  const f=paFixture();f.comments[0].body="PASS, check verde, liberado manualmente";
+  assert.equal(parseAssistantPreaudit(f.comments[0].body),null);
+  assert.equal(paCheck(f).pass,false);
 });

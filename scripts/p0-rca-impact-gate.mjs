@@ -511,6 +511,163 @@ export async function resolvePrContext(event, base, head, changed, token, eventB
   throw new Error("evento GitHub sem proveniência validada");
 }
 
+// A manual assistant pre-audit is a prerequisite for PRE-CERTIFICATION only.
+// It is NOT an independent Codex PASS, a Github review, a mission certificate,
+// or authorization to merge. Its evidence is a Github-authenticated PR comment
+// tied to one exact HEAD and base and separately cross-checked against CI.
+export const ASSISTANT_PREAUDIT_MARKER = "CONTAOS_ASSISTANT_PREAUDIT_V1";
+export const ASSISTANT_PREAUDIT_CRITERIA = Object.freeze([
+  "scope_and_manifest", "root_causes", "event_provenance",
+  "negative_tests", "regression_integration", "security_boundaries",
+  "check_and_artifact_provenance", "limitations_and_next_gates",
+]);
+export const PRECERT_REQUIRED_CHECKS = Object.freeze([
+  "ContaOS Frontend Zero-Drift",
+  "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+  "ContaOS P0-NR-001 Integridade e Provas",
+  "protect-types", "Controlador offline Windows",
+]);
+export const PRECERT_ISSUER = 15368; // Github Actions, active ruleset #26495643.
+const preauditHash = (text) => createHash("sha256").update(text, "utf8").digest("hex");
+const exactSet = (a, b) => Array.isArray(a) && Array.isArray(b) &&
+  a.length === b.length && new Set(a).size === a.length &&
+  new Set(b).size === b.length && a.every(x => b.includes(x));
+export function parseAssistantPreaudit(body) {
+  if (typeof body !== "string") return null;
+  const re = new RegExp("<!-- " + ASSISTANT_PREAUDIT_MARKER + "\\s*\\n([\\s\\S]*?)\\n-->", "g");
+  const items = [...body.matchAll(re)];
+  if (items.length !== 1) return null;
+  try { return JSON.parse(items[0][1]); }
+  catch { return null; }
+}
+export function validateAssistantPrecertRelease({
+  pr, currentMain, manifest, paths, comments, checkRuns, artifact,
+  expectedHead, expectedBase,
+} = {}) {
+  const issues = [];
+  const add = (reason) => issues.push(reason);
+  if (!validSha(expectedHead) || !validSha(expectedBase) ||
+      !pr || pr.number !== 690 || pr.state !== "open" ||
+      pr.merged !== false || pr.draft !== false ||
+      pr.head?.sha !== expectedHead ||
+      pr.base?.sha !== expectedBase || pr.base?.ref !== "main" ||
+      pr.base?.repo?.full_name !== REPO || currentMain !== expectedBase)
+    add("PR/HEAD/base/main não vinculados ao mesmo snapshot vivo");
+  if (!manifest || manifest.schema !== "contaos.p0.gov-plan.v1" ||
+      manifest.approved !== true || manifest.pr_number !== 690 ||
+      manifest.full_diff !== true || manifest.ativacao_autorizada !== false ||
+      !Array.isArray(manifest.files) || manifest.files.length !== 14 ||
+      !exactSet(paths, manifest.files) ||
+      paths?.includes("docs/frontend/planos/P0_GOV_PLAN_690.json"))
+    add("manifesto protegido e full_diff 14/14 não comprovados");
+  if (!Array.isArray(checkRuns)) add("check runs ausentes");
+  for (const name of PRECERT_REQUIRED_CHECKS) {
+    const list = Array.isArray(checkRuns) ? checkRuns.filter(x => x?.name === name) : [];
+    if (list.length !== 1 || list[0]?.head_sha !== expectedHead ||
+        list[0]?.app?.id !== PRECERT_ISSUER ||
+        list[0]?.status !== "completed" || list[0]?.conclusion !== "success" ||
+        !Number.isSafeInteger(list[0]?.id) || list[0].id <= 0)
+      add("check exigido ausente, repetido, sem sucesso ou origem: " + name);
+  }
+  const history = Array.isArray(comments) ? comments
+    .filter(x => x?.user?.login === "contaos9999" &&
+      typeof x.body === "string" && x.body.includes(ASSISTANT_PREAUDIT_MARKER))
+    .sort((a,b) => a.id - b.id) : [];
+  const last = history.at(-1);
+  const record = parseAssistantPreaudit(last?.body);
+  if (!last || !record) add("parecer do assistente ausente/inválido na PR");
+  else {
+    if (record.schema !== "contaos.assistant-preaudit.v1" ||
+        record.kind !== "ASSISTANT_PREAUDIT_NOT_INDEPENDENT" ||
+        record.verdict !== "PASS" || record.pr !== 690 ||
+        record.head !== expectedHead || record.base !== expectedBase ||
+        !/^PA-690-[A-Za-z0-9.-]+$/.test(record.run_id || "") ||
+        typeof record.report !== "string" || record.report.length < 400 ||
+        !/^[0-9a-f]{64}$/.test(record.report_sha256 || "") ||
+        record.report_sha256 !== preauditHash(record.report) ||
+        !ASSISTANT_PREAUDIT_CRITERIA.every(x => record.criteria?.[x] === "PASS"))
+      add("último parecer não é PASS íntegro no HEAD/base e matriz completos");
+    if (!record.artifact || !Number.isSafeInteger(record.artifact.id) ||
+        record.artifact.id <= 0 || !/^sha256:[0-9a-f]{64}$/.test(record.artifact.digest || ""))
+      add("parecer sem recibo de artefato visual");
+    else if (record.artifact.id !== artifact?.id ||
+        record.artifact.digest !== artifact?.digest ||
+        artifact?.expired === true ||
+        artifact?.workflow_run?.head_sha !== expectedHead)
+      add("artefato visual não confere com API no HEAD");
+  }
+  return {pass: issues.length === 0, verdict: issues.length ? "BLOCKED" : "PASS",
+    release: issues.length === 0 ? "PRE_CERTIFICATION_ONLY" : "NO_GO",
+    issues, comment_id: last?.id ?? null, head: expectedHead, base: expectedBase};
+}
+async function fetchAllPrecert(path, token) {
+  const all = [];
+  for (let page = 1; page <= 10; page++) {
+    const part = await http(path + (path.includes("?") ? "&" : "?") +
+      "per_page=100&page=" + page, token);
+    if (!Array.isArray(part)) throw Error("API paginada retornou tipo inválido");
+    all.push(...part);
+    if (part.length < 100) return all;
+  }
+  throw Error("paginação excedeu limite auditável");
+}
+export async function verifyAssistantPrecertInGithub({
+  token = process.env.GITHUB_TOKEN,
+  env = process.env,
+  api = (p) => http(p, token),
+  list = (p) => fetchAllPrecert(p, token),
+  baseManifest = (base) => JSON.parse(execFileSync("git", [
+    "show", base + ":docs/frontend/planos/P0_GOV_PLAN_690.json",
+  ], {encoding: "utf8", timeout: 15000})),
+} = {}) {
+  if (env.GITHUB_EVENT_NAME !== "pull_request" ||
+      env.GITHUB_REPOSITORY !== REPO ||
+      env.INPUT_PREAUDIT_PR !== "690" ||
+      !validSha(env.INPUT_PREAUDIT_HEAD) ||
+      !validSha(env.INPUT_PREAUDIT_BASE) || !token)
+    throw Error("precert exige evento PR #690, HEAD/base e token de leitura");
+  const number = 690, head = env.INPUT_PREAUDIT_HEAD, base = env.INPUT_PREAUDIT_BASE;
+  const [pr, main, files, comments, checks] = await Promise.all([
+    api("/repos/" + REPO + "/pulls/" + number),
+    api("/repos/" + REPO + "/git/ref/heads/main"),
+    list("/repos/" + REPO + "/pulls/" + number + "/files"),
+    list("/repos/" + REPO + "/issues/" + number + "/comments"),
+    api("/repos/" + REPO + "/commits/" + head + "/check-runs?per_page=100"),
+  ]);
+  if (!Array.isArray(files) || !Array.isArray(comments) ||
+      !Array.isArray(checks?.check_runs) || checks.total_count !== checks.check_runs.length)
+    throw Error("API de diff/parecer/checks incompleta");
+  const latest = comments.filter(x => x?.user?.login === "contaos9999" &&
+    typeof x.body === "string" && x.body.includes(ASSISTANT_PREAUDIT_MARKER))
+    .sort((a,b) => a.id - b.id).at(-1);
+  const record = parseAssistantPreaudit(latest?.body);
+  const artifact = Number.isSafeInteger(record?.artifact?.id) &&
+    record.artifact.id > 0 ?
+    await api("/repos/" + REPO + "/actions/artifacts/" + record.artifact.id) : null;
+  const manifest = baseManifest(base);
+  // Original and destination paths of renamed files must both be authorized.
+  const paths = files.flatMap(x => x?.status === "renamed" ?
+    [x.previous_filename, x.filename] : [x?.filename]);
+  const result = validateAssistantPrecertRelease({
+    pr, currentMain: main?.object?.sha, manifest, paths,
+    comments, checkRuns: checks.check_runs, artifact,
+    expectedHead: head, expectedBase: base,
+  });
+  // Fail closed if the PR advances between check collection and decision.
+  const [latestPr, latestMain] = await Promise.all([
+    api("/repos/" + REPO + "/pulls/" + number),
+    api("/repos/" + REPO + "/git/ref/heads/main"),
+  ]);
+  if (latestPr?.head?.sha !== head || latestPr?.base?.sha !== base ||
+      latestPr?.state !== pr?.state ||
+      latestMain?.object?.sha !== base)
+    result.issues.push("HEAD/base/PR changed during pre-cert readback");
+  result.pass = result.issues.length === 0;
+  result.verdict = result.pass ? "PASS" : "BLOCKED";
+  result.release = result.pass ? "PRE_CERTIFICATION_ONLY" : "NO_GO";
+  return result;
+}
+
 function changes() {
   const prior = String(process.env.FRONTEND_DIFF_BASE || "").trim();
   const event = String(process.env.GITHUB_EVENT_NAME || "");
@@ -680,4 +837,14 @@ async function main() {
     evidence.executed + " casos GREEN/NEG/REG executados no HEAD.");
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) ===
-  fileURLToPath(new URL("file://" + process.argv[1]))) main();
+  fileURLToPath(new URL("file://" + process.argv[1]))) {
+  if (process.argv.includes("--verify-assistant-preaudit")) {
+    verifyAssistantPrecertInGithub().then(result => {
+      console.log(JSON.stringify(result));
+      if (!result.pass) process.exitCode = 1;
+    }).catch(error => {
+      console.error("P0 ASSISTANT PREAUDIT BLOCKED: " + error.message);
+      process.exitCode = 1;
+    });
+  } else main();
+}

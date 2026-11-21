@@ -9,6 +9,16 @@ A PR #689 integrou o PLAN documental na main no merge 3ee94171f2fc4cbec2e2d2b6f9
 - O parecer técnico independente de 3.1.4 permanece `CHANGES_REQUESTED`, RunId `20261120T212820314Z-e2ad6157613b-9024ef95a37f4a42a0aa78216d7ea4f4`, SHA-256 `AE825B2DA941370C35B4DD51C75DEAD71368D6B16E9DC59D149CC1A7D565E8BA`. O recibo comprova a integração documental autorizada. O certificado da instalação depende do BUILD, dos negativos operacionais e do novo check obrigatório. [PR de BUILD #690](https://github.com/contaos999999/contaos-hml-control/pull/690) · [Ruleset 26495643](https://github.com/contaos999999/contaos-hml-control/rules/26495643)
 
 
+## P0-ABS #690 — Novo gate obrigatório de pré-auditoria do assistente (21/11/2026)
+
+**Autorização do titular nesta conversa:** acrescentar uma camada prévia, executada pelo assistente e com parecer explícito `PASS` ou `CHANGES_REQUESTED`, impedindo a **liberação da pré-certificação interna** enquanto não houver `PASS` registrado sobre o HEAD/base exatos. Com `CHANGES_REQUESTED`, o implementador precisa corrigir causa, executar negativos/regressão e repetir a verificação; ausência de prova mantém `BLOCKED_EXTERNAL`. O parecer interno não equivale à auditoria independente Codex 3.1.4.
+
+**Base de implementação:** PR #690, branch `build/p0-abs-fiscal-universal`, último HEAD comprovado anteriormente `53bdc4fd67d2b20a86f89b6dd65630e6392b6541`, base `main@e007c4bad8f2c66c489c55e4752b71bb19c5ced0`; diffs limitados a 14 arquivos do manifesto protegido, `ativacao_autorizada=false`. O CI desse HEAD tinha 5/5 checks verdes, mas tal evidência NÃO representa o resultado de pré-auditoria obrigatória da nova regra.
+
+**Entrega deste pacote:** regras escritas em `docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md` §5.3, validador fail-closed em `scripts/p0-rca-impact-gate.mjs`, testes positivos/negativos em `scripts/p0-rca-impact-gate.test.mjs`, job separado no `contaos-auditoria-controller.yml`. O job lê comentários e CI reais em GitHub e não aprova PR, não publica status privilegiado, não executa merge, não cria conta ou política, nem dispensa auditoria independente.
+
+**Última etapa comprovada:** novo bloqueio especificado, ainda sem execução de CI ou parecer `PASS` do novo HEAD. **Próxima tarefa:** publicar commit na branch, rodar CI, executar pré-auditoria efetiva dos oito critérios, registrar parecer completo/hashes/artefato no GitHub; se `CHANGES_REQUESTED`, corrigir e repetir com novos SHAs; somente se houver `PASS` íntegro verificar gate no GitHub e registrar pré-certificação interna liberada. CHECKPOINT EM BRANCH, NÃO INTEGRADO À MAIN. A PR #679, HML real, N17(c), App e ativação seguem pendentes/NO-GO.
+
 ## P0-ABS #690 — NOVO CHANGES_REQUESTED HEAD 502710a — RCA dos quatro achados, CI ainda não comprovado
 
 **Estado comprovado de origem:** PR #690 OPEN, HEAD 502710a3089aab3964cb516f26ba9773d9c23a09, base main e007c4bad8f2c66c489c55e4752b71bb19c5ced0. 14 arquivos da allowlist #691. O auditor independente apresentou CHANGES_REQUESTED, quatro achados: manifesto #690 só bloqueado após merge; checkout não ligado à ref viva da fila; check do App errado ainda aceito como prontidão; PR closed/merged mal interpretada. Checks CI anteriores 5/5 pertencem ao HEAD reprovado e NÃO certificam a correção.
