@@ -1055,6 +1055,32 @@ const FULL_PROTOCOL_STRUCTURAL_TO_EXECUTED=Object.freeze({
   NO_SELF_CERTIFICATION:"AUTH-NO-SELF-CERTIFY",
 });
 
+// Compound clauses must be proven by EVERY constituent, not by one
+// executable witness whose title happens to match the final element.
+const FULL_PROTOCOL_COMPOUND_WITNESSES=Object.freeze({
+  "S5.5:Dez camadas, sempre na ordem":
+    Array.from({length:10},(_,i)=>["rca","P0 V2 LAYER "+String(i+1).padStart(2,"0")+":"]),
+  "S5.5:Doze perspectivas obrigatórias":
+    ADVERSARIAL_V2_LENSES.map(name=>["rca","P0 V2 LENS "+name+":"]),
+  "S5-EVENT-MATRIX":[
+    ["rca","NR-005 pull_request bloqueia manifesto"],
+    ["rca","P0 PRE-AUDIT push da #690"],
+    ["queue","N13 protected workflows recheck group"],
+  ],
+});
+function executedConstituents(suites,requirements){
+  if(!requirements) return {complete:true,names:[]};
+  const names=[];
+  for(const [key,prefix] of requirements){
+    const suite=suites?.[key];
+    if(suite?.passed!==true || suite?.exitCode!==0 ||
+       !Array.isArray(suite.successfulNames))return {complete:false,names};
+    const matched=suite.successfulNames.filter(name=>name.startsWith(prefix));
+    if(matched.length!==1)return {complete:false,names};
+    names.push(key+":"+matched[0]);
+  }
+  return {complete:true,names};
+}
 export function attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha}={}){
   const issues=[...(coverage?.issues||[])];
   const rows=[];
@@ -1092,9 +1118,11 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
     const suite=item&&suites?.[item.file];
     const matches=Array.isArray(suite?.successfulNames)?
       suite.successfulNames.filter(x=>x.startsWith(item.pattern)):[];
+    const compound=executedConstituents(suites,FULL_PROTOCOL_COMPOUND_WITNESSES[row.id]);
     const good=suite?.passed===true && suite?.exitCode===0 &&
-      row.status==="TEST_DECLARED_NOT_EXECUTED" && matches.length>=1;
-    rows.push({...row,execution:good?
+      row.status==="TEST_DECLARED_NOT_EXECUTED" && matches.length>=1 &&
+      compound.complete;
+    rows.push({...row,compoundTests:compound.names,execution:good?
       (row.scope==="BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL"?
         "BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED":
        row.scope==="BUILD_NEGATIVE_PROOF_INDEPENDENT_AUDIT_EXTERNAL"?
