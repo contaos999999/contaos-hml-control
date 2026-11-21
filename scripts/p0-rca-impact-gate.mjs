@@ -552,7 +552,7 @@ export function parseAssistantPreaudit(body) {
 }
 export function validateAssistantPrecertRelease({
   pr, currentMain, manifest, paths, comments, checkRuns, artifact,
-  testCJob, expectedHead, expectedBase,
+  testCJob, testCRun, testCAttemptJobs, expectedHead, expectedBase,
 } = {}) {
   const issues = [];
   const add = (reason) => issues.push(reason);
@@ -616,15 +616,25 @@ export function validateAssistantPrecertRelease({
           artifact?.workflow_run?.id !== runId ||
           testCJob?.id !== jobId ||
           testCJob?.run_id !== runId ||
-          testCJob?.run_attempt !== attempt ||
+          testCRun?.id !== runId ||
+          testCRun?.run_attempt !== attempt ||
+          testCRun?.head_sha !== expectedHead ||
+          testCRun?.event !== "pull_request" ||
+          testCRun?.path !== ".github/workflows/contaos-frontend-zero-drift.yml" ||
+          !testCRun?.pull_requests?.some(x => x?.number === 690 &&
+            x?.head?.sha === expectedHead && x?.base?.sha === expectedBase) ||
+          !Array.isArray(testCAttemptJobs?.jobs) ||
+          !testCAttemptJobs.jobs.some(x => x?.id === jobId &&
+            x?.run_id === runId && x?.conclusion === "success") ||
           testCJob?.head_sha !== expectedHead ||
           testCJob?.status !== "completed" ||
           testCJob?.conclusion !== "success" ||
           !Array.isArray(testCJob?.steps) ||
           !testCJob.steps.some(x => x?.conclusion === "success" &&
-            /playwright|teste c/i.test(x?.name || "")) ||
-          !testC?.details_url?.includes("/actions/runs/" + runId + "/") ||
-          !testC?.details_url?.endsWith("/job/" + jobId))
+            x?.name === "Teste C Playwright — 24 telas, 4 larguras, 2 temas") ||
+          testC?.id !== jobId ||
+          testC?.details_url !==
+            "https://github.com/" + REPO + "/actions/runs/" + runId + "/job/" + jobId)
         add("artefato sem vínculo autenticado ao run/attempt/job Playwright do check Teste C");
     }
   }
@@ -681,13 +691,20 @@ export async function verifyAssistantPrecertInGithub({
   const testCJob = Number.isSafeInteger(runId) && runId > 0 &&
     Number.isSafeInteger(jobId) && jobId > 0 ?
     await api("/repos/" + REPO + "/actions/jobs/" + jobId) : null;
+  const attempt = record?.artifact?.run_attempt;
+  const [testCRun, testCAttemptJobs] = Number.isSafeInteger(runId) && runId > 0 &&
+    Number.isSafeInteger(attempt) && attempt > 0 ?
+    await Promise.all([
+      api("/repos/" + REPO + "/actions/runs/" + runId),
+      api("/repos/" + REPO + "/actions/runs/" + runId + "/attempts/" + attempt + "/jobs?per_page=100"),
+    ]) : [null, null];
   const manifest = baseManifest(base);
   // Original and destination paths of renamed files must both be authorized.
   const paths = files.flatMap(x => x?.status === "renamed" ?
     [x.previous_filename, x.filename] : [x?.filename]);
   const result = validateAssistantPrecertRelease({
     pr, currentMain: main?.object?.sha, manifest, paths,
-    comments, checkRuns: checks.check_runs, artifact, testCJob,
+    comments, checkRuns: checks.check_runs, artifact, testCJob, testCRun, testCAttemptJobs,
     expectedHead: head, expectedBase: base,
   });
   // Fail closed if the PR advances between check collection and decision.
