@@ -1103,11 +1103,15 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
   assert.ok(activation.every(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED"));
   assert.equal(valid.activationBlocked,activation.length);
   const independent=valid.rows.filter(x=>x.scope==="BUILD_NEGATIVE_PROOF_INDEPENDENT_AUDIT_EXTERNAL");
-  assert.equal(independent.length,1);
-  assert.equal(valid.independentAuditPending,1);
-  assert.equal(independent[0].execution,"BUILD_NEGATIVE_PASS_INDEPENDENT_AUDIT_PENDING");
-  assert.ok(valid.external.some(x=>x.requirement===independent[0].id &&
-    x.status==="BLOCKED_EXTERNAL_FOR_INDEPENDENT_AUDIT"));
+  assert.deepEqual(independent.map(x=>x.id).sort(),[
+    "PLAN-S3-RULE-05","PLAN-S3-RULE-06","S5.1:Revisão independente"].sort(),
+    "PLAN §3 technical auditor and post-merge CERTIFIED require independent proof");
+  assert.equal(valid.independentAuditPending,3);
+  assert.ok(independent.every(x=>
+    x.execution==="BUILD_NEGATIVE_PASS_INDEPENDENT_AUDIT_PENDING" &&
+    valid.external.some(e=>e.requirement===x.id &&
+      e.status==="BLOCKED_EXTERNAL_FOR_INDEPENDENT_AUDIT")),
+    "none of three independent obligations may be self-certified");
   assert.equal(valid.executed+valid.activationBlocked+valid.independentAuditPending,
     valid.requirements);
   assert.ok(activation.every(x=>valid.external.some(e=>e.requirement===x.id &&
