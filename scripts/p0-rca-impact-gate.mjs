@@ -897,7 +897,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"cb2eb04b2e3b1c595d959816b220b116465716b9",
+  rca:"e9787acdf905e8dbe2fade4e349bb3720fa50345",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -1067,6 +1067,10 @@ const FULL_PROTOCOL_COMPOUND_WITNESSES=Object.freeze({
     ["rca","P0 PRE-AUDIT push da #690"],
     ["queue","N13 protected workflows recheck group"],
   ],
+  "S5.1:NR-005 / falsificações":
+    FULL_PROTOCOL_51_FALSIFICATION_SUBCASES.map(([,pattern])=>["rca",pattern]),
+  "S5.1:WDG-02 / progresso":
+    FULL_PROTOCOL_WDG02_SUBCASES.map(([,pattern])=>["python",pattern]),
 });
 function executedConstituents(suites,requirements){
   if(!requirements) return {complete:true,names:[]};
