@@ -638,8 +638,15 @@ export function verifyPrecertRunOrigin({check,job,run,attemptJobs,head,base,work
       x.status==="completed" && x.conclusion==="success");
 }
 export function classifyPrecertReadiness(checkRuns,name,head){
+  // GitHub may queue a workflow without creating its check_run yet.
+  // Absent is pending, but an ambiguous/forged published check is terminal.
+  if(!Array.isArray(checkRuns))
+    return {state:"TERMINAL",name,reason:"API checks indisponivel"};
+  const matching=checkRuns.filter(x=>x?.name===name);
+  if(matching.length===0)
+    return {state:"PENDING",name,reason:"workflow enfileirado, check ainda nao publicado"};
   const selected=latestPrecertCheck(checkRuns,name,head);
-  if(!selected)return {state:"TERMINAL",name,reason:"origem/check ausente ou ambiguo"};
+  if(!selected)return {state:"TERMINAL",name,reason:"origem/check publicado ambiguo"};
   if(["queued","waiting","pending","requested","in_progress"].includes(selected.status))
     return {state:"PENDING",name,reason:"check ainda em execucao"};
   if(selected.status==="completed" && selected.conclusion==="success")
