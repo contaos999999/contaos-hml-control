@@ -269,13 +269,21 @@ jobs:
         run: |
           set -euo pipefail
           echo "PRÉ-CERTIFICAÇÃO BLOQUEADA até parecer PASS do assistente."
-          for attempt in $(seq 1 24); do
-            if node scripts/p0-rca-impact-gate.mjs --verify-assistant-preaudit; then
+          for attempt in $(seq 1 10); do
+            if output=$(node scripts/p0-rca-impact-gate.mjs --verify-assistant-preaudit 2>&1); then
+              echo "$output"
               echo "P0 ASSISTENTE PASS autenticado. PRÉ-CERTIFICAÇÃO INTERNA LIBERADA."
               echo "AUDITORIA INDEPENDENTE, APPROVED, MERGE e ATIVAÇÃO continuam pendentes."
               exit 0
             fi
-            if [ "$attempt" -eq 24 ]; then
+            echo "$output"
+            # Permanent/authorization failures are NOT solved by polling.
+            # Preserve NO-GO and expose a clear root cause for correction.
+            if echo "$output" | grep -Eq 'GitHub HTTP 403|NR-006: RED causal|25 provas executaveis'; then
+              echo "P0-ABS BLOCKED: erro nao transitorio; corrija a causa antes de reexecutar."
+              exit 1
+            fi
+            if [ "$attempt" -eq 10 ]; then
               echo "CHANGES_REQUESTED/BLOCKED: sem PASS íntegro neste HEAD."
               exit 1
             fi
