@@ -921,7 +921,7 @@ export function parseFullProtocolSuiteResult(key,result){
   }
   return {exitCode:result?.status??null,passed,executed,
     successfulNames,outputSha256,
-    diagnostic:passed?null:output.slice(-1200)};
+    diagnostic:passed?null:(output.includes("\nnot ok ")?output.slice(output.indexOf("\nnot ok ")+1,output.indexOf("\nnot ok ")+2600):output.slice(-1800))};
 }
 function runFullProtocolSuites(){
   const definitions=[
