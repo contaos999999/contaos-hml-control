@@ -927,7 +927,7 @@ FULL_PROTOCOL_CASES.push(...[
 // Blind protocol paragraph audit, complementary to §5.1–§5.5 heading/row
 // inventory. A new or changed rule invalidates the frozen Git blob below,
 // even when all existing names and tests remain green.
-const FULL_PROTOCOL_GIT_BLOB="9de81d2738a2b53c1a5f13c3b04903694221406a";
+const FULL_PROTOCOL_GIT_BLOB="794b42269b6dea48775b92e3641ed3dc4474a3cb";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
   rca:"f643dd59dea6de18e79f50b03528e1245c65f021",
@@ -981,7 +981,7 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
       issues.push("META_PROTOCOL: obrigacao raiz ausente/divergente "+id);
   }
   const expectedSections=["## 1.","## 2.","## 3.","## 4.","## 5.",
-    "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 5.6.","## 5.7.","## 6."];
+    "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 5.6.","## 5.7.","## 5.8.","## 6."];
   // Fail closed when the protected protocol grows without a corresponding
   // executable authorization requirement. A summary checkbox is insufficient.
   const section51=typeof protocol==="string"?
