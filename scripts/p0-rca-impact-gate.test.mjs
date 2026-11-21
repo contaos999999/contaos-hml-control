@@ -886,6 +886,35 @@ test("P0 FULL_PROTOCOL terminal checks never wait; pending checks never PASS",()
   latest.status="queued";latest.conclusion=null;
   assert.equal(classifyPrecertReadiness(queued,name,PA_HEAD).state,"PENDING");
 });
+
+test("P0 FULL_PROTOCOL controller read-only permissions cannot grant write",()=>{
+  const source=readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8");
+  const m=/\npermissions:\n((?:  [a-z-]+: [a-z]+\n)+)/.exec(source);
+  assert.ok(m,"explicit permission allowlist missing");
+  const items=m[1].trim().split("\n").map(x=>x.trim()).sort();
+  const expected=["contents: read","checks: read","actions: read","pull-requests: read","issues: read"].sort();
+  assert.deepEqual(items,expected);
+  for(const change of ["pull-requests: write","actions: write"]){
+    const tampered=source.replace(change.replace("write","read"),change);
+    const k=/\npermissions:\n((?:  [a-z-]+: [a-z]+\n)+)/.exec(tampered);
+    assert.notDeepEqual(k[1].trim().split("\n").map(x=>x.trim()).sort(),expected);
+  }
+});
+test("P0 FULL_PROTOCOL suite output cannot be accepted from names alone",()=>{
+  const variants=[
+    "# tests 2\n# pass 2\n# fail 0\n# skipped 0\n# cancelled 0\n",
+    "ok 1 - first\n# tests 2\n# pass 2\n# fail 0\n# skipped 0\n# cancelled 0\n",
+    "ok 1 - first\nnot ok 2 - failed\n# tests 2\n# pass 1\n# fail 1\n# skipped 0\n# cancelled 0\n",
+  ];
+  for(const t of variants)
+    assert.equal(parseFullProtocolSuiteResult("rca",{status:0,stdout:t}).passed,false);
+  const good="ok 1 - first\nok 2 - second\n# tests 2\n# pass 2\n# fail 0\n# skipped 0\n# cancelled 0\n";
+  const result=parseFullProtocolSuiteResult("rca",{status:0,stdout:good});
+  assert.equal(result.passed,true);
+  assert.deepEqual(result.successfulNames,["first","second"]);
+  assert.equal(parseFullProtocolSuiteResult("rca",{status:1,stdout:good}).passed,false);
+});
+
 test("P0 FULL_PROTOCOL matrix is fail-closed for absent N17 and missing critical control",()=>{
   const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
   const tests={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
