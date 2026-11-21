@@ -1061,6 +1061,32 @@ test("P0 FULL_PROTOCOL matrix is fail-closed for absent N17 and missing critical
   assert.equal(unauthorized.verdict,"CHANGES_REQUESTED");
 });
 
+test("P0 META_PROTOCOL audit verdict transport separation and V1/V2 precedence",()=>{
+  const accepted=paFixture();
+  const permitted=paCheck(accepted);
+  assert.equal(permitted.verdict,"PASS");
+  assert.equal(permitted.release,"PRE_CERTIFICATION_ONLY");
+  assert.equal(accepted.manifest.ativacao_autorizada,false);
+  const legacy=paFixture();
+  legacy.record.schema="contaos.assistant-preaudit.v1";
+  setPaRecord(legacy);
+  const legacyResult=paCheck(legacy);
+  assert.equal(legacyResult.pass,false);
+  assert.equal(legacyResult.release,"NO_GO");
+  assert.equal(legacyResult.verdict,"BLOCKED");
+  const revoked=paFixture();
+  revoked.reviews=[{id:300,commit_id:PA_HEAD,user:{login:"Edivan5002"},
+    state:"CHANGES_REQUESTED",submitted_at:"2026-11-21T19:00:00Z"}];
+  const vetoed=paCheck(revoked);
+  assert.equal(vetoed.verdict,"BLOCKED");
+  assert.equal(vetoed.release,"NO_GO");
+  assert.ok(vetoed.issues.some(x=>/CHANGES_REQUESTED/.test(x)));
+  const tampered=paFixture();tampered.manifest.ativacao_autorizada=true;
+  assert.equal(paCheck(tampered).release,"NO_GO");
+  // A transport result is not an independent auditor's fourth/fifth decision.
+  assert.notEqual(legacyResult.release,"PRE_CERTIFICATION_ONLY");
+});
+
 test("P0 PA positive: recorded assistant PASS exact HEAD/base with 5 CI and visual artifact permits precert only",()=>{
   const f=paFixture(),result=paCheck(f);
   assert.equal(result.pass,true);
