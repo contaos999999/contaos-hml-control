@@ -1039,17 +1039,26 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
   const target={head:PA_HEAD,base:PA_BASE,checkoutSha:PA_HEAD};
   const valid=attestFullProtocolExecutions(coverage,suites,target);
   assert.equal(valid.verdict,"EXECUTED_PASS_FOR_BUILD_ONLY",JSON.stringify(valid.issues));
-  assert.equal(valid.rows.filter(x=>x.source&&x.scope!=="BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL"&&
+  assert.equal(valid.rows.filter(x=>x.source&&x.scope==="BUILD"&&
     x.execution!=="EXECUTED_PASS").length,0);
   const activation=valid.rows.filter(x=>x.scope==="BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL");
   assert.ok(activation.length>=11,"privileged activation is never certified by synthetic tests");
   assert.ok(activation.every(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED"));
   assert.equal(valid.activationBlocked,activation.length);
-  assert.equal(valid.executed+valid.activationBlocked,valid.requirements);
+  const independent=valid.rows.filter(x=>x.scope==="BUILD_NEGATIVE_PROOF_INDEPENDENT_AUDIT_EXTERNAL");
+  assert.equal(independent.length,1);
+  assert.equal(valid.independentAuditPending,1);
+  assert.equal(independent[0].execution,"BUILD_NEGATIVE_PASS_INDEPENDENT_AUDIT_PENDING");
+  assert.ok(valid.external.some(x=>x.requirement===independent[0].id &&
+    x.status==="BLOCKED_EXTERNAL_FOR_INDEPENDENT_AUDIT"));
+  assert.equal(valid.executed+valid.activationBlocked+valid.independentAuditPending,
+    valid.requirements);
   assert.ok(activation.every(x=>valid.external.some(e=>e.requirement===x.id &&
     e.status==="BLOCKED_EXTERNAL_FOR_ACTIVATION")));
   assert.ok(valid.external.length>=4);
-  assert.ok(valid.external.every(x=>x.status==="BLOCKED_EXTERNAL_FOR_ACTIVATION"));
+  assert.ok(valid.external.every(x=>[
+    "BLOCKED_EXTERNAL_FOR_ACTIVATION","BLOCKED_EXTERNAL_FOR_INDEPENDENT_AUDIT"
+  ].includes(x.status)));
   const noTest=structuredClone(suites);
   noTest.queue.successfulNames=noTest.queue.successfulNames.filter(x=>!x.includes("N13 prova git real"));
   noTest.queue.executed=noTest.queue.successfulNames.length;
