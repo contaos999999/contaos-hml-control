@@ -8,6 +8,8 @@ import json
 import io
 import pathlib
 import tempfile
+import subprocess
+import sys
 import unittest
 from unittest import mock
 
@@ -728,6 +730,30 @@ class MissionSupervisorTests(unittest.TestCase):
         self.assertFalse(out["required_checks_complete"])
         self.assertEqual(out["next_action"], "REVALIDATE_HEAD")
 
+
+    def test_v2_causal_watchdog_historical_red_then_green(self):
+        """Reproduce real N05 watchdog failure on old SHA; current gate must diagnose."""
+        vulnerable_sha = "54b596f4ae3cce085e79967c4ea8cc4446685d5d"
+        root = HERE.parent.parent
+        subprocess.run(["git", "merge-base", "--is-ancestor", vulnerable_sha, "HEAD"],
+                       cwd=root, check=True, capture_output=True, timeout=15)
+        old_source = subprocess.run(
+            ["git", "show", vulnerable_sha + ":scripts/auditoria/mission-supervisor.py"],
+            cwd=root, check=True, capture_output=True, timeout=15).stdout
+        with tempfile.TemporaryDirectory() as location:
+            temp = pathlib.Path(location)
+            (temp / "mission-supervisor.py").write_bytes(old_source)
+            (temp / "test_mission_supervisor.py").write_bytes(
+                pathlib.Path(__file__).read_bytes())
+            red = subprocess.run(
+                [sys.executable, "-B", str(temp / "test_mission_supervisor.py"),
+                 "MissionSupervisorTests.test_v2_red_first_post_merge_is_diagnosable"],
+                cwd=root, capture_output=True, text=True, timeout=30)
+        self.assertNotEqual(red.returncode, 0, "historical vulnerable code did not fail")
+        self.assertIn("test_v2_red_first_post_merge_is_diagnosable", red.stderr)
+        self.assertIn("N05:", red.stderr)
+        # Apply the exact same scenario to the present module.
+        self.test_v2_red_first_post_merge_is_diagnosable()
 
     def test_v2_red_first_post_merge_is_diagnosable(self):
         c = contract()
