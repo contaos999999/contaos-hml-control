@@ -27,6 +27,8 @@ jobs:
         run: python -B scripts/auditoria/test_runner.py
       - name: Testar preparacao, proveniencia e Git real
         run: python -B scripts/auditoria/test_preparation.py
+      - name: P0-ABS supervisor universal N01-N17 (RED/GREEN)
+        run: python -B scripts/auditoria/test_mission_supervisor.py
       - name: Testar controlador PowerShell e gates negativos
         shell: powershell
         run: |
