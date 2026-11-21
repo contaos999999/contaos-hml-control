@@ -605,6 +605,44 @@ const v2AttestedJob=(check, job, head)=>
       step.status==="completed" && step.conclusion==="success").length===1);
 
 
+
+// A prior Actions attempt can disappear from the CURRENT commit check-run
+// enumeration after a rerun. Authenticate its actual job/run/attempt through
+// the GitHub Actions API, rather than accepting an arbitrary job id or
+// downgrading the requirement that the LATEST V2 check is GREEN.
+export function verifyHistoricalV2JobProvenance({
+  job,run,attemptJobs,attempt,head,base,
+}={}) {
+  const stepNames=["P0 FULL_PROTOCOL matriz integral e testemunhas executaveis",
+    ...ADVERSARIAL_V2_STEP_NAMES,
+    ...ADVERSARIAL_V2_CAUSAL_CASES.map(x=>"P0 V2 CAUSAL_RED "+x.case_id)];
+  return !!job && Number.isSafeInteger(job.id) && job.id>0 &&
+    job.head_sha===head && job.name===ADVERSARIAL_V2_CHECK_NAME &&
+    job.status==="completed" && job.conclusion==="success" &&
+    Number.isSafeInteger(job.run_id) && job.run_id>0 &&
+    Array.isArray(job.steps) && stepNames.every(name=>
+      job.steps.filter(x=>x?.name===name &&
+        x.status==="completed" && x.conclusion==="success").length===1) &&
+    !!run && run.id===job.run_id && run.head_sha===head &&
+    run.head_branch==="build/p0-abs-fiscal-universal" &&
+    run.path===".github/workflows/contaos-auditoria-controller.yml" &&
+    run.repository?.full_name===REPO &&
+    ["pull_request","pull_request_review","workflow_dispatch"].includes(run.event) &&
+    ["completed","in_progress"].includes(run.status) &&
+    Number.isSafeInteger(run.run_attempt) &&
+    Number.isSafeInteger(attempt) && attempt>0 &&
+    attempt<=run.run_attempt &&
+    (run.event==="workflow_dispatch" ||
+      run.pull_requests?.some(x=>x.number===690 &&
+        x.head?.sha===head && x.base?.sha===base)) &&
+    Array.isArray(attemptJobs?.jobs) &&
+    attemptJobs.total_count===attemptJobs.jobs.length &&
+    attemptJobs.jobs.filter(x=>x?.id===job.id &&
+      x.run_id===run.id && x.name===ADVERSARIAL_V2_CHECK_NAME &&
+      x.head_sha===head && x.status==="completed" &&
+      x.conclusion==="success").length===1;
+}
+
 const PRECERT_WORKFLOW_ORIGINS=Object.freeze({
   "Controlador offline Windows": ".github/workflows/contaos-auditoria-controller.yml",
   "P0-ABS Adversarial V2 executavel": ".github/workflows/contaos-auditoria-controller.yml",
@@ -1170,7 +1208,9 @@ export function parseAssistantPreaudit(body) {
 export function validateAssistantPrecertRelease({
   pr, currentMain, manifest, paths, comments, reviews = [], checkRuns, artifact,
   testCJob, testCRun, testCAttemptJobs, v2Job, receiptV2Job=v2Job,
-  redProvenance=[], expectedHead, expectedBase,
+  redProvenance=[], historicalV2Run=null,
+  historicalV2AttemptJobs=null,historicalV2Attempt=null,
+  expectedHead, expectedBase,
 } = {}) {
   const issues = [];
   const add = (reason) => issues.push(reason);
@@ -1219,8 +1259,16 @@ export function validateAssistantPrecertRelease({
     checkRuns.filter(x=>x?.name===ADVERSARIAL_V2_CHECK_NAME):[];
   const latestV2=latestPrecertCheck(checkRuns,ADVERSARIAL_V2_CHECK_NAME,expectedHead);
   const receiptCheck=v2Checks.find(x=>x?.id===receiptV2Job?.id);
+  const historicalReceipt= !receiptCheck &&
+    verifyHistoricalV2JobProvenance({
+      job:receiptV2Job,run:historicalV2Run,
+      attemptJobs:historicalV2AttemptJobs,
+      attempt:historicalV2Attempt,head:expectedHead,base:expectedBase,
+    });
   if (!latestV2 || !v2AttestedJob(latestV2,v2Job,expectedHead) ||
-      !receiptCheck || !v2AttestedJob(receiptCheck,receiptV2Job,expectedHead))
+      !(receiptCheck ?
+        v2AttestedJob(receiptCheck,receiptV2Job,expectedHead) :
+        historicalReceipt))
     add("25 provas executaveis P0-ABS V2 sem autenticacao de latest/receipt JOB/HEAD 10+12+3 causal");
   const history = Array.isArray(comments) ? comments
     .filter(x => x?.user?.login === "contaos9999" &&
@@ -1436,6 +1484,28 @@ export async function verifyAssistantPrecertInGithub({
   const receiptV2Job=Number.isSafeInteger(receiptJobId) && receiptJobId>0 ?
     (receiptJobId===v2Check?.id?v2Job:
       await api("/repos/" + REPO + "/actions/jobs/" + receiptJobId)):null;
+  // Rerun replaces a historic check-run in the commit listing. Locate the
+  // old authenticated job in its real Actions attempt, never by its title.
+  let historicalV2Run=null,historicalV2AttemptJobs=null,historicalV2Attempt=null;
+  if(receiptV2Job && !checks.check_runs.some(x=>x.id===receiptV2Job.id)){
+    historicalV2Run=await api("/repos/"+REPO+"/actions/runs/"+receiptV2Job.run_id);
+    const count=historicalV2Run?.run_attempt;
+    if(!Number.isSafeInteger(count)||count<1||count>20)
+      throw Error("historical V2 run attempts outside auditable limit");
+    for(let i=1;i<=count;i++){
+      const candidate=await api("/repos/"+REPO+"/actions/runs/"+
+        receiptV2Job.run_id+"/attempts/"+i+"/jobs?per_page=100");
+      if(!Array.isArray(candidate?.jobs) ||
+          candidate.total_count!==candidate.jobs.length)
+        throw Error("historical V2 attempts incomplete");
+      if(candidate.jobs.some(x=>x.id===receiptV2Job.id)){
+        if(historicalV2Attempt!==null)
+          throw Error("historical V2 job exists in multiple attempts");
+        historicalV2Attempt=i;
+        historicalV2AttemptJobs=candidate;
+      }
+    }
+  }
   const artifact = Number.isSafeInteger(record?.artifact?.id) &&
     record.artifact.id > 0 ?
     await api("/repos/" + REPO + "/actions/artifacts/" + record.artifact.id) : null;
@@ -1459,6 +1529,7 @@ export async function verifyAssistantPrecertInGithub({
     pr, currentMain: main?.object?.sha, manifest, paths,
     comments, reviews, checkRuns: checks.check_runs, artifact, testCJob, testCRun,
     testCAttemptJobs, v2Job, receiptV2Job, redProvenance,
+    historicalV2Run,historicalV2AttemptJobs,historicalV2Attempt,
     expectedHead: head, expectedBase: base,
   });
   // Fail closed if the PR advances between check collection and decision.
@@ -1497,12 +1568,16 @@ export async function verifyAssistantPrecertInGithub({
       .map(name=>latestPrecertCheck(checks.check_runs,name,head));
     const oldV2Check=checks.check_runs.find(x=>x.id===receiptV2Job?.id &&
       x.name===ADVERSARIAL_V2_CHECK_NAME);
-    if(!oldV2Check)result.issues.push("ORIGIN: recibo V2 historico sem check autenticado");
+    if(!oldV2Check && !verifyHistoricalV2JobProvenance({
+      job:receiptV2Job,run:historicalV2Run,
+      attemptJobs:historicalV2AttemptJobs,
+      attempt:historicalV2Attempt,head,base,
+    }))result.issues.push("ORIGIN: recibo V2 historico sem run/attempt autenticado");
     const originPairs=[
       ...selectedChecks.map(check=>({check,job:
         check?.id===v2Job?.id?v2Job:
         check?.id===testCJob?.id?testCJob:null})),
-      {check:oldV2Check,job:receiptV2Job},
+      ...(oldV2Check?[{check:oldV2Check,job:receiptV2Job}]:[]),
     ];
     for(const entry of originPairs){
       if(!entry.check){result.issues.push("ORIGIN: check selecionado ausente");continue;}
