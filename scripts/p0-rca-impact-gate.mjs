@@ -269,7 +269,7 @@ export function runCase(entry) {
   const pat = "^" + escaped + "$";
   const node = entry.runner === "node";
   const args = node
-    ? ["--test", "--test-name-pattern=" + pat, entry.arquivo]
+    ? ["--test", "--test-reporter=tap", "--test-name-pattern=" + pat, entry.arquivo]
     : ["vitest", "run", entry.arquivo, "-t", pat, "--reporter=json", "--maxWorkers=2"];
   // Casos de teste não recebem credenciais usadas pelo gate de autenticidade.
   // O runner principal é a única autoridade autorizada a consultar o GitHub.
@@ -370,46 +370,77 @@ async function githubPrFiles(number, token) {
 }
 const setEqual = (a, b) =>
   a.length === b.length && a.every((p) => b.includes(p));
-async function resolvePrContext(event, base, head, changed, token) {
+export async function resolvePrContext(event, base, head, changed, token, eventBase = base, options = {}) {
   const path = process.env.GITHUB_EVENT_PATH;
-  if (!path) throw new Error("payload GitHub ausente");
-  const payload = JSON.parse(readFileSync(path, "utf8"));
+  if (!options.payload && !path) throw new Error("payload GitHub ausente");
+  const payload = options.payload ?? JSON.parse(readFileSync(path, "utf8"));
+  const gitFn = options.gitFn ?? git;
+  const apiGet = options.apiGet ?? http;
   if (payload?.repository?.full_name !== REPO)
     throw new Error("repo GitHub do evento não corresponde");
   if (event === "pull_request") {
     const pr = payload.pull_request;
     const number = pr?.number ?? payload.number;
-    const currentHead = git("rev-parse", head);
+    const currentHead = gitFn("rev-parse", head);
+    // The event base can legitimately be newer than the merge-base of
+    // the feature branch. Bind the live event base, not an ancestor.
     if (!Number.isInteger(number) || number < 1 ||
         pr?.base?.ref !== "main" || pr?.head?.sha !== currentHead ||
-        !pr?.base?.sha || git("rev-parse", base) !== pr.base.sha)
+        !validSha(pr?.base?.sha) ||
+        gitFn("rev-parse", eventBase) !== pr.base.sha ||
+        gitFn("merge-base", eventBase, head) !== gitFn("rev-parse", base))
       throw new Error("PR/base/head do evento não comprovados");
-    return { number, manifestBase: base };
+    return { number, manifestBase: eventBase };
   }
   if (event === "merge_group") {
     const group = await resolveEventContext();
-    if (group.base_sha !== git("rev-parse", base) ||
-        group.head_sha !== git("rev-parse", "HEAD"))
+    if (group.base_sha !== gitFn("rev-parse", base) ||
+        group.head_sha !== gitFn("rev-parse", "HEAD"))
       throw new Error("grupo autenticado não corresponde ao diff");
     return { number: group.pr, manifestBase: group.base_sha };
   }
   if (event === "push") {
     if (payload.ref !== "refs/heads/main" ||
-        payload.before !== git("rev-parse", base) ||
-        payload.after !== git("rev-parse", "HEAD"))
+        payload.before !== gitFn("rev-parse", base) ||
+        payload.after !== gitFn("rev-parse", "HEAD"))
       throw new Error("push/HEAD/base não comprovados");
-    const list = await http("/repos/" + REPO + "/commits/" + payload.after + "/pulls", token);
+    const list = await apiGet("/repos/" + REPO + "/commits/" + payload.after + "/pulls", token);
     if (!Array.isArray(list)) throw new Error("associação autenticada de PR indisponível");
-    // Branch protection requires a PR even for a docs-only push. Never N/A.
+    // Classify *before* applying the #690 MERGE-only contract. In particular,
+    // ordinary docs with no protected BUILD overlap may be integrated via
+    // squash (one parent) or by a regular merge. No implicit BUILD exemption.
+    let manifest690 = null;
+    try {
+      manifest690 = JSON.parse(gitFn("show", payload.before +
+        ":docs/frontend/planos/P0_GOV_PLAN_690.json"));
+    } catch { /* A missing protected manifest cannot authorize a BUILD. */ }
+    const protectedPaths = Array.isArray(manifest690?.files) ? manifest690.files : [];
+    const touchesBuild = changed.some((p) => protectedPaths.includes(p));
+    if (!list.length) {
+      if (touchesBuild || changed.some(codeFile))
+        throw new Error("push de BUILD/código sem PR autenticada");
+      return { number: null, manifestBase: payload.before, ordinaryDocument: true };
+    }
+    if (list.length !== 1) {
+      if (touchesBuild || changed.some(codeFile))
+        throw new Error("push de BUILD/código com PR ambígua");
+      return { number: null, manifestBase: payload.before, ordinaryDocument: true };
+    }
     const associated = uniquePrAssociation(list);
-    const pr = await http("/repos/" + REPO + "/pulls/" + associated, token);
-    const parents = git("rev-list", "--parents", "-n", "1", "HEAD").split(/\s+/);
-    if (pr.merged_at == null || pr.base?.ref !== "main" ||
-        pr.merge_commit_sha !== payload.after ||
-        parents.length !== 3 || parents[0] !== payload.after ||
-        parents[1] !== payload.before || parents[2] !== pr.head?.sha)
-      throw new Error("push não comprovado por merge de dois pais/PR");
-    return { number: pr.number, manifestBase: payload.before };
+    const pr = await apiGet("/repos/" + REPO + "/pulls/" + associated, token);
+    if (pr?.merged_at == null || pr.base?.ref !== "main" ||
+        pr.merge_commit_sha !== payload.after || pr.number !== associated)
+      throw new Error("associação PR/commit de integração não comprovada");
+    if (touchesBuild || associated === 690) {
+      // The privileged #690 contract is strictly two-parent MERGE. Unrelated
+      // PRs may use squash, but can never borrow #690's protected allowlist.
+      if (associated !== 690) throw new Error("diff protegido da #690 associado a outra PR");
+      const parents = gitFn("rev-list", "--parents", "-n", "1", "HEAD").split(/\s+/);
+      if (parents.length !== 3 || parents[0] !== payload.after ||
+          parents[1] !== payload.before || parents[2] !== pr.head?.sha)
+        throw new Error("merge da #690 não comprovado por pais/HEAD protegidos");
+    }
+    return { number: pr.number, manifestBase: payload.before, ordinaryDocument: !touchesBuild && associated !== 690 };
   }
   throw new Error("evento GitHub sem proveniência validada");
 }
@@ -420,12 +451,13 @@ function changes() {
   if (event === "workflow_dispatch" && !prior)
     throw new Error("workflow manual sem base de diff verificável.");
   let base = prior && !/^0+$/.test(prior) ? prior : git("rev-parse", "HEAD^");
+  const eventBase = base;
   let head = "HEAD";
   if (event === "pull_request") {
     try { head = git("rev-parse", "HEAD^2"); } catch { head = "HEAD"; }
     base = git("merge-base", base, head);
   }
-  return { base, head, changed: git("diff", "--name-only", "--diff-filter=ACMRTD", base, head).split("\n").filter(Boolean) };
+  return { base, eventBase, head, changed: git("diff", "--name-only", "--diff-filter=ACMRTD", base, head).split("\n").filter(Boolean) };
 }
 async function http(path, token, raw = false) {
   if (!token) throw new Error("token de leitura indisponível.");
@@ -439,9 +471,9 @@ async function http(path, token, raw = false) {
   return raw ? res.text() : res.json();
 }
 async function main() {
-  let base, head, changed, plan, previous, report = null;
+  let base, eventBase, head, changed, plan, previous, report = null;
   try {
-    ({ base, head, changed } = changes());
+    ({ base, eventBase, head, changed } = changes());
     plan = JSON.parse(readFileSync(PLAN, "utf8"));
     previous = JSON.parse(git("show", base + ":" + PLAN));
     if (existsSync(REPORT)) report = JSON.parse(readFileSync(REPORT, "utf8"));
@@ -471,7 +503,7 @@ async function main() {
   let fullPaths = null;
   const event = String(process.env.GITHUB_EVENT_NAME || "");
   try {
-    const resolved = await resolvePrContext(event, base, head, changed, githubToken);
+    const resolved = await resolvePrContext(event, base, head, changed, githubToken, eventBase);
     prNumber = resolved.number;
     fullPaths = fullDiffPaths(base, head);
     if (prNumber) {

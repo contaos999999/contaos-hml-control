@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry } from "./p0-rca-impact-gate.mjs";
+import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry, resolvePrContext } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -227,6 +227,104 @@ test("NR-005 dispensa documental legitima fora do BUILD preservada", () => {
   });
   assert.deepEqual(r.errors, []);
   assert.equal(r.applicable, false);
+});
+
+
+/* P0-PRE-AUDIT: event-to-guard matrix, not merely validateRcaImpact mocks.
+ * The webhook/API data are synthetic; this proves routing and fail-closed
+ * logic, NOT that an external GitHub event/runner has been authenticated. */
+const EVT_BASE = "c".repeat(40), EVT_HEAD = "d".repeat(40);
+const PR_HEAD = "e".repeat(40), COMMON = "f".repeat(40);
+const makeEvent = (kind, n = 701) => kind === "pull_request" ?
+  { repository:{full_name:"contaos999999/contaos-hml-control"}, number:n,
+    pull_request:{number:n, base:{ref:"main",sha:EVT_BASE}, head:{sha:PR_HEAD}} } :
+  { repository:{full_name:"contaos999999/contaos-hml-control"},
+    ref:"refs/heads/main", before:EVT_BASE, after:EVT_HEAD };
+const fakeGit = (...args) => {
+  if (args[0] === "rev-parse") return ({
+    HEAD:EVT_HEAD, [EVT_HEAD]:EVT_HEAD, [EVT_BASE]:EVT_BASE,
+    [PR_HEAD]:PR_HEAD, [COMMON]:COMMON,
+  })[args[1]] || args[1];
+  if (args[0] === "merge-base") return COMMON;
+  if (args[0] === "rev-list") return [EVT_HEAD,EVT_BASE,PR_HEAD].join(" ");
+  if (args[0] === "show") return JSON.stringify(manifest690());
+  throw new Error("unexpected git request " + args.join(" "));
+};
+const fakeEvent = async (kind, paths, number, extras={}) => {
+  const payload = makeEvent(kind,number);
+  const call = extras.apiGet || (async (path) => {
+    if (path.endsWith("/pulls")) return [{number}];
+    if (path.endsWith("/pulls/" + number))
+      return {number, merged_at:"2026-11-21T00:00:00Z",
+        base:{ref:"main"},merge_commit_sha:EVT_HEAD,head:{sha:PR_HEAD}};
+    throw Error("unmocked API path " + path);
+  });
+  return resolvePrContext(kind, kind === "pull_request" ? COMMON : EVT_BASE,
+    kind === "pull_request" ? PR_HEAD : "HEAD", paths, "fixture-only",
+    EVT_BASE, {payload,gitFn:extras.gitFn || fakeGit,apiGet:call});
+};
+test("P0 PRE-AUDIT push squash documental comum preserva N/A", async () => {
+  const paths=["docs/frontend/planos/PLANO_COMUM.md"];
+  const result=await fakeEvent("push",paths,701,{
+    gitFn:(...a)=>a[0] === "rev-list" ? EVT_HEAD+" "+EVT_BASE : fakeGit(...a),
+  });
+  assert.equal(result.number,701);
+  assert.equal(result.ordinaryDocument,true);
+  assert.deepEqual(check(null,paths,"75",[],{prNumber:701}).errors,[]);
+});
+test("P0 PRE-AUDIT push documental sem associação permanece N/A somente fora BUILD", async () => {
+  const paths=["docs/frontend/planos/DOC_COMUM.md"];
+  const result=await fakeEvent("push",paths,701,{
+    apiGet:async(p)=>p.endsWith("/pulls")?[]:null,
+  });
+  assert.equal(result.number,null);
+  assert.deepEqual(check(null,paths,"75",[],{prNumber:null}).errors,[]);
+});
+test("P0 PRE-AUDIT push da #690 com merge MERGE e manifesto protegido: PASS", async () => {
+  const paths=[files690[0],files690[2]];
+  const result=await fakeEvent("push",paths,690);
+  assert.equal(result.number,690);
+  assert.equal(result.manifestBase,EVT_BASE);
+  assert.deepEqual(check(null,paths,"75",[],{
+    prNumber:result.number,governancePlan:manifest690(),fullDiffPaths:paths,
+  }).errors,[]);
+});
+test("P0 PRE-AUDIT #690 via squash de um pai: FAIL", async () => {
+  await assert.rejects(()=>fakeEvent("push",[files690[2]],690,{
+    gitFn:(...a)=>a[0]==="rev-list"?EVT_HEAD+" "+EVT_BASE:fakeGit(...a),
+  }),/merge da #690 não comprovado/);
+});
+test("P0 PRE-AUDIT #690 falsificada apenas por mensagem/caminho: FAIL", async () => {
+  await assert.rejects(()=>fakeEvent("push",[files690[2]],701),/outra PR/);
+});
+test("P0 PRE-AUDIT #690 sem associação autenticada: FAIL", async () => {
+  await assert.rejects(()=>fakeEvent("push",[files690[2]],690,{
+    apiGet:async(p)=>p.endsWith("/pulls")?[]:null,
+  }),/sem PR autenticada/);
+});
+test("P0 PRE-AUDIT push de código sem PR autenticada nunca N/A", async () => {
+  await assert.rejects(()=>fakeEvent("push",["scripts/ci/other.mjs"],701,{
+    apiGet:async(p)=>p.endsWith("/pulls")?[]:null,
+  }),/sem PR autenticada/);
+});
+test("P0 PRE-AUDIT PR head/base avançada distingue evento e merge-base", async () => {
+  const res=await fakeEvent("pull_request",[files690[0]],690);
+  assert.equal(res.number,690);
+  assert.equal(res.manifestBase,EVT_BASE);
+});
+test("P0 PRE-AUDIT PR com base do evento forjada: FAIL", async () => {
+  const payload=makeEvent("pull_request",690);
+  payload.pull_request.base.sha=COMMON;
+  await assert.rejects(()=>resolvePrContext("pull_request",COMMON,PR_HEAD,
+    [files690[0]],"fixture-only",EVT_BASE,
+    {payload,gitFn:fakeGit,apiGet:async()=>null}),/evento não comprovados/);
+});
+test("P0 PRE-AUDIT PR com HEAD obsoleto: FAIL", async () => {
+  const payload=makeEvent("pull_request",690);
+  payload.pull_request.head.sha=EVT_HEAD;
+  await assert.rejects(()=>resolvePrContext("pull_request",COMMON,PR_HEAD,
+    [files690[0]],"fixture-only",EVT_BASE,
+    {payload,gitFn:fakeGit,apiGet:async()=>null}),/evento não comprovados/);
 });
 
 test("P0 RCA — falta relatório no diff BUILD V2 falha", () => {

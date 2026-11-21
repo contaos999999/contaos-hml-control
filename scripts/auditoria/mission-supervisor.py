@@ -8,8 +8,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
+import urllib.request
+from datetime import datetime, timezone
 from collections import Counter
 from pathlib import Path
 
@@ -224,18 +227,128 @@ def evaluate(contract, evidence):
     }
 
 
+
+def iso_time(value):
+    if not isinstance(value, str):
+        raise InvalidEvidence("N07: timestamp missing")
+    stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if stamp.tzinfo is None:
+        raise InvalidEvidence("N07: timestamp without timezone")
+    return stamp.astimezone(timezone.utc)
+
+
+def collect_watchdog(contract, api_get, expected_main):
+    """Only authenticated GET responses. Never a certification receipt."""
+    check_contract(contract)
+    if not sha(expected_main):
+        raise InvalidEvidence("N03: main SHA absent")
+    live = api_get("/git/ref/heads/main")
+    if live.get("object", {}).get("sha") != expected_main:
+        raise InvalidEvidence("N05: protected main advanced")
+    data = []
+    for number in [contract["target"]["pr"], *contract["allowed_dependencies"]]:
+        pr = api_get("/pulls/" + str(number))
+        if pr.get("number") != number or pr.get("base", {}).get("ref") != "main":
+            raise InvalidEvidence("N02: wrong PR or base")
+        head = pr.get("head", {}).get("sha")
+        if not sha(head):
+            raise InvalidEvidence("N05: missing PR HEAD")
+        runs = api_get("/commits/" + head + "/check-runs?per_page=100")
+        if not isinstance(runs, dict) or runs.get("total_count", 0) > 100 or not isinstance(runs.get("check_runs"), list):
+            raise InvalidEvidence("N04: incomplete GitHub checks")
+        data.append({
+            "repo": REPO, "number": number, "head_sha": head,
+            "updated_at": pr.get("updated_at"), "state": pr.get("state"),
+            "checks": [{k: x.get(k) for k in ("name", "status", "conclusion", "started_at")} for x in runs["check_runs"]],
+        })
+    return data
+
+
+def assess_watchdog(contract, data, now):
+    """Read-only watchdog; decisions are recommendations, never permissions."""
+    check_contract(contract)
+    clock = iso_time(now) if isinstance(now, str) else now
+    if not isinstance(clock, datetime) or clock.tzinfo is None:
+        raise InvalidEvidence("N07: invalid clock")
+    wanted = {contract["target"]["pr"], *contract["allowed_dependencies"]}
+    if not isinstance(data, list) or len(data) != len(wanted) or {x.get("number") for x in data if isinstance(x, dict)} != wanted:
+        raise InvalidEvidence("N02: observations do not cover authorized PRs")
+    findings = []
+    for item in data:
+        number = item["number"]
+        if item.get("repo") != REPO or not sha(item.get("head_sha")) or item.get("state") not in ("open", "closed"):
+            raise InvalidEvidence("N02: untrusted PR observation")
+        updated = iso_time(item.get("updated_at"))
+        if updated > clock:
+            raise InvalidEvidence("N07: future observation")
+        if number == contract["target"]["pr"] and item["head_sha"] != contract["target"]["head"]:
+            findings.append({"code": "N05", "pr": number, "action": "REVALIDATE_HEAD"})
+        checks = item.get("checks")
+        if not isinstance(checks, list) or any(not isinstance(x, dict) for x in checks):
+            raise InvalidEvidence("N04: invalid check observations")
+        if any(x.get("conclusion") in ("failure", "error", "cancelled") for x in checks):
+            findings.append({"code": "N04", "pr": number, "action": "FIX_FAILED_CI"})
+        if any(x.get("status") in ("in_progress", "queued") and
+               (clock - iso_time(x.get("started_at") or item["updated_at"])).total_seconds() >= 7200
+               for x in checks):
+            findings.append({"code": "N07", "pr": number, "action": "INVESTIGATE_CI_STALL"})
+        if (clock - updated).total_seconds() >= 86400:
+            findings.append({"code": "N08", "pr": number, "action": "INVESTIGATE_NO_PROGRESS"})
+        if not checks and item["state"] == "open":
+            findings.append({"code": "N04", "pr": number, "action": "VERIFY_MISSING_CI"})
+    rank = {"REVALIDATE_HEAD": 0, "FIX_FAILED_CI": 1, "INVESTIGATE_CI_STALL": 2,
+            "VERIFY_MISSING_CI": 3, "INVESTIGATE_NO_PROGRESS": 4}
+    findings.sort(key=lambda x: (rank.get(x["action"], 99), x["pr"]))
+    return {
+        "source_verified": True,
+        "state": "BLOCKED_EXTERNAL" if findings else "ACTIVE",
+        "certified": False, "eligible": False, "authoritative_for_merge": False,
+        "activation_authorized": False, "issues": findings,
+        "next_action": findings[0]["action"] if findings else "REVIEW_INDEPENDENT_AUDIT_AND_CI",
+        "observed_prs": [{"number": x["number"], "head": x["head_sha"]} for x in data],
+    }
+
+
+def watchdog_main(contract):
+    if os.environ.get("GITHUB_REPOSITORY") != REPO:
+        raise InvalidEvidence("N02: unexpected repository")
+    token = os.environ.get("GITHUB_TOKEN")
+    head = os.environ.get("GITHUB_SHA")
+    if not token or not sha(head):
+        raise InvalidEvidence("N11: read-only token or SHA missing")
+
+    def api_get(path):
+        request = urllib.request.Request("https://api.github.com/repos/" + REPO + path, headers={
+            "Authorization": "Bearer " + token,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "ContaOS-Watchdog-ReadOnly",
+        }, method="GET")
+        with urllib.request.urlopen(request, timeout=15) as response:
+            return json.load(response)
+
+    data = collect_watchdog(contract, api_get, head)
+    return assess_watchdog(contract, data, datetime.now(timezone.utc))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="ContaOS P0-ABS offline diagnostic (read-only)")
     parser.add_argument("--contract", type=Path, required=True)
-    parser.add_argument("--evidence", type=Path, required=True)
+    parser.add_argument("--evidence", type=Path)
+    parser.add_argument("--watchdog", action="store_true")
     args = parser.parse_args(argv)
     try:
         contract = json.loads(args.contract.read_text(encoding="utf-8-sig"))
-        evidence = json.loads(args.evidence.read_text(encoding="utf-8-sig"))
-        result = evaluate(contract, evidence)
+        if args.watchdog:
+            result = watchdog_main(contract)
+        else:
+            if args.evidence is None:
+                raise InvalidEvidence("N11: evidence path required")
+            evidence = json.loads(args.evidence.read_text(encoding="utf-8-sig"))
+            result = evaluate(contract, evidence)
     except (OSError, ValueError, TypeError, KeyError) as exc:
         print(json.dumps({"state": "BLOCKED_EXTERNAL", "eligible": False,
-                          "certified": False,
+                          "certified": False, "source_verified": False,
                           "issues": [{"code": "N11", "detail": str(exc)}]},
                          ensure_ascii=False))
         return 2

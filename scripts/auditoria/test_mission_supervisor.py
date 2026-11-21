@@ -281,6 +281,100 @@ class MissionSupervisorTests(unittest.TestCase):
         with self.assertRaises(mod.InvalidEvidence):
             mod.check_contract(c)
 
+    def watchdog_data(self, when="2026-11-21T12:00:00Z"):
+        return [
+            {"repo": mod.REPO, "number": n, "head_sha": H, "state": "open",
+             "updated_at": when, "checks": [
+                 {"name": name, "status": "completed", "conclusion": "success",
+                  "started_at": when} for name in mod.REQUIRED]}
+            for n in (679, 690)
+        ]
+
+    def test_watchdog_valid_diagnosis_never_certifies(self):
+        o = mod.assess_watchdog(contract(), self.watchdog_data(), "2026-11-21T13:00:00Z")
+        self.assertEqual(o["state"], "ACTIVE")
+        self.assertFalse(o["certified"])
+        self.assertFalse(o["eligible"])
+        self.assertFalse(o["authoritative_for_merge"])
+
+    def test_watchdog_drift_head_blocks(self):
+        data = self.watchdog_data()
+        data[0]["head_sha"] = C
+        self.assertEqual(mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")["next_action"],
+                         "REVALIDATE_HEAD")
+
+    def test_watchdog_failure_ci_blocks(self):
+        data = self.watchdog_data()
+        data[1]["checks"][0]["conclusion"] = "failure"
+        self.assertEqual(mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")["next_action"],
+                         "FIX_FAILED_CI")
+
+    def test_watchdog_stalled_ci_blocks(self):
+        data = self.watchdog_data()
+        data[1]["checks"][0].update(status="in_progress", conclusion=None,
+                                   started_at="2026-11-21T09:00:00Z")
+        self.assertEqual(mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")["next_action"],
+                         "INVESTIGATE_CI_STALL")
+
+    def test_watchdog_no_progress_alerts(self):
+        data = self.watchdog_data("2026-11-18T12:00:00Z")
+        self.assertEqual(mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")["next_action"],
+                         "INVESTIGATE_NO_PROGRESS")
+
+    def test_watchdog_missing_checks_not_pass(self):
+        data = self.watchdog_data()
+        data[1]["checks"] = []
+        self.assertEqual(mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")["next_action"],
+                         "VERIFY_MISSING_CI")
+
+    def test_watchdog_extra_unauthorized_pr_rejected(self):
+        data = self.watchdog_data()
+        data[1]["number"] = 692
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+
+    def test_watchdog_no_timezone_rejected(self):
+        data = self.watchdog_data("2026-11-21T12:00:00")
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+
+    def test_watchdog_protected_main_drift_fail_closed(self):
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.collect_watchdog(contract(), lambda _: {"object": {"sha": B}}, H)
+
+    def test_watchdog_readonly_collects_target_and_dependency(self):
+        seen = []
+        def fake_api(path):
+            seen.append(path)
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": H}}
+            if path.startswith("/pulls/"):
+                n = int(path.split("/")[-1])
+                return {"number": n, "base": {"ref": "main"},
+                        "head": {"sha": H}, "updated_at": "2026-11-21T12:00:00Z",
+                        "state": "open"}
+            if path.startswith("/commits/"):
+                return {"total_count": 1, "check_runs": [
+                    {"name": "test", "status": "completed", "conclusion": "success"}
+                ]}
+            raise RuntimeError("unapproved endpoint")
+        data = mod.collect_watchdog(contract(), fake_api, H)
+        self.assertEqual([x["number"] for x in data], [679, 690])
+        self.assertEqual(len(seen), 5)
+        self.assertTrue(all(x.startswith(("/git/ref/", "/pulls/", "/commits/")) for x in seen))
+
+    def test_watchdog_incomplete_check_pagination_rejected(self):
+        def fake_api(path):
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": H}}
+            if path.startswith("/pulls/"):
+                return {"number": int(path.split("/")[-1]), "base": {"ref": "main"},
+                        "head": {"sha": H}, "state": "open",
+                        "updated_at": "2026-11-21T12:00:00Z"}
+            return {"total_count": 101, "check_runs": []}
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.collect_watchdog(contract(), fake_api, H)
+
     def test_cli_blocked_diagnostic_never_signals_ci_pass(self):
         with tempfile.TemporaryDirectory() as d:
             root = pathlib.Path(d)

@@ -18,7 +18,7 @@ Contrato proposto em `docs/frontend/governanca/MISSAO_ATIVA_4_1.json`, com `miss
 - `CERTIFIED`: exige provas técnicas e administrativas em duas etapas, incluindo relatório independente, revisão formal aplicável, merge protegido, readback na main e checkpoint integrado. Texto autodeclarado não é prova.
 - `NO-GO` de ativação: independente do estado operacional da missão. Pode coexistir com `ACTIVE` e com BUILD de código desativado.
 
-Contrato não contém o próprio blob SHA (autorreferência impossível). Em vez disso vincula o blob protegido do PLAN #689. Um executor confiável deverá ler por SHA explícito o blob Git da própria versão integrada do contrato e atestar essa origem antes de utilizar o resultado. O supervisor que recebe JSON arbitrário é **somente diagnóstico**; não pode servir como publicador confiável por autoclassificar sua origem. **Regra fail-closed de execução:** o comando `mission-supervisor.py` sempre retorna exit code `2`, mesmo quando o JSON é estruturalmente válido, porque nenhum dado offline equivale à certificação assinada por origem protegida. O JSON emitido em stdout serve ao diagnóstico; CI e consumidores não podem converter exit `0` de diagnóstico em status de aprovação. Essa proibição é coberta por testes negativos.
+Contrato não contém o próprio blob SHA (autorreferência impossível). Em vez disso vincula o blob protegido do PLAN #689. Um executor confiável deverá ler por SHA explícito o blob Git da própria versão integrada do contrato e atestar essa origem antes de utilizar o resultado. O supervisor que recebe JSON arbitrário é **somente diagnóstico**; não pode servir como publicador confiável por autoclassificar sua origem. O watchdog observa main/PRs/checks por API autenticada somente leitura e registra próxima ação, sem publicar status de autorização, reabrir PR ou produzir certificado. **Regra fail-closed de execução:** o comando `mission-supervisor.py` sempre retorna exit code `2`, mesmo quando o JSON é estruturalmente válido, porque nenhum dado offline equivale à certificação assinada por origem protegida. O JSON emitido em stdout serve ao diagnóstico; CI e consumidores não podem converter exit `0` de diagnóstico em status de aprovação. Essa proibição é coberta por testes negativos.
 
 ## 3. Matriz negativa e prevenção
 
@@ -53,6 +53,33 @@ Este BUILD **não cria nem ativa** esse App nem adiciona contexto ao ruleset. O 
 Exigir: matriz de eventos `pull_request`, `push` e `merge_group`; testes RED/GREEN e mutantes; regra `full_diff` aplicada a qualquer extensão do BUILD #690; verificação de auth da PR no push por evidências GitHub; resolução do manifesto **na base anterior ao diff**, não em `origin/main` pós-merge; vínculo real da entrada única da fila com SHA/base/PR; status do App no SHA requerido; revogação de autorização mesmo após `success`; recuperação sem retirar proteções. Se o provider GitHub não suportar prova atômica suficientemente segura para a revogação, manter `ativacao_autorizada=false` e registrar `BLOCKED_EXTERNAL/NO-GO`.
 
 A ativação e a configuração administrativa requerem autorização separada do titular, snapshots do ruleset, testes negativos reais e readback de enforcement em main. Isso não se deduz de jobs verdes ou de simulação local.
+
+
+## 5.1. Matriz obrigatória de pré-certificação do BUILD #690
+
+**Status:** esta matriz é obrigação de execução, não declaração de PASS. O implementador deve anexar logs, hashes e o HEAD exato antes da auditoria independente. Provas de SHA anterior são históricas.
+
+| Gate | Prova exigida antes da auditoria |
+| --- | --- |
+| NR-005 / documentos comuns | Caso de push documental por squash/merge e de PR sem associação legítima sem relação com #690 preserva N/A, sem exigir dois pais ou manifesto do BUILD. |
+| NR-005 / BUILD válido | Push da #690 exige PR autenticada, dois pais/HEAD corretos, manifesto da base anterior e diff completo dentro de 14 caminhos. |
+| NR-005 / falsificações | PR errada, associação ausente, squash da #690, documento extra, script extra, renomeação e alteração de modo devem falhar. |
+| NR-009 / base avançada | PR com main avançada compara a base do evento viva com o HEAD e usa merge-base apenas para construir o diff, sem falsa reprovação. |
+| Node 24 / testes | Runner usa formato TAP explícito; teste selecionado exato, 0 tests e status falso são recusados. |
+| Segurança runner / N06 | Job Codex autogerenciado com identidade local é removido até comprovação administrativa externa do isolamento do host, runner group, workflow/ref e credenciais gh. |
+| Segurança Actions | Workflow observador usa runner GitHub hospedado, permissões apenas read, checkout main sem credenciais persistentes e sem escrita, merge ou aprovação. |
+| WDG-01 / origem | Fonte autenticada confirma main e SHAs das PRs 679 e 690 contra contrato; divergência produz REVALIDATE_HEAD, nunca certificado. |
+| WDG-02 / progresso | Diagnosticar CI com falha, ausência de checks, CI parado por 2h, ausência de atividade por 24h; determinar próxima ação sem agir autonomamente. |
+| WDG-03 / fail-closed | Contrato adulterado, API incompleta e cancelamento/certificado autodeclarados permanecem bloqueados; CLI diagnóstica nunca devolve sinal de aprovação. |
+| N01-N17 | Todos os negativos Python aplicáveis passam, incluindo revisão, autorização, head/base, grupo e check antigo. Ensaios físicos de fila/App continuam NO-GO até autorização. |
+| N13 / fila | Provar em Git temporário PR com múltiplos commits e impedir grupo extra; validar states e árvores, sem confundir simulação com fila real. |
+| Regressão global | Rodar cinco checks no mesmo HEAD, incluindo RCA operacional, 1.266 Vitest, lint, typecheck, build, Teste C Playwright, P0-NR, protect-types e controlador Windows offline. |
+| Evidências | Registrar job URLs, SHA dos checks, resultado TAP, hash SHA-256 do artefato visual, diff exato, limitações HML e causa de qualquer skipped. |
+| Revisão independente | Somente com HEAD congelado, matriz comprovada e checks terminais solicitar nova análise Codex 3.1.4. Preservar RunId/hash, não autoconceder APPROVED. |
+
+**Critério de congelamento:** não publicar melhorias cosméticas nem reenviar auditoria sem delta causal. Falha nova exige causa raiz, teste negativo, correção e regressão no mesmo HEAD. Preflight verde não elimina possibilidade de novo achado, nem altera o dever de auditoria independente de código.
+
+**Fronteira administrativa:** reinserir o runner Windows com perfil gh local ou criar App/status de missão, novo required check, fila e ruleset depende de controle externo comprovado e autorização separada. Mesmo integrado à main, o watchdog agendado é best effort e somente leitura. N17(c) permanece NO-GO para ativação até ensaio isolado com terceiro autor e duas aprovações elegíveis.
 
 ## 6. Implantação, rollback e continuidade
 
