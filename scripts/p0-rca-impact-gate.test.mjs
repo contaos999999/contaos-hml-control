@@ -675,15 +675,19 @@ function paFixture() {
     full_diff:true,ativacao_autorizada:false,files:PA_FILES},
   paths:[...PA_FILES],comments:[comment],
   checkRuns:PRECERT_REQUIRED_CHECKS.map((name,i)=>({
-    id:100+i, name, head_sha:PA_HEAD, app:{id:15368},
+    id:name.includes("Teste C")?888:100+i, name, head_sha:PA_HEAD, app:{id:15368},
     details_url:name.includes("Teste C") ? "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/888" : "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/100",
     status:"completed",conclusion:"success",
   })),
   artifact:{id:9001,digest:PA_DIGEST,expired:false,
     workflow_run:{head_sha:PA_HEAD,id:777}},
-  testCJob:{id:888,run_id:777,run_attempt:1,head_sha:PA_HEAD,
+  testCJob:{id:888,run_id:777,head_sha:PA_HEAD,
     status:"completed",conclusion:"success",
-    steps:[{name:"Playwright Teste C",conclusion:"success"}]},
+    steps:[{name:"Teste C Playwright — 24 telas, 4 larguras, 2 temas",conclusion:"success"}]},
+  testCRun:{id:777,run_attempt:1,head_sha:PA_HEAD,event:"pull_request",
+    path:".github/workflows/contaos-frontend-zero-drift.yml",
+    pull_requests:[{number:690,head:{sha:PA_HEAD},base:{sha:PA_BASE}}]},
+  testCAttemptJobs:{jobs:[{id:888,run_id:777,conclusion:"success"}]},
   expectedHead:PA_HEAD,expectedBase:PA_BASE};
 }
 const paCheck = (fixture) => validateAssistantPrecertRelease(fixture);
@@ -790,5 +794,20 @@ test("P0 PA foreign run attempt or job must block",()=>{
 });
 test("P0 PA missing Playwright execution step must block",()=>{
   const f=paFixture();f.testCJob.steps=[{name:"upload",conclusion:"success"}];
+  assert.equal(paCheck(f).pass,false);
+});
+
+test("P0 adversarial wrong workflow and unrelated PR cannot release",()=>{
+  for(const mutate of [
+    f=>f.testCRun.path=".github/workflows/unrelated.yml",
+    f=>f.testCRun.pull_requests[0].number=691,
+    f=>f.testCRun.pull_requests[0].base.sha="f".repeat(40),
+    f=>f.testCAttemptJobs.jobs[0].id=999,
+    f=>f.testCRun.run_attempt=2,
+    f=>f.checkRuns.find(x=>x.name.includes("Teste C")).details_url="https://evil.example/actions/runs/777/job/888",
+  ]){const f=paFixture();mutate(f);assert.equal(paCheck(f).pass,false)}
+});
+test("P0 adversarial upload labeled Teste C is not Playwright proof",()=>{
+  const f=paFixture();f.testCJob.steps=[{name:"Upload Teste C evidence",conclusion:"success"}];
   assert.equal(paCheck(f).pass,false);
 });
