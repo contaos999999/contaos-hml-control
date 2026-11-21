@@ -19,7 +19,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: contaos-auditor-readonly-\${{ github.repository }}
+  group: contaos-auditor-readonly-${{ github.repository }}
   cancel-in-progress: false
 
 jobs:
@@ -75,7 +75,7 @@ jobs:
       - name: Auditoria em sessao Codex nova, sem APPROVE
         shell: powershell
         env:
-          PR_NUMBER: \${{ inputs.pr }}
+          PR_NUMBER: ${{ inputs.pr }}
         run: |
           $ErrorActionPreference = "Stop"
           $pr = [int]::Parse($env:PR_NUMBER)
@@ -111,7 +111,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: contaos-parecer-pr-\${{ inputs.pr }}-\${{ github.run_id }}
-          path: \${{ runner.temp }}/contaos-parecer/
+          name: contaos-parecer-pr-${{ inputs.pr }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/contaos-parecer/
           if-no-files-found: warn
           retention-days: 14
