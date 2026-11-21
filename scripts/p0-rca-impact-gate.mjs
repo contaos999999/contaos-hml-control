@@ -702,7 +702,7 @@ export async function verifyAssistantPrecertInGithub({
   ], {encoding: "utf8", timeout: 15000})),
 } = {}) {
   const manual = env.GITHUB_EVENT_NAME === "workflow_dispatch";
-  if (!["pull_request", "workflow_dispatch"].includes(env.GITHUB_EVENT_NAME) ||
+  if (!["pull_request", "pull_request_review", "workflow_dispatch"].includes(env.GITHUB_EVENT_NAME) ||
       (manual && (env.GITHUB_REF !== "refs/heads/build/p0-abs-fiscal-universal" ||
         !validSha(env.GITHUB_SHA))) ||
       env.GITHUB_REPOSITORY !== REPO ||
