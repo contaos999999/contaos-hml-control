@@ -686,18 +686,39 @@ class MissionSupervisorTests(unittest.TestCase):
         self.assertFalse(out["required_checks_complete"])
         self.assertEqual(out["next_action"], "REVALIDATE_HEAD")
 
-    def test_watchdog_wrong_live_pr_base_fails_closed(self):
-        def fake_api(path):
+    def test_NR009_live_older_target_base_must_diagnose_instead_of_abort(self):
+        c = contract()
+        old_base = "1" * 40 if H != "1" * 40 else "2" * 40
+        def api(path):
             if path == "/git/ref/heads/main":
                 return {"object": {"sha": H}}
             if path.startswith("/pulls/"):
-                return {"number": int(path.split("/")[-1]),
-                        "base": {"ref": "main", "sha": B},
+                number = int(path.rsplit("/", 1)[1])
+                return {
+                    "number": number, "base": {"ref": "main", "sha": B if number == 679 else H},
+                    "head": {"sha": H}, "updated_at": "2026-11-21T12:00:00Z",
+                    "state": "open", "merged": False,
+                }
+            return {"total_count": 0, "check_runs": []}
+        observations = mod.collect_watchdog(c, api, H)
+        diag = mod.assess_watchdog(c, observations, "2026-11-21T13:00:00Z")
+        self.assertEqual(diag["state"], "BLOCKED_EXTERNAL")
+        self.assertEqual(diag["next_action"], "REVALIDATE_HEAD")
+        self.assertFalse(diag["eligible"])
+        self.assertEqual(observations[0]["base_sha"], B)
+
+    def test_watchdog_malformed_live_pr_base_still_fails_closed(self):
+        def api(path):
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": H}}
+            if path.startswith("/pulls/"):
+                return {"number": int(path.rsplit("/", 1)[1]),
+                        "base": {"ref": "main", "sha": "not-a-sha"},
                         "head": {"sha": H}, "state": "open", "merged": False,
                         "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 0, "check_runs": []}
         with self.assertRaises(mod.InvalidEvidence):
-            mod.collect_watchdog(contract(), fake_api, H)
+            mod.collect_watchdog(contract(), api, H)
 
     def test_watchdog_adversarial_offline_base_drift_is_not_active(self):
         data = self.watchdog_data()
