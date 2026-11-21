@@ -887,6 +887,49 @@ test("P0 FULL_PROTOCOL terminal checks never wait; pending checks never PASS",()
   assert.equal(classifyPrecertReadiness(queued,name,PA_HEAD).state,"PENDING");
 });
 
+
+test("P0 FULL_PROTOCOL watchdog read-only permissions and hosted runner",()=>{
+  const doc=readFileSync(".github/workflows/contaos-missao-auditoria.yml","utf8");
+  const m=/\npermissions:\n((?:  [a-z-]+: [a-z]+\n)+)/.exec(doc);
+  assert.ok(m,"explicit watchdog permissions missing");
+  const p=m[1].trim().split("\n").map(x=>x.trim()).sort();
+  assert.deepEqual(p,["contents: read","actions: read","checks: read",
+    "pull-requests: read"].sort());
+  assert.match(doc,/runs-on: ubuntu-22\.04/);
+  assert.match(doc,/persist-credentials: false/);
+  assert.match(doc,/if: github\.ref == 'refs\/heads\/main'/);
+  assert.doesNotMatch(doc,/runs-on: self-hosted/);
+  assert.doesNotMatch(doc,/permissions: write-all/);
+  const mutations=[
+    doc.replace("actions: read","actions: write"),
+    doc.replace("runs-on: ubuntu-22.04","runs-on: self-hosted"),
+    doc.replace("persist-credentials: false","persist-credentials: true"),
+  ];
+  assert.ok(mutations.every(x=>x!==doc));
+  for(const bad of mutations)
+    assert.ok(!(
+      /\nactions: read\n/.test(bad) &&
+      /runs-on: ubuntu-22\.04/.test(bad) &&
+      /persist-credentials: false/.test(bad)),"mutant must violate a security invariant");
+});
+test("P0 FULL_PROTOCOL global checks bound to exact HEAD and issuer",()=>{
+  const f=paFixture();
+  const req=[...PRECERT_REQUIRED_CHECKS,ADVERSARIAL_V2_CHECK_NAME];
+  assert.equal(req.length,6);
+  for(const name of req)
+    assert.equal(classifyPrecertReadiness(f.checkRuns,name,PA_HEAD).state,"READY",name);
+  for(const mutation of [
+    x=>x.find(c=>c.name===PRECERT_REQUIRED_CHECKS[0]).head_sha="a".repeat(40),
+    x=>x.find(c=>c.name===PRECERT_REQUIRED_CHECKS[0]).app.id=0,
+    x=>x.find(c=>c.name===PRECERT_REQUIRED_CHECKS[0]).conclusion="skipped",
+    x=>x.find(c=>c.name===PRECERT_REQUIRED_CHECKS[0]).status="queued",
+  ]){
+    const altered=structuredClone(f.checkRuns);mutation(altered);
+    assert.notEqual(classifyPrecertReadiness(altered,PRECERT_REQUIRED_CHECKS[0],PA_HEAD).state,
+      "READY");
+  }
+});
+
 test("P0 FULL_PROTOCOL controller read-only permissions cannot grant write",()=>{
   const source=readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8");
   const m=/\npermissions:\n((?:  [a-z-]+: [a-z]+\n)+)/.exec(source);
