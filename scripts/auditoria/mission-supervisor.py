@@ -63,7 +63,7 @@ def check_contract(contract):
     if (not isinstance(plan, dict)
             or plan.get("path") != "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md"
             or not sha(plan.get("blob"))):
-        raise InvalidEvidence("protected PLAN blob missing"
+        raise InvalidEvidence("protected PLAN blob missing")
     if not isinstance(contract.get("requirements"), dict):
         raise InvalidEvidence("requirements missing")
     required = contract["requirements"].get("required_checks")
