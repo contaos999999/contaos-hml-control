@@ -2226,6 +2226,7 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
     interpretation:"Synthetic fixture statement, not a substantive legal interpretation.",
     counterexample:"Synthetic contradictory case, not executed evidence.",
     witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head},
+    negative_witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/2",head},
     independent_review_id:independent.review_id});
   const rules=worklist.normative_rules.map(x=>({
     ...proof(x.rule_id),rule_id:x.rule_id,axes}));
@@ -2243,6 +2244,18 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
     }
   const input={inventory,worklist,sentenceInventory,reverseCoverage,
     head,independent,rules,sentences,sources,interactions};
+  const recycledNegative=await assessSemanticCompletenessGate({...input,
+    rules:rules.map((x,i)=>i===0?{...x,negative_witness:x.witness}:x),
+    authenticateIndependent:async()=>true,
+    authenticateWitness:async()=>true});
+  assert.equal(recycledNegative.semantic_completeness,"INCONCLUSIVE");
+  assert.match(recycledNegative.issues.join(" "),/SEMANTIC_RULE_UNPROVEN/);
+  const missingNegative=await assessSemanticCompletenessGate({...input,
+    interactions:interactions.map((x,i)=>i===0?{...x,negative_witness:null}:x),
+    authenticateIndependent:async()=>true,
+    authenticateWitness:async()=>true});
+  assert.equal(missingNegative.semantic_completeness,"INCONCLUSIVE");
+  assert.match(missingNegative.issues.join(" "),/SEMANTIC_PAIR_UNPROVEN/);
   const withoutExternal=await assessSemanticCompletenessGate(input);
   assert.equal(withoutExternal.semantic_completeness,"INCONCLUSIVE");
   assert.equal(withoutExternal.release,"NO_GO");
