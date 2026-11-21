@@ -7,6 +7,11 @@ import { createHash } from 'node:crypto';
 import { inflateRawSync } from 'node:zlib';
 import { validateCSDI } from './csdi-receipt-validator.mjs';
 
+function crc32(bytes) {
+  let crc=0xffffffff;
+  for(const byte of bytes){crc^=byte;for(let bit=0;bit<8;bit++) crc=(crc>>>1) ^ ((crc&1)?0xedb88320:0);}
+  return (crc^0xffffffff)>>>0;
+}
 function readWitnessArchive(zip) {
   if(zip.length>100*1024*1024) throw Error('ARCHIVE_TOO_LARGE');
   const eocd=zip.lastIndexOf(Buffer.from([0x50,0x4b,0x05,0x06]));
@@ -33,6 +38,7 @@ function readWitnessArchive(zip) {
   const payload=zip.subarray(start,start+compressed);
   const decoded=method===8?inflateRawSync(payload,{maxOutputLength:5*1024*1024}):payload;
   if(decoded.length!==uncompressed) throw Error('ZIP_SIZE_MISMATCH');
+  if(crc32(decoded)!==zip.readUInt32LE(offset+16)) throw Error('ZIP_CRC_MISMATCH');
   return {bytes:decoded,witnesses:JSON.parse(decoded.toString('utf8'))};
 }
 export function validateWitnessContents(w,receipt) {
@@ -129,6 +135,7 @@ export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.en
         const bytes=Buffer.from(await archive.arrayBuffer());
         if (bytes.length<4 || bytes.subarray(0,2).toString()!=='PK') issues.push('ARTIFACT_ARCHIVE_INVALID');
         if (bytes.length>100*1024*1024) issues.push('ARTIFACT_TOO_LARGE');
+        if (bytes.length!==artifact.size_in_bytes) issues.push('ARTIFACT_METADATA_SIZE_MISMATCH');
         const actual=createHash('sha256').update(bytes).digest('hex');
         if (actual.toLowerCase()!==receipt.artifact_archive_sha256.toLowerCase()) issues.push('ARTIFACT_ARCHIVE_DIGEST_MISMATCH');
         else {
