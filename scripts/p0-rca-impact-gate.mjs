@@ -1291,10 +1291,52 @@ export function buildSevenAxisSemanticBacklog(inventory){
       axes:Object.fromEntries(SEMANTIC_AXES.map(axis=>[axis,"UNPROVEN"])),
       rule_verdict:"INCONCLUSIVE"};
   });
+
+  // These are provisional review locations, not assertions that a numbered
+  // paragraph covers all atomic consequences. A candidate link cannot count
+  // as source-verified or as evidence of any semantic axis.
+  const planSectionLines=Object.freeze({
+    S31:[36,37,38,40,41,42,44,45,46],
+    S4:[50,52,53,54,55,56,57,58,59,60,61,62,64,66],
+    S5:[70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87],
+    S6:[93,97,99,100,101,102],
+    S7:[106,108,110],
+    S8:[115,119,120,121,124,125,126],
+    S9:[135,136],S10:[143,144],
+  });
+  const amendmentPath="docs/frontend/planos/EMENDA_P0_ABS_FILA_REVISAO_690_2026-11-20.md";
+  const amendmentLines=[3,7,9,10,12,16,17,18,22,23,24,25,29,31,33,
+    35,37,41,45,47,49,51,53,55,57,61,64,65,66];
+  const atomLines=[36,37,38,40,41,42,44,45,46];
+  const recoveryLines=[97,99,100,101,102];
+  for(const record of normative_rules){
+    if(record.source_links.length){record.source_link_level="DIRECT_NUMBERED";continue;}
+    const id=record.rule_id;
+    let path=planPath,lines=null;
+    const section=/^PLAN-(S31|S4|S5|S6|S7|S8|S9|S10)-(\\d{2})$/.exec(id);
+    const amend=/^EMENDA-(\\d{2})$/.exec(id);
+    const atom=/^PLAN-S31-ATOM-A(\\d{2})$/.exec(id);
+    const recover=/^PLAN-S6-RECOVERY-R(\\d{2})$/.exec(id);
+    const n17=/^EMENDA-N17-([A-F])$/.exec(id);
+    if(section)lines=[planSectionLines[section[1]]?.[Number(section[2])-1]];
+    else if(amend){path=amendmentPath;lines=[amendmentLines[Number(amend[1])-1]];}
+    else if(atom)lines=[atomLines[(Number(atom[1])-1)%atomLines.length]];
+    else if(recover)lines=[recoveryLines[(Number(recover[1])-1)%recoveryLines.length]];
+    else if(n17){path=amendmentPath;lines=[51];}
+    const matches=(inventory?.lines||[]).filter(row=>
+      row.path===path&&lines?.includes(row.line));
+    record.candidate_source_links=matches.map(row=>row.id);
+    record.source_link_level=matches.length===1?"PROVISIONAL_ONLY":"UNMAPPED";
+    if(n17)record.source_clause_marker="("+n17[1].toLowerCase()+")";
+    // Never silently upgrade provisional source anchors into certified links.
+  }
+  const provisional_count=normative_rules.filter(row=>
+    row.source_link_level==="PROVISIONAL_ONLY").length;
+
   const linked_count=normative_rules.filter(row=>row.source_links.length).length;
   const issues=[...(inventory?.issues||[])];
   if(!inventory?.inventory_verified)issues.push("SEMANTIC_SOURCE_NOT_VERIFIED");
-  if(normative_rules.length!==137||linked_count!==10)issues.push("SEMANTIC_NORMATIVE_RULE_LINKAGE_INCOMPLETE");
+  if(normative_rules.length!==137||linked_count!==10||provisional_count!==127)issues.push("SEMANTIC_NORMATIVE_RULE_LINKAGE_INCOMPLETE");
   if(slots.length!==inventory?.lines?.length||
      slots.some(row=>SEMANTIC_AXES.some(a=>row.axes[a]?.status!=="UNPROVEN")))
     issues.push("SEMANTIC_SEVEN_AXIS_WORKLIST_INCOMPLETE");
@@ -1302,6 +1344,7 @@ export function buildSevenAxisSemanticBacklog(inventory){
     normative_rules,normative_rule_count:normative_rules.length,
     normative_axis_slots:normative_rules.length*SEMANTIC_AXES.length,
     anchored_normative_rules:linked_count,unlinked_normative_rules:normative_rules.length-linked_count,
+    provisionally_located_rules:provisional_count,
     source_lines:slots.length,axes_per_source:SEMANTIC_AXES.length,
     axis_slots:slots.length*SEMANTIC_AXES.length,rows:slots,
     co_mentioned_interactions:pairs,issues,
