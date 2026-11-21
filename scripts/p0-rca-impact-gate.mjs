@@ -981,7 +981,7 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
       issues.push("META_PROTOCOL: obrigacao raiz ausente/divergente "+id);
   }
   const expectedSections=["## 1.","## 2.","## 3.","## 4.","## 5.",
-    "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 5.6.","## 6."];
+    "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 5.6.","## 5.7.","## 6."];
   // Fail closed when the protected protocol grows without a corresponding
   // executable authorization requirement. A summary checkbox is insufficient.
   const section51=typeof protocol==="string"?
@@ -1009,7 +1009,7 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
     ["## 5.4.","## 5.5.",FULL_PROTOCOL_54_STEPS,/^\d+\. \*\*([^*]+?):\*\*/gm],
     ["## 5.4.","## 5.5.",FULL_PROTOCOL_54_RULES,/^\*\*([^*]+?):\*\*/gm],
     ["## 5.5.","## 5.6.",FULL_PROTOCOL_55_RULES,/^\*\*([^*]+?):\*\*/gm],
-    ["## 5.6.","## 6.",FULL_PROTOCOL_56_RULES,/^\*\*([^*]+?):\*\*/gm],
+    ["## 5.6.","## 5.7.",FULL_PROTOCOL_56_RULES,/^\*\*([^*]+?):\*\*/gm],
   ];
   for(const [from,to,inventory,re] of sectionRules){
     const part=typeof protocol==="string"?protocol.split(from)[1]?.split(to)[0]:"";
