@@ -886,3 +886,22 @@ test("P0 fixture isolation: prior hostile mutation cannot poison later positive"
   assert.equal(independent.manifest.files[0],PA_FILES[0]);
   assert.equal(paCheck(independent).pass,true);
 });
+
+test("P0 V2 RED: stale ZIP from previous attempt in same run must never release",()=>{
+  const f=paFixture();
+  f.artifact.name="contaos-teste-c-777-0";
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 V2 RED: present attempt without producer artifact name must block",()=>{
+  const f=paFixture();
+  f.artifact.name="contaos-teste-c-777-2";
+  assert.equal(paCheck(f).pass,false);
+});
+test("P0 V2 RED: parent check PASS is not durable authorization after later veto",()=>{
+  const f=paFixture();
+  const later=structuredClone(f.comments[0]);
+  later.id=999;
+  later.body=later.body.replace('"verdict":"PASS"','"verdict":"CHANGES_REQUESTED"');
+  f.comments.push(later);
+  assert.equal(paCheck(f).pass,false);
+});
