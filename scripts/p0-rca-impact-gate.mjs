@@ -1313,10 +1313,10 @@ export function buildSevenAxisSemanticBacklog(inventory){
     if(record.source_links.length){record.source_link_level="DIRECT_NUMBERED";continue;}
     const id=record.rule_id;
     let path=planPath,lines=null;
-    const section=/^PLAN-(S31|S4|S5|S6|S7|S8|S9|S10)-(\\d{2})$/.exec(id);
-    const amend=/^EMENDA-(\\d{2})$/.exec(id);
-    const atom=/^PLAN-S31-ATOM-A(\\d{2})$/.exec(id);
-    const recover=/^PLAN-S6-RECOVERY-R(\\d{2})$/.exec(id);
+    const section=/^PLAN-(S31|S4|S5|S6|S7|S8|S9|S10)-(\d{2})$/.exec(id);
+    const amend=/^EMENDA-(\d{2})$/.exec(id);
+    const atom=/^PLAN-S31-ATOM-A(\d{2})$/.exec(id);
+    const recover=/^PLAN-S6-RECOVERY-R(\d{2})$/.exec(id);
     const n17=/^EMENDA-N17-([A-F])$/.exec(id);
     if(section)lines=[planSectionLines[section[1]]?.[Number(section[2])-1]];
     else if(amend){path=amendmentPath;lines=[amendmentLines[Number(amend[1])-1]];}
