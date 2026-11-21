@@ -1996,7 +1996,7 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   const out=inventoryProtectedSemanticLines(snapshots);
   assert.deepEqual(out.issues,[]);
   assert.equal(out.inventory_verified,true);
-  assert.ok(out.lines.length>137,"do not let 137 manually selected IDs hide unmapped prose");
+  assert.equal(out.lines.length,118,"protected textual inventory count must not silently drift");
   assert.equal(new Set(out.lines.map(x=>x.id)).size,out.lines.length);
   assert.ok(out.lines.every(x=>x.line>0 && x.text_sha256.length===64));
   assert.equal(out.semantic_completeness,"INCONCLUSIVE");
