@@ -11,6 +11,10 @@ export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.en
   if (!token) issues.push('MISSING_GITHUB_TOKEN');
   if (!Number.isSafeInteger(receipt?.github_run_id) || receipt.github_run_id<=0) issues.push('INVALID_RUN_ID');
   if (!Number.isSafeInteger(receipt?.github_job_id) || receipt.github_job_id<=0) issues.push('INVALID_JOB_ID');
+  if (!Number.isSafeInteger(receipt?.github_run_attempt) || receipt.github_run_attempt<=0) issues.push('INVALID_RUN_ATTEMPT');
+  if (!Number.isSafeInteger(receipt?.github_artifact_id) || receipt.github_artifact_id<=0) issues.push('INVALID_ARTIFACT_ID');
+  if (!Number.isSafeInteger(receipt?.pr_number) || receipt.pr_number<=0) issues.push('INVALID_PR_NUMBER');
+  if (typeof receipt?.reviewer_login!=='string' || !/^[a-zA-Z0-9-]{1,39}$/.test(receipt.reviewer_login)) issues.push('INVALID_REVIEWER_LOGIN');
   if (issues.length) return {pass:false,verdict:'BLOCKED',issues};
   const headers={Authorization:`Bearer ${token}`,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
   async function get(path) {
@@ -19,18 +23,33 @@ export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.en
     return response.json();
   }
   try {
-    const [run,jobs,commit]=await Promise.all([
+    const [run,jobs,commit,artifacts,pr,reviews,plan]=await Promise.all([
       get(`actions/runs/${receipt.github_run_id}`),
       get(`actions/runs/${receipt.github_run_id}/jobs?per_page=100`),
-      get(`commits/${receipt.head}`)
+      get(`commits/${receipt.head}`),
+      get(`actions/runs/${receipt.github_run_id}/artifacts?per_page=100`),
+      get(`pulls/${receipt.pr_number}`),
+      get(`pulls/${receipt.pr_number}/reviews?per_page=100`),
+      get(`contents/docs/frontend/planos/P0_GOV_PLAN_${receipt.pr_number}.json?ref=main`)
     ]);
     if (run.head_sha!==receipt.head || run.status!=='completed' || run.conclusion!=='success') issues.push('RUN_NOT_SUCCESS_ON_HEAD');
     if (!Array.isArray(jobs.jobs) || !jobs.jobs.some(j=>j.id===receipt.github_job_id && j.run_id===receipt.github_run_id && j.conclusion==='success')) issues.push('JOB_NOT_SUCCESS_ON_RUN');
     if (commit.sha!==receipt.head) issues.push('COMMIT_MISMATCH');
     if (run.repository?.full_name!==repository) issues.push('RUN_REPOSITORY_MISMATCH');
-    // Important: this consumer does NOT validate witness artifacts, reviewer identity,
-    // PLAN origin, run attempt or protected main ancestry. It cannot issue final PASS.
-    issues.push('FULL_AUTHENTICATED_EVIDENCE_CONSUMER_NOT_IMPLEMENTED');
+    if (run.run_attempt!==receipt.github_run_attempt) issues.push('RUN_ATTEMPT_MISMATCH');
+    if (!Array.isArray(artifacts.artifacts) || !artifacts.artifacts.some(a=>a.id===receipt.github_artifact_id && a.workflow_run?.id===receipt.github_run_id && !a.expired)) issues.push('ARTIFACT_NOT_VERIFIED');
+    if (pr.head?.sha!==receipt.head || pr.base?.sha!==receipt.base) issues.push('PR_HEAD_BASE_MISMATCH');
+    if (!Array.isArray(reviews) || !reviews.some(x=>x.user?.login?.toLowerCase()===receipt.reviewer_login.toLowerCase() && x.state==='APPROVED' && x.commit_id===receipt.head && x.user?.login!==pr.user?.login)) issues.push('INDEPENDENT_REVIEW_NOT_VERIFIED');
+    if (plan.path!==`docs/frontend/planos/P0_GOV_PLAN_${receipt.pr_number}.json` || !plan.sha || !plan.content) issues.push('PROTECTED_PLAN_NOT_FOUND');
+    else {
+      const decoded=Buffer.from(plan.content.replace(/\\s/g,''),'base64').toString('utf8');
+      const parsed=JSON.parse(decoded);
+      if(parsed.approved!==true || parsed.pr_number!==receipt.pr_number || parsed.ativacao_autorizada!==false || !parsed.files?.includes('scripts/csdi-live-consumer.mjs')) issues.push('PROTECTED_PLAN_SCOPE_MISMATCH');
+    }
+    // Artifact metadata alone does not authenticate its bytes or semantic witnesses.
+    // Full immutable digest, complete pagination, reviewer adjudication and
+    // seven-axis semantic witness execution remain mandatory before PASS.
+    issues.push('ARTIFACT_BYTES_AND_SEMANTIC_WITNESSES_NOT_VERIFIED');
   } catch { issues.push('LIVE_EVIDENCE_UNAVAILABLE'); }
   return {pass:false,verdict:'BLOCKED',issues};
 }
