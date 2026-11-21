@@ -872,6 +872,15 @@ test("P0 FULL_PROTOCOL origin: exact workflow/run/attempt cannot be replaced by 
   assert.equal(verifyPrecertRunOrigin(inProgress),true,
     "parent run may still run preaudit after current job succeeded");
 });
+test("P0 FULL_PROTOCOL workflow queued before check exists must wait, not terminal false negative",()=>{
+  const f=paFixture();
+  const missing=f.checkRuns.filter(x=>x.name!=="ContaOS Frontend Zero-Drift");
+  assert.equal(classifyPrecertReadiness(missing,"ContaOS Frontend Zero-Drift",PA_HEAD).state,"PENDING");
+  const malformed=structuredClone(f.checkRuns);
+  malformed.find(x=>x.name==="ContaOS Frontend Zero-Drift").app.id=1;
+  assert.equal(classifyPrecertReadiness(malformed,"ContaOS Frontend Zero-Drift",PA_HEAD).state,"TERMINAL");
+});
+
 test("P0 FULL_PROTOCOL terminal checks never wait; pending checks never PASS",()=>{
   const f=paFixture(), name=ADVERSARIAL_V2_CHECK_NAME;
   assert.equal(classifyPrecertReadiness(f.checkRuns,name,PA_HEAD).state,"READY");
