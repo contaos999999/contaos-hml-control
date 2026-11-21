@@ -2257,7 +2257,7 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
     authenticateIndependent:async()=>true,
     authenticateWitness:async()=>{witnessCalls++;return false;}});
   assert.equal(fakeWitness.semantic_completeness,"INCONCLUSIVE");
-  assert.equal(witnessCalls,1);
+  assert.equal(witnessCalls,1,"gate issues: "+JSON.stringify(fakeWitness.issues));
   // Unit contract only. Callback mock intentionally cannot be installed
   // by production. This asserts the engine is not a permanently hardcoded
   // INCONCLUSIVE predicate, NOT that the supplied synthetic facts are true.
