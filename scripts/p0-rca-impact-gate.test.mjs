@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -1201,7 +1201,7 @@ test("P0 V2 NR-006 avoid API storm while current CI or comment is incomplete",as
   assert.equal(result.pass,false);
   assert.equal(result.release,"NO_GO");
   assert.equal(result.provenanceCalls,0,"no Actions GET before required CI and receipt");
-  assert.match(result.issues.join(" "),/check obrigatorio ainda nao pronto/);
+  assert.match(result.issues.join(" "),/PENDENTE:.*check ainda em execucao/);
   assert.match(result.issues.join(" "),/parecer estruturado V2/);
 });
 
