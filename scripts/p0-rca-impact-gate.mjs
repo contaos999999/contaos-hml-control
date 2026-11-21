@@ -841,6 +841,7 @@ function gitBlobId(content){
 
 // Normative BUILD tests prove NO-GO behavior for future activation, not
 // that a dedicated App, live merge queue or third-party N17(c) ran.
+const INDEPENDENT_AUDIT_ONLY_IDS=new Set(["S5.1:Revisão independente"]);
 const ACTIVATION_ONLY_PROTOCOL_IDS=new Set([
   "S3-N17C-THIRD-AUTHOR","S3-N17C-TWO-APPROVALS","S3-N17C-EXTERNAL",
   "S4-APP-ONLY","S4-ENTRY-SHA-BASE","S4-GROUP-REVALIDATE",
@@ -918,7 +919,9 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
     const ok=names.some(name=>name.includes(item.pattern));
     rows.push({id:item.id,status:ok?"TEST_DECLARED_NOT_EXECUTED":"MISSING_TEST",
       scope:ACTIVATION_ONLY_PROTOCOL_IDS.has(item.id)?
-        "BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL":"BUILD",
+        "BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL":
+        INDEPENDENT_AUDIT_ONLY_IDS.has(item.id)?
+          "BUILD_NEGATIVE_PROOF_INDEPENDENT_AUDIT_EXTERNAL":"BUILD",
       source:PROTOCOL_FULL_AUDIT_FILES[item.file],witness:item.pattern});
     if(!ok)issues.push("Protocolo sem caso executavel: "+item.id+" / "+item.pattern);
   }
@@ -1016,7 +1019,9 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
       row.status==="TEST_DECLARED_NOT_EXECUTED" && matches.length>=1;
     rows.push({...row,execution:good?
       (row.scope==="BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL"?
-        "BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED":"EXECUTED_PASS"):"UNPROVEN",
+        "BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED":
+       row.scope==="BUILD_NEGATIVE_PROOF_INDEPENDENT_AUDIT_EXTERNAL"?
+        "BUILD_NEGATIVE_PASS_INDEPENDENT_AUDIT_PENDING":"EXECUTED_PASS"):"UNPROVEN",
       suite:item?.file||null,matchedTests:matches,
       outputSha256:suite?.outputSha256||null});
     if(!good)issues.push("EXECUTION: requisito sem teste executado PASS: "+row.id);
@@ -1026,10 +1031,14 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
     head,base,checkoutSha,requirements:rows.length,
     executed:rows.filter(x=>x.execution==="EXECUTED_PASS").length,
     activationBlocked:rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED").length,
+    independentAuditPending:rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_INDEPENDENT_AUDIT_PENDING").length,
     structural:rows.filter(x=>x.execution==="STRUCTURAL_CHECK_ONLY").length,
     rows,external:[...(coverage?.external||[]),
       ...rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED")
         .map(x=>({requirement:x.id,status:"BLOCKED_EXTERNAL_FOR_ACTIVATION",
+          negativeBuildTest:x.matchedTests?.[0]||null})),
+      ...rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_INDEPENDENT_AUDIT_PENDING")
+        .map(x=>({requirement:x.id,status:"BLOCKED_EXTERNAL_FOR_INDEPENDENT_AUDIT",
           negativeBuildTest:x.matchedTests?.[0]||null}))],issues,
     suites:Object.fromEntries(suiteKeys.map(k=>[k,suites?.[k]?{
       exitCode:suites[k].exitCode,executed:suites[k].executed,
