@@ -33,3 +33,5 @@ test('normative inventory duplicate rule blocks witness',()=>{const {w,receipt}=
 test('normative source digest absent blocks witness',()=>{const {w,receipt}=witnessFixture();delete w.normative_source.sha256;assert.equal(validateWitnessContents(w,receipt),false)});
 
 test('duplicated semantic axis blocks witness',()=>{const {w,receipt}=witnessFixture();w.axes[6]={...w.axes[0]};assert.equal(validateWitnessContents(w,receipt),false)});
+
+for(const key of ['clauses','rules','pairs','normative_inventory','axes']) test('null witness item in '+key+' is rejected without exception',()=>{const {w,receipt}=witnessFixture();w[key][0]=null;assert.equal(validateWitnessContents(w,receipt),false)});
