@@ -2033,6 +2033,15 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   assert.equal(reverse.semantic_completeness,"INCONCLUSIVE");
   assert.equal(reverse.release,"NO_GO");
   assert.equal(reverse.invalid.length,0);
+  assert.equal(reverse.uncovered_source_count,18);
+  assert.ok(reverse.uncovered.every(x=>
+    !!x.category&&x.assessment==="REQUIRES_INDEPENDENT_SEMANTIC_REVIEW"&&
+    x.semantic_evidence===null&&x.negative_witness===null));
+  assert.ok(reverse.uncovered.some(x=>x.category==="FORBIDDEN_SCOPE"));
+  assert.ok(reverse.uncovered.some(x=>x.category==="RED_GREEN_SECURITY_GATES"));
+  assert.ok(reverse.uncovered.some(x=>x.category==="PROTECTION_AND_REVIEW_AUTHORITY"));
+  assert.equal(reverse.semantic_completeness,"INCONCLUSIVE");
+
   const forgedReverse=structuredClone(backlog);
   forgedReverse.normative_rules[0].source_links=["SRC-FAKE"];
   const rejectedReverse=auditSemanticReverseCoverage(out,forgedReverse);
