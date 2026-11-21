@@ -1351,8 +1351,8 @@ export function buildSevenAxisSemanticBacklog(inventory){
     S9:[135,136],S10:[143,144],
   });
   const amendmentPath="docs/frontend/planos/EMENDA_P0_ABS_FILA_REVISAO_690_2026-11-20.md";
-  const amendmentLines=[3,7,9,10,12,16,17,18,22,23,24,25,29,31,33,
-    35,37,41,45,47,49,51,53,55,57,61,64,65,66];
+  const amendmentLines=[3,9,10,12,16,17,18,22,23,24,25,29,31,33,35,
+    37,41,45,47,49,51,53,55,57,61,64,65,66,68];
   const atomLines=[36,37,38,40,41,42,44,45,46];
   const recoveryLines=[97,99,100,101,102];
   for(const record of normative_rules){
@@ -1371,13 +1371,24 @@ export function buildSevenAxisSemanticBacklog(inventory){
     else if(n17){path=amendmentPath;lines=[51];}
     const matches=(inventory?.lines||[]).filter(row=>
       row.path===path&&lines?.includes(row.line));
+    const positional=!!section||!!amend;
     record.candidate_source_links=matches.map(row=>row.id);
-    record.source_link_level=matches.length===1?"PROVISIONAL_ONLY":"UNMAPPED";
+    if(positional&&matches.length===1){
+      record.source_links=[matches[0].id];
+      record.source_link_level="POSITIONAL_SOURCE_VERIFIED";
+      record.source_location={path:matches[0].path,line:matches[0].line,
+        blob:matches[0].blob,text_sha256:matches[0].text_sha256};
+    } else {
+      record.source_link_level=matches.length===1?"PROVISIONAL_ONLY":"UNMAPPED";
+    }
     if(n17)record.source_clause_marker="("+n17[1].toLowerCase()+")";
-    // Never silently upgrade provisional source anchors into certified links.
+    // Verification is ONLY of physical position against the protected blob.
+    // It cannot establish atomic meaning, entailment, or semantic PASS.
   }
   const provisional_count=normative_rules.filter(row=>
     row.source_link_level==="PROVISIONAL_ONLY").length;
+  const positional_count=normative_rules.filter(row=>
+    row.source_link_level==="POSITIONAL_SOURCE_VERIFIED").length;
 
   const normativeIds=normative_rules.map(row=>row.rule_id);
   const pairCount=normativeIds.length*(normativeIds.length-1)/2;
@@ -1389,7 +1400,7 @@ export function buildSevenAxisSemanticBacklog(inventory){
   const linked_count=normative_rules.filter(row=>row.source_links.length).length;
   const issues=[...(inventory?.issues||[])];
   if(!inventory?.inventory_verified)issues.push("SEMANTIC_SOURCE_NOT_VERIFIED");
-  if(normative_rules.length!==137||linked_count!==10||provisional_count!==127)issues.push("SEMANTIC_NORMATIVE_RULE_LINKAGE_INCOMPLETE");
+  if(normative_rules.length!==137||linked_count!==100||provisional_count!==37||positional_count!==90)issues.push("SEMANTIC_NORMATIVE_RULE_LINKAGE_INCOMPLETE");
   if(slots.length!==inventory?.lines?.length||
      slots.some(row=>SEMANTIC_AXES.some(a=>row.axes[a]?.status!=="UNPROVEN")))
     issues.push("SEMANTIC_SEVEN_AXIS_WORKLIST_INCOMPLETE");
@@ -1398,6 +1409,7 @@ export function buildSevenAxisSemanticBacklog(inventory){
     normative_axis_slots:normative_rules.length*SEMANTIC_AXES.length,
     anchored_normative_rules:linked_count,unlinked_normative_rules:normative_rules.length-linked_count,
     provisionally_located_rules:provisional_count,
+    positionally_verified_rules:positional_count,
     all_possible_rule_pairs:pairCount,untriaged_rule_pairs:pairCount,
     pair_inventory_sha256:pairDigest,
     source_lines:slots.length,axes_per_source:SEMANTIC_AXES.length,
