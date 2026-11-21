@@ -25,6 +25,7 @@ function readWitnessArchive(zip) {
   const local=zip.readUInt32LE(offset+42);
   if(local===0xffffffff || compressed===0xffffffff || uncompressed===0xffffffff) throw Error('ZIP64_UNSUPPORTED');
   if(local+30>zip.length || zip.readUInt32LE(local)!==0x04034b50) throw Error('ZIP_LOCAL_INVALID');
+  if(flags & 0x8) throw Error('ZIP_DATA_DESCRIPTOR_UNSUPPORTED');
   if(zip.readUInt16LE(local+8)!==method || zip.readUInt16LE(local+6)!==flags || zip.readUInt32LE(local+18)!==compressed || zip.readUInt32LE(local+22)!==uncompressed || zip.readUInt32LE(local+14)!==zip.readUInt32LE(offset+16)) throw Error('ZIP_HEADER_MISMATCH');
   if(zip.subarray(local+30,local+30+zip.readUInt16LE(local+26)).toString('utf8')!==name) throw Error('ZIP_FILENAME_MISMATCH');
   const start=local+30+zip.readUInt16LE(local+26)+zip.readUInt16LE(local+28);
