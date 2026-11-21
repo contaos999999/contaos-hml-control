@@ -281,6 +281,26 @@ class MissionSupervisorTests(unittest.TestCase):
         with self.assertRaises(mod.InvalidEvidence):
             mod.check_contract(c)
 
+    def test_cli_blocked_diagnostic_never_signals_ci_pass(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = pathlib.Path(d)
+            (root / "contract.json").write_text(json.dumps(contract()), encoding="utf8")
+            (root / "evidence.json").write_text(json.dumps(evidence()), encoding="utf8")
+            result = mod.main(["--contract", str(root / "contract.json"),
+                               "--evidence", str(root / "evidence.json")])
+            self.assertEqual(result, 2)
+
+    def test_cli_cancelled_receipt_also_fails_closed(self):
+        c = contract()
+        c["state"] = "CANCELLED_BY_OWNER"
+        c["cancellation_receipt"] = {"owner_authorized": True, "decision_id": "forged"}
+        with tempfile.TemporaryDirectory() as d:
+            root = pathlib.Path(d)
+            (root / "contract.json").write_text(json.dumps(c), encoding="utf8")
+            (root / "evidence.json").write_text(json.dumps(evidence()), encoding="utf8")
+            self.assertEqual(mod.main(["--contract", str(root / "contract.json"),
+                                       "--evidence", str(root / "evidence.json")]), 2)
+
     def test_cli_no_files_changed_and_missing_evidence_fails_closed(self):
         with tempfile.TemporaryDirectory() as d:
             root = pathlib.Path(d)

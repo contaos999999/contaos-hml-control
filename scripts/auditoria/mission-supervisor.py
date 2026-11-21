@@ -240,7 +240,10 @@ def main(argv=None):
                          ensure_ascii=False))
         return 2
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
-    return 0 if result["state"] in STATES else 2
+    # This executable is deliberately read-only/diagnostic. Its JSON cannot
+    # prove trusted GitHub origin or authorize merge. Never signal CI success.
+    # Consumers may still read the structured diagnosis from stdout.
+    return 2
 
 
 if __name__ == "__main__":

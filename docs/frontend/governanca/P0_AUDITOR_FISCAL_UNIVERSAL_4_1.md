@@ -18,7 +18,7 @@ Contrato proposto em `docs/frontend/governanca/MISSAO_ATIVA_4_1.json`, com `miss
 - `CERTIFIED`: exige provas técnicas e administrativas em duas etapas, incluindo relatório independente, revisão formal aplicável, merge protegido, readback na main e checkpoint integrado. Texto autodeclarado não é prova.
 - `NO-GO` de ativação: independente do estado operacional da missão. Pode coexistir com `ACTIVE` e com BUILD de código desativado.
 
-Contrato não contém o próprio blob SHA (autorreferência impossível). Em vez disso vincula o blob protegido do PLAN #689. Um executor confiável deverá ler por SHA explícito o blob Git da própria versão integrada do contrato e atestar essa origem antes de utilizar o resultado. O supervisor que recebe JSON arbitrário é **somente diagnóstico**; não pode servir como publicador confiável por autoclassificar sua origem.
+Contrato não contém o próprio blob SHA (autorreferência impossível). Em vez disso vincula o blob protegido do PLAN #689. Um executor confiável deverá ler por SHA explícito o blob Git da própria versão integrada do contrato e atestar essa origem antes de utilizar o resultado. O supervisor que recebe JSON arbitrário é **somente diagnóstico**; não pode servir como publicador confiável por autoclassificar sua origem. **Regra fail-closed de execução:** o comando `mission-supervisor.py` sempre retorna exit code `2`, mesmo quando o JSON é estruturalmente válido, porque nenhum dado offline equivale à certificação assinada por origem protegida. O JSON emitido em stdout serve ao diagnóstico; CI e consumidores não podem converter exit `0` de diagnóstico em status de aprovação. Essa proibição é coberta por testes negativos.
 
 ## 3. Matriz negativa e prevenção
 
