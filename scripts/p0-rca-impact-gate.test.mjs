@@ -2240,7 +2240,11 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
     for(let j=i+1;j<worklist.normative_rules.length;j++){
       const pair_id=worklist.normative_rules[i].rule_id+"|"+
         worklist.normative_rules[j].rule_id;
-      interactions.push({...proof(pair_id),pair_id,decision:"NONINTERACTING"});
+      interactions.push({...proof(pair_id),pair_id,decision:"NONINTERACTING",
+        left_rule_id:worklist.normative_rules[i].rule_id,
+        right_rule_id:worklist.normative_rules[j].rule_id,
+        pair_rationale:"Synthetic fixture only: "+pair_id+" not a real adjudication of two protected rules.",
+        separation_basis:"Synthetic non-interaction assumption unverified by independent reviewer."});
     }
   const input={inventory,worklist,sentenceInventory,reverseCoverage,
     head,independent,rules,sentences,sources,interactions};
@@ -2250,6 +2254,16 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
     authenticateWitness:async()=>true});
   assert.equal(recycledNegative.semantic_completeness,"INCONCLUSIVE");
   assert.match(recycledNegative.issues.join(" "),/SEMANTIC_RULE_UNPROVEN/);
+  const missingPairRationale=await assessSemanticPreauditGate({...input,
+    independent:null,
+    rules:rules.map(({independent_review_id,...rest})=>rest),
+    sentences:sentences.map(({independent_review_id,...rest})=>rest),
+    sources:sources.map(({independent_review_id,...rest})=>rest),
+    interactions:interactions.map((x,i)=>i===0?{...x,pair_rationale:"boilerplate"}:
+      (({independent_review_id,...rest})=>rest)(x)),
+    authenticateWitness:async()=>true});
+  assert.equal(missingPairRationale.semantic_preaudit,"INCONCLUSIVE");
+  assert.match(missingPairRationale.issues.join(" "),/SEMANTIC_PAIR_UNPROVEN/);
   const missingNegative=await assessSemanticCompletenessGate({...input,
     interactions:interactions.map((x,i)=>i===0?{...x,negative_witness:null}:x),
     authenticateIndependent:async()=>true,
