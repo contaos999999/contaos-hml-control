@@ -1409,8 +1409,8 @@ export function buildSevenAxisSemanticBacklog(inventory){
     return true;
   };
   for(const row of normative_rules.filter(x=>x.source_link_level==="PROVISIONAL_ONLY")){
-    const atom=/^PLAN-S31-ATOM-A(\\d{2})$/.exec(row.rule_id);
-    const recovery=/^PLAN-S6-RECOVERY-R(\\d{2})$/.exec(row.rule_id);
+    const atom=/^PLAN-S31-ATOM-A(\d{2})$/.exec(row.rule_id);
+    const recovery=/^PLAN-S6-RECOVERY-R(\d{2})$/.exec(row.rule_id);
     const n17=/^EMENDA-N17-([A-F])$/.exec(row.rule_id);
     if(atom||recovery){
       const target=atom?atomOrdinalTargets[Number(atom[1])-1]:
@@ -1419,7 +1419,7 @@ export function buildSevenAxisSemanticBacklog(inventory){
       atomize(row,source,target);
     }else if(n17){
       const source=(inventory?.lines||[]).find(x=>x.path===amendmentPath&&x.line===51);
-      const found=source?[...source.text.matchAll(/\\(([a-f])\\)/g)]:[];
+      const found=source?[...source.text.matchAll(/\(([a-f])\)/g)]:[];
       const idx="ABCDEF".indexOf(n17[1]);
       const mark=found[idx];
       if(mark&&mark[1]===n17[1].toLowerCase()){
