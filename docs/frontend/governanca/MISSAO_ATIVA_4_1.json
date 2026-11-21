@@ -1,0 +1,56 @@
+{
+  "schema": "contaos.mission.v1",
+  "mission_id": "P0-AUD-UNIVERSAL-001",
+  "repo": "contaos999999/contaos-hml-control",
+  "state": "ACTIVE",
+  "target": {
+    "pr": 679,
+    "head": "f827c023b6743e4a2efbf5bff6b4ce0e591d031b",
+    "branch": "main",
+    "objective": "Resolver e certificar a integração funcional V1/PR679 após instalação e prova do fiscal universal"
+  },
+  "allowed_dependencies": [
+    690
+  ],
+  "activation_authorized": false,
+  "requirements": {
+    "required_checks": [
+      "ContaOS Frontend Zero-Drift",
+      "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+      "ContaOS P0-NR-001 Integridade e Provas"
+    ],
+    "independent_audit_for_build": true,
+    "formal_review": true,
+    "merge_protected": true,
+    "checkpoint_readback": true,
+    "operational_queue_proofs": [
+      "N04",
+      "N05",
+      "N13",
+      "N16",
+      "N17"
+    ]
+  },
+  "immutable_plan": {
+    "path": "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md",
+    "blob": "9d037a37df8ae177f7f02123932e0ca60e7e3f81"
+  },
+  "last_proven": {
+    "milestone": "PR #691 integrada",
+    "merge_sha": "e007c4bad8f2c66c489c55e4752b71bb19c5ced0",
+    "verified": true
+  },
+  "pending": [
+    "BUILD #690",
+    "Testes negativos e mutação",
+    "Auditoria/revisão independente do BUILD",
+    "Prova operacional de fila e revogação",
+    "Autorização administrativa expressa para ativação",
+    "Certificado de liberação da #679",
+    "Revalidar pin da dependência #690 após alterações de HEAD, mediante checkpoint protegido independente"
+  ],
+  "next_task": "Implementar PR #690 com ativacao desabilitada; nenhuma conclusão de missão sem certificado e readback",
+  "dependency_heads": {
+    "690": "1e4a19028dad1c75212d179d9f3b27333207124b"
+  }
+}
