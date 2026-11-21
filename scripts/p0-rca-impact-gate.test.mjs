@@ -773,8 +773,10 @@ test("P0 NR-006 RED: historical V2 job absent from current check list must use a
     id:889,run_id:777,name:ADVERSARIAL_V2_CHECK_NAME,
     head_sha:PA_HEAD,status:"completed",conclusion:"success",
   }]};
-  assert.equal(paCheck(f).pass,true,
-    "historical GitHub Actions V2 job in authenticated earlier attempt must remain usable");
+  const historic=paCheck(f);
+  assert.equal(historic.pass,true,
+    "historical GitHub Actions V2 job in authenticated earlier attempt must remain usable: "+
+      JSON.stringify(historic.issues));
   const forged=structuredClone(f);
   forged.historicalV2AttemptJobs.jobs[0].id=1234;
   assert.equal(paCheck(forged).pass,false,"foreign historical job must not release");
