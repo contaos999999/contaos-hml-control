@@ -1620,6 +1620,123 @@ export function auditSemanticReverseCoverage(inventory,worklist){
     semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
 }
 
+
+/**
+ * Exhaustive evidence gate, not an evidence generator. All rules,
+ * sentence candidates, source lines and unordered interactions must be
+ * adjudicated. Trusted read-only evidence providers are required.
+ */
+export async function assessSemanticCompletenessGate({
+  inventory,worklist,sentenceInventory,reverseCoverage,
+  rules=[],sentences=[],sources=[],interactions=[],
+  independent=null,head=null,
+  authenticateWitness=null,authenticateIndependent=null,
+}={}){
+  const issues=[];
+  const fail=x=>issues.push(x);
+  const expectedRules=worklist?.normative_rules||[];
+  const expectedSentences=sentenceInventory?.candidates||[];
+  const expectedSources=inventory?.lines||[];
+  const goodSha=typeof head==="string"&&/^[0-9a-f]{40}$/.test(head);
+  if(!inventory?.inventory_verified||!worklist?.worklist_verified||
+     !sentenceInventory?.partition_verified||!goodSha)
+    fail("SEMANTIC_UNVERIFIED_SOURCE_OR_HEAD");
+  if(!reverseCoverage||reverseCoverage.source_count!==expectedSources.length||
+     reverseCoverage.unproven_rule_count!==expectedRules.length)
+    fail("SEMANTIC_REVERSE_BASELINE_MISMATCH");
+  const validateSet=(label,expected,actual,key)=>{
+    const ids=new Set(expected.map(key));
+    const got=new Set(actual.map(key));
+    if(got.size!==actual.length||got.size!==ids.size||
+       [...ids].some(id=>!got.has(id)))fail("SEMANTIC_"+label+"_COVERAGE_INCOMPLETE");
+  };
+  validateSet("RULES",expectedRules,rules,x=>x?.rule_id);
+  validateSet("SENTENCES",expectedSentences,sentences,x=>x?.id);
+  validateSet("SOURCES",expectedSources,sources,x=>x?.source_id);
+  const pairs=[];
+  for(let i=0;i<expectedRules.length;i++)
+    for(let j=i+1;j<expectedRules.length;j++)
+      pairs.push(expectedRules[i].rule_id+"|"+expectedRules[j].rule_id);
+  const pairSet=new Set(pairs),normalized=new Set();
+  for(const p of interactions){
+    if(!p||!pairSet.has(p.pair_id)||normalized.has(p.pair_id)){
+      fail("SEMANTIC_PAIR_UNKNOWN_OR_DUPLICATE");break;
+    }
+    normalized.add(p.pair_id);
+  }
+  if(interactions.length!==pairs.length||normalized.size!==pairs.length)
+    fail("SEMANTIC_9316_PAIRS_UNADJUDICATED");
+  const proofOk=(p,id)=>!!p&&p.head===head&&
+    typeof p.interpretation==="string"&&p.interpretation.trim().length>=35&&
+    typeof p.counterexample==="string"&&p.counterexample.trim().length>=25&&
+    typeof p.witness==="object"&&p.witness!==null&&
+    !!p.witness.run_url&&p.witness.head===head&&
+    p.independent_review_id===independent?.review_id &&
+    p.id===id;
+  for(const record of rules){
+    const origin=expectedRules.find(x=>x.rule_id===record?.rule_id);
+    if(!origin||!origin.source_links?.length||
+       !proofOk(record,record.rule_id)||
+       SEMANTIC_AXES.some(axis=>!semanticAxisStructurallyComplete(record.axes,axis))){
+      fail("SEMANTIC_RULE_UNPROVEN: "+record?.rule_id);break;
+    }
+  }
+  for(const record of sentences){
+    const origin=expectedSentences.find(x=>x.id===record?.id);
+    if(!origin||record.source_id!==origin.source_id||
+       record.text_sha256!==origin.text_sha256||
+       !["NORMATIVE","CONTEXTUAL"].includes(record.classification)||
+       !proofOk(record,record.id)||
+       (record.classification==="NORMATIVE"&&
+          SEMANTIC_AXES.some(axis=>!semanticAxisStructurallyComplete(record.axes,axis)))){
+      fail("SEMANTIC_SENTENCE_UNPROVEN: "+record?.id);break;
+    }
+  }
+  for(const record of sources){
+    const origin=expectedSources.find(x=>x.id===record?.source_id);
+    if(!origin||record.text_sha256!==origin.text_sha256||
+       record.blob!==origin.blob||!proofOk(record,record.source_id)){
+      fail("SEMANTIC_SOURCE_UNPROVEN: "+record?.source_id);break;
+    }
+  }
+  for(const pair of interactions){
+    if(!["INTERACTS","NONINTERACTING","CONFLICT"].includes(pair.decision)||
+       !proofOk(pair,pair.pair_id)){
+      fail("SEMANTIC_PAIR_UNPROVEN: "+pair?.pair_id);break;
+    }
+  }
+  if(independent?.head!==head||!Number.isSafeInteger(independent?.review_id)||
+     independent.review_id<=0||independent.author===independent.reviewer||
+     independent.state!=="APPROVED"||independent.scope!=="FULL_SEMANTIC_CORPUS")
+    fail("SEMANTIC_INDEPENDENCE_UNPROVEN");
+  if(typeof authenticateWitness!=="function"||
+     typeof authenticateIndependent!=="function")
+    fail("SEMANTIC_AUTHENTICATED_CONTRADICTION_MISSING");
+  // Authenticate only once all the local evidence is complete. Do not
+  // perform thousands of calls for an incomplete or fabricated ledger.
+  if(issues.length===0){
+    try {
+      if(await authenticateIndependent(independent,head)!==true)
+        fail("SEMANTIC_INDEPENDENT_REVIEW_NOT_AUTHENTICATED");
+      const all=[...rules,...sentences,...sources,...interactions];
+      if(issues.length===0)
+        for(const row of all){
+          if(await authenticateWitness(row.witness,head,row.id)!==true){
+            fail("SEMANTIC_WITNESS_NOT_AUTHENTICATED: "+row.id);break;
+          }
+        }
+    } catch(e){fail("SEMANTIC_EXTERNAL_AUTHENTICATION_UNAVAILABLE");}
+  }
+  return {schema:"contaos.semantic-completeness-gate.v1",
+    head,rule_count:expectedRules.length,sentence_count:expectedSentences.length,
+    source_count:expectedSources.length,pair_count:pairs.length,
+    supplied:{rules:rules.length,sentences:sentences.length,
+      sources:sources.length,pairs:interactions.length},
+    semantic_completeness:issues.length?"INCONCLUSIVE":"PASS",
+    release:issues.length?"NO_GO":"SEMANTIC_REVIEW_CERTIFIED_ONLY",
+    independent_review_id:issues.length?null:independent.review_id,issues};
+}
+
 export function auditNormativeSemanticCompleteness(matrix,claims={}){
   const rows=Array.isArray(matrix?.rows)?matrix.rows:[];
   const issues=[];
