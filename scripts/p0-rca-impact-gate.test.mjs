@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -1155,6 +1155,45 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
   assert.equal(attestFullProtocolExecutions(coverage,suites,mismatched).verdict,"CHANGES_REQUESTED");
 });
 
+
+test("P0 §5.6 semantic completeness never inherits PASS from executable matrix",()=>{
+  const matrix={verdict:"EXECUTED_PASS_FOR_BUILD_ONLY",rows:[
+    {id:"PLAN-S3-RULE-01",execution:"EXECUTED_PASS"},
+    {id:"S5.6:Prova semântica por cláusula",execution:"EXECUTED_PASS"},
+  ]};
+  const empty=auditNormativeSemanticCompleteness(matrix,{});
+  assert.equal(empty.verdict,"INCONCLUSIVE");
+  assert.equal(empty.unproven,2);
+  assert.equal(empty.release,"NO_GO");
+  const fields={
+    authority:{actor:"implementer",source:"PLAN §3"},
+    antecedent:{event:"candidate branch",source:"PLAN §3"},
+    outcomes:{positive:{decision:"eligible BUILD",source:"PLAN §3"},
+      negative:{decision:"NO_GO",source:"PLAN §3"}},
+    interactions:{clauses:["N01","N03"],counterexample:"wrong contract cannot pass"},
+    live:{source:"GitHub Actions",url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/123",head:"a".repeat(40)},
+    revocation:{trigger:"head change",source:"PLAN §3"},
+    boundary:{phase:"BUILD",external:"activation NO_GO"},
+  };
+  const candidate=auditNormativeSemanticCompleteness(matrix,{
+    "PLAN-S3-RULE-01":fields,
+    "S5.6:Prova semântica por cláusula":fields,
+  });
+  assert.equal(candidate.unproven,0);
+  assert.equal(candidate.verdict,"INCONCLUSIVE");
+  assert.equal(candidate.release,"NO_GO");
+  assert.equal(candidate.reviewRequired,true,
+    "self-authored seven-field attestations cannot replace independent review");
+  for(const missing of Object.keys(fields)){
+    const mutant={...fields};delete mutant[missing];
+    const result=auditNormativeSemanticCompleteness(matrix,{
+      "PLAN-S3-RULE-01":mutant,
+      "S5.6:Prova semântica por cláusula":fields,
+    });
+    assert.equal(result.unproven,1,"missing axis "+missing+" must fail closed");
+    assert.equal(result.verdict,"INCONCLUSIVE");
+  }
+});
 
 test("P0 PLAN protected ten mission rules require ten distinct BUILD witnesses",()=>{
   const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
