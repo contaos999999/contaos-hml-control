@@ -1497,9 +1497,10 @@ export function validateSevenAxisSemanticBacklog(inventory,backlog){
     issues.push("SEMANTIC_NORMATIVE_RULE_MATRIX_INCOMPLETE");
   const positionalRows=actualRules.filter(row=>row.source_link_level==="POSITIONAL_SOURCE_VERIFIED");
   if(positionalRows.length!==90||backlog?.positionally_verified_rules!==90||
-     backlog?.anchored_normative_rules!==100||
-     backlog?.provisionally_located_rules!==37||
-     backlog?.unlinked_normative_rules!==37)
+     backlog?.anchored_normative_rules!==137||
+     backlog?.provisionally_located_rules!==0||
+     backlog?.unlinked_normative_rules!==0||
+     backlog?.segment_located_rules!==37)
     issues.push("SEMANTIC_POSITIONAL_SOURCE_TOTAL_INVALID");
   for(const row of positionalRows){
     const src=(inventory?.lines||[]).find(x=>x.id===row.source_links?.[0]);
@@ -1510,11 +1511,29 @@ export function validateSevenAxisSemanticBacklog(inventory,backlog){
        src.text_sha256!==row.source_location?.text_sha256)
       issues.push("SEMANTIC_POSITIONAL_SOURCE_INVALID: "+row.rule_id);
   }
-  const unconfirmed=actualRules.filter(row=>row.source_link_level==="PROVISIONAL_ONLY");
-  if(unconfirmed.length!==37||
-     unconfirmed.some(row=>row.source_links?.length||
-       row.candidate_source_links?.length!==1))
-    issues.push("SEMANTIC_ATOM_SOURCE_NOT_PROVISIONAL");
+  const segmentRows=actualRules.filter(row=>row.source_link_level==="TEXT_SEGMENT_VERIFIED");
+  if(segmentRows.length!==37)issues.push("SEMANTIC_SEGMENT_TOTAL_INVALID");
+  const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
+  for(const row of segmentRows){
+    const src=(inventory?.lines||[]).find(x=>x.id===row.source_links?.[0]);
+    const atom=row.source_atom;
+    const phrase=src?.text?.slice(atom?.start,atom?.end);
+    const valid=src&&row.source_links.length===1&&atom&&
+      atom.path===src.path&&atom.blob===src.blob&&atom.line===src.line&&
+      Number.isSafeInteger(atom.start)&&Number.isSafeInteger(atom.end)&&
+      atom.start>=0&&atom.end>atom.start&&atom.end<=src.text.length&&
+      createHash("sha256").update(phrase).digest("hex")===atom.text_sha256;
+    if(!valid){issues.push("SEMANTIC_SEGMENT_SOURCE_INVALID: "+row.rule_id);continue;}
+    const n17=/^EMENDA-N17-([A-F])$/.exec(row.rule_id);
+    if(n17){
+      if(atom.id!=="N17-"+n17[1]||
+         !phrase.startsWith("("+n17[1].toLowerCase()+")"))
+        issues.push("SEMANTIC_N17_CASE_SOURCE_INVALID: "+row.rule_id);
+    }else if(!sentenceInventory.candidates.some(x=>
+      x.id===atom.id&&x.source_id===src.id&&
+      x.start===atom.start&&x.end===atom.end))
+      issues.push("SEMANTIC_SENTENCE_SOURCE_INVALID: "+row.rule_id);
+  }
   for(let i=0;i<10;i++){
     const id="PLAN-S3-"+String(i+1).padStart(2,"0");
     const expectedAnchor=(inventory?.lines||[]).find(x=>
