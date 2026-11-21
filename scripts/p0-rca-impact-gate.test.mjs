@@ -2029,18 +2029,30 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   assert.equal(backlog.rows.length,118);
   assert.equal(backlog.normative_rule_count,137);
   assert.equal(backlog.normative_axis_slots,959);
-  assert.equal(backlog.anchored_normative_rules,10);
-  assert.equal(backlog.unlinked_normative_rules,127);
-  assert.equal(backlog.provisionally_located_rules,127);
+  assert.equal(backlog.anchored_normative_rules,100);
+  assert.equal(backlog.unlinked_normative_rules,37);
+  assert.equal(backlog.provisionally_located_rules,37);
   assert.equal(backlog.all_possible_rule_pairs,9316);
   assert.equal(backlog.untriaged_rule_pairs,9316);
   assert.match(backlog.pair_inventory_sha256,/^[a-f0-9]{64}$/);
   assert.equal(backlog.semantic_completeness,"INCONCLUSIVE");
 
   assert.equal(backlog.normative_rules.filter(x=>x.source_link_level==="DIRECT_NUMBERED").length,10);
-  assert.equal(backlog.normative_rules.filter(x=>x.source_link_level==="PROVISIONAL_ONLY").length,127);
+  assert.equal(backlog.positionally_verified_rules,90);
+  const positional=backlog.normative_rules.filter(x=>
+    x.source_link_level==="POSITIONAL_SOURCE_VERIFIED");
+  assert.equal(positional.length,90);
+  assert.ok(positional.every(x=>x.source_links.length===1&&
+    x.source_location?.blob&&x.source_location?.line>0&&
+    x.source_location?.text_sha256?.length===64));
+  assert.ok(positional.every(x=>out.lines.some(line=>
+    line.id===x.source_links[0]&&line.path===x.source_location.path&&
+    line.blob===x.source_location.blob&&line.line===x.source_location.line&&
+    line.text_sha256===x.source_location.text_sha256)));
+
+  assert.equal(backlog.normative_rules.filter(x=>x.source_link_level==="PROVISIONAL_ONLY").length,37);
   assert.ok(backlog.normative_rules.every(x=>x.source_link_level==="DIRECT_NUMBERED"||
-    x.candidate_source_links.length===1));
+    x.source_link_level==="POSITIONAL_SOURCE_VERIFIED"||x.candidate_source_links.length===1));
   for(const suffix of ["A","B","C","D","E","F"]){
     const rule=backlog.normative_rules.find(x=>x.rule_id==="EMENDA-N17-"+suffix);
     assert.equal(rule.source_clause_marker,"("+suffix.toLowerCase()+")");
