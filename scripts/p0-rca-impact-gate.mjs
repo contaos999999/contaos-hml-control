@@ -1131,15 +1131,19 @@ export async function verifyAssistantPrecertInGithub({
         const match=/\/actions\/runs\/([1-9][0-9]*)\/job\//.exec(entry.check.details_url||"");
         if(!match)throw Error("URL nao vinculada ao GitHub Actions");
         const runId=Number(match[1]);
-        const job=entry.job??await api("/repos/"+REPO+"/actions/jobs/"+entry.check.id);
-        const run=await api("/repos/"+REPO+"/actions/runs/"+runId);
-        const aj=await api("/repos/"+REPO+"/actions/runs/"+runId+
-          "/attempts/"+run?.run_attempt+"/jobs?per_page=100");
-        const valid=originVerify?
-          await originVerify({check:entry.check,job,run,attemptJobs:aj,head,base,
-            workflow:PRECERT_WORKFLOW_ORIGINS[entry.check.name]}):
-          verifyPrecertRunOrigin({check:entry.check,job,run,
+        let valid=false;
+        if(originVerify){
+          // Fixture-only dependency injection. Production never supplies this.
+          valid=await originVerify({check:entry.check,head,base,
+            workflow:PRECERT_WORKFLOW_ORIGINS[entry.check.name]});
+        }else{
+          const job=entry.job??await api("/repos/"+REPO+"/actions/jobs/"+entry.check.id);
+          const run=await api("/repos/"+REPO+"/actions/runs/"+runId);
+          const aj=await api("/repos/"+REPO+"/actions/runs/"+runId+
+            "/attempts/"+run?.run_attempt+"/jobs?per_page=100");
+          valid=verifyPrecertRunOrigin({check:entry.check,job,run,
             attemptJobs:aj,head,base,workflow:PRECERT_WORKFLOW_ORIGINS[entry.check.name]});
+        }
         if(!valid)
           result.issues.push("ORIGIN: job/run/attempt/workflow/event/HEAD invalido: "+entry.check.name);
       }catch(e){result.issues.push("ORIGIN: prova indisponivel para "+
