@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2025,6 +2025,29 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   assert.equal(forged.partition_verified,false);
   assert.equal(forged.release,"NO_GO");
   const backlog=buildSevenAxisSemanticBacklog(out);
+  const reverse=auditSemanticReverseCoverage(out,backlog);
+  assert.equal(reverse.source_count,118);
+  assert.equal(reverse.rule_count,137);
+  assert.equal(reverse.unproven_rule_count,137);
+  assert.equal(reverse.covered_source_count+reverse.uncovered_source_count,118);
+  assert.equal(reverse.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(reverse.release,"NO_GO");
+  assert.equal(reverse.invalid.length,0);
+  const forgedReverse=structuredClone(backlog);
+  forgedReverse.normative_rules[0].source_links=["SRC-FAKE"];
+  const rejectedReverse=auditSemanticReverseCoverage(out,forgedReverse);
+  assert.equal(rejectedReverse.invalid.length,1);
+  assert.ok(rejectedReverse.issues.some(x=>x.includes("INVALID_SOURCE_LINK")));
+  assert.equal(rejectedReverse.release,"NO_GO");
+  const allMapped=structuredClone(backlog);
+  for(const [i,row] of out.lines.entries())
+    allMapped.normative_rules[i%allMapped.normative_rules.length].source_links.push(row.id);
+  const mapped=auditSemanticReverseCoverage(out,allMapped);
+  assert.equal(mapped.uncovered_source_count,0);
+  assert.equal(mapped.semantic_completeness,"INCONCLUSIVE",
+    "complete traceability cannot certify interpretation or independent review");
+  assert.equal(mapped.release,"NO_GO");
+
   assert.equal(backlog.axis_slots,826,"every one of the 118 spans needs seven individual axes");
   assert.equal(backlog.rows.length,118);
   assert.equal(backlog.normative_rule_count,137);
