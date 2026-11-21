@@ -926,6 +926,20 @@ function changes() {
   }
   return { base, eventBase, head, changed: git("diff", "--name-only", "--diff-filter=ACMRTD", base, head).split("\n").filter(Boolean) };
 }
+export function classifyGithubReadError(status, headers, path) {
+  const get=(name)=>headers?.get?.(name) ?? null;
+  const remaining=get("x-ratelimit-remaining") ?? "unknown";
+  const reset=get("x-ratelimit-reset") ?? "none";
+  const retry=get("retry-after") ?? "none";
+  const requestId=get("x-github-request-id") ?? "unknown";
+  const rateLimited=(status===403 || status===429) && remaining==="0" &&
+    /^\\d{10}$/.test(String(reset));
+  return {
+    rateLimited, status, remaining, reset_at:reset,
+    message:"GitHub HTTP "+status+" on "+path+" remaining="+remaining+
+      " reset-at="+reset+" retry-after="+retry+" request-id="+requestId,
+  };
+}
 async function http(path, token, raw = false) {
   if (!token) throw new Error("token de leitura indisponível.");
   const res = await fetch("https://api.github.com" + path, {
@@ -935,14 +949,10 @@ async function http(path, token, raw = false) {
     signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) {
-    // Never print token, Authorization header, body or untrusted URL; only
-    // the fixed GitHub API path and standard rate-limit diagnostics.
-    const remaining=res.headers.get("x-ratelimit-remaining") ?? "unknown";
-    const retry=res.headers.get("retry-after") ?? "none";
-    const requestId=res.headers.get("x-github-request-id") ?? "unknown";
-    throw new Error("GitHub HTTP " + res.status + " on " + path +
-      " remaining=" + remaining + " retry-after=" + retry +
-      " request-id=" + requestId);
+    // Authenticated API denial is never a PASS. Report only fixed endpoint
+    // and standard rate-limit headers; never expose bearer token or body.
+    const diagnosis=classifyGithubReadError(res.status,res.headers,path);
+    throw new Error(diagnosis.message);
   }
   return raw ? res.text() : res.json();
 }
