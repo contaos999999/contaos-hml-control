@@ -991,8 +991,9 @@ function runFullProtocolSuites(){
     ["queue",process.execPath,["--test","--test-reporter=tap",
       "scripts/ci/merge-group-context.test.mjs"]],
   ];
-  const safeEnv={...process.env,GITHUB_TOKEN:"",
-    CONTAOS_CANONICAL_READ_TOKEN:"",GH_TOKEN:"",GITHUB_PAT:""};
+  const safeEnv={...process.env};
+  for(const key of ["GITHUB_TOKEN","CONTAOS_CANONICAL_READ_TOKEN","GH_TOKEN","GITHUB_PAT"])
+    delete safeEnv[key];
   return Object.fromEntries(definitions.map(([key,bin,args])=>{
     const result=spawnSync(bin,args,{encoding:"utf8",env:safeEnv,
       timeout:180000,maxBuffer:12*1024*1024});
