@@ -245,6 +245,9 @@ const makeEvent = (kind, n = 701) => kind === "pull_request" ?
   { repository:{full_name:"contaos999999/contaos-hml-control"},
     ref:"refs/heads/main", before:EVT_BASE, after:EVT_HEAD };
 const fakeGit = (...args) => {
+  if (args[0] === "rev-parse" && typeof args[1] === "string" &&
+      (args[1].startsWith(EVT_HEAD + ":") || args[1].startsWith(PR_HEAD + ":")))
+    return "4".repeat(40); // identical blob at the same audited path
   if (args[0] === "rev-parse") return ({
     HEAD:EVT_HEAD, [EVT_HEAD]:EVT_HEAD, [EVT_BASE]:EVT_BASE,
     [PR_HEAD]:PR_HEAD, [COMMON]:COMMON,
@@ -292,6 +295,12 @@ test("P0 PRE-AUDIT push da #690 com merge MERGE e manifesto protegido: PASS", as
   assert.deepEqual(check(null,paths,"75",[],{
     prNumber:result.number,governancePlan:manifest690(),fullDiffPaths:paths,
   }).errors,[]);
+});
+test("NR-005 #690 same paths but different integrated blob must FAIL", async () => {
+  await assert.rejects(()=>fakeEvent("push",[files690[0]],690,{
+    gitFn:(...args) => args[0] === "rev-parse" && args[1] === EVT_HEAD + ":" + files690[0]
+      ? "9".repeat(40) : fakeGit(...args),
+  }),/conteúdo da árvore integrada difere do HEAD da PR/);
 });
 test("P0 PRE-AUDIT #690 via squash de um pai: FAIL", async () => {
   await assert.rejects(()=>fakeEvent("push",[files690[2]],690,{
