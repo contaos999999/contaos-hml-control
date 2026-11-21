@@ -457,26 +457,25 @@ async function main() {
       process.exitCode = 1; return;
     }
   }
-  // PLAN técnico prévio e protegido deve pertencer à PR atual. O bootstrap
-  // #661 usa a emenda PLAN #662, já integrada na main, com allowlist explícita.
+  // NR-005: resolver PR autenticada, manifesto na base pré-diff e diff completo.
+  // Nunca usar texto do commit ou origin/main já avançada como autoridade.
   let prNumber = null;
   let governancePlan = null;
+  let fullPaths = null;
   const event = String(process.env.GITHUB_EVENT_NAME || "");
   try {
-    if (event === "pull_request") {
-      const payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
-      prNumber = payload?.pull_request?.number || payload?.number;
-    } else if (event === "push") {
-      const match = /Merge pull request #(\d+)/.exec(git("log", "-1", "--format=%B"));
-      if (match) prNumber = Number(match[1]);
-    }
+    const resolved = await resolvePrContext(event, base, head, changed, githubToken);
+    prNumber = resolved.number;
+    fullPaths = fullDiffPaths(base, head);
     if (prNumber) {
       const planPath = "docs/frontend/planos/P0_GOV_PLAN_" + prNumber + ".json";
       let approved = null;
-      try { approved = JSON.parse(git("show", "origin/main:" + planPath)); }
-      catch {
+      try {
+        approved = JSON.parse(git("show", resolved.manifestBase + ":" + planPath));
+      } catch {
         if (prNumber === 661) {
-          const original = git("show", "origin/main:" + BOOTSTRAP_PLAN);
+          // Fallback legado explicitamente limitado à PR 661 previamente autorizada.
+          const original = git("show", resolved.manifestBase + ":" + BOOTSTRAP_PLAN);
           const mark = String.fromCharCode(96);
           const pattern = new RegExp(mark +
             "((?:scripts/|\\.github/workflows/)[^" + mark + "]+)" + mark, "g");
@@ -489,9 +488,31 @@ async function main() {
       if (approved?.pr_number === prNumber &&
           approved.approved === true && Array.isArray(approved.files))
         governancePlan = approved;
+      if (prNumber === 690) {
+        if (!governancePlan || governancePlan.full_diff !== true ||
+            governancePlan.ativacao_autorizada !== false ||
+            governancePlan.plan_blob !==
+              git("rev-parse", resolved.manifestBase + ":" +
+                "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md"))
+          throw new Error("manifesto #690 não é íntegro na base protegida anterior");
+        if (!/^[a-f0-9]{40}$/.test(governancePlan.plan_base_sha || ""))
+          throw new Error("PLAN base SHA ausente");
+        try {
+          execFileSync("git", ["merge-base", "--is-ancestor",
+            governancePlan.plan_base_sha, resolved.manifestBase]);
+        } catch { throw new Error("PLAN #690 não antecede base protegida"); }
+      }
+      if (governancePlan?.full_diff === true) {
+        const remotePaths = await githubPrFiles(prNumber, githubToken);
+        if (!setEqual(fullPaths, remotePaths))
+          throw new Error("full_diff local difere da lista paginada GitHub PR " + prNumber);
+      }
+    } else if (changed.some((p) => /mission-supervisor|merge-group-context|MISSAO_ATIVA_4_1/.test(p))) {
+      throw new Error("BUILD sem PR autenticada, N/A documental proibido");
     }
   } catch (e) {
-    console.error("P0 RCA: PLAN de governança não verificável: " + e.message);
+    console.error("P0 RCA FAIL: identidade de PR/manifesto/full_diff: " + e.message);
+    process.exitCode = 1; return;
   }
   let v1Scope = null;
   if (existsSync(V1_SCOPE)) {
@@ -510,7 +531,7 @@ async function main() {
     planId: plan.prompt_id, changed, report, reportExists: existsSync(REPORT),
     legacyAllowlist: previous.arquivos_permitidos,
     expectedFrontendSha: base, expectedBackendSha: backendSha,
-    prNumber, governancePlan, v1Scope,
+    prNumber, governancePlan, v1Scope, fullDiffPaths: fullPaths,
     v1ScopeChanged: changed.includes(V1_SCOPE), addedLines,
   });
   if (result.errors.length) {
@@ -518,7 +539,7 @@ async function main() {
     process.exitCode = 1; return;
   }
   if (!result.applicable) {
-    console.log("P0 RCA N/A: governança com PLAN protegido ou diff documental.");
+    console.log(result.version === "P0_GOV_FULL_DIFF" ? "P0 RCA FULL_DIFF PASS: manifesto protegido, 14 caminhos, PR GitHub e renomeações verificados." : "P0 RCA N/A: governança com PLAN protegido ou diff documental comum.");
     return;
   }
   const activeReport = result.version === "V1" ? v1Scope : report;
