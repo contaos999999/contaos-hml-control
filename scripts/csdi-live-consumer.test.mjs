@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import { validateLiveCSDI, validateWitnessContents } from './csdi-live-consumer.mjs';
+import { validateLiveCSDI, validateWitnessContents, verifyNormativeSource } from './csdi-live-consumer.mjs';
 test('fail closed when receipt absent',async()=>{const r=await validateLiveCSDI(null,{token:'x',repository:'owner/repo'});assert.equal(r.pass,false);assert.equal(r.verdict,'BLOCKED')});
 test('fail closed when credentials absent',async()=>{const r=await validateLiveCSDI({}, {token:'',repository:'owner/repo'});assert.ok(r.issues.includes('MISSING_GITHUB_TOKEN'))});
 test('fail closed when run absent',async()=>{const r=await validateLiveCSDI({}, {token:'x',repository:'owner/repo'});assert.ok(r.issues.includes('INVALID_RUN_ID'))});
@@ -35,3 +35,6 @@ test('normative source digest absent blocks witness',()=>{const {w,receipt}=witn
 test('duplicated semantic axis blocks witness',()=>{const {w,receipt}=witnessFixture();w.axes[6]={...w.axes[0]};assert.equal(validateWitnessContents(w,receipt),false)});
 
 for(const key of ['clauses','rules','pairs','normative_inventory','axes']) test('null witness item in '+key+' is rejected without exception',()=>{const {w,receipt}=witnessFixture();w[key][0]=null;assert.equal(validateWitnessContents(w,receipt),false)});
+
+test('normative source verified against immutable commit and bytes',async()=>{const bytes=Buffer.from('canonical normative text');const source={repository:'owner/repo',commit:'a'.repeat(40),path:'docs/canon.md',sha256:createHash('sha256').update(bytes).digest('hex')};let calls=0;const fetchImpl=async(url,options)=>{calls++;assert.match(url,/ref=aaaaaaaa/);assert.equal(options.redirect,'error');return {ok:true,json:async()=>({type:'file',path:source.path,encoding:'base64',content:bytes.toString('base64')})}};assert.equal(await verifyNormativeSource(source,{fetchImpl,token:'test'}),true);assert.equal(calls,1);source.sha256='b'.repeat(64);assert.equal(await verifyNormativeSource(source,{fetchImpl,token:'test'}),false)});
+test('normative source rejects mutable branch ref and traversal',async()=>{const source={repository:'owner/repo',commit:'main',path:'../secret',sha256:'a'.repeat(64)};assert.equal(await verifyNormativeSource(source,{token:'test',fetchImpl:async()=>{throw Error('unexpected fetch')}}),false)});
