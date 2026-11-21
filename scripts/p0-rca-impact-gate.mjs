@@ -558,7 +558,7 @@ export function parseAssistantPreaudit(body) {
   catch { return null; }
 }
 export function validateAssistantPrecertRelease({
-  pr, currentMain, manifest, paths, comments, checkRuns, artifact,
+  pr, currentMain, manifest, paths, comments, reviews = [], checkRuns, artifact,
   testCJob, testCRun, testCAttemptJobs, expectedHead, expectedBase,
 } = {}) {
   const issues = [];
@@ -578,6 +578,22 @@ export function validateAssistantPrecertRelease({
       paths?.includes("docs/frontend/planos/P0_GOV_PLAN_690.json"))
     add("manifesto protegido e full_diff 14/14 não comprovados");
   if (!Array.isArray(checkRuns)) add("check runs ausentes");
+  // The latest *native* review per reviewer on this exact HEAD is authoritative.
+  // An independent CHANGES_REQUESTED is never overridden by our own PASS.
+  if (!Array.isArray(reviews)) add("revisoes nativas do GitHub incompletas");
+  else {
+    const lastByReviewer = new Map();
+    for (const review of [...reviews].sort((a,b) =>
+      (a.submitted_at || "").localeCompare(b.submitted_at || "") ||
+      (a.id || 0) - (b.id || 0))) {
+      if (review?.commit_id === expectedHead && review?.user?.login)
+        lastByReviewer.set(review.user.login, review);
+    }
+    for (const review of lastByReviewer.values()) {
+      if (review.state === "CHANGES_REQUESTED")
+        add("revisao formal CHANGES_REQUESTED ainda vigente no HEAD");
+    }
+  }
   for (const name of PRECERT_REQUIRED_CHECKS) {
     const list = Array.isArray(checkRuns) ? checkRuns.filter(x => x?.name === name) : [];
     if (list.length !== 1 || list[0]?.head_sha !== expectedHead ||
@@ -697,16 +713,17 @@ export async function verifyAssistantPrecertInGithub({
   const number = 690, head = env.INPUT_PREAUDIT_HEAD;
   if (manual && head !== env.GITHUB_SHA)
     throw Error("despacho nao coincide com checkout HEAD da branch");
-  const [pr, main, files, comments, checks] = await Promise.all([
+  const [pr, main, files, comments, reviews, checks] = await Promise.all([
     api("/repos/" + REPO + "/pulls/" + number),
     api("/repos/" + REPO + "/git/ref/heads/main"),
     list("/repos/" + REPO + "/pulls/" + number + "/files"),
     list("/repos/" + REPO + "/issues/" + number + "/comments"),
+    list("/repos/" + REPO + "/pulls/" + number + "/reviews"),
     api("/repos/" + REPO + "/commits/" + head + "/check-runs?per_page=100"),
   ]);
   const base = manual ? pr?.base?.sha : env.INPUT_PREAUDIT_BASE;
   if (!validSha(base)) throw Error("base PR nao autenticada no despacho");
-  if (!Array.isArray(files) || !Array.isArray(comments) ||
+  if (!Array.isArray(files) || !Array.isArray(comments) || !Array.isArray(reviews) ||
       !Array.isArray(checks?.check_runs) || checks.total_count !== checks.check_runs.length)
     throw Error("API de diff/parecer/checks incompleta");
   const latest = comments.filter(x => x?.user?.login === "contaos9999" &&
@@ -734,20 +751,22 @@ export async function verifyAssistantPrecertInGithub({
     [x.previous_filename, x.filename] : [x?.filename]);
   const result = validateAssistantPrecertRelease({
     pr, currentMain: main?.object?.sha, manifest, paths,
-    comments, checkRuns: checks.check_runs, artifact, testCJob, testCRun, testCAttemptJobs,
+    comments, reviews, checkRuns: checks.check_runs, artifact, testCJob, testCRun, testCAttemptJobs,
     expectedHead: head, expectedBase: base,
   });
   // Fail closed if the PR advances between check collection and decision.
-  const [latestPr, latestMain, latestComments, latestChecks] = await Promise.all([
+  const [latestPr, latestMain, latestComments, latestReviews, latestChecks] = await Promise.all([
     api("/repos/" + REPO + "/pulls/" + number),
     api("/repos/" + REPO + "/git/ref/heads/main"),
     list("/repos/" + REPO + "/issues/" + number + "/comments"),
+    list("/repos/" + REPO + "/pulls/" + number + "/reviews"),
     api("/repos/" + REPO + "/commits/" + head + "/check-runs?per_page=100"),
   ]);
   if (latestPr?.head?.sha !== head || latestPr?.base?.sha !== base ||
       latestPr?.state !== pr?.state ||
       latestMain?.object?.sha !== base ||
       JSON.stringify(latestComments) !== JSON.stringify(comments) ||
+      JSON.stringify(latestReviews) !== JSON.stringify(reviews) ||
       latestChecks?.total_count !== latestChecks?.check_runs?.length ||
       JSON.stringify(latestChecks?.check_runs) !== JSON.stringify(checks.check_runs))
     result.issues.push("HEAD/base/parecer/checks changed during pre-cert readback");
