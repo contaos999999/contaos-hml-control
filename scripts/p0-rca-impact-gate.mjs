@@ -1280,12 +1280,28 @@ export function buildSevenAxisSemanticBacklog(inventory){
         pairs.push({source_id:row.source_id,a:row.mentioned_rules[i],
           b:row.mentioned_rules[j],status:"INTERACTION_UNPROVEN"});
   }
+  const firstTen=CLOSED_PLAN_SEMANTIC_UNITS.filter(id=>/^PLAN-S3-\\d{2}$/.test(id));
+  const planPath="docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md";
+  const normative_rules=CLOSED_PLAN_SEMANTIC_UNITS.map(id=>{
+    const n=firstTen.indexOf(id);
+    const anchor=n<0?null:(inventory?.lines||[]).find(row=>
+      row.path===planPath&&row.line===23+n&&
+      row.text.trim().startsWith((n+1)+". **"));
+    return {rule_id:id,source_links:anchor?[anchor.id]:[],
+      axes:Object.fromEntries(SEMANTIC_AXES.map(axis=>[axis,"UNPROVEN"])),
+      rule_verdict:"INCONCLUSIVE"};
+  });
+  const linked_count=normative_rules.filter(row=>row.source_links.length).length;
   const issues=[...(inventory?.issues||[])];
   if(!inventory?.inventory_verified)issues.push("SEMANTIC_SOURCE_NOT_VERIFIED");
+  if(normative_rules.length!==137||linked_count!==10)issues.push("SEMANTIC_NORMATIVE_RULE_LINKAGE_INCOMPLETE");
   if(slots.length!==inventory?.lines?.length||
      slots.some(row=>SEMANTIC_AXES.some(a=>row.axes[a]?.status!=="UNPROVEN")))
     issues.push("SEMANTIC_SEVEN_AXIS_WORKLIST_INCOMPLETE");
   return {schema:"contaos.semantic-seven-axis-backlog.v1",
+    normative_rules,normative_rule_count:normative_rules.length,
+    normative_axis_slots:normative_rules.length*SEMANTIC_AXES.length,
+    anchored_normative_rules:linked_count,unlinked_normative_rules:normative_rules.length-linked_count,
     source_lines:slots.length,axes_per_source:SEMANTIC_AXES.length,
     axis_slots:slots.length*SEMANTIC_AXES.length,rows:slots,
     co_mentioned_interactions:pairs,issues,
@@ -1311,6 +1327,21 @@ export function validateSevenAxisSemanticBacklog(inventory,backlog){
   }
   if(observed.size!==expected.size||backlog?.axis_slots!==expected.size*7)
     issues.push("SEMANTIC_WORKLIST_MISSING_SOURCE_OR_SLOT");
+  const actualRules=backlog?.normative_rules||[];
+  if(actualRules.length!==137||backlog?.normative_axis_slots!==959||
+     new Set(actualRules.map(x=>x.rule_id)).size!==137||
+     CLOSED_PLAN_SEMANTIC_UNITS.some(id=>!actualRules.some(x=>x.rule_id===id))||
+     actualRules.some(x=>SEMANTIC_AXES.some(axis=>!Object.prototype.hasOwnProperty.call(
+       x.axes||{},axis))))
+    issues.push("SEMANTIC_NORMATIVE_RULE_MATRIX_INCOMPLETE");
+  for(let i=0;i<10;i++){
+    const id="PLAN-S3-"+String(i+1).padStart(2,"0");
+    const expectedAnchor=(inventory?.lines||[]).find(x=>
+      x.path==="docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md"&&x.line===23+i);
+    if(!expectedAnchor||!actualRules.some(x=>x.rule_id===id&&
+        x.source_links?.length===1&&x.source_links[0]===expectedAnchor.id))
+      issues.push("SEMANTIC_NORMATIVE_S3_SOURCE_MISMATCH: "+id);
+  }
   return {worklist_complete:issues.length===0,
     missing_sources:[...expected.keys()].filter(id=>!observed.has(id)),
     issues,semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
