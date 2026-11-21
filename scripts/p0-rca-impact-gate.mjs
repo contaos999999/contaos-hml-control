@@ -795,14 +795,14 @@ const FULL_PROTOCOL_54_RULES=[
   ["Limitações não dispensáveis","rca","P0 V2 LENS operational_environment:"],
 ];
 const FULL_PROTOCOL_56_RULES=[
-  ["Regra de interpretação","python","test_N01_certified_without_real_receipts"],
+  ["Regra de interpretação","rca","P0 META_PROTOCOL exhaustive cross-clause five-dimensional authorization model"],
   ["V1 versus V2 do recibo","rca","P0 PA positive: recorded assistant PASS"],
   ["Cinco checks versus sete contextos de CI","rca","P0 FULL_PROTOCOL global checks bound to exact HEAD"],
   ["Checks duplicados e reexecuções legítimas","rca","P0 NR-006 RED: COMMENTED starts second"],
   ["Estado operacional, certificação e ativação","python","test_activation_cannot_be_enabled_by_candidate"],
   ["Prova semântica por cláusula","rca","P0 META_PROTOCOL root obligations must reject"],
   ["Estados de transporte versus veredito normativo","rca","P0 META_PROTOCOL audit verdict transport separation"],
-  ["Precedência","rca","P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed PASS"],
+  ["Precedência","rca","P0 META_PROTOCOL exhaustive cross-clause five-dimensional authorization model"],
 ];
 const FULL_PROTOCOL_55_RULES=[
   ["Autoridade e limites","python","test_N06_code_without_independent_audit"],
