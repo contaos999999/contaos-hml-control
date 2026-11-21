@@ -1284,7 +1284,6 @@ export function inventorySemanticSentenceCandidates(inventory){
     for(const end of ends){
       const segment=text.slice(start,end);
       if(!segment){issues.push("SEMANTIC_ATOM_EMPTY_SEGMENT");continue;}
-      const idx=pieces.length+1;
       const id="ATOM-"+createHash("sha256")
         .update(row.id+"\0"+start+"\0"+segment).digest("hex").slice(0,24);
       pieces.push(segment);
