@@ -1021,6 +1021,14 @@ const CAUSAL_REVIEW_VULNERABLE_SHA="caa351c68a197fec3c7e6a95b8a7de4cfcc9845e";
 async function historicalGate(sha){
   assert.match(sha,/^[a-f0-9]{40}$/);
   execFileSync("git",["merge-base","--is-ancestor",sha,"HEAD"],{timeout:15000});
+  const pinnedBlob=sha===CAUSAL_ARTIFACT_VULNERABLE_SHA
+    ? "38072d1d3a940d2f722f3e42d1475ab9cb5a04c5"
+    : sha===CAUSAL_REVIEW_VULNERABLE_SHA
+      ? "a85931fbe7215712b2df6d95366f41cc63b7cd29" : null;
+  assert.ok(pinnedBlob,"unrecognized vulnerable SHA");
+  assert.equal(execFileSync("git",["rev-parse",
+    sha+":scripts/p0-rca-impact-gate.mjs"],{encoding:"utf8",timeout:15000}).trim(),
+    pinnedBlob,"historical code blob differs from authenticated immutable source");
   const source=execFileSync("git",["show",sha+":scripts/p0-rca-impact-gate.mjs"],{
     encoding:"utf8",timeout:15000,maxBuffer:5*1024*1024,
   });
