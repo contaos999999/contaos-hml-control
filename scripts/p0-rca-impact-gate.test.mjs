@@ -1350,7 +1350,10 @@ test("P0 META_PROTOCOL authoritative PLAN and amendment must match protected Git
     {encoding:"utf8"});
   const amendment=execFileSync("git",["show",base+":"+manifest.emenda_fila],
     {encoding:"utf8"});
-  const proof=attestProtectedNormativeSources({manifest,plan,amendment});
+  const canonical=execFileSync("git",["show",base+
+    ":docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md"],
+    {encoding:"utf8"});
+  const proof=attestProtectedNormativeSources({manifest,plan,amendment,canonical});
   assert.equal(proof.verdict,"PASS",JSON.stringify(proof.issues));
   assert.equal(proof.activationAuthorized,false);
   for(const mutation of [
@@ -1359,8 +1362,10 @@ test("P0 META_PROTOCOL authoritative PLAN and amendment must match protected Git
     x=>x.plan=x.plan+"silently added exception",
     x=>x.amendment=x.amendment.replace("autoria terceira","autoria da PR"),
     x=>x.manifest={...x.manifest,emenda_fila:"docs/foreign.md"},
+    x=>x.canonical=null,
+    x=>x.canonical=x.canonical.replace("Antes de enviar `APPROVE`","Envie `APPROVE`"),
   ]){
-    const f={manifest:structuredClone(manifest),plan,amendment};
+    const f={manifest:structuredClone(manifest),plan,amendment,canonical};
     mutation(f);
     const result=attestProtectedNormativeSources(f);
     assert.equal(result.verdict,"CHANGES_REQUESTED",JSON.stringify(result));
