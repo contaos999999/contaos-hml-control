@@ -611,6 +611,7 @@ const PRECERT_WORKFLOW_ORIGINS=Object.freeze({
   "ContaOS Frontend Zero-Drift": ".github/workflows/contaos-frontend-zero-drift.yml",
   "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente": ".github/workflows/contaos-frontend-zero-drift.yml",
   "ContaOS P0-NR-001 Integridade e Provas": ".github/workflows/p0-nr001-anti-recurrence.yml",
+  "protect-types": ".github/workflows/lock-types-double-barrier.yml",
 });
 // Real GitHub Actions job->run->attempt chain. No arbitrary workflow may
 // impersonate a required check simply by selecting the same job NAME.
