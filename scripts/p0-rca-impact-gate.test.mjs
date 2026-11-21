@@ -2075,6 +2075,8 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
     x=>x.normative_rules[0].source_links=[],
     x=>delete x.normative_rules[0].axes.authority,
     x=>x.normative_axis_slots=958,
+    x=>x.normative_rules.find(r=>r.source_link_level==="POSITIONAL_SOURCE_VERIFIED").source_location.line++,
+    x=>x.normative_rules.find(r=>r.source_link_level==="PROVISIONAL_ONLY").source_links=["fabricated"],
   ]){
     const changed=structuredClone(backlog);mutant(changed);
     const checked=validateSevenAxisSemanticBacklog(out,changed);
