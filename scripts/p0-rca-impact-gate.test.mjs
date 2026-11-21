@@ -753,6 +753,39 @@ function paReviewRerunFixture({state="success", prior="success"}={}){
     conclusion:state==="queued"?null:state};
   return f;
 }
+test("P0 NR-006 RED: historical V2 job absent from current check list must use authenticated run attempt",()=>{
+  const f=paFixture();
+  const oldJob=structuredClone(f.v2Job);
+  f.receiptV2Job=oldJob;
+  f.v2Job={...structuredClone(oldJob),id:990,run_id:778};
+  const check=f.checkRuns.find(x=>x.name===ADVERSARIAL_V2_CHECK_NAME);
+  check.id=990;
+  check.details_url="https://github.com/contaos999999/contaos-hml-control/actions/runs/778/job/990";
+  f.historicalV2Run={
+    id:777,head_sha:PA_HEAD,head_branch:"build/p0-abs-fiscal-universal",
+    path:".github/workflows/contaos-auditoria-controller.yml",
+    event:"pull_request",run_attempt:3,status:"completed",conclusion:"failure",
+    repository:{full_name:"contaos999999/contaos-hml-control"},
+    pull_requests:[{number:690,head:{sha:PA_HEAD},base:{sha:PA_BASE}}],
+  };
+  f.historicalV2Attempt=1;
+  f.historicalV2AttemptJobs={total_count:1,jobs:[{
+    id:889,run_id:777,name:ADVERSARIAL_V2_CHECK_NAME,
+    head_sha:PA_HEAD,status:"completed",conclusion:"success",
+  }]};
+  assert.equal(paCheck(f).pass,true,
+    "historical GitHub Actions V2 job in authenticated earlier attempt must remain usable");
+  const forged=structuredClone(f);
+  forged.historicalV2AttemptJobs.jobs[0].id=1234;
+  assert.equal(paCheck(forged).pass,false,"foreign historical job must not release");
+  const stale=structuredClone(f);
+  stale.v2Job.conclusion="failure";
+  assert.equal(paCheck(stale).pass,false,"latest failed V2 must veto historical green");
+  const missing=structuredClone(f);
+  delete missing.historicalV2AttemptJobs;
+  assert.equal(paCheck(missing).pass,false,"missing attempt provenance must fail closed");
+});
+
 test("P0 NR-006 RED: COMMENTED starts second successful V2 run on unchanged HEAD",()=>{
   const f=paReviewRerunFixture();
   assert.equal(paCheck(f).pass,true,
