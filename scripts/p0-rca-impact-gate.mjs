@@ -822,6 +822,25 @@ export async function verifyAssistantPrecertInGithub({
     typeof x.body === "string" && x.body.includes(ASSISTANT_PREAUDIT_MARKER))
     .sort((a,b) => a.id - b.id).at(-1);
   const record = parseAssistantPreaudit(latest?.body);
+  // Do not hammer Actions/Jobs/Artifacts while Teste C or the current
+  // structured receipt is not ready. This early result NEVER releases.
+  const requiredNow=[...PRECERT_REQUIRED_CHECKS,ADVERSARIAL_V2_CHECK_NAME];
+  const pending=requiredNow.filter(name => {
+    const matching=checks.check_runs.filter(x=>x?.name===name);
+    return matching.length!==1 || matching[0]?.head_sha!==head ||
+      matching[0]?.app?.id!==PRECERT_ISSUER ||
+      matching[0]?.status!=="completed" || matching[0]?.conclusion!=="success";
+  });
+  if (pending.length || record?.head!==head || record?.base!==base ||
+      record?.verdict!=="PASS") {
+    return {pass:false,verdict:"BLOCKED",release:"NO_GO",head,base,
+      issues:[
+        ...pending.map(name=>"check obrigatorio ainda nao pronto: "+name),
+        ...(record?.head!==head || record?.base!==base ||
+            record?.verdict!=="PASS" ?
+          ["parecer estruturado V2 no HEAD/base atual ainda nao disponivel"] : []),
+      ]};
+  }
   const redIds = Array.isArray(record?.adversarial_v2?.red_runs) &&
     record.adversarial_v2.red_runs.length <= 10 &&
     record.adversarial_v2.red_runs.every(x=>Number.isSafeInteger(x)&&x>0)
@@ -915,7 +934,16 @@ async function http(path, token, raw = false) {
       Accept: "application/vnd.github+json", "User-Agent": "ContaOS-P0-RCA" },
     signal: AbortSignal.timeout(20000),
   });
-  if (!res.ok) throw new Error("GitHub HTTP " + res.status);
+  if (!res.ok) {
+    // Never print token, Authorization header, body or untrusted URL; only
+    // the fixed GitHub API path and standard rate-limit diagnostics.
+    const remaining=res.headers.get("x-ratelimit-remaining") ?? "unknown";
+    const retry=res.headers.get("retry-after") ?? "none";
+    const requestId=res.headers.get("x-github-request-id") ?? "unknown";
+    throw new Error("GitHub HTTP " + res.status + " on " + path +
+      " remaining=" + remaining + " retry-after=" + retry +
+      " request-id=" + requestId);
+  }
   return raw ? res.text() : res.json();
 }
 async function main() {
