@@ -90,6 +90,21 @@ class MissionSupervisorTests(unittest.TestCase):
         self.assertIn("N01", codes(obj))
         self.assertFalse(obj["certified"])
 
+    def test_N01_perfect_self_declared_receipt_must_not_certify(self):
+        c = contract()
+        c["state"] = "CERTIFIED"
+        c["certification_receipt"] = {
+            "merged": True,
+            "merge_sha": C,
+            "main_readback": True,
+            "checkpoint_sha": B,
+            "independent_audit_pass": True,
+            "review_approved": True,
+        }
+        result = mod.evaluate(c, evidence())
+        self.assertFalse(result["certified"])
+        self.assertFalse(result["eligible"])
+
     def test_N02_unrelated_pr_rejected(self):
         e = evidence(); e["pr"] = 999
         self.assertIn("N02", codes(mod.evaluate(contract(), e)))
