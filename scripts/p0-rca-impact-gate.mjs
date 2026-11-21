@@ -930,7 +930,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"08a998d947425f0a2ae29324ca15bdb90da844db",
+  rca:"6f6875c7e1b54a26dd50de7b6f6f47e6eed4ba31",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -947,12 +947,14 @@ function gitBlobId(content){
 
 // Normative BUILD tests prove NO-GO behavior for future activation, not
 // that a dedicated App, live merge queue or third-party N17(c) ran.
-const INDEPENDENT_AUDIT_ONLY_IDS=new Set(["S5.1:Revisão independente"]);
+const INDEPENDENT_AUDIT_ONLY_IDS=new Set(["S5.1:Revisão independente",
+  "PLAN-S3-RULE-05","PLAN-S3-RULE-06"]);
 const ACTIVATION_ONLY_PROTOCOL_IDS=new Set([
   "S3-N17C-THIRD-AUTHOR","S3-N17C-TWO-APPROVALS","S3-N17C-EXTERNAL",
   "S4-APP-ONLY","S4-ENTRY-SHA-BASE","S4-GROUP-REVALIDATE",
   "S5-QUEUE-SINGLE-PR","S5-REVOCATION","S5-NO-WEAK-PROVIDER",
   "S5-ADMIN-AUTH","S5-RULESET-READBACK",
+  "PLAN-S3-RULE-02","PLAN-S3-RULE-04","PLAN-S3-RULE-09",
   ...FULL_PROTOCOL_PLAN_ACTIVATION_NEGATIVES.map(([id])=>id),
 ]);
 
