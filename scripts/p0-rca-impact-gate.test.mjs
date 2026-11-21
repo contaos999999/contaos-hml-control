@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { validateRcaImpact, verifyRcaOperational, runCase } from "./p0-rca-impact-gate.mjs";
+import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -124,6 +124,19 @@ test("P0 RCA — V2 explícita dentro de arquivo V1 permitido não é isenta", (
 });
 test("P0 RCA — docs-only não invoca RCA nem bloqueia V1", () => {
   assert.deepEqual(check(null, ["docs/frontend/planos/PLAN.md"], "44").errors, []);
+});
+test("NR-005 parser NUL cobre lado anterior e novo da renomeação", () => {
+  assert.deepEqual(parseFullDiffNameStatus("R100\0docs/a.md\0docs/b.md\0M\0scripts/x.mjs\0"),
+    ["docs/a.md", "docs/b.md", "scripts/x.mjs"]);
+});
+test("NR-005 parser rejeita diff truncado antes de N/A", () => {
+  assert.throws(() => parseFullDiffNameStatus("R100\0docs/a.md\0"), /diff truncado/);
+});
+test("NR-005 parser rejeita nome com quebra de linha", () => {
+  assert.throws(() => parseFullDiffNameStatus("A\0docs/extra\nbad.md\0"), /caminho suspeito/);
+});
+test("NR-005 parser rejeita status não previsto", () => {
+  assert.throws(() => parseFullDiffNameStatus("Z\0docs/a.md\0"), /tipo de diff/);
 });
 const files690 = [
   "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md",
