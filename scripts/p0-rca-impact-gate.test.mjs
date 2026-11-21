@@ -1229,6 +1229,14 @@ test("P0 FULL_PROTOCOL matrix is fail-closed for absent N17 and missing critical
   for(const name of falsifications)
     assert.ok(provedIds.includes("S5.1:NR-005-FALSIFICACAO:"+name),
       "each distinct falsification needs its own executed witness: "+name);
+  for(const name of [
+    "FALHA_CI","CHECKS_AUSENTES","STALL_EXATO_2H",
+    "INATIVIDADE_EXATA_24H","DIAGNOSTICO_SEM_AUTORIDADE",
+  ]){
+    assert.ok(provedIds.includes("S5.1:WDG02-PROGRESSO:"+name),
+      "all independent watchdog progress conditions require named evidence: "+name);
+  }
+
 
 });
 
