@@ -306,6 +306,13 @@ jobs:
               echo "P0-ABS BLOCKED: impedimento tecnico/permissao; nova revisao necessaria."
               exit 1
             fi
+            # Terminal failures must never be recycled as CI pending.
+            # Only pending checks or a still-unpublished current-HEAD receipt
+            # may enter the bounded wait loop.
+            if echo "$output" | grep -Fq '"waitable":false'; then
+              echo "P0-ABS CHANGES_REQUESTED: impedimento terminal, sem retries cegos."
+              exit 1
+            fi
             if [ "$attempt" -eq 10 ]; then
               echo "CHANGES_REQUESTED/BLOCKED: sem PASS íntegro neste HEAD."
               exit 1
