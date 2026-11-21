@@ -1175,6 +1175,90 @@ const CLOSED_PLAN_SEMANTIC_UNITS=Object.freeze([
 if(CLOSED_PLAN_SEMANTIC_UNITS.length!==137 ||
    new Set(CLOSED_PLAN_SEMANTIC_UNITS).size!==137)
   throw Error("SEMANTIC: protected source inventory not unique/complete");
+
+/**
+ * Semantic source inventory is a provenance check, NOT an interpretation or PASS.
+ * Every meaningful source line is kept, rather than assuming that the 137
+ * previously enumerated identifiers exhaust the protected normative texts.
+ */
+export const PROTECTED_SEMANTIC_SOURCES=Object.freeze({
+  "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md":
+    "9d037a37df8ae177f7f02123932e0ca60e7e3f81",
+  "docs/frontend/planos/EMENDA_P0_ABS_FILA_REVISAO_690_2026-11-20.md":
+    "cba58ceb1f88fa6774ccf1ce1661ac9f5a942c1b",
+});
+export function inventoryProtectedSemanticLines(sources){
+  const issues=[];const rows=[];
+  const paths=Object.keys(PROTECTED_SEMANTIC_SOURCES);
+  for(const path of paths){
+    const data=sources?.[path];
+    if(!data||typeof data.content!=="string"){
+      issues.push("SEMANTIC_SOURCE_MISSING: "+path);continue;
+    }
+    const bytes=Buffer.from(data.content,"utf8");
+    const actualBlob=createHash("sha1").update(
+      Buffer.concat([Buffer.from("blob "+bytes.length+"\\0"),bytes])).digest("hex");
+    if(actualBlob!==PROTECTED_SEMANTIC_SOURCES[path]||
+       (data.blob&&data.blob!==actualBlob)){
+      issues.push("SEMANTIC_SOURCE_TAMPERED: "+path);continue;
+    }
+    const lines=data.content.split(/\\r?\\n/);
+    for(let n=0;n<lines.length;n++){
+      const value=lines[n].trim();
+      if(!value||/^#{1,6}\\s/.test(value)||/^[-|: ]+$/.test(value)||
+          /^\\`{3}/.test(value))continue;
+      // Keep descriptive and table rows too: never silently discard a rule
+      // merely because it was expressed in prose rather than 'deve'.
+      rows.push({id:"SRC-"+createHash("sha256").update(path+"\\0"+(n+1)+
+          "\\0"+lines[n]).digest("hex").slice(0,20),
+        path,blob:actualBlob,line:n+1,
+        text_sha256:createHash("sha256").update(lines[n]).digest("hex"),
+        text:lines[n]});
+    }
+  }
+  if(Object.keys(sources||{}).some(path=>!paths.includes(path)))
+    issues.push("SEMANTIC_SOURCE_UNKNOWN");
+  return {schema:"contaos.semantic-source-inventory.v1",
+    source_blobs:PROTECTED_SEMANTIC_SOURCES,
+    lines:rows,source_count:paths.length,issues,
+    inventory_verified:issues.length===0,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+/** Rejects fabricated, reused, outdated and non-source-bound interpretations. */
+export function verifySemanticSourceClaims(inventory,claims){
+  const issues=[...(inventory?.issues||[])];
+  const rows=inventory?.lines||[];
+  const byId=new Map(rows.map(row=>[row.id,row]));
+  const seen=new Set();
+  if(!inventory?.inventory_verified)issues.push("SEMANTIC_INVENTORY_NOT_VERIFIED");
+  for(const claim of claims||[]){
+    const row=byId.get(claim?.source_id);
+    if(!row){issues.push("SEMANTIC_CLAIM_UNKNOWN_SOURCE");continue;}
+    if(seen.has(row.id)){issues.push("SEMANTIC_CLAIM_DUPLICATE: "+row.id);continue;}
+    seen.add(row.id);
+    if(claim.path!==row.path||claim.blob!==row.blob||
+       claim.line!==row.line||claim.text_sha256!==row.text_sha256)
+      issues.push("SEMANTIC_CLAIM_WRONG_ANCHOR: "+row.id);
+    // This checks explicit source binding, not the truth of seven axes.
+    if(!claim.axes||SEMANTIC_AXES.some(axis=>!semanticAxisStructurallyComplete(
+        {[axis]:claim.axes[axis]},axis)))
+      issues.push("SEMANTIC_CLAIM_UNPROVEN_AXES: "+row.id);
+    if(!Array.isArray(claim.negative_witnesses)||
+       !claim.negative_witnesses.length||
+       claim.negative_witnesses.some(w=>typeof w!=="object"||
+         !w.case_id||!w.run_url||!w.head||!validSha(w.head)))
+      issues.push("SEMANTIC_CLAIM_NO_EXECUTED_COUNTERPROOF: "+row.id);
+    if(claim.independent_review?.verdict!=="APPROVED"||
+       !claim.independent_review?.review_id)
+      issues.push("SEMANTIC_CLAIM_NO_INDEPENDENT_REVIEW: "+row.id);
+  }
+  return {schema:"contaos.semantic-source-claims.v1",
+    anchored_count:seen.size,source_lines:rows.length,
+    unmapped:rows.filter(row=>!seen.has(row.id)).map(row=>row.id),
+    issues,verdict:"INCONCLUSIVE",release:"NO_GO",
+    note:"Even a structurally complete self-report needs authenticated LIVE counterproof and independent contradiction."};
+}
+
 export function auditNormativeSemanticCompleteness(matrix,claims={}){
   const rows=Array.isArray(matrix?.rows)?matrix.rows:[];
   const issues=[];
