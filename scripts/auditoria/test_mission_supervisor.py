@@ -30,6 +30,7 @@ def contract():
         "state": "ACTIVE",
         "target": {"pr": 679, "head": H, "branch": "main"},
         "allowed_dependencies": [690],
+        "dependency_heads": {"690": H},
         "activation_authorized": False,
         "requirements": {"required_checks": list(mod.REQUIRED)},
         "immutable_plan": {
@@ -285,7 +286,7 @@ class MissionSupervisorTests(unittest.TestCase):
 
     def watchdog_data(self, when="2026-11-21T12:00:00Z"):
         return [
-            {"repo": mod.REPO, "number": n, "head_sha": H, "state": "open", "merged": False,
+            {"repo": mod.REPO, "number": n, "head_sha": H, "base_sha": H, "state": "open", "merged": False,
              "updated_at": when, "checks": [
                  {"id": i + 100, "name": name, "head_sha": H,
                   "integration_id": 15368, "status": "completed",
@@ -354,7 +355,7 @@ class MissionSupervisorTests(unittest.TestCase):
                 return {"object": {"sha": H}}
             if path.startswith("/pulls/"):
                 n = int(path.split("/")[-1])
-                return {"number": n, "base": {"ref": "main"},
+                return {"number": n, "base": {"ref": "main", "sha": H},
                         "head": {"sha": H}, "updated_at": "2026-11-21T12:00:00Z",
                         "state": "open", "merged": False}
             if path.startswith("/commits/"):
@@ -373,7 +374,7 @@ class MissionSupervisorTests(unittest.TestCase):
             if path == "/git/ref/heads/main":
                 return {"object": {"sha": H}}
             if path.startswith("/pulls/"):
-                return {"number": int(path.split("/")[-1]), "base": {"ref": "main"},
+                return {"number": int(path.split("/")[-1]), "base": {"ref": "main", "sha": H},
                         "head": {"sha": H}, "state": "open", "merged": False,
                         "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 101, "check_runs": []}
@@ -449,7 +450,7 @@ class MissionSupervisorTests(unittest.TestCase):
                 return {"object": {"sha": H}}
             if path.startswith("/pulls/"):
                 n = int(path.split("/")[-1])
-                return {"number": n, "base": {"ref": "main"}, "head": {"sha": H},
+                return {"number": n, "base": {"ref": "main", "sha": H}, "head": {"sha": H},
                         "state": "open", "merged": False, "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 1, "check_runs": [{
                 "id": 4, "name": "test", "head_sha": H, "app": {},
@@ -464,7 +465,7 @@ class MissionSupervisorTests(unittest.TestCase):
                 return {"object": {"sha": H}}
             if path.startswith("/pulls/"):
                 n = int(path.split("/")[-1])
-                return {"number": n, "base": {"ref": "main"}, "head": {"sha": H},
+                return {"number": n, "base": {"ref": "main", "sha": H}, "head": {"sha": H},
                         "state": "open", "merged": False, "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 1, "check_runs": [{
                 "id": 4, "name": "test", "head_sha": C, "app": {"id": 15368},
@@ -479,7 +480,7 @@ class MissionSupervisorTests(unittest.TestCase):
                 return {"object": {"sha": H}}
             if path.startswith("/pulls/"):
                 n = int(path.split("/")[-1])
-                return {"number": n, "base": {"ref": "main"}, "head": {"sha": H},
+                return {"number": n, "base": {"ref": "main", "sha": H}, "head": {"sha": H},
                         "state": "open", "merged": False, "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 2, "check_runs": [{
                 "id": 4, "name": "test", "head_sha": H, "app": {"id": 15368},
@@ -496,7 +497,7 @@ class MissionSupervisorTests(unittest.TestCase):
             if path.startswith("/pulls/"):
                 calls[path] = calls.get(path, 0) + 1
                 n = int(path.split("/")[-1])
-                return {"number": n, "base": {"ref": "main"},
+                return {"number": n, "base": {"ref": "main", "sha": H},
                         "head": {"sha": C if calls[path] == 2 else H},
                         "state": "open", "merged": False, "updated_at": "2026-11-21T12:00:00Z"}
             return {"total_count": 0, "check_runs": []}
@@ -518,7 +519,7 @@ class MissionSupervisorTests(unittest.TestCase):
                 data = {"object": {"sha": H}}
             elif route.startswith("/pulls/"):
                 n = int(route.split("/")[-1])
-                data = {"number": n, "base": {"ref": "main"},
+                data = {"number": n, "base": {"ref": "main", "sha": H},
                         "head": {"sha": H}, "state": "open", "merged": False,
                         "updated_at": now}
             elif route.startswith("/commits/"):
@@ -618,7 +619,7 @@ class MissionSupervisorTests(unittest.TestCase):
                 return {"object": {"sha": H}}
             if path.startswith("/pulls/"):
                 n = int(path.split("/")[-1])
-                return {"number": n, "base": {"ref": "main"},
+                return {"number": n, "base": {"ref": "main", "sha": H},
                         "head": {"sha": H}, "updated_at": "2026-11-21T12:00:00Z",
                         "state": "closed", "merged": True, "merge_commit_sha": B,
                         "merged_at": "2026-11-21T12:00:00Z"}
@@ -637,7 +638,7 @@ class MissionSupervisorTests(unittest.TestCase):
             if path.startswith("/pulls/"):
                 calls[path] = calls.get(path, 0) + 1
                 n = int(path.split("/")[-1])
-                return {"number": n, "base": {"ref": "main"},
+                return {"number": n, "base": {"ref": "main", "sha": H},
                         "head": {"sha": H}, "updated_at": "2026-11-21T12:00:00Z",
                         "state": "closed" if calls[path] > 1 else "open",
                         "merged": False}
@@ -676,3 +677,26 @@ class MissionSupervisorTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+    def test_watchdog_dependency_head_drift_is_not_ready(self):
+        data = self.watchdog_data()
+        data[1]["head_sha"] = C
+        for check in data[1]["checks"]:
+            check["head_sha"] = C
+        out = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(out["state"], "BLOCKED_EXTERNAL")
+        self.assertFalse(out["required_checks_complete"])
+        self.assertEqual(out["next_action"], "REVALIDATE_HEAD")
+
+    def test_watchdog_wrong_live_pr_base_fails_closed(self):
+        def fake_api(path):
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": H}}
+            if path.startswith("/pulls/"):
+                return {"number": int(path.split("/")[-1]),
+                        "base": {"ref": "main", "sha": B},
+                        "head": {"sha": H}, "state": "open", "merged": False,
+                        "updated_at": "2026-11-21T12:00:00Z"}
+            return {"total_count": 0, "check_runs": []}
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.collect_watchdog(contract(), fake_api, H)
