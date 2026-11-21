@@ -1131,6 +1131,8 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
     ["S5.5:Dez camadas, sempre na ordem","rca","P0 V2 LAYER 01:"],
     ["S5.5:Doze perspectivas obrigatórias","rca","P0 V2 LENS security:"],
     ["S5-EVENT-MATRIX","rca","P0 PRE-AUDIT push da #690"],
+    ["S5.1:NR-005 / falsificações","rca","NR-005 script adicional fora dos 14 caminhos sempre falha"],
+    ["S5.1:WDG-02 / progresso","python","test_watchdog_inactivity_exact_24_hour_boundary"],
   ];
   for(const [id,key,prefix] of cases){
     const missing=structuredClone(suites);
