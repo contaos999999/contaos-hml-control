@@ -1652,7 +1652,7 @@ export async function assessSemanticCompletenessGate({
   };
   validateSet("RULES",expectedRules,rules,x=>x?.rule_id);
   validateSet("SENTENCES",expectedSentences,sentences,x=>x?.id);
-  validateSet("SOURCES",expectedSources,sources,x=>x?.source_id);
+  validateSet("SOURCES",expectedSources,sources,x=>x?.source_id??x?.id);
   const pairs=[];
   for(let i=0;i<expectedRules.length;i++)
     for(let j=i+1;j<expectedRules.length;j++)
