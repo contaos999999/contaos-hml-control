@@ -691,7 +691,9 @@ function paFixture() {
     workflow_run:{head_sha:PA_HEAD,id:777}},
   redProvenance:[44880700882,44880711676].map((id,i)=>({
     run:{id,head_sha:i===0?"a".repeat(40):"b".repeat(40),
-      event:"pull_request",path:".github/workflows/contaos-auditoria-controller.yml",
+      event:"pull_request",head_branch:"build/p0-abs-fiscal-universal",
+      pull_requests:[{number:690}],
+      path:".github/workflows/contaos-auditoria-controller.yml",
       status:"completed",conclusion:"failure"},
     jobs:{total_count:1,jobs:[{name:"Controlador offline Windows",
       conclusion:"failure",steps:[{name:"P0-ABS supervisor universal N01-N17 (RED/GREEN)",
@@ -1021,6 +1023,8 @@ test("P0 V2 RED source cannot be arbitrary failed workflow",()=>{
     f=>f.redProvenance[0].jobs.jobs[0].steps[0].name="Unrelated build",
     f=>f.redProvenance[0].jobs.total_count=4,
     f=>f.redProvenance[0].run.path=".github/workflows/unrelated.yml",
+    f=>f.redProvenance[0].run.pull_requests[0].number=692,
+    f=>f.redProvenance[0].run.head_branch="other-branch",
   ]){const f=paFixture();mutate(f);
     const o=paCheck(f);assert.equal(o.pass,false);
     assert.match(o.issues.join(" "),/RED nao vinculado/);
