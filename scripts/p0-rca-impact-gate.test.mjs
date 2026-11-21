@@ -1095,6 +1095,45 @@ test("P0 META_PROTOCOL authoritative PLAN and amendment must match protected Git
   }
 });
 
+test("P0 META_PROTOCOL exhaustive cross-clause five-dimensional authorization model",()=>{
+  const versions=["v2","v1"];
+  const reviews=["none","commented","changes_requested"];
+  const statuses=["success","queued","failure"];
+  const activation=[false,true];
+  const artifacts=["valid","expired"];
+  let total=0,positive=0,negative=0;
+  for(const version of versions)
+  for(const review of reviews)
+  for(const status of statuses)
+  for(const activationAuthorized of activation)
+  for(const art of artifacts){
+    const f=paFixture();
+    if(version==="v1"){f.record.schema="contaos.assistant-preaudit.v1";setPaRecord(f);}
+    if(review!=="none")f.reviews=[{id:500,commit_id:PA_HEAD,
+      user:{login:"Edivan5002"},
+      state:review==="commented"?"COMMENTED":"CHANGES_REQUESTED",
+      submitted_at:"2026-11-21T20:00:00Z"}];
+    if(status!=="success"){
+      const current=f.checkRuns.find(x=>x.name===ADVERSARIAL_V2_CHECK_NAME);
+      current.status=status==="queued"?"queued":"completed";
+      current.conclusion=status==="queued"?null:"failure";
+    }
+    f.manifest.ativacao_autorizada=activationAuthorized;
+    if(art==="expired")f.artifact.expired=true;
+    const z=paCheck(f);
+    const allowed=version==="v2" && review!=="changes_requested" &&
+      status==="success" && activationAuthorized===false && art==="valid";
+    assert.equal(z.pass,allowed,
+      JSON.stringify({version,review,status,activationAuthorized,art,issues:z.issues}));
+    assert.equal(z.release,allowed?"PRE_CERTIFICATION_ONLY":"NO_GO");
+    if(allowed)positive++;else negative++;
+    total++;
+  }
+  assert.equal(total,72);
+  assert.equal(positive,2);
+  assert.equal(negative,70);
+});
+
 test("P0 META_PROTOCOL audit verdict transport separation and V1/V2 precedence",()=>{
   const accepted=paFixture();
   const permitted=paCheck(accepted);
