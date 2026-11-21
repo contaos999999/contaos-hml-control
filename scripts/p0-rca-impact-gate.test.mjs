@@ -1039,8 +1039,8 @@ test("P0 V2 CAUSAL_RED artifact_attempt: historical false PASS then GREEN reject
   f.record.schema="contaos.assistant-preaudit.v1";
   f.record.criteria=Object.fromEntries(vulnerable.ASSISTANT_PREAUDIT_CRITERIA.map(x=>[x,"PASS"]));
   f.artifact.name="contaos-teste-c-777-0";
-  f.comments[0].body="<!-- "+vulnerable.ASSISTANT_PREAUDIT_MARKER+"\\n"+
-    JSON.stringify(f.record)+"\\n-->";
+  f.comments[0].body="<!-- "+vulnerable.ASSISTANT_PREAUDIT_MARKER+"\n"+
+    JSON.stringify(f.record)+"\n-->";
   const before=vulnerable.validateAssistantPrecertRelease(f);
   assert.equal(before.pass,true,"RED: vulnerable commit must incorrectly authorize old attempt artifact: "+JSON.stringify(before));
   const green=paFixture();green.artifact.name=f.artifact.name;
