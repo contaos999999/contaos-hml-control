@@ -251,6 +251,14 @@ A correspondência é **temática e parcial**, não um fechamento automático do
 
 **Condição de certificação:** qualquer resultado desta tabela exige ligação com regras e fonte exata, sete eixos expressos em proposições completas, contraprova negativa executada (run/job/HEAD/logs), verificação de precedência e revisão independente de autoria. Evidência não produzida conserva `INCONCLUSIVE`, inclusive para itens históricos ou cabeçalhos. As 381 sentenças candidatas e as 9.316 combinações de pares continuam sujeitas a decisão individual justificável; não se atribui `PASS` a elas por exaustividade aritmética.
 
+### Distinção normativa obrigatória: pré-auditoria e certificação final
+
+A fase **SEMANTIC_PREAUDIT** é exclusivamente interna e antecede a auditoria independente. Seu possível `PASS` exige a mesma completude substantiva de inventário (137 regras, 381 sentenças, 118 trechos e 9.316 pares, ou inventário novo legitimamente corrigido), sete eixos, decisões de aplicabilidade fundamentadas, dois testemunhos de natureza distinta por registro e autenticação externa LIVE do HEAD. **Não depende de `independent.review_id` ou `APPROVED` de uma revisão ainda não solicitada**. A saída positiva, `INDEPENDENT_REVIEW_ELIGIBLE_ONLY`, apenas admite encaminhamento; conserva `SEMANTIC_COMPLETENESS=INCONCLUSIVE`, `MERGE=NO_GO` e `ACTIVATION=NO_GO`. No caso de ausência de evidência, permanece `SEMANTIC_PREAUDIT=INCONCLUSIVE` e `NO_GO`.
+
+A fase **SEMANTIC_COMPLETENESS** é posterior e independente da pré-auditoria. Sua única possibilidade de `PASS` exige todas as provas semânticas anteriores **mais** parecer efetivamente elaborado por auditor de autoria distinta, revisão formal `APPROVED` autenticada, `scope=FULL_SEMANTIC_CORPUS`, IDs e HEAD/base vivos. Revisor conectado ou texto publicado pela mesma assistência em outra conta não constituem independência. Revisão `CHANGES_REQUESTED`, troca de HEAD, testemunho inválido, revisão fabricada ou falta de prova mantém `INCONCLUSIVE`.
+
+**Proibição explícita:** não promover automaticamente `SEMANTIC_PREAUDIT=PASS` para `SEMANTIC_COMPLETENESS=PASS`, nem associar o PASS operacional do BUILD ao aceite semântico. Testes sintéticos do gate demonstram somente comportamento do código, não autenticam 137/381/118/9316 avaliações reais. Um dossiê de testemunhas e uma credencial externa devem estar disponíveis antes de qualquer declaração positiva. Este esclarecimento não modifica o PLAN/emenda protegidos, não autoriza publicação privilegiada, merge, fila real, N17(c), HML/RLS, PROD ou liberação da #679.
+
 ## 6. Implantação, rollback e continuidade
 
 1. Esta PR implementa código de diagnóstico, testes offline e adaptação de compatibilidade à fila **sem ativação**, com CI e revisão técnica independente de código.
