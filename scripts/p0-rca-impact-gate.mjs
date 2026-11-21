@@ -1626,14 +1626,17 @@ export function auditSemanticReverseCoverage(inventory,worklist){
  * sentence candidates, source lines and unordered interactions must be
  * adjudicated. Trusted read-only evidence providers are required.
  */
-export async function assessSemanticCompletenessGate({
+async function assessSemanticGate({
   inventory,worklist,sentenceInventory,reverseCoverage,
   rules=[],sentences=[],sources=[],interactions=[],
-  independent=null,head=null,
+  independent=null,head=null,stage="FINAL",
   authenticateWitness=null,authenticateIndependent=null,
 }={}){
   const issues=[];
   const fail=x=>issues.push(x);
+  const preaudit=stage==="PREAUDIT";
+  if(!["FINAL","PREAUDIT"].includes(stage))fail("SEMANTIC_STAGE_UNKNOWN");
+  if(preaudit&&independent!==null)fail("SEMANTIC_PREAUDIT_INDEPENDENT_STAGE_CONFUSION");
   const expectedRules=worklist?.normative_rules||[];
   const expectedSentences=sentenceInventory?.candidates||[];
   const expectedSources=inventory?.lines||[];
@@ -1674,7 +1677,8 @@ export async function assessSemanticCompletenessGate({
     typeof p.negative_witness==="object"&&p.negative_witness!==null&&
     !!p.negative_witness.run_url&&p.negative_witness.head===head&&
     p.negative_witness.run_url!==p.witness.run_url&&
-    p.independent_review_id===independent?.review_id &&
+    (preaudit?p.independent_review_id==null:
+      p.independent_review_id===independent?.review_id)&&
     p.id===id;
   for(const record of rules){
     const origin=expectedRules.find(x=>x.rule_id===record?.rule_id);
@@ -1708,18 +1712,18 @@ export async function assessSemanticCompletenessGate({
       fail("SEMANTIC_PAIR_UNPROVEN: "+pair?.pair_id);break;
     }
   }
-  if(independent?.head!==head||!Number.isSafeInteger(independent?.review_id)||
+  if(!preaudit&&(independent?.head!==head||!Number.isSafeInteger(independent?.review_id)||
      independent.review_id<=0||independent.author===independent.reviewer||
-     independent.state!=="APPROVED"||independent.scope!=="FULL_SEMANTIC_CORPUS")
+     independent.state!=="APPROVED"||independent.scope!=="FULL_SEMANTIC_CORPUS"))
     fail("SEMANTIC_INDEPENDENCE_UNPROVEN");
   if(typeof authenticateWitness!=="function"||
-     typeof authenticateIndependent!=="function")
+     (!preaudit&&typeof authenticateIndependent!=="function"))
     fail("SEMANTIC_AUTHENTICATED_CONTRADICTION_MISSING");
   // Authenticate only once all the local evidence is complete. Do not
   // perform thousands of calls for an incomplete or fabricated ledger.
   if(issues.length===0){
     try {
-      if(await authenticateIndependent(independent,head)!==true)
+      if(!preaudit&&await authenticateIndependent(independent,head)!==true)
         fail("SEMANTIC_INDEPENDENT_REVIEW_NOT_AUTHENTICATED");
       const all=[...rules,...sentences,...sources,...interactions];
       if(issues.length===0)
@@ -1733,14 +1737,32 @@ export async function assessSemanticCompletenessGate({
         }
     } catch(e){fail("SEMANTIC_EXTERNAL_AUTHENTICATION_UNAVAILABLE");}
   }
-  return {schema:"contaos.semantic-completeness-gate.v1",
-    head,rule_count:expectedRules.length,sentence_count:expectedSentences.length,
+  return {schema:preaudit?"contaos.semantic-preaudit-gate.v1":
+      "contaos.semantic-completeness-gate.v1",
+    stage,head,rule_count:expectedRules.length,sentence_count:expectedSentences.length,
     source_count:expectedSources.length,pair_count:pairs.length,
     supplied:{rules:rules.length,sentences:sentences.length,
       sources:sources.length,pairs:interactions.length},
-    semantic_completeness:issues.length?"INCONCLUSIVE":"PASS",
-    release:issues.length?"NO_GO":"SEMANTIC_REVIEW_CERTIFIED_ONLY",
-    independent_review_id:issues.length?null:independent.review_id,issues};
+    ...(preaudit?{
+      semantic_preaudit:issues.length?"INCONCLUSIVE":"PASS",
+      semantic_completeness:"INCONCLUSIVE",
+      release:issues.length?"NO_GO":"INDEPENDENT_REVIEW_ELIGIBLE_ONLY",
+      independent_review_id:null,
+    }:{
+      semantic_completeness:issues.length?"INCONCLUSIVE":"PASS",
+      release:issues.length?"NO_GO":"SEMANTIC_REVIEW_CERTIFIED_ONLY",
+      independent_review_id:issues.length?null:independent.review_id,
+    }),issues};
+}
+
+// Pre-audit and final certification use the identical substantive inventory,
+// seven-axis checks, positive/negative witnesses and read-only authentication.
+// Only the final stage consumes an independently authored GitHub review.
+export async function assessSemanticPreauditGate(input={}){
+  return assessSemanticGate({...input,stage:"PREAUDIT"});
+}
+export async function assessSemanticCompletenessGate(input={}){
+  return assessSemanticGate({...input,stage:"FINAL"});
 }
 
 export function auditNormativeSemanticCompleteness(matrix,claims={}){
