@@ -743,7 +743,7 @@ const FULL_PROTOCOL_51_GATES=[
   ["WDG-01 / origem","python","test_watchdog_readonly_collects_target_and_dependency"],
   ["WDG-02 / progresso","python","test_watchdog_stalled_ci_blocks"],
   ["WDG-03 / fail-closed","python","test_cli_blocked_diagnostic_never_signals_ci_pass"],
-  ["N01-N17","python","test_N17_revoked_specific_authorization"],
+  ["N01-N17","python","test_N01_to_N17_all_negative_states_keep_mission_uncertified"],
   ["N13 / fila","queue","N13 prova git real"],
   ["Regressão global","rca","P0 FULL_PROTOCOL global checks bound to exact HEAD"],
   ["Evidências","rca","P0 FULL_PROTOCOL ZIP mismatch and missing ZIP cannot certify"],
