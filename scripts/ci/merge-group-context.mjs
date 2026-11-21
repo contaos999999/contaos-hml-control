@@ -76,7 +76,7 @@ async function github(path, token, post = null) {
 }
 const git = (...a) => execFileSync("git", a, { encoding: "utf8", timeout: 15000 }).trim();
 
-export async function main({ env = process.env, http = github, gitFn = git } = {}) {
+export async function resolveEventContext({ env = process.env, http = github, gitFn = git } = {}) {
   if (env.GITHUB_EVENT_NAME !== "merge_group")
     fail("not a merge_group event");
   if (!env.GITHUB_EVENT_PATH || !env.GITHUB_TOKEN)
@@ -112,6 +112,10 @@ export async function main({ env = process.env, http = github, gitFn = git } = {
     gitParents: parents, commitsFromBase: deltaCount,
   });
   if (!result.valid) fail(result.issues.join("; "));
+  return result;
+}
+export async function main({ env = process.env, http = github, gitFn = git } = {}) {
+  const result = await resolveEventContext({ env, http, gitFn });
   if (env.GITHUB_OUTPUT) {
     for (const [key, value] of Object.entries(result)) {
       if (["pr", "base_sha", "head_sha", "pr_head_sha", "entry_id"].includes(key))
