@@ -273,6 +273,46 @@ class MissionSupervisorTests(unittest.TestCase):
         e = evidence(); e["review"] = ["APPROVED"]
         self.assertIn("N17", codes(mod.evaluate(contract(), e)))
 
+    def test_N01_to_N17_all_negative_states_keep_mission_uncertified(self):
+        """Distinct offline negative assertions for every N01-N17 family.
+
+        A synthetic negative matrix proves rejection by the BUILD supervisor,
+        not N17(c), App, merge-queue or HML/RLS operational activation.
+        """
+        scenarios = [
+            ("N01", lambda c,e: c.update(state="CERTIFIED",
+                certification_receipt={"merged": False})),
+            ("N02", lambda c,e: e.update(pr=999)),
+            ("N03", lambda c,e: e.update(contract_source="candidate")),
+            ("N04", lambda c,e: e["checks"][0].update(conclusion="skipped")),
+            ("N05", lambda c,e: e.update(live_head=C)),
+            ("N06", lambda c,e: e["independent_audit"].update(verified_pass=False)),
+            ("N07", lambda c,e: e.update(runner_status="interrupted")),
+            ("N08", lambda c,e: e.update(attempts_without_delta=2)),
+            ("N09", lambda c,e: e.update(lock_conflict=True)),
+            ("N10", lambda c,e: c.update(state="CANCELLED_BY_OWNER",
+                cancellation_receipt={"owner_authorized": False})),
+            ("N11", lambda c,e: e.update(tooling="unavailable")),
+            ("N12", lambda c,e: e["review"].update(head=B)),
+            ("N13", lambda c,e: e.update(event="custom")),
+            # Unknown dependencies are rejected under the N02 code by design.
+            ("N02", lambda c,e: e.update(pr=692)),
+            ("N15", lambda c,e: e["publisher"].update(available=False)),
+            ("N16", lambda c,e: e.update(event="merge_group",
+                merge_group={"state":"active","sha":H,"base":B,"prs":[690]})),
+            ("N17", lambda c,e: e["owner_authorization"].update(revoked=True)),
+        ]
+        self.assertEqual(len(scenarios), 17)
+        for idx, (expected_code, mutate) in enumerate(scenarios, start=1):
+            with self.subTest(rule=f"N{idx:02d}", expected=expected_code):
+                c, e = contract(), evidence()
+                mutate(c, e)
+                result = mod.evaluate(c, e)
+                self.assertIn(expected_code, codes(result))
+                self.assertFalse(result["certified"])
+                self.assertFalse(result["eligible"])
+                self.assertFalse(result["authoritative"])
+
     def test_N17_missing_review_not_equivalent_to_pass(self):
         e = evidence(); e["review"]["state"] = "COMMENTED"
         self.assertIn("N17", codes(mod.evaluate(contract(), e)))
