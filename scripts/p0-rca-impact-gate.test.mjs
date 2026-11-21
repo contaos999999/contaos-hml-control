@@ -125,6 +125,78 @@ test("P0 RCA — V2 explícita dentro de arquivo V1 permitido não é isenta", (
 test("P0 RCA — docs-only não invoca RCA nem bloqueia V1", () => {
   assert.deepEqual(check(null, ["docs/frontend/planos/PLAN.md"], "44").errors, []);
 });
+const files690 = [
+  "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md",
+  "docs/frontend/governanca/MISSAO_ATIVA_4_1.json",
+  "scripts/auditoria/mission-supervisor.py",
+  "scripts/auditoria/test_mission_supervisor.py",
+  ".github/workflows/contaos-auditoria-controller.yml",
+  ".github/workflows/contaos-missao-auditoria.yml",
+  "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md",
+  ".github/workflows/contaos-frontend-zero-drift.yml",
+  ".github/workflows/contaos-teste-c-independente.yml",
+  ".github/workflows/p0-nr001-anti-recurrence.yml",
+  "scripts/ci/merge-group-context.mjs",
+  "scripts/ci/merge-group-context.test.mjs",
+  "scripts/p0-rca-impact-gate.mjs",
+  "scripts/p0-rca-impact-gate.test.mjs",
+];
+const manifest690 = () => ({
+  approved: true, pr_number: 690, full_diff: true, files: [...files690],
+});
+const gov690 = (changed, extra = {}) => check(null, changed, "75", [], {
+  prNumber: 690, governancePlan: manifest690(), fullDiffPaths: [...changed],
+  ...extra,
+});
+test("NR-005 full_diff do BUILD #690 aceita somente os caminhos autorizados", () => {
+  const r = gov690([files690[0], files690[2], files690[13]]);
+  assert.deepEqual(r.errors, []);
+  assert.equal(r.version, "P0_GOV_FULL_DIFF");
+});
+test("NR-005 documento extra com codigo permitido nao pode passar", () => {
+  const r = gov690([files690[2], "docs/frontend/governanca/DOCUMENTO_EXTRA.md"]);
+  assert.match(r.errors.join(" "), /fora da allowlist full_diff/);
+});
+test("NR-005 diff exclusivamente documental fora da allowlist nao recebe N/A", () => {
+  const r = gov690([files690[0], "docs/frontend/planos/PLANO_EXTRA.md"]);
+  assert.match(r.errors.join(" "), /fora da allowlist full_diff/);
+});
+test("NR-005 a PR #690 documental sem manifesto protegido falha", () => {
+  const r = gov690([files690[0]], { governancePlan: null });
+  assert.match(r.errors.join(" "), /manifesto full_diff protegido ausente/);
+});
+test("NR-005 manifesto de outra PR nao pode autorizar #690", () => {
+  const bad = manifest690(); bad.pr_number = 691;
+  assert.match(gov690([files690[0]], { governancePlan: bad }).errors.join(" "), /manifesto full_diff protegido/);
+});
+test("NR-005 manifesto sem 14 caminhos falha", () => {
+  const bad = manifest690(); bad.files.pop();
+  assert.match(gov690([files690[0]], { governancePlan: bad }).errors.join(" "), /14 caminhos/);
+});
+test("NR-005 caminho de origem de renomeacao tambem exige allowlist", () => {
+  const r = gov690([files690[2]], {fullDiffPaths: ["scripts/auditoria/OLD.py", files690[2]]});
+  assert.match(r.errors.join(" "), /fora da allowlist full_diff/);
+});
+test("NR-005 full_diff omitido e FAIL, nao N/A", () => {
+  const r = gov690([files690[2]], { fullDiffPaths: null });
+  assert.match(r.errors.join(" "), /full_diff de arquivos/);
+});
+test("NR-005 diff declarado incompleto nao pode passar", () => {
+  const r = gov690([files690[0], files690[2]], {fullDiffPaths:[files690[0]]});
+  assert.match(r.errors.join(" "), /full_diff incompleto/);
+});
+test("NR-005 manifestos duplicados nos caminhos nao passam", () => {
+  const bad = manifest690(); bad.files[1] = bad.files[0];
+  assert.match(gov690([files690[0]], { governancePlan: bad }).errors.join(" "), /manifesto full_diff protegido/);
+});
+test("NR-005 dispensa documental legitima fora do BUILD preservada", () => {
+  const r = check(null, ["docs/frontend/planos/PLANO_COMUM.md"], "75", [], {
+    prNumber: 692, governancePlan: null,
+  });
+  assert.deepEqual(r.errors, []);
+  assert.equal(r.applicable, false);
+});
+
 test("P0 RCA — falta relatório no diff BUILD V2 falha", () => {
   mustFail(null, /sem ficha RCA/);
 });
