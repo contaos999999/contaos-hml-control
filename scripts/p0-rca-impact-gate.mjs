@@ -724,6 +724,46 @@ const FULL_PROTOCOL_CRITICAL_TESTS=[
   {id:"AUTH-CI-PENDING-TERMINAL",file:"rca",pattern:"P0 FULL_PROTOCOL terminal checks"},
 ];
 FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_CRITICAL_TESTS);
+
+const FULL_PROTOCOL_51_GATES=[
+  ["NR-005 / documentos comuns","rca","NR-005 checkpoint documental em PR posterior"],
+  ["NR-005 / BUILD válido","rca","P0 PRE-AUDIT PR head/base avançada"],
+  ["NR-005 / falsificações","rca","NR-005 manifesto protegido"],
+  ["NR-009 / base avançada","python","test_NR009_live_older_target_base"],
+  ["Node 24 / testes","rca","P0 RCA runner executa caso exato"],
+  ["Segurança runner / N06","python","test_N06_code_without_independent_audit"],
+  ["Segurança Actions","rca","P0 FULL_PROTOCOL watchdog read-only permissions"],
+  ["WDG-01 / origem","python","test_watchdog_readonly_collects_target_and_dependency"],
+  ["WDG-02 / progresso","python","test_watchdog_stalled_ci_blocks"],
+  ["WDG-03 / fail-closed","python","test_cli_blocked_diagnostic_never_signals_ci_pass"],
+  ["N01-N17","python","test_N17_revoked_specific_authorization"],
+  ["N13 / fila","queue","N13 prova git real"],
+  ["Regressão global","rca","P0 FULL_PROTOCOL global checks bound to exact HEAD"],
+  ["Evidências","rca","P0 FULL_PROTOCOL late veto after ZIP"],
+  ["Revisão independente","python","test_N06_author_cannot_review_own_work"],
+  ["NR-005 / manutenção posterior","rca","NR-005 manutenção autorizada de workflow"],
+  ["NR-005 / modos Git","rca","NR-005 chmod"],
+  ["NR-005 / schema","rca","NR-005 schema"],
+  ["WDG-04 / checks obrigatórios","python","test_watchdog_only_protect_types_cannot_claim_ready"],
+  ["WDG-05 / proveniência","python","test_watchdog_partial_pagination_even_below_100"],
+  ["WDG-06 / estados terminais","python","test_watchdog_forged_certified_contract"],
+  ["WDG-07 / permissão REST","rca","P0 FULL_PROTOCOL watchdog read-only permissions"],
+];
+const FULL_PROTOCOL_52_RULES=[
+  ["Pré-integração NR-005","rca","NR-005 pull_request bloqueia manifesto"],
+  ["Fila NR-009/N13","queue","N13 removed merge queue entry during readback"],
+  ["Origem N04/N13","python","test_watchdog_all_three_same_name_wrong_app"],
+  ["Ciclo de vida","python","test_watchdog_closed_without_merge_never_prompts_review"],
+  ["Revalidação no encerramento do job","queue","N13 protected workflows recheck group"],
+  ["Regressão obrigatória","rca","P0 FULL_PROTOCOL suite output cannot be accepted"],
+];
+FULL_PROTOCOL_CASES.push(
+  ...FULL_PROTOCOL_51_GATES.map(([name,file,pattern])=>({
+    id:"S5.1:"+name,file,pattern})),
+  ...FULL_PROTOCOL_52_RULES.map(([name,file,pattern])=>({
+    id:"S5.2:"+name,file,pattern})),
+);
+
 const FULL_PROTOCOL_EXTERNAL=[
   "N17(c): autoria terceira e duas aprovacoes elegiveis em fila real",
   "HML: sessao autenticada e isolamento RLS/tenant",
@@ -736,6 +776,28 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
   const rows=[];
   const expectedSections=["## 1.","## 2.","## 3.","## 4.","## 5.",
     "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 6."];
+  // Fail closed when the protected protocol grows without a corresponding
+  // executable authorization requirement. A summary checkbox is insufficient.
+  const section51=typeof protocol==="string"?
+    protocol.split("## 5.1.")[1]?.split("## 5.2.")[0]:"";
+  const gates=[...section51.matchAll(/^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$/gm)]
+    .map(m=>m[1].trim()).filter(x=>x!=="Gate" && x!=="---");
+  const declaredGates=FULL_PROTOCOL_51_GATES.map(x=>x[0]);
+  if(gates.length!==declaredGates.length ||
+      new Set(gates).size!==gates.length ||
+      gates.some(x=>!declaredGates.includes(x)) ||
+      declaredGates.some(x=>!gates.includes(x)))
+    issues.push("Secao 5.1 tem requisito sem testemunha executavel ou gate retirado");
+  const section52=typeof protocol==="string"?
+    protocol.split("## 5.2.")[1]?.split("## 5.3.")[0]:"";
+  const rules=[...section52.matchAll(/^\*\*([^*]+?):\*\*/gm)]
+    .map(m=>m[1].trim());
+  const declaredRules=FULL_PROTOCOL_52_RULES.map(x=>x[0]);
+  if(rules.length!==declaredRules.length ||
+      rules.some(x=>!declaredRules.includes(x)) ||
+      declaredRules.some(x=>!rules.includes(x)))
+    issues.push("Secao 5.2 tem regra sem testemunha executavel ou regra retirada");
+
   for(const section of expectedSections)
     if(!protocol?.includes(section))issues.push("Secao do protocolo ausente: "+section);
   for(const item of FULL_PROTOCOL_CASES){
