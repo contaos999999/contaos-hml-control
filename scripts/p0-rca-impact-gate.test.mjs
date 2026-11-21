@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2158,4 +2158,45 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
     assert.equal(check.verdict,"INCONCLUSIVE");
     assert.equal(check.release,"NO_GO");
   }
+});
+
+
+test("P0 SEMANTIC COMPLETENESS requires authenticated 137/381/118/9316 evidence; BUILD PASS not authority",async()=>{
+  const sourceFiles=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES)
+    .map(([path,blob])=>[path,{content:readFileSync(path,"utf8"),blob}]));
+  const inventory=inventoryProtectedSemanticLines(sourceFiles);
+  const worklist=buildSevenAxisSemanticBacklog(inventory);
+  const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
+  const reverseCoverage=auditSemanticReverseCoverage(inventory,worklist);
+  const head="f5de50d3a5106caea62a5fbcf423299436bfdcc9";
+  const input={inventory,worklist,sentenceInventory,reverseCoverage,head};
+  const empty=await assessSemanticCompletenessGate(input);
+  assert.equal(empty.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(empty.release,"NO_GO");
+  assert.equal(empty.rule_count,137);
+  assert.equal(empty.sentence_count,381);
+  assert.equal(empty.source_count,118);
+  assert.equal(empty.pair_count,9316);
+  assert.ok(empty.issues.some(x=>x.includes("RULES_COVERAGE")));
+  assert.ok(empty.issues.some(x=>x.includes("SENTENCES_COVERAGE")));
+  assert.ok(empty.issues.some(x=>x.includes("SOURCES_COVERAGE")));
+  assert.ok(empty.issues.some(x=>x.includes("PAIRS_UNADJUDICATED")));
+  assert.ok(empty.issues.some(x=>x.includes("INDEPENDENCE_UNPROVEN")));
+  let authentications=0;
+  const forged=await assessSemanticCompletenessGate({...input,
+    independent:{head,review_id:123,author:"implementer",
+      reviewer:"implementer",state:"APPROVED",scope:"FULL_SEMANTIC_CORPUS"},
+    authenticateIndependent:async()=>{authentications++;return true;},
+    authenticateWitness:async()=>{authentications++;return true;}});
+  assert.equal(forged.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(authentications,0,
+    "incomplete evidence must not trigger fake external attestations");
+  const wrongBase=await assessSemanticCompletenessGate({...input,
+    inventory:{...inventory,inventory_verified:false}});
+  assert.ok(wrongBase.issues.includes("SEMANTIC_UNVERIFIED_SOURCE_OR_HEAD"));
+  assert.equal(wrongBase.semantic_completeness,"INCONCLUSIVE");
+  const badPairs=await assessSemanticCompletenessGate({...input,
+    interactions:[{pair_id:"INVENTED|RULE",decision:"NONINTERACTING"}]});
+  assert.ok(badPairs.issues.includes("SEMANTIC_PAIR_UNKNOWN_OR_DUPLICATE"));
+  assert.equal(badPairs.release,"NO_GO");
 });
