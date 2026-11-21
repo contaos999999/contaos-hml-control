@@ -231,6 +231,24 @@ A tabela de revisão contém: **A** autoridade responsável, **P** precondição
 | EMENDA 7 | Cabeçalho de ressalvas separa obrigações BUILD e ativação; colunas não podem ser mescladas. | §3.1 × emenda §9–10 | PASS de teste do publicador não prova status exigido em fila real. | Gate administrativo; ativação |
 | EMENDA 63 | Cabeçalho Zero-Drift vincula exigências das linhas 64–66, sem dispensar teste visual sob diff de produto. | Emenda §22–25 × Teste C | Diff visual real com triagem N/A indevida deve FAIL. | Diff do HEAD; BUILD |
 
+
+### Contraprovas do BUILD já executadas e vinculadas a interpretações específicas
+
+**Recibo:** [Actions #44934172855, job P0-ABS Adversarial V2](https://github.com/contaos999999/contaos-hml-control/actions/runs/44934172855/job/136937082323), HEAD exato `d8781566f8886cd7630d48307a4a2fb3e116044c`, base `e007c4bad8f2c66c489c55e4752b71bb19c5ced0`. Relatório `EXECUTED_PASS_FOR_BUILD_ONLY`, `issues=[]`. SHA-256 da saída Python: `5a47a1d7055a59e5ac7642848efb41eb5caf8b9632c00ad6437540ff4f85b064`; saída RCA: `b3353d6620b8258933866c72d5d5ae7e96367fe1bec7e2d3602ef7cdc22248c5`. São testes reais de negativos específicos; **não demonstram execução de todas as interações dos eixos E1–E7** nem equivalem à auditoria externa.
+
+| Fonte | Cláusula/teste executado | Efeito negativo realmente coberto pelo teste | Limitação persistente |
+| --- | --- | --- | --- |
+| PLAN 7 | N05: `test_N05_base_advance_not_accepted` | Base alterada não reutiliza automaticamente recibo anterior. | Não substitui revalidação de fila/PROD LIVE |
+| PLAN 8 e 17 | N01: `test_N01_active_cannot_certify_from_reports` | Relatório interno não encerra missão sem recibos. | Não certifica a PR #679 nem contrato final |
+| PLAN 9 e 19 | N06: `test_N06_author_cannot_review_own_work` | Autoria não aprova seu próprio trabalho. | Parecer independente de autoria continua ausente |
+| PLAN 11 | N17: `test_N17_approved_review_does_not_replace_authorization` | Review APPROVED não substitui autorização específica. | Revogação no GitHub/fila real não provada |
+| PLAN 13 | NR-005: `NR-005 manifesto sem 14 caminhos falha` | Manifesto de escopo incompleto é rejeitado. | Ainda exigir confronto do diff 14/14 e fonte viva |
+| PLAN 19 | N06: `test_N06_code_without_independent_audit_not_certified` | Código com teste positivo sem auditoria independente não certifica. | A própria auditoria independente permanece pendente |
+| PLAN 89 | `P0 V2 formal independent review veto invalidates internal PASS on same HEAD` | Veto formal impede que PASS interno seja autoridade. | Não comprova configuração nativa de veto na fila |
+| PLAN 89 e 128 | NR-005: `NR-005 manifesto de outra PR nao pode autorizar #690` | Escopo de outra PR não herda autorização da #690. | O Teste C visual e o status final exigem readback próprio |
+
+A correspondência é **temática e parcial**, não um fechamento automático dos itens de origem: por exemplo, PLAN 89 tem também o predicado sobre isolamento do token e a execução real dos checks, que não se esgota pelos negativos acima. As oito linhas não cobrem as 18 fontes nem as 137 regras inteiras. Não copiar o `EXECUTED_PASS_FOR_BUILD_ONLY` do job para o campo de veredito semântico.
+
 **Condição de certificação:** qualquer resultado desta tabela exige ligação com regras e fonte exata, sete eixos expressos em proposições completas, contraprova negativa executada (run/job/HEAD/logs), verificação de precedência e revisão independente de autoria. Evidência não produzida conserva `INCONCLUSIVE`, inclusive para itens históricos ou cabeçalhos. As 381 sentenças candidatas e as 9.316 combinações de pares continuam sujeitas a decisão individual justificável; não se atribui `PASS` a elas por exaustividade aritmética.
 
 ## 6. Implantação, rollback e continuidade
