@@ -756,6 +756,7 @@ function paReviewRerunFixture({state="success", prior="success"}={}){
 test("P0 NR-006 RED: historical V2 job absent from current check list must use authenticated run attempt",()=>{
   const f=paFixture();
   const oldJob=structuredClone(f.v2Job);
+  oldJob.name=ADVERSARIAL_V2_CHECK_NAME;
   f.receiptV2Job=oldJob;
   f.v2Job={...structuredClone(oldJob),id:990,run_id:778};
   const check=f.checkRuns.find(x=>x.name===ADVERSARIAL_V2_CHECK_NAME);
