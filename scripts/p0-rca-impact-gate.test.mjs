@@ -4,7 +4,8 @@ import { createHash } from "node:crypto";
 import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry, resolvePrContext, verifyRawFullDiffModes, classifyProtectedPush,
   assertImmutableP0Governance, IMMUTABLE_P0_690_MANIFEST,
   ASSISTANT_PREAUDIT_MARKER, ASSISTANT_PREAUDIT_CRITERIA,
-  PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, validateAssistantPrecertRelease,
+  PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
+  ADVERSARIAL_V2_CHECK_NAME, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
@@ -679,13 +680,17 @@ function paFixture() {
   manifest:{schema:"contaos.p0.gov-plan.v1",approved:true,pr_number:690,
     full_diff:true,ativacao_autorizada:false,files:[...PA_FILES]},
   paths:[...PA_FILES],comments:[comment],reviews:[],
-  checkRuns:PRECERT_REQUIRED_CHECKS.map((name,i)=>({
-    id:name.includes("Teste C")?888:100+i, name, head_sha:PA_HEAD, app:{id:15368},
-    details_url:name.includes("Teste C") ? "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/888" : "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/100",
+  checkRuns:[...PRECERT_REQUIRED_CHECKS,ADVERSARIAL_V2_CHECK_NAME].map((name,i)=>({
+    id:name.includes("Teste C")?888:(name===ADVERSARIAL_V2_CHECK_NAME?889:100+i), name, head_sha:PA_HEAD, app:{id:15368},
+    details_url:name.includes("Teste C") ? "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/888" :
+      name===ADVERSARIAL_V2_CHECK_NAME ? "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/889" :
+      "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/100",
     status:"completed",conclusion:"success",
   })),
   artifact:{id:9001,name:"contaos-teste-c-777-1",digest:PA_DIGEST,expired:false,
     workflow_run:{head_sha:PA_HEAD,id:777}},
+  v2Job:{id:889,run_id:777,head_sha:PA_HEAD,status:"completed",conclusion:"success",
+    steps:ADVERSARIAL_V2_STEP_NAMES.map(name=>({name,status:"completed",conclusion:"success"}))},
   testCJob:{id:888,run_id:777,head_sha:PA_HEAD,
     status:"completed",conclusion:"success",
     steps:[{name:"Teste C Playwright — 24 telas, 4 larguras, 2 temas",conclusion:"success"}]},
@@ -839,6 +844,7 @@ async function paLiveVerification({mutateReadback,manual=false}={}) {
     }
     if(path.endsWith("/actions/artifacts/9001")) return f.artifact;
     if(path.endsWith("/actions/jobs/888")) return f.testCJob;
+    if(path.endsWith("/actions/jobs/889")) return f.v2Job;
     if(path.endsWith("/actions/runs/777")) return f.testCRun;
     if(path.endsWith("/actions/runs/777/attempts/1/jobs?per_page=100"))
       return f.testCAttemptJobs;
@@ -980,3 +986,18 @@ test("P0 V2 LENS supply_chain: Foreign check issuer",async()=>{const f=paFixture
 test("P0 V2 LENS legitimate_regression: Preserve success path",async()=>{const f=paFixture();assert.equal(paCheck(f).pass,true);const v=await paLiveVerification();assert.equal(v.pass,true);});
 test("P0 V2 LENS observability: Do not conceal failure",async()=>{const f=paFixture();f.testCRun.conclusion="failure";const out=paCheck(f);assert.equal(out.pass,false);assert.ok(out.issues.length>0);});
 test("P0 V2 LENS operational_environment: Different workflow context",async()=>{const f=paFixture();f.testCRun.path=".github/workflows/unrelated.yml";assert.equal(paCheck(f).pass,false);});
+
+test("P0 V2 probe evidence is authenticated, never self-declared 10+12",()=>{
+  for (const change of [
+    f=>f.v2Job.steps.splice(3,1),
+    f=>f.v2Job.steps[0].conclusion="skipped",
+    f=>f.v2Job.steps.push({...f.v2Job.steps[0]}),
+    f=>f.v2Job.head_sha="f".repeat(40),
+    f=>f.v2Job.id=900,
+    f=>f.checkRuns.find(x=>x.name===ADVERSARIAL_V2_CHECK_NAME).conclusion="failure",
+    f=>f.checkRuns.find(x=>x.name===ADVERSARIAL_V2_CHECK_NAME).app.id=99,
+  ]){const f=paFixture();change(f);const o=paCheck(f);
+    assert.equal(o.pass,false);
+    assert.match(o.issues.join(" "),/22 provas executaveis/);
+  }
+});
