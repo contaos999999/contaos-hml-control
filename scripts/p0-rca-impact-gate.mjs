@@ -705,6 +705,25 @@ const FULL_PROTOCOL_CASES=[
     "legitimate_regression","observability","operational_environment"]
     .map(n=>({id:"V2-LENS-"+n,file:"rca",pattern:"P0 V2 LENS "+n+":"})),
 ];
+// Every authorization invariant must have an EXECUTED test witness, not
+// a source-code string or merely a test declaration.
+const FULL_PROTOCOL_CRITICAL_TESTS=[
+  {id:"AUTH-CHECK-WORKFLOW-RUN-ATTEMPT",file:"rca",pattern:"P0 FULL_PROTOCOL origin:"},
+  {id:"AUTH-ZIP-BYTES",file:"rca",pattern:"P0 FULL_PROTOCOL ZIP mismatch"},
+  {id:"AUTH-FAILURE-TERMINAL",file:"rca",pattern:"P0 FULL_PROTOCOL terminal checks"},
+  {id:"AUTH-FINAL-POST-ZIP-READBACK",file:"rca",pattern:"P0 FULL_PROTOCOL late veto after ZIP"},
+  {id:"AUTH-MANIFEST-IMMUTABLE",file:"rca",pattern:"NR-005 manifesto imutável"},
+  {id:"AUTH-NATIVE-VETO",file:"rca",pattern:"P0 V2 formal independent review veto"},
+  {id:"AUTH-PR-IDENTITY",file:"rca",pattern:"P0 PRE-AUDIT #690 sem associação autenticada"},
+  {id:"AUTH-NO-ACTIVATION",file:"rca",pattern:"P0 FULL_PROTOCOL matrix is fail-closed"},
+  {id:"AUTH-FULL-DIFF-MODE",file:"rca",pattern:"NR-005 chmod"},
+  {id:"AUTH-READONLY-PERMISSIONS",file:"rca",pattern:"P0 FULL_PROTOCOL controller read-only permissions"},
+  {id:"AUTH-NO-SELF-CERTIFY",file:"python",pattern:"test_N06_code_without_independent_audit"},
+  {id:"AUTH-ZIP-TOCTOU",file:"rca",pattern:"P0 FULL_PROTOCOL late veto after ZIP"},
+  {id:"AUTH-ORIGIN-FOREIGN-WORKFLOW",file:"rca",pattern:"P0 FULL_PROTOCOL origin:"},
+  {id:"AUTH-CI-PENDING-TERMINAL",file:"rca",pattern:"P0 FULL_PROTOCOL terminal checks"},
+];
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_CRITICAL_TESTS);
 const FULL_PROTOCOL_EXTERNAL=[
   "N17(c): autoria terceira e duas aprovacoes elegiveis em fila real",
   "HML: sessao autenticada e isolamento RLS/tenant",
@@ -726,7 +745,7 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
       [...code.matchAll(/(?:test\(["']([^"'\n]+)|def (test_[A-Za-z0-9_]+)\()/g)]
         .map(m=>m[1]||m[2]):[];
     const ok=names.some(name=>name.includes(item.pattern));
-    rows.push({id:item.id,status:ok?"NAMED_TEST_PRESENT":"MISSING_TEST",
+    rows.push({id:item.id,status:ok?"TEST_DECLARED_NOT_EXECUTED":"MISSING_TEST",
       source:PROTOCOL_FULL_AUDIT_FILES[item.file],witness:item.pattern});
     if(!ok)issues.push("Protocolo sem caso executavel: "+item.id+" / "+item.pattern);
   }
@@ -761,7 +780,7 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
       !protocol.includes("N17(c)"))
     issues.push("Fronteiras externas e N17(c) ausentes do protocolo");
   return {schema:"contaos.full-protocol-preaudit.v1",
-    verdict:issues.length?"CHANGES_REQUESTED":"COVERAGE_READY_FOR_EXECUTION",
+    verdict:issues.length?"CHANGES_REQUESTED":"COVERAGE_MAPPED_NOT_EXECUTED",
     requirements:rows.length,covered:rows.filter(x=>!x.status.startsWith("MISSING")).length,
     rows,external:FULL_PROTOCOL_EXTERNAL.map(x=>({requirement:x,status:"BLOCKED_EXTERNAL_FOR_ACTIVATION"})),
     issues};
