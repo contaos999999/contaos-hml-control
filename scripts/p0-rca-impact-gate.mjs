@@ -930,7 +930,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"7effbc241cbe7398809431ce4d58c72650f0374b",
+  rca:"61d6eb61c5154d7efe03b8cd6387c1d0449594d4",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -1137,6 +1137,20 @@ function nonEmptySemanticValue(value){
   }
   return false;
 }
+const CLOSED_PLAN_SEMANTIC_UNITS=Object.freeze([
+  ...[
+    ["S3",10],["S31",9],["S4",14],["S5",18],["S6",6],
+    ["S7",3],["S8",7],["S9",2],["S10",2],
+  ].flatMap(([section,count])=>Array.from({length:count},(_,i)=>
+    "PLAN-"+section+"-"+String(i+1).padStart(2,"0"))),
+  ...Array.from({length:29},(_,i)=>"EMENDA-"+String(i+1).padStart(2,"0")),
+  ...Array.from({length:24},(_,i)=>"PLAN-S31-ATOM-A"+String(i+1).padStart(2,"0")),
+  ...Array.from({length:7},(_,i)=>"PLAN-S6-RECOVERY-R"+String(i+1).padStart(2,"0")),
+  ...["A","B","C","D","E","F"].map(letter=>"EMENDA-N17-"+letter),
+]);
+if(CLOSED_PLAN_SEMANTIC_UNITS.length!==137 ||
+   new Set(CLOSED_PLAN_SEMANTIC_UNITS).size!==137)
+  throw Error("SEMANTIC: protected source inventory not unique/complete");
 export function auditNormativeSemanticCompleteness(matrix,claims={}){
   const rows=Array.isArray(matrix?.rows)?matrix.rows:[];
   const issues=[];
@@ -1146,6 +1160,14 @@ export function auditNormativeSemanticCompleteness(matrix,claims={}){
     claims={};
   if(new Set(rows.map(row=>row.id)).size!==rows.length)
     issues.push("SEMANTIC: duplicated obligation ID");
+  // This set is separate from the 218 executable BUILD matrix.
+  // A self-selected subset cannot create a zero-unproven semantic certificate.
+  const presentIds=new Set(rows.map(row=>row.id));
+  const sourceUnmapped=CLOSED_PLAN_SEMANTIC_UNITS.filter(id=>!presentIds.has(id));
+  if(sourceUnmapped.length)
+    issues.push("SEMANTIC: protected PLAN/emend source not wholly mapped: "+
+      sourceUnmapped.length+" obligations missing");
+
   const findings=rows.map(row=>{
     const evidence=Object.prototype.hasOwnProperty.call(claims,row.id)?claims[row.id]:null;
     const missing=SEMANTIC_AXES.filter(axis=>!nonEmptySemanticValue(evidence?.[axis]));
@@ -1158,6 +1180,8 @@ export function auditNormativeSemanticCompleteness(matrix,claims={}){
   return {schema:"contaos.protocol-semantic-audit.v1",
     verdict:"INCONCLUSIVE",release:"NO_GO",reviewRequired:true,
     total:rows.length,unproven:findings.filter(x=>x.missing.length).length,
+    sourceExpected:CLOSED_PLAN_SEMANTIC_UNITS.length,
+    sourceUnmapped,sourceComplete:sourceUnmapped.length===0,
     findings,issues,
     reason:"Seven narrative axes need source-backed verification and independent adversarial contradiction; neither self-assertion nor BUILD PASS is a semantic certificate"};
 }
