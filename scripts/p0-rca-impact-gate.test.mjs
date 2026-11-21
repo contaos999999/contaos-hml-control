@@ -689,6 +689,14 @@ function paFixture() {
   })),
   artifact:{id:9001,name:"contaos-teste-c-777-1",digest:PA_DIGEST,expired:false,
     workflow_run:{head_sha:PA_HEAD,id:777}},
+  redProvenance:[44880700882,44880711676].map((id,i)=>({
+    run:{id,head_sha:i===0?"a".repeat(40):"b".repeat(40),
+      event:"pull_request",path:".github/workflows/contaos-auditoria-controller.yml",
+      status:"completed",conclusion:"failure"},
+    jobs:{total_count:1,jobs:[{name:"Controlador offline Windows",
+      conclusion:"failure",steps:[{name:"P0-ABS supervisor universal N01-N17 (RED/GREEN)",
+      conclusion:"failure"}]}]},
+  })),
   v2Job:{id:889,run_id:777,head_sha:PA_HEAD,status:"completed",conclusion:"success",
     steps:ADVERSARIAL_V2_STEP_NAMES.map(name=>({name,status:"completed",conclusion:"success"}))},
   testCJob:{id:888,run_id:777,head_sha:PA_HEAD,
@@ -845,6 +853,10 @@ async function paLiveVerification({mutateReadback,manual=false}={}) {
     if(path.endsWith("/actions/artifacts/9001")) return f.artifact;
     if(path.endsWith("/actions/jobs/888")) return f.testCJob;
     if(path.endsWith("/actions/jobs/889")) return f.v2Job;
+    for(const [i,id] of [44880700882,44880711676].entries()){
+      if(path.endsWith("/actions/runs/"+id)) return f.redProvenance[i].run;
+      if(path.endsWith("/actions/runs/"+id+"/jobs?per_page=100")) return f.redProvenance[i].jobs;
+    }
     if(path.endsWith("/actions/runs/777")) return f.testCRun;
     if(path.endsWith("/actions/runs/777/attempts/1/jobs?per_page=100"))
       return f.testCAttemptJobs;
@@ -999,5 +1011,18 @@ test("P0 V2 probe evidence is authenticated, never self-declared 10+12",()=>{
   ]){const f=paFixture();change(f);const o=paCheck(f);
     assert.equal(o.pass,false);
     assert.match(o.issues.join(" "),/22 provas executaveis/);
+  }
+});
+
+test("P0 V2 RED source cannot be arbitrary failed workflow",()=>{
+  for(const mutate of [
+    f=>f.redProvenance[0].run.conclusion="success",
+    f=>f.redProvenance[0].run.head_sha=PA_HEAD,
+    f=>f.redProvenance[0].jobs.jobs[0].steps[0].name="Unrelated build",
+    f=>f.redProvenance[0].jobs.total_count=4,
+    f=>f.redProvenance[0].run.path=".github/workflows/unrelated.yml",
+  ]){const f=paFixture();mutate(f);
+    const o=paCheck(f);assert.equal(o.pass,false);
+    assert.match(o.issues.join(" "),/RED nao vinculado/);
   }
 });
