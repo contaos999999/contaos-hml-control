@@ -1280,7 +1280,7 @@ export function buildSevenAxisSemanticBacklog(inventory){
         pairs.push({source_id:row.source_id,a:row.mentioned_rules[i],
           b:row.mentioned_rules[j],status:"INTERACTION_UNPROVEN"});
   }
-  const firstTen=CLOSED_PLAN_SEMANTIC_UNITS.filter(id=>/^PLAN-S3-\\d{2}$/.test(id));
+  const firstTen=CLOSED_PLAN_SEMANTIC_UNITS.filter(id=>/^PLAN-S3-\d{2}$/.test(id));
   const planPath="docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md";
   const normative_rules=CLOSED_PLAN_SEMANTIC_UNITS.map(id=>{
     const n=firstTen.indexOf(id);
