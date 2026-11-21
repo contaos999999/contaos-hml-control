@@ -685,9 +685,10 @@ function paFixture() {
     status:"completed",conclusion:"success",
     steps:[{name:"Teste C Playwright — 24 telas, 4 larguras, 2 temas",conclusion:"success"}]},
   testCRun:{id:777,run_attempt:1,head_sha:PA_HEAD,event:"pull_request",
+    status:"completed",conclusion:"success",
     path:".github/workflows/contaos-frontend-zero-drift.yml",
     pull_requests:[{number:690,head:{sha:PA_HEAD},base:{sha:PA_BASE}}]},
-  testCAttemptJobs:{jobs:[{id:888,run_id:777,conclusion:"success"}]},
+  testCAttemptJobs:{total_count:1,jobs:[{id:888,run_id:777,conclusion:"success"}]},
   expectedHead:PA_HEAD,expectedBase:PA_BASE};
 }
 const paCheck = (fixture) => validateAssistantPrecertRelease(fixture);
@@ -797,6 +798,13 @@ test("P0 PA missing Playwright execution step must block",()=>{
   assert.equal(paCheck(f).pass,false);
 });
 
+test("P0 adversarial incomplete attempt pagination and failed workflow block",()=>{
+  for(const mutate of [
+    f=>f.testCAttemptJobs.total_count=2,
+    f=>f.testCRun.conclusion="failure",
+    f=>f.testCRun.status="in_progress",
+  ]){const f=paFixture();mutate(f);assert.equal(paCheck(f).pass,false)}
+});
 test("P0 adversarial wrong workflow and unrelated PR cannot release",()=>{
   for(const mutate of [
     f=>f.testCRun.path=".github/workflows/unrelated.yml",
