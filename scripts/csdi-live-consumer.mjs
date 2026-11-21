@@ -58,7 +58,7 @@ export function validateWitnessContents(w,receipt) {
     const expected=new Set(inventory.filter(x=>x.kind===kind).map(x=>x.id));
     if(expected.size!==items.length || items.some(x=>!expected.has(x.id))) return false;
   }
-  if(!Array.isArray(w.axes) || w.axes.length!==7 || !axes.every(name=>w.axes.some(a=>a.name===name && a.status==='PASS' && Array.isArray(a.witness_ids) && a.witness_ids.length>0 && a.witness_ids.every(id=>w.clauses.some(c=>c.id===id))))) return false;
+  if(!Array.isArray(w.axes) || w.axes.length!==7 || new Set(w.axes.map(a=>a?.name)).size!==7 || !axes.every(name=>w.axes.some(a=>a.name===name && a.status==='PASS' && Array.isArray(a.witness_ids) && a.witness_ids.length>0 && a.witness_ids.every(id=>w.clauses.some(c=>c.id===id))))) return false;
   return true;
 }
 
@@ -101,7 +101,9 @@ export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.en
     if (!artifact) issues.push('ARTIFACT_NOT_VERIFIED');
     else {
       if(artifact.size_in_bytes>100*1024*1024) throw Error('ARTIFACT_SIZE_LIMIT');
-      const archive=await fetchImpl(`https://api.github.com/repos/${repository}/actions/artifacts/${receipt.github_artifact_id}/zip`,{headers,redirect:'follow'});
+      // Never forward a bearer token across a cross-origin redirect.
+      const archive=await fetchImpl(`https://api.github.com/repos/${repository}/actions/artifacts/${receipt.github_artifact_id}/zip`,{headers,redirect:'manual'});
+      if(archive.status>=300 && archive.status<400) {issues.push('ARTIFACT_REDIRECT_REQUIRES_TRUSTED_FETCH');}
       if (!archive.ok) issues.push('ARTIFACT_DOWNLOAD_FAILED');
       else {
         const bytes=Buffer.from(await archive.arrayBuffer());
@@ -120,7 +122,9 @@ export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.en
       }
     }
     if (pr.head?.sha!==receipt.head || pr.base?.sha!==receipt.base || pr.number!==receipt.pr_number) issues.push('PR_HEAD_BASE_MISMATCH');
-    if (!Array.isArray(reviews) || !reviews.some(x=>x.user?.login?.toLowerCase()===receipt.reviewer_login.toLowerCase() && x.state==='APPROVED' && x.commit_id===receipt.head && x.user?.login!==pr.user?.login)) issues.push('INDEPENDENT_REVIEW_NOT_VERIFIED');
+    const reviewerEvents=Array.isArray(reviews)?reviews.filter(x=>x.user?.login?.toLowerCase()===receipt.reviewer_login.toLowerCase() && ['APPROVED','CHANGES_REQUESTED','DISMISSED'].includes(x.state)).sort((a,b)=>new Date(a.submitted_at||0)-new Date(b.submitted_at||0)):[];
+    const latestReview=reviewerEvents.at(-1);
+    if (!latestReview || latestReview.state!=='APPROVED' || latestReview.commit_id!==receipt.head || latestReview.user?.login===pr.user?.login) issues.push('INDEPENDENT_REVIEW_NOT_VERIFIED');
     if (plan.path!==`docs/frontend/planos/P0_GOV_PLAN_${receipt.pr_number}.json` || !plan.sha || !plan.content) issues.push('PROTECTED_PLAN_NOT_FOUND');
     else {
       const decoded=Buffer.from(plan.content.replace(/\s/g,''),'base64').toString('utf8');
