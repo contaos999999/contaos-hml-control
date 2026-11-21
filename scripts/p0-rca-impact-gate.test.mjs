@@ -1196,6 +1196,24 @@ test("P0 §5.6 semantic completeness never inherits PASS from executable matrix"
   assert.equal(candidate.release,"NO_GO");
   assert.equal(candidate.reviewRequired,true,
     "self-authored seven-field attestations cannot replace independent review");
+  for(const [label,change] of [
+    ["missing negative effect",x=>delete x.outcomes.negative],
+    ["missing positive effect",x=>delete x.outcomes.positive],
+    ["missing counterexample",x=>delete x.interactions.counterexample],
+    ["missing source LIVE head",x=>delete x.live.head],
+    ["invalid source LIVE head",x=>x.live.head="not-a-sha"],
+    ["missing revocation source",x=>delete x.revocation.source],
+    ["missing external boundary",x=>delete x.boundary.external],
+    ["missing authority provenance",x=>delete x.authority.source],
+  ]){
+    const incomplete=structuredClone(fields);change(incomplete);
+    const tested=auditNormativeSemanticCompleteness(matrix,{
+      "PLAN-S3-RULE-01":incomplete,
+      "S5.6:Prova semântica por cláusula":fields,
+    });
+    assert.equal(tested.unproven,1,label+" must be structurally UNPROVEN");
+    assert.equal(tested.verdict,"INCONCLUSIVE");
+  }
   const closedIds=[
     ...[["S3",10],["S31",9],["S4",14],["S5",18],["S6",6],
       ["S7",3],["S8",7],["S9",2],["S10",2]].flatMap(([section,count])=>
