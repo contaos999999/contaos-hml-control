@@ -10,7 +10,7 @@ function fixture() {return {
  axes:axes.map(name=>({name,verdict:'PASS',witnesses:['test-run-123']})),
  ambiguities_unresolved:0,unproven_rules:0,unadjudicated_pairs:0,active_vetoes:0,
  positive_tests:[{status:'PASS',run_id:'p1'}],negative_tests:[{status:'PASS',run_id:'n1'}],
- second_read:{verdict:'PASS',reviewer:'reviewer2',evidence_ref:'review-1'},
+ second_read:{verdict:'PASS',reviewer:'reviewer2',evidence_ref:'review-1',commit_sha:sha40,review_id:123,findings:[]},
  live_provenance_verified:true,drift_detected:false,verdict:'PASS'
 };}
 test('receipt completo estruturalmente passa, sem equivaler a autenticacao externa',()=>assert.equal(validateCSDI(fixture()).pass,true));
@@ -46,3 +46,7 @@ for (const axis of axes) {
     assert.ok(verdict.issues.includes('INCOMPLETE_SEVEN_AXES'));
   });
 }
+
+test('second read stale HEAD blocks',()=>{const r=fixture();r.second_read.commit_sha='c'.repeat(40);assert.ok(validateCSDI(r).issues.includes('SECOND_READ_MISSING'))});
+test('second read absent review ID blocks',()=>{const r=fixture();delete r.second_read.review_id;assert.ok(validateCSDI(r).issues.includes('SECOND_READ_MISSING'))});
+test('second read unresolved finding blocks',()=>{const r=fixture();r.second_read.findings=[{resolution:'OPEN'}];assert.ok(validateCSDI(r).issues.includes('SECOND_READ_MISSING'))});
