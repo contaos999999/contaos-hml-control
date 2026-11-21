@@ -1002,7 +1002,7 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
       const witness=FULL_PROTOCOL_CASES.find(x=>x.id===witnessId);
       const suite=witness&&suites?.[witness.file];
       const matches=witness&&Array.isArray(suite?.successfulNames)?
-        suite.successfulNames.filter(x=>x.includes(witness.pattern)):[];
+        suite.successfulNames.filter(x=>x.startsWith(witness.pattern)):[];
       const valid=row.status==="STRUCTURAL_WITNESS" && !!witnessId &&
         suite?.passed===true && suite.exitCode===0 && matches.length>0;
       rows.push({...row,execution:valid?"EXECUTED_PASS":"UNPROVEN",
@@ -1014,7 +1014,7 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
     const item=FULL_PROTOCOL_CASES.find(x=>x.id===row.id);
     const suite=item&&suites?.[item.file];
     const matches=Array.isArray(suite?.successfulNames)?
-      suite.successfulNames.filter(x=>x.includes(item.pattern)):[];
+      suite.successfulNames.filter(x=>x.startsWith(item.pattern)):[];
     const good=suite?.passed===true && suite?.exitCode===0 &&
       row.status==="TEST_DECLARED_NOT_EXECUTED" && matches.length>=1;
     rows.push({...row,execution:good?
