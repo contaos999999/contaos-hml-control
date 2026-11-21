@@ -788,6 +788,21 @@ const FULL_PROTOCOL_PLAN_CORE_RULES=Object.freeze([
 FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_PLAN_CORE_RULES.map(([number,file,pattern])=>({
   id:"PLAN-S3-RULE-"+number,file,pattern
 })));
+// Section 3.1 of the protected PLAN is about future privileged activation.
+// These tests show rejection in the unprivileged BUILD. They MUST NOT be
+// reported as evidence that any GitHub App, queue or owner authorization ran.
+const FULL_PROTOCOL_PLAN_ACTIVATION_NEGATIVES=Object.freeze([
+  ["PLAN-S3.1-APP-IDENTITY","python","test_N13_wrong_check_integration_rejected"],
+  ["PLAN-S3.1-QUEUE","queue","N13 entrada QUEUED nao prova grupo ativo"],
+  ["PLAN-S3.1-STATUS-API","python","test_N13_foreign_status_publisher_rejected"],
+  ["PLAN-S3.1-GROUP-AUTH","queue","N13 real resolver rejects removed queue ref"],
+  ["PLAN-S3.1-OWNER-REVIEW","python","test_N17_approved_review_does_not_replace_authorization"],
+  ["PLAN-S3.1-LIVE-TRIAL","python","test_N16_no_real_group_status_rejected"],
+  ["PLAN-S3.1-ADMIN-AUTH","python","test_activation_cannot_be_enabled_by_candidate"],
+]);
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_PLAN_ACTIVATION_NEGATIVES.map(([id,file,pattern])=>({
+  id,file,pattern
+})));
 const FULL_PROTOCOL_51_GATES=[
   ["NR-005 / documentos comuns","rca","NR-005 checkpoint documental em PR posterior"],
   ["NR-005 / BUILD válido","rca","P0 PRE-AUDIT PR head/base avançada"],
@@ -915,7 +930,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"0afe77ad28859afed7d29a80fa08f408e4fe6659",
+  rca:"9b04956f4f27c876d93386d9cc18c0cec4783d83",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -938,6 +953,7 @@ const ACTIVATION_ONLY_PROTOCOL_IDS=new Set([
   "S4-APP-ONLY","S4-ENTRY-SHA-BASE","S4-GROUP-REVALIDATE",
   "S5-QUEUE-SINGLE-PR","S5-REVOCATION","S5-NO-WEAK-PROVIDER",
   "S5-ADMIN-AUTH","S5-RULESET-READBACK",
+  ...FULL_PROTOCOL_PLAN_ACTIVATION_NEGATIVES.map(([id])=>id),
 ]);
 
 const FULL_PROTOCOL_EXTERNAL=[
