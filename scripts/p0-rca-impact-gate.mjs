@@ -794,6 +794,20 @@ const FULL_PROTOCOL_51_GATES=[
   ["WDG-06 / estados terminais","python","test_watchdog_forged_certified_contract"],
   ["WDG-07 / permissão REST","rca","P0 FULL_PROTOCOL watchdog read-only permissions"],
 ];
+// A composite normative row does not imply seven negatives merely because
+// one test is green. Map each anti-bypass scenario to a distinct executed case.
+const FULL_PROTOCOL_51_FALSIFICATION_SUBCASES=[
+  ["PR_ERRADA","NR-005 manifesto de outra PR nao pode autorizar #690"],
+  ["ASSOCIACAO_AUSENTE","P0 PRE-AUDIT #690 sem associação autenticada: FAIL"],
+  ["SQUASH","P0 PRE-AUDIT #690 via squash de um pai: FAIL"],
+  ["DOCUMENTO_EXTRA","NR-005 documento extra com codigo permitido nao pode passar"],
+  ["SCRIPT_EXTRA","NR-005 script adicional fora dos 14 caminhos sempre falha"],
+  ["RENOMEACAO","NR-005 caminho de origem de renomeacao tambem exige allowlist"],
+  ["MODO_GIT","NR-005 chmod 100644 para 100755 é FAIL"],
+];
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_51_FALSIFICATION_SUBCASES.map(([id,pattern])=>({
+  id:"S5.1:NR-005-FALSIFICACAO:"+id,file:"rca",pattern
+})));
 const FULL_PROTOCOL_52_RULES=[
   ["Pré-integração NR-005","rca","NR-005 pull_request bloqueia manifesto"],
   ["Fila NR-009/N13","queue","N13 removed merge queue entry during readback"],
@@ -871,7 +885,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"f5b4b7b9583ebeb7222339b46ff871920d07949a",
-  rca:"ab04717bf765d46fa1d16a00e57284877d08b6dd",
+  rca:"10b51d0823a5f05bc4fb3b8e7f423d466ba8499e",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
