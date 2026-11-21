@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, attestFullProtocolExecutions, parseFullProtocolSuiteResult, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -897,7 +897,7 @@ test("P0 FULL_PROTOCOL matrix is fail-closed for absent N17 and missing critical
   const fixture={protocol,tests,source,workflow,manifest,
     mission:{activation_authorized:false},paths:[...PA_FILES]};
   const ok=auditFullProtocolCoverage(fixture);
-  assert.equal(ok.verdict,"COVERAGE_READY_FOR_EXECUTION",JSON.stringify(ok.issues));
+  assert.equal(ok.verdict,"COVERAGE_MAPPED_NOT_EXECUTED",JSON.stringify(ok.issues));
   assert.ok(ok.requirements>=55,"integral protocol matrix not just old findings");
   const missing=auditFullProtocolCoverage({...fixture,tests:{...tests,
     python:tests.python.replaceAll("test_N17_","test_NEUTRALIZED_")}});
