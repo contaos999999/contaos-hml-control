@@ -1119,6 +1119,46 @@ function executedConstituents(suites,requirements){
   }
   return {complete:true,names};
 }
+// Separate normative semantic assurance from executable BUILD coverage.
+// A seven-field narrative does not establish that any asserted relationship
+// is true: independent contradictory review and authenticated provenance are
+// separate decisions. Fail closed even when all seven fields are populated.
+const SEMANTIC_AXES=Object.freeze([
+  "authority","antecedent","outcomes","interactions","live","revocation","boundary"
+]);
+function nonEmptySemanticValue(value){
+  if(typeof value==="string")return value.trim().length>0;
+  if(Array.isArray(value))return value.length>0&&value.every(nonEmptySemanticValue);
+  if(value&&typeof value==="object"){
+    const values=Object.values(value);
+    return values.length>0&&values.every(nonEmptySemanticValue);
+  }
+  return false;
+}
+export function auditNormativeSemanticCompleteness(matrix,claims={}){
+  const rows=Array.isArray(matrix?.rows)?matrix.rows:[];
+  const issues=[];
+  if(matrix?.verdict!=="EXECUTED_PASS_FOR_BUILD_ONLY"||!rows.length)
+    issues.push("SEMANTIC: executable BUILD evidence not complete");
+  if(!claims||typeof claims!=="object"||Array.isArray(claims))
+    claims={};
+  if(new Set(rows.map(row=>row.id)).size!==rows.length)
+    issues.push("SEMANTIC: duplicated obligation ID");
+  const findings=rows.map(row=>{
+    const evidence=Object.prototype.hasOwnProperty.call(claims,row.id)?claims[row.id]:null;
+    const missing=SEMANTIC_AXES.filter(axis=>!nonEmptySemanticValue(evidence?.[axis]));
+    if(missing.length)issues.push("SEMANTIC: "+row.id+" missing "+missing.join(","));
+    return {id:row.id,execution:row.execution,axes:SEMANTIC_AXES.length-missing.length,
+      missing,semanticVerdict:missing.length?"INCONCLUSIVE":"REVIEW_REQUIRED"};
+  });
+  const unknown=Object.keys(claims).filter(id=>!rows.some(row=>row.id===id));
+  if(unknown.length)issues.push("SEMANTIC: unrecognized claims "+unknown.join(","));
+  return {schema:"contaos.protocol-semantic-audit.v1",
+    verdict:"INCONCLUSIVE",release:"NO_GO",reviewRequired:true,
+    total:rows.length,unproven:findings.filter(x=>x.missing.length).length,
+    findings,issues,
+    reason:"Seven narrative axes need source-backed verification and independent adversarial contradiction; neither self-assertion nor BUILD PASS is a semantic certificate"};
+}
 export function attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha}={}){
   const issues=[...(coverage?.issues||[])];
   const rows=[];
