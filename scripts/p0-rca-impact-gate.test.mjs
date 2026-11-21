@@ -2009,6 +2009,11 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   assert.equal(backlog.anchored_normative_rules,10);
   assert.equal(backlog.unlinked_normative_rules,127);
   assert.equal(backlog.provisionally_located_rules,127);
+  assert.equal(backlog.all_possible_rule_pairs,9316);
+  assert.equal(backlog.untriaged_rule_pairs,9316);
+  assert.match(backlog.pair_inventory_sha256,/^[a-f0-9]{64}$/);
+  assert.equal(backlog.semantic_completeness,"INCONCLUSIVE");
+
   assert.equal(backlog.normative_rules.filter(x=>x.source_link_level==="DIRECT_NUMBERED").length,10);
   assert.equal(backlog.normative_rules.filter(x=>x.source_link_level==="PROVISIONAL_ONLY").length,127);
   assert.ok(backlog.normative_rules.every(x=>x.source_link_level==="DIRECT_NUMBERED"||
