@@ -200,6 +200,10 @@ test("NR-005 documento extra com codigo permitido nao pode passar", () => {
   const r = gov690([files690[2], "docs/frontend/governanca/DOCUMENTO_EXTRA.md"]);
   assert.match(r.errors.join(" "), /fora da allowlist full_diff/);
 });
+test("NR-005 script adicional fora dos 14 caminhos sempre falha", () => {
+  const r=gov690([files690[2], "scripts/auditoria/UNAPPROVED_NEW.py"]);
+  assert.match(r.errors.join(" "), /fora da allowlist full_diff/);
+});
 test("NR-005 diff exclusivamente documental fora da allowlist nao recebe N/A", () => {
   const r = gov690([files690[0], "docs/frontend/planos/PLANO_EXTRA.md"]);
   assert.match(r.errors.join(" "), /fora da allowlist full_diff/);
@@ -1217,6 +1221,15 @@ test("P0 FULL_PROTOCOL matrix is fail-closed for absent N17 and missing critical
   const unauthorized=auditFullProtocolCoverage({...fixture,
     mission:{activation_authorized:true}});
   assert.equal(unauthorized.verdict,"CHANGES_REQUESTED");
+  const falsifications=[
+    "PR_ERRADA","ASSOCIACAO_AUSENTE","SQUASH","DOCUMENTO_EXTRA",
+    "SCRIPT_EXTRA","RENOMEACAO","MODO_GIT",
+  ];
+  const provedIds=ok.rows.map(x=>x.id);
+  for(const name of falsifications)
+    assert.ok(provedIds.includes("S5.1:NR-005-FALSIFICACAO:"+name),
+      "each distinct falsification needs its own executed witness: "+name);
+
 });
 
 test("P0 META_PROTOCOL authoritative PLAN and amendment must match protected Git blobs",()=>{
