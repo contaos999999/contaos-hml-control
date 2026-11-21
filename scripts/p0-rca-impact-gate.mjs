@@ -930,7 +930,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="3e652740fc7a60b5ccd8ca1081529c95cc7d4739";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"3125e9dd44c92d508d265b57e380ecbeb60d87a9",
+  rca:"6335d6f6d650cfa7e6df85b0cb1c208f5d4b05de",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
