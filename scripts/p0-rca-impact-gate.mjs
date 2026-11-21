@@ -571,6 +571,38 @@ const preauditHash = (text) => createHash("sha256").update(text, "utf8").digest(
 const exactSet = (a, b) => Array.isArray(a) && Array.isArray(b) &&
   a.length === b.length && new Set(a).size === a.length &&
   new Set(b).size === b.length && a.every(x => b.includes(x));
+// GitHub returns ALL checks on a commit, not just the newest workflow run.
+// A native pull_request_review legitimately creates another run on the SAME
+// commit. Select its newest authenticated job by monotonic GitHub Actions job
+// ID, not API ordering, and reject foreign/ambiguous evidence; never reuse an
+// older PASS while a newer run is pending or failed.
+export function latestPrecertCheck(checkRuns, name, expectedHead) {
+  if (!Array.isArray(checkRuns) || !validSha(expectedHead)) return null;
+  const found=checkRuns.filter(x=>x?.name===name);
+  if (!found.length || new Set(found.map(x=>x?.id)).size!==found.length) return null;
+  if (!found.every(x=>Number.isSafeInteger(x?.id) && x.id>0 &&
+      x.head_sha===expectedHead && x?.app?.id===PRECERT_ISSUER &&
+      typeof x.details_url==="string" &&
+      new RegExp("^https://github[.]com/"+REPO.replaceAll("/","\\/")+
+        "/actions/runs/[1-9][0-9]*/job/"+x.id+"$").test(x.details_url) &&
+      ["queued","in_progress","completed","waiting","pending","requested"].includes(x.status)))
+    return null;
+  return found.reduce((latest,x)=>!latest || x.id>latest.id?x:latest,null);
+}
+const v2AttestedJob=(check, job, head)=>
+  !!check && !!job && job.id===check.id &&
+  check.head_sha===head && check.app?.id===PRECERT_ISSUER &&
+  check.status==="completed" && check.conclusion==="success" &&
+  job.head_sha===head && job.status==="completed" && job.conclusion==="success" &&
+  Number.isSafeInteger(job.run_id) && job.run_id>0 &&
+  check.details_url==="https://github.com/"+REPO+"/actions/runs/"+
+    job.run_id+"/job/"+job.id &&
+  Array.isArray(job.steps) &&
+  [...ADVERSARIAL_V2_STEP_NAMES,
+    ...ADVERSARIAL_V2_CAUSAL_CASES.map(x=>"P0 V2 CAUSAL_RED "+x.case_id)]
+    .every(name=>job.steps.filter(step=>step?.name===name &&
+      step.status==="completed" && step.conclusion==="success").length===1);
+
 export function parseAssistantPreaudit(body) {
   if (typeof body !== "string") return null;
   const re = new RegExp("<!-- " + ASSISTANT_PREAUDIT_MARKER + "\\s*\\n([\\s\\S]*?)\\n-->", "g");
@@ -581,7 +613,8 @@ export function parseAssistantPreaudit(body) {
 }
 export function validateAssistantPrecertRelease({
   pr, currentMain, manifest, paths, comments, reviews = [], checkRuns, artifact,
-  testCJob, testCRun, testCAttemptJobs, v2Job, redProvenance=[], expectedHead, expectedBase,
+  testCJob, testCRun, testCAttemptJobs, v2Job, receiptV2Job=v2Job,
+  redProvenance=[], expectedHead, expectedBase,
 } = {}) {
   const issues = [];
   const add = (reason) => issues.push(reason);
@@ -618,36 +651,21 @@ export function validateAssistantPrecertRelease({
     }
   }
   for (const name of PRECERT_REQUIRED_CHECKS) {
-    const list = Array.isArray(checkRuns) ? checkRuns.filter(x => x?.name === name) : [];
-    if (list.length !== 1 || list[0]?.head_sha !== expectedHead ||
-        list[0]?.app?.id !== PRECERT_ISSUER ||
-        list[0]?.status !== "completed" || list[0]?.conclusion !== "success" ||
-        !Number.isSafeInteger(list[0]?.id) || list[0].id <= 0)
-      add("check exigido ausente, repetido, sem sucesso ou origem: " + name);
+    const latest=latestPrecertCheck(checkRuns,name,expectedHead);
+    if (!latest || latest.status!=="completed" || latest.conclusion!=="success")
+      add("check exigido sem latest SUCCESS autenticado, pending/failure ou origem: "+name);
   }
-  // Attest test execution through an authenticated GitHub Actions check and
-  // 22 successful steps on the same immutable commit. A self-authored
-  // "PASS" string cannot substitute for an executed step.
-  const v2Checks = Array.isArray(checkRuns)
-    ? checkRuns.filter(x=>x?.name === ADVERSARIAL_V2_CHECK_NAME) : [];
-  if (v2Checks.length !== 1 || v2Checks[0]?.head_sha !== expectedHead ||
-      v2Checks[0]?.app?.id !== PRECERT_ISSUER ||
-      v2Checks[0]?.status !== "completed" ||
-      v2Checks[0]?.conclusion !== "success" ||
-      !Number.isSafeInteger(v2Checks[0]?.id) ||
-      !v2Job || v2Job.id !== v2Checks[0].id ||
-      v2Job.head_sha !== expectedHead ||
-      v2Job.status !== "completed" || v2Job.conclusion !== "success" ||
-      !Array.isArray(v2Job.steps) ||
-      ![...ADVERSARIAL_V2_STEP_NAMES,
-        ...ADVERSARIAL_V2_CAUSAL_CASES.map(x=>"P0 V2 CAUSAL_RED "+x.case_id)]
-        .every(name=>v2Job.steps.filter(step => step?.name === name &&
-          step?.status === "completed" && step?.conclusion === "success").length === 1) ||
-      !Number.isSafeInteger(v2Job?.run_id) ||
-      v2Checks[0]?.details_url !==
-        "https://github.com/" + REPO + "/actions/runs/" +
-        v2Job?.run_id + "/job/" + v2Job?.id)
-    add("25 provas executaveis P0-ABS V2 sem autenticacao de JOB/HEAD: 10+12+3 causal");
+  // The current LIVE V2 job must be green; the earlier receipt still proves
+  // the original historical RED on this exact commit, independently verified
+  // through its own authenticated Actions job. No check is trusted by name
+  // alone; duplicate names with a foreign issuer or ID remain NO-GO.
+  const v2Checks=Array.isArray(checkRuns)?
+    checkRuns.filter(x=>x?.name===ADVERSARIAL_V2_CHECK_NAME):[];
+  const latestV2=latestPrecertCheck(checkRuns,ADVERSARIAL_V2_CHECK_NAME,expectedHead);
+  const receiptCheck=v2Checks.find(x=>x?.id===receiptV2Job?.id);
+  if (!latestV2 || !v2AttestedJob(latestV2,v2Job,expectedHead) ||
+      !receiptCheck || !v2AttestedJob(receiptCheck,receiptV2Job,expectedHead))
+    add("25 provas executaveis P0-ABS V2 sem autenticacao de latest/receipt JOB/HEAD 10+12+3 causal");
   const history = Array.isArray(comments) ? comments
     .filter(x => x?.user?.login === "contaos9999" &&
       typeof x.body === "string" && x.body.includes(ASSISTANT_PREAUDIT_MARKER))
@@ -690,9 +708,9 @@ export function validateAssistantPrecertRelease({
             observed.observed===expected.observed &&
             observed.green===expected.green &&
             observed.green_head===expectedHead &&
-            observed.run_id===v2Job?.run_id &&
-            observed.job_id===v2Job?.id &&
-            v2Job?.steps?.filter(x=>x?.name===stepName &&
+            observed.run_id===receiptV2Job?.run_id &&
+            observed.job_id===receiptV2Job?.id &&
+            receiptV2Job?.steps?.filter(x=>x?.name===stepName &&
               x.status==="completed" && x.conclusion==="success").length===1;
         }))
       add("NR-006: RED causal nao demonstrado por caso/SHA/blob/resultado e GREEN no mesmo job");
@@ -826,10 +844,8 @@ export async function verifyAssistantPrecertInGithub({
   // structured receipt is not ready. This early result NEVER releases.
   const requiredNow=[...PRECERT_REQUIRED_CHECKS,ADVERSARIAL_V2_CHECK_NAME];
   const pending=requiredNow.filter(name => {
-    const matching=checks.check_runs.filter(x=>x?.name===name);
-    return matching.length!==1 || matching[0]?.head_sha!==head ||
-      matching[0]?.app?.id!==PRECERT_ISSUER ||
-      matching[0]?.status!=="completed" || matching[0]?.conclusion!=="success";
+    const latest=latestPrecertCheck(checks.check_runs,name,head);
+    return !latest || latest.status!=="completed" || latest.conclusion!=="success";
   });
   if (pending.length || record?.head!==head || record?.base!==base ||
       record?.verdict!=="PASS") {
@@ -852,9 +868,13 @@ export async function verifyAssistantPrecertInGithub({
     ]);
     return {run,jobs};
   }));
-  const v2Check = checks.check_runs.find(x=>x?.name === ADVERSARIAL_V2_CHECK_NAME);
-  const v2Job = Number.isSafeInteger(v2Check?.id) && v2Check.id > 0 ?
-    await api("/repos/" + REPO + "/actions/jobs/" + v2Check.id) : null;
+  const v2Check=latestPrecertCheck(checks.check_runs,ADVERSARIAL_V2_CHECK_NAME,head);
+  const v2Job=v2Check?
+    await api("/repos/" + REPO + "/actions/jobs/" + v2Check.id):null;
+  const receiptJobId=record?.adversarial_v2?.red_cases?.[0]?.job_id;
+  const receiptV2Job=Number.isSafeInteger(receiptJobId) && receiptJobId>0 ?
+    (receiptJobId===v2Check?.id?v2Job:
+      await api("/repos/" + REPO + "/actions/jobs/" + receiptJobId)):null;
   const artifact = Number.isSafeInteger(record?.artifact?.id) &&
     record.artifact.id > 0 ?
     await api("/repos/" + REPO + "/actions/artifacts/" + record.artifact.id) : null;
@@ -876,7 +896,8 @@ export async function verifyAssistantPrecertInGithub({
     [x.previous_filename, x.filename] : [x?.filename]);
   const result = validateAssistantPrecertRelease({
     pr, currentMain: main?.object?.sha, manifest, paths,
-    comments, reviews, checkRuns: checks.check_runs, artifact, testCJob, testCRun, testCAttemptJobs, v2Job, redProvenance,
+    comments, reviews, checkRuns: checks.check_runs, artifact, testCJob, testCRun,
+    testCAttemptJobs, v2Job, receiptV2Job, redProvenance,
     expectedHead: head, expectedBase: base,
   });
   // Fail closed if the PR advances between check collection and decision.
