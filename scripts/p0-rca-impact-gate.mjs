@@ -2134,7 +2134,26 @@ async function main() {
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) ===
   fileURLToPath(new URL("file://" + process.argv[1]))) {
-  if (process.argv.includes("--audit-full-protocol")) {
+  if (process.argv.includes("--audit-semantic-inventory")) {
+    try{
+      const base=process.env.INPUT_PREAUDIT_BASE||git("rev-parse","origin/main");
+      if(!validSha(base))throw Error("invalid protected base SHA");
+      const sources=Object.fromEntries(Object.keys(PROTECTED_SEMANTIC_SOURCES)
+        .map(path=>[path,{content:git("show",base+":"+path),
+          blob:git("rev-parse",base+":"+path)}]));
+      const inventory=inventoryProtectedSemanticLines(sources);
+      const result={schema:inventory.schema,head:git("rev-parse","HEAD"),
+        protected_base:base,source_count:inventory.source_count,
+        anchored_lines:inventory.lines.length,
+        anchors:inventory.lines.map(({id,path,blob,line,text_sha256})=>
+          ({id,path,blob,line,text_sha256})),
+        issues:inventory.issues,source_verified:inventory.inventory_verified,
+        semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+      console.log(JSON.stringify(result));
+      if(!result.source_verified)process.exitCode=1;
+    }catch(e){console.error("SEMANTIC_SOURCE_INVENTORY FAIL: "+e.message);
+      process.exitCode=1;}
+  } else if (process.argv.includes("--audit-full-protocol")) {
     try{
       const audit=fullProtocolAuditFromCheckout();
       console.log(JSON.stringify(audit));
