@@ -930,7 +930,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"86caf9379fcebbcfb1f631b880e2022da49056f6",
+  rca:"7effbc241cbe7398809431ce4d58c72650f0374b",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -1278,7 +1278,7 @@ function runFullProtocolSuites(){
 // The PLAN #689 and queue amendment #691 are protected normative inputs.
 // A green test matrix cannot replace or invent their source or soften their
 // BUILD-vs-activation boundary.
-export function attestProtectedNormativeSources({manifest,plan,amendment}={}){
+export function attestProtectedNormativeSources({manifest,plan,amendment,canonical}={}){
   const issues=[];
   if(manifest?.schema!=="contaos.p0.gov-plan.v1" ||
     manifest?.approved!==true || manifest?.pr_number!==690 ||
@@ -1291,6 +1291,16 @@ export function attestProtectedNormativeSources({manifest,plan,amendment}={}){
     issues.push("NORMATIVE: PLAN #689 sem blob imutavel de origem");
   if(typeof amendment!=="string" || gitBlobId(amendment)!=="cba58ceb1f88fa6774ccf1ce1661ac9f5a942c1b")
     issues.push("NORMATIVE: emenda #691 sem blob imutavel de origem");
+  const CANONICAL_ORCHESTRATION_BLOB="8a9d5824a83d43150589b97ad8cbd95d6b49cfdd";
+  if(typeof canonical!=="string" || gitBlobId(canonical)!==CANONICAL_ORCHESTRATION_BLOB)
+    issues.push("NORMATIVE: protocolo persistente de orquestracao sem blob protegido");
+  for(const phrase of [
+    "Antes de enviar `APPROVE`",
+    "exceção documental",
+    "Para BUILD/código",
+    "Não leia tokens",
+  ])if(typeof canonical!=="string" || !canonical.includes(phrase))
+    issues.push("NORMATIVE: regra de revisão ou exceção documental ausente: "+phrase);
   for(const [id,source,words] of [
     ["BUILD-SEPARATE-ACTIVATION",amendment,"ativacao_autorizada: false"],
     ["BUILD-MANIFEST-ALLOWLIST",amendment,"manifesto"],
@@ -1305,6 +1315,7 @@ export function attestProtectedNormativeSources({manifest,plan,amendment}={}){
     verdict:issues.length?"CHANGES_REQUESTED":"PASS",
     planBlob:typeof plan==="string"?gitBlobId(plan):null,
     amendmentBlob:typeof amendment==="string"?gitBlobId(amendment):null,
+    canonicalBlob:typeof canonical==="string"?gitBlobId(canonical):null,
     activationAuthorized:false,issues};
 }
 
@@ -1324,7 +1335,10 @@ function fullProtocolAuditFromCheckout(){
     manifest.plan_documento],{encoding:"utf8",timeout:15000});
   const amendment=execFileSync("git",["show",base+":"+
     manifest.emenda_fila],{encoding:"utf8",timeout:15000});
-  const normative=attestProtectedNormativeSources({manifest,plan,amendment});
+  const canonical=execFileSync("git",["show",base+
+    ":docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md"],
+    {encoding:"utf8",timeout:15000});
+  const normative=attestProtectedNormativeSources({manifest,plan,amendment,canonical});
   if(normative.verdict!=="PASS")throw Error(normative.issues.join("; "));
   const paths=execFileSync("git",["diff","--name-only",base,"HEAD"],
     {encoding:"utf8",timeout:15000}).trim().split("\n").filter(Boolean);
