@@ -61,6 +61,10 @@ def check_contract(contract):
     if not isinstance(contract.get("allowed_dependencies"), list):
         raise InvalidEvidence("dependencies missing")
     deps = contract["allowed_dependencies"]
+    pins = contract.get("dependency_heads")
+    if (not isinstance(pins, dict) or set(pins) != {str(x) for x in deps}
+            or any(not sha(v) for v in pins.values())):
+        raise InvalidEvidence("N05: pinned dependency HEADs absent/invalid")
     if len(deps) != len(set(x for x in deps if type(x) is int)) or any(type(x) is not int or x < 1 for x in deps):
         raise InvalidEvidence("dependencies invalid")
     if contract.get("activation_authorized") is not False:
@@ -255,6 +259,7 @@ def collect_watchdog(contract, api_get, expected_main):
         pr = api_get("/pulls/" + str(number))
         if (not isinstance(pr, dict) or pr.get("number") != number or
                 pr.get("base", {}).get("ref") != "main" or
+                pr.get("base", {}).get("sha") != expected_main or
                 pr.get("state") not in ("open", "closed") or
                 type(pr.get("merged")) is not bool):
             raise InvalidEvidence("N02: wrong PR/base/merge state")
@@ -296,6 +301,7 @@ def collect_watchdog(contract, api_get, expected_main):
         if (not isinstance(current, dict) or current.get("number") != number or
                 current.get("head", {}).get("sha") != head or
                 current.get("base", {}).get("ref") != "main" or
+                current.get("base", {}).get("sha") != expected_main or
                 current.get("updated_at") != pr.get("updated_at") or
                 current.get("state") != pr.get("state") or
                 current.get("merged") is not pr.get("merged") or
@@ -304,6 +310,7 @@ def collect_watchdog(contract, api_get, expected_main):
             raise InvalidEvidence("N05: PR/merge state changed during check collection")
         data.append({
             "repo": REPO, "number": number, "head_sha": head,
+            "base_sha": expected_main,
             "updated_at": pr.get("updated_at"), "state": pr.get("state"),
             "merged": pr["merged"],
             "merged_at": pr.get("merged_at"),
@@ -365,6 +372,14 @@ def assess_watchdog(contract, data, now):
                                  "detail": "closed without merge; no resume for review"})
         if number == contract["target"]["pr"] and item["head_sha"] != contract["target"]["head"]:
             findings.append({"code": "N05", "pr": number, "action": "REVALIDATE_HEAD"})
+        if number in contract["allowed_dependencies"] and item["head_sha"] != contract["dependency_heads"][str(number)]:
+            all_required_complete = False
+            findings.append({"code": "N05", "pr": number, "action": "REVALIDATE_HEAD",
+                             "detail": "dependency HEAD differs from protected mission pin"})
+        if not sha(item.get("base_sha")):
+            all_required_complete = False
+            findings.append({"code": "N05", "pr": number, "action": "REVALIDATE_HEAD",
+                             "detail": "PR base SHA not verified"})
         checks = item.get("checks")
         if not isinstance(checks, list) or any(not isinstance(x, dict) for x in checks):
             raise InvalidEvidence("N04: invalid check observations")
