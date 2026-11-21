@@ -10,7 +10,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   assertImmutableP0Governance, IMMUTABLE_P0_690_MANIFEST,
   ASSISTANT_PREAUDIT_MARKER, ASSISTANT_PREAUDIT_CRITERIA,
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
-  ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, validateAssistantPrecertRelease,
+  ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
@@ -968,6 +968,24 @@ test("P0 V2 negative: no auto PASS from legacy 8 dimensions",()=>{
     assert.equal(paCheck(f).pass,false);
     assert.match(paCheck(f).issues.join(" "),/parecer V2/);
   }
+});
+
+test("P0 V2 API rate 403 is transient only with authenticated reset and remaining zero",()=>{
+  const headers=map=>({get:name=>map[name] ?? null});
+  const path="/repos/contaos999999/contaos-hml-control/git/ref/heads/main";
+  const primary=classifyGithubReadError(403,headers({
+    "x-ratelimit-remaining":"0","x-ratelimit-reset":"1795255200",
+    "x-github-request-id":"rate-001",
+  }),path);
+  assert.equal(primary.rateLimited,true);
+  assert.equal(primary.reset_at,"1795255200");
+  assert.match(primary.message,/remaining=0 reset-at=1795255200/);
+  assert.ok(!primary.message.includes("Bearer"));
+  for(const item of [
+    [403,{"x-ratelimit-remaining":"100","x-ratelimit-reset":"1795255200"}],
+    [403,{"x-ratelimit-remaining":"0","x-ratelimit-reset":"not-epoch"}],
+    [401,{"x-ratelimit-remaining":"0","x-ratelimit-reset":"1795255200"}],
+  ]) assert.equal(classifyGithubReadError(item[0],headers(item[1]),path).rateLimited,false);
 });
 
 test("P0 V2 NR-006 avoid API storm while current CI or comment is incomplete",async()=>{
