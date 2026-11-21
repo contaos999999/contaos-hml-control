@@ -2223,8 +2223,8 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
     revocation:{trigger:"new head",source:"PLAN"},
     boundary:{phase:"BUILD",external:"activation separate"}};
   const proof=id=>({id,head,
-    interpretation:"Synthetic fixture statement, not a substantive legal interpretation.",
-    counterexample:"Synthetic contradictory case, not executed evidence.",
+    interpretation:`Synthetic fixture statement for ${id}, not a substantive legal interpretation.`,
+    counterexample:`Synthetic contradictory case for ${id}, not executed evidence.`,
     witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head},
     negative_witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/2",head},
     independent_review_id:independent.review_id});
@@ -2270,6 +2270,15 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
     authenticateWitness:async()=>true});
   assert.equal(missingNegative.semantic_completeness,"INCONCLUSIVE");
   assert.match(missingNegative.issues.join(" "),/SEMANTIC_PAIR_UNPROVEN/);
+  const duplicatedNarrative=await assessSemanticCompletenessGate({...input,
+    rules:rules.map((x,i)=>i===1?{...x,
+      interpretation:rules[0].interpretation,
+      counterexample:rules[0].counterexample}:x),
+    authenticateIndependent:async()=>true,
+    authenticateWitness:async()=>true});
+  assert.equal(duplicatedNarrative.semantic_completeness,"INCONCLUSIVE");
+  assert.match(duplicatedNarrative.issues.join(" "),/SEMANTIC_REUSED_INTERPRETATION/);
+  assert.match(duplicatedNarrative.issues.join(" "),/SEMANTIC_REUSED_COUNTEREXAMPLE/);
   const withoutExternal=await assessSemanticCompletenessGate(input);
   assert.equal(withoutExternal.semantic_completeness,"INCONCLUSIVE");
   assert.equal(withoutExternal.release,"NO_GO");
