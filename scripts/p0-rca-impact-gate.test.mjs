@@ -863,7 +863,7 @@ async function paLiveVerification({mutateReadback}={}) {
 }
 test("P0 adversarial GitHub live verified snapshot can release precert only",async()=>{
   const o=await paLiveVerification();
-  assert.equal(o.pass,true);
+  assert.equal(o.pass,true,JSON.stringify(o));
   assert.equal(o.release,"PRE_CERTIFICATION_ONLY");
 });
 test("P0 adversarial new CHANGES_REQUESTED during async API collection blocks",async()=>{
