@@ -30,7 +30,10 @@ def contract():
         "allowed_dependencies": [690],
         "activation_authorized": False,
         "requirements": {"required_checks": list(mod.REQUIRED)},
-        "blob": C,
+        "immutable_plan": {
+            "path": "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md",
+            "blob": C,
+        },
     }
 
 
@@ -45,6 +48,8 @@ def evidence():
         "target_branch": "main",
         "contract_source": "protected-main",
         "contract_blob": C,
+        "contract_integrity_verified": True,
+        "plan_blob": C,
         "tooling": "available",
         "attempts_without_delta": 0,
         "lock_conflict": False,
@@ -98,6 +103,7 @@ class MissionSupervisorTests(unittest.TestCase):
 
     def test_N03_different_contract_blob_rejected(self):
         e = evidence(); e["contract_blob"] = B
+        e["contract_integrity_verified"] = False
         self.assertIn("N03", codes(mod.evaluate(contract(), e)))
 
     def test_N04_success_from_old_sha_rejected(self):
