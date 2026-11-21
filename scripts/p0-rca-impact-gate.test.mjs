@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2280,4 +2280,28 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
   assert.equal(fixturePass.semantic_completeness,"PASS");
   assert.equal(fixturePass.release,"SEMANTIC_REVIEW_CERTIFIED_ONLY");
   assert.deepEqual(fixturePass.issues,[]);
+  // PREAUDIT is necessarily prior to independent review; a stage-specific
+  // PASS never writes or implies SEMANTIC_COMPLETENESS=PASS.
+  const preauditInput={...input,independent:null,
+    rules:rules.map(({independent_review_id,...rest})=>rest),
+    sentences:sentences.map(({independent_review_id,...rest})=>rest),
+    sources:sources.map(({independent_review_id,...rest})=>rest),
+    interactions:interactions.map(({independent_review_id,...rest})=>rest),
+    authenticateWitness:async()=>true};
+  const preauditFixture=await assessSemanticPreauditGate(preauditInput);
+  assert.equal(preauditFixture.semantic_preaudit,"PASS");
+  assert.equal(preauditFixture.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(preauditFixture.release,"INDEPENDENT_REVIEW_ELIGIBLE_ONLY");
+  assert.equal(preauditFixture.independent_review_id,null);
+  const withoutWitness=await assessSemanticPreauditGate({...preauditInput,
+    authenticateWitness:null});
+  assert.equal(withoutWitness.semantic_preaudit,"INCONCLUSIVE");
+  assert.equal(withoutWitness.release,"NO_GO");
+  const withPrematureReview=await assessSemanticPreauditGate({...preauditInput,
+    independent});
+  assert.equal(withPrematureReview.semantic_preaudit,"INCONCLUSIVE");
+  assert.ok(withPrematureReview.issues.includes("SEMANTIC_PREAUDIT_INDEPENDENT_STAGE_CONFUSION"));
+  const cannotCertifyFinal=await assessSemanticCompletenessGate(preauditInput);
+  assert.equal(cannotCertifyFinal.semantic_completeness,"INCONCLUSIVE");
+  assert.ok(cannotCertifyFinal.issues.includes("SEMANTIC_INDEPENDENCE_UNPROVEN"));
 });
