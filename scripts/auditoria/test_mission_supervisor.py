@@ -287,8 +287,10 @@ class MissionSupervisorTests(unittest.TestCase):
         return [
             {"repo": mod.REPO, "number": n, "head_sha": H, "state": "open",
              "updated_at": when, "checks": [
-                 {"name": name, "status": "completed", "conclusion": "success",
-                  "started_at": when} for name in mod.REQUIRED]}
+                 {"id": i + 100, "name": name, "head_sha": H,
+                  "integration_id": 15368, "status": "completed",
+                  "conclusion": "success", "started_at": when}
+                 for i, name in enumerate(mod.REQUIRED)]}
             for n in (679, 690)
         ]
 
@@ -357,12 +359,13 @@ class MissionSupervisorTests(unittest.TestCase):
                         "state": "open"}
             if path.startswith("/commits/"):
                 return {"total_count": 1, "check_runs": [
-                    {"name": "test", "status": "completed", "conclusion": "success"}
+                    {"id": 100, "name": "test", "head_sha": H, "app": {"id": 15368},
+                     "status": "completed", "conclusion": "success"}
                 ]}
             raise RuntimeError("unapproved endpoint")
         data = mod.collect_watchdog(contract(), fake_api, H)
         self.assertEqual([x["number"] for x in data], [679, 690])
-        self.assertEqual(len(seen), 5)
+        self.assertEqual(len(seen), 8)
         self.assertTrue(all(x.startswith(("/git/ref/", "/pulls/", "/commits/")) for x in seen))
 
     def test_watchdog_incomplete_check_pagination_rejected(self):
@@ -377,6 +380,128 @@ class MissionSupervisorTests(unittest.TestCase):
         with self.assertRaises(mod.InvalidEvidence):
             mod.collect_watchdog(contract(), fake_api, H)
 
+    def test_watchdog_only_protect_types_cannot_claim_ready_for_review(self):
+        data = self.watchdog_data()
+        data[1]["checks"] = [{
+            "id": 301, "name": "protect-types", "head_sha": H,
+            "integration_id": 15368, "status": "completed",
+            "conclusion": "success", "started_at": "2026-11-21T12:00:00Z",
+        }]
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(o["state"], "BLOCKED_EXTERNAL")
+        self.assertEqual(o["next_action"], "VERIFY_REQUIRED_CHECKS")
+        self.assertFalse(o["required_checks_complete"])
+        self.assertFalse(o["source_verified"])
+        self.assertFalse(o["certified"])
+
+    def test_watchdog_duplicate_required_check_is_not_a_single_success(self):
+        data = self.watchdog_data()
+        data[1]["checks"].append(dict(data[1]["checks"][0], id=901))
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(o["next_action"], "VERIFY_REQUIRED_CHECKS")
+
+    def test_watchdog_required_check_neutral_is_not_success(self):
+        data = self.watchdog_data()
+        data[1]["checks"][0]["conclusion"] = "neutral"
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(o["next_action"], "REEXECUTE_REQUIRED_CHECKS")
+
+    def test_watchdog_required_check_queued_waits_without_false_success(self):
+        data = self.watchdog_data()
+        data[1]["checks"][0]["status"] = "queued"
+        data[1]["checks"][0]["conclusion"] = None
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(o["next_action"], "WAIT_REQUIRED_CHECKS")
+        self.assertFalse(o["required_checks_complete"])
+
+    def test_watchdog_required_check_stale_head_has_next_action(self):
+        data = self.watchdog_data()
+        data[1]["checks"][0]["head_sha"] = C
+        o = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(o["next_action"], "VERIFY_CHECK_PROVENANCE")
+        self.assertFalse(o["required_checks_complete"])
+
+    def test_watchdog_forged_certified_contract_never_reports_active(self):
+        c = contract()
+        c["state"] = "CERTIFIED"
+        c["certification_receipt"] = {}
+        o = mod.assess_watchdog(c, self.watchdog_data(), "2026-11-21T13:00:00Z")
+        self.assertEqual(o["state"], "BLOCKED_EXTERNAL")
+        self.assertEqual(o["next_action"], "VERIFY_CERTIFICATION_RECEIPT")
+        self.assertFalse(o["source_verified"])
+
+    def test_watchdog_forged_cancelled_contract_never_reports_active(self):
+        c = contract()
+        c["state"] = "CANCELLED_BY_OWNER"
+        c["cancellation_receipt"] = {}
+        o = mod.assess_watchdog(c, self.watchdog_data(), "2026-11-21T13:00:00Z")
+        self.assertEqual(o["state"], "BLOCKED_EXTERNAL")
+        self.assertEqual(o["next_action"], "VERIFY_OWNER_CANCELLATION")
+        self.assertFalse(o["certified"])
+
+    def test_watchdog_source_is_not_trusted_when_only_offline_json_was_used(self):
+        self.assertFalse(mod.assess_watchdog(
+            contract(), self.watchdog_data(), "2026-11-21T13:00:00Z")["source_verified"])
+
+    def test_watchdog_api_check_without_app_id_fails_closed(self):
+        def fake_api(path):
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": H}}
+            if path.startswith("/pulls/"):
+                n = int(path.split("/")[-1])
+                return {"number": n, "base": {"ref": "main"}, "head": {"sha": H},
+                        "state": "open", "updated_at": "2026-11-21T12:00:00Z"}
+            return {"total_count": 1, "check_runs": [{
+                "id": 4, "name": "test", "head_sha": H, "app": {},
+                "status": "completed", "conclusion": "success",
+            }]}
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.collect_watchdog(contract(), fake_api, H)
+
+    def test_watchdog_api_check_with_foreign_head_fails_closed(self):
+        def fake_api(path):
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": H}}
+            if path.startswith("/pulls/"):
+                n = int(path.split("/")[-1])
+                return {"number": n, "base": {"ref": "main"}, "head": {"sha": H},
+                        "state": "open", "updated_at": "2026-11-21T12:00:00Z"}
+            return {"total_count": 1, "check_runs": [{
+                "id": 4, "name": "test", "head_sha": C, "app": {"id": 15368},
+                "status": "completed", "conclusion": "success",
+            }]}
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.collect_watchdog(contract(), fake_api, H)
+
+    def test_watchdog_partial_pagination_even_below_100_fails_closed(self):
+        def fake_api(path):
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": H}}
+            if path.startswith("/pulls/"):
+                n = int(path.split("/")[-1])
+                return {"number": n, "base": {"ref": "main"}, "head": {"sha": H},
+                        "state": "open", "updated_at": "2026-11-21T12:00:00Z"}
+            return {"total_count": 2, "check_runs": [{
+                "id": 4, "name": "test", "head_sha": H, "app": {"id": 15368},
+                "status": "completed", "conclusion": "success",
+            }]}
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.collect_watchdog(contract(), fake_api, H)
+
+    def test_watchdog_pr_head_moving_during_collection_fails_closed(self):
+        calls = {}
+        def fake_api(path):
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": H}}
+            if path.startswith("/pulls/"):
+                calls[path] = calls.get(path, 0) + 1
+                n = int(path.split("/")[-1])
+                return {"number": n, "base": {"ref": "main"},
+                        "head": {"sha": C if calls[path] == 2 else H},
+                        "state": "open", "updated_at": "2026-11-21T12:00:00Z"}
+            return {"total_count": 0, "check_runs": []}
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.collect_watchdog(contract(), fake_api, H)
 
     def test_watchdog_main_authenticated_get_readback_never_certifies(self):
         now = mod.datetime.now(mod.timezone.utc).isoformat()

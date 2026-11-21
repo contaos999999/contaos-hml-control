@@ -360,9 +360,13 @@ def assess_watchdog(contract, data, now):
                                      "action": "FIX_FAILED_CI",
                                      "detail": expected})
                 else:
+                    # A finished neutral/skipped check will never become PASS
+                    # by waiting. Only queued/in-progress checks can wait.
+                    action = ("REEXECUTE_REQUIRED_CHECKS"
+                              if selected.get("status") == "completed"
+                              else "WAIT_REQUIRED_CHECKS")
                     findings.append({"code": "N04", "pr": number,
-                                     "action": "WAIT_REQUIRED_CHECKS",
-                                     "detail": expected})
+                                     "action": action, "detail": expected})
         if any(c.get("conclusion") in ("failure", "error", "cancelled")
                for c in checks):
             findings.append({"code": "N04", "pr": number, "action": "FIX_FAILED_CI"})
@@ -376,7 +380,8 @@ def assess_watchdog(contract, data, now):
         "VERIFY_CERTIFICATION_RECEIPT": 0, "VERIFY_OWNER_CANCELLATION": 0,
         "REVALIDATE_HEAD": 1, "VERIFY_CHECK_PROVENANCE": 2,
         "FIX_FAILED_CI": 3, "VERIFY_MISSING_CI": 4,
-        "VERIFY_REQUIRED_CHECKS": 4, "INVESTIGATE_CI_STALL": 5,
+        "VERIFY_REQUIRED_CHECKS": 4, "REEXECUTE_REQUIRED_CHECKS": 4,
+        "INVESTIGATE_CI_STALL": 5,
         "WAIT_REQUIRED_CHECKS": 6, "INVESTIGATE_NO_PROGRESS": 7,
     }
     findings.sort(key=lambda x: (rank.get(x["action"], 99), x["pr"]))
