@@ -620,10 +620,13 @@ export function validateAssistantPrecertRelease({
           testCRun?.run_attempt !== attempt ||
           testCRun?.head_sha !== expectedHead ||
           testCRun?.event !== "pull_request" ||
+          testCRun?.status !== "completed" ||
+          testCRun?.conclusion !== "success" ||
           testCRun?.path !== ".github/workflows/contaos-frontend-zero-drift.yml" ||
           !testCRun?.pull_requests?.some(x => x?.number === 690 &&
             x?.head?.sha === expectedHead && x?.base?.sha === expectedBase) ||
           !Array.isArray(testCAttemptJobs?.jobs) ||
+          testCAttemptJobs?.total_count !== testCAttemptJobs.jobs.length ||
           !testCAttemptJobs.jobs.some(x => x?.id === jobId &&
             x?.run_id === runId && x?.conclusion === "success") ||
           testCJob?.head_sha !== expectedHead ||
