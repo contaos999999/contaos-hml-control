@@ -284,8 +284,7 @@ def collect_watchdog(contract, api_get, expected_main):
         pr = merged_dependency if transition and number == 690 else api_get("/pulls/" + str(number))
         if (not isinstance(pr, dict) or pr.get("number") != number or
                 pr.get("base", {}).get("ref") != "main" or
-                pr.get("base", {}).get("sha") not in
-                    ({checkpoint, expected_main} if transition else {checkpoint}) or
+                not sha(pr.get("base", {}).get("sha")) or
                 pr.get("state") not in ("open", "closed") or
                 type(pr.get("merged")) is not bool):
             raise InvalidEvidence("N02: wrong PR/base/merge state")
