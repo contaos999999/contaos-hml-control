@@ -94,6 +94,15 @@ jobs:
           set -euo pipefail
           node scripts/p0-rca-impact-gate.mjs --audit-full-protocol
 
+      - name: P0 SEMANTIC SOURCE protected inventory (NO-GO for semantic certification)
+        shell: bash
+        env:
+          INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha || 'e007c4bad8f2c66c489c55e4752b71bb19c5ced0' }}
+        run: |
+          set -euo pipefail
+          node scripts/p0-rca-impact-gate.mjs --audit-semantic-inventory | tee /tmp/p0-semantic-source-inventory.json
+          node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync("/tmp/p0-semantic-source-inventory.json","utf8"));if(!x.source_verified||x.anchored_lines!==118||x.semantic_completeness!=="INCONCLUSIVE"||x.release!=="NO_GO")process.exit(1);console.log("SEMANTIC_SOURCE_INVENTORY VERIFIED; SEMANTIC_COMPLETENESS INCONCLUSIVE");'
+
       - name: P0 V2 LAYER 01
         shell: bash
         run: |
