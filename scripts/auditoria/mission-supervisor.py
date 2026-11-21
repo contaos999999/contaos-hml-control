@@ -252,19 +252,40 @@ def iso_time(value):
 def collect_watchdog(contract, api_get, expected_main):
     """Collect read-only Github evidence, binding checks to live PR HEADs."""
     check_contract(contract)
-    if not sha(expected_main) or expected_main != contract["last_proven"]["merge_sha"]:
-        raise InvalidEvidence("N05: live main does not match protected checkpoint")
+    if not sha(expected_main):
+        raise InvalidEvidence("N05: live main SHA absent")
+    checkpoint = contract["last_proven"]["merge_sha"]
+    transition = expected_main != checkpoint
     def main_oid():
         live = api_get("/git/ref/heads/main")
         if not isinstance(live, dict) or live.get("object", {}).get("sha") != expected_main:
             raise InvalidEvidence("N05: protected main advanced")
     main_oid()
+    # A legitimate merge changes main. Prove the exact transition using the
+    # protected dependency and GitHub's merged/merge_commit_sha fields,
+    # BEFORE accepting the new main. Never trust a merely advanced SHA.
+    merged_dependency = None
+    if transition:
+        if contract["allowed_dependencies"] != [690]:
+            raise InvalidEvidence("N05: unrecognized checkpoint transition")
+        merged_dependency = api_get("/pulls/690")
+        if (not isinstance(merged_dependency, dict) or
+                merged_dependency.get("number") != 690 or
+                merged_dependency.get("state") != "closed" or
+                merged_dependency.get("merged") is not True or
+                merged_dependency.get("base", {}).get("ref") != "main" or
+                merged_dependency.get("base", {}).get("sha") != checkpoint or
+                merged_dependency.get("merge_commit_sha") != expected_main or
+                not isinstance(merged_dependency.get("merged_at"), str) or
+                not sha(merged_dependency.get("head", {}).get("sha"))):
+            raise InvalidEvidence("N05: main advanced without proven #690 merge")
     data = []
     for number in [contract["target"]["pr"], *contract["allowed_dependencies"]]:
-        pr = api_get("/pulls/" + str(number))
+        pr = merged_dependency if transition and number == 690 else api_get("/pulls/" + str(number))
         if (not isinstance(pr, dict) or pr.get("number") != number or
                 pr.get("base", {}).get("ref") != "main" or
-                pr.get("base", {}).get("sha") != expected_main or
+                pr.get("base", {}).get("sha") not in
+                    ({checkpoint, expected_main} if transition else {checkpoint}) or
                 pr.get("state") not in ("open", "closed") or
                 type(pr.get("merged")) is not bool):
             raise InvalidEvidence("N02: wrong PR/base/merge state")
@@ -306,7 +327,7 @@ def collect_watchdog(contract, api_get, expected_main):
         if (not isinstance(current, dict) or current.get("number") != number or
                 current.get("head", {}).get("sha") != head or
                 current.get("base", {}).get("ref") != "main" or
-                current.get("base", {}).get("sha") != expected_main or
+                current.get("base", {}).get("sha") != pr.get("base", {}).get("sha") or
                 current.get("updated_at") != pr.get("updated_at") or
                 current.get("state") != pr.get("state") or
                 current.get("merged") is not pr.get("merged") or
@@ -315,7 +336,9 @@ def collect_watchdog(contract, api_get, expected_main):
             raise InvalidEvidence("N05: PR/merge state changed during check collection")
         data.append({
             "repo": REPO, "number": number, "head_sha": head,
-            "base_sha": expected_main,
+            "base_sha": pr["base"]["sha"],
+            "live_main_sha": expected_main,
+            "post_merge_proven": transition,
             "updated_at": pr.get("updated_at"), "state": pr.get("state"),
             "merged": pr["merged"],
             "merged_at": pr.get("merged_at"),
@@ -382,11 +405,26 @@ def assess_watchdog(contract, data, now):
             all_required_complete = False
             findings.append({"code": "N05", "pr": number, "action": "REVALIDATE_HEAD",
                              "detail": "dependency HEAD differs from protected mission pin"})
+        proven_transition = item.get("post_merge_proven") is True
+        live_main = item.get("live_main_sha")
+        checkpoint = contract["last_proven"]["merge_sha"]
+        if (proven_transition and
+                (not sha(live_main) or live_main == checkpoint)):
+            all_required_complete = False
+            findings.append({"code": "N05", "pr": number,
+                             "action": "REVALIDATE_HEAD",
+                             "detail": "invalid post-merge provenance"})
         if (not sha(item.get("base_sha")) or
-                item["base_sha"] != contract["last_proven"]["merge_sha"]):
+                (item["base_sha"] != checkpoint and
+                 (not proven_transition or item["base_sha"] != live_main))):
             all_required_complete = False
             findings.append({"code": "N05", "pr": number, "action": "REVALIDATE_HEAD",
                              "detail": "PR base SHA differs from protected main checkpoint"})
+        if proven_transition:
+            all_required_complete = False
+            findings.append({"code": "N05", "pr": number,
+                             "action": "VERIFY_POST_MERGE_READBACK",
+                             "detail": "new main requires protected checkpoint and dependency-pins update"})
         checks = item.get("checks")
         if not isinstance(checks, list) or any(not isinstance(x, dict) for x in checks):
             raise InvalidEvidence("N04: invalid check observations")
