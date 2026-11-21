@@ -697,6 +697,15 @@ class MissionSupervisorTests(unittest.TestCase):
         with self.assertRaises(mod.InvalidEvidence):
             mod.collect_watchdog(contract(), fake_api, H)
 
+    def test_watchdog_adversarial_offline_base_drift_is_not_active(self):
+        data = self.watchdog_data()
+        data[1]["base_sha"] = B
+        out = mod.assess_watchdog(contract(), data, "2026-11-21T13:00:00Z")
+        self.assertEqual(out["state"], "BLOCKED_EXTERNAL")
+        self.assertFalse(out["required_checks_complete"])
+        self.assertEqual(out["next_action"], "REVALIDATE_HEAD")
+
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
