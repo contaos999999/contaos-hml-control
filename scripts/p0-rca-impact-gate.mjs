@@ -415,7 +415,16 @@ export async function resolvePrContext(event, base, head, changed, token, eventB
         ":docs/frontend/planos/P0_GOV_PLAN_690.json"));
     } catch { /* A missing protected manifest cannot authorize a BUILD. */ }
     const protectedPaths = Array.isArray(manifest690?.files) ? manifest690.files : [];
-    const touchesBuild = changed.some((p) => protectedPaths.includes(p));
+    // Minimal immutable sentinels: never grant a documentary N/A if the
+    // previously protected manifest is missing but the BUILD contract itself
+    // is being introduced/touched by this very integration.
+    const protectedSentinels = new Set([
+      "docs/frontend/planos/P0_GOV_PLAN_690.json",
+      "docs/frontend/governanca/MISSAO_ATIVA_4_1.json",
+      "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md",
+    ]);
+    const touchesBuild = changed.some((p) =>
+      protectedPaths.includes(p) || protectedSentinels.has(p));
     if (!list.length) {
       if (touchesBuild || changed.some(codeFile))
         throw new Error("push de BUILD/código sem PR autenticada");

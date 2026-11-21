@@ -302,6 +302,25 @@ test("P0 PRE-AUDIT #690 sem associação autenticada: FAIL", async () => {
     apiGet:async(p)=>p.endsWith("/pulls")?[]:null,
   }),/sem PR autenticada/);
 });
+test("P0 PRE-AUDIT manifesto ausente no base e presente no diff nao vira N/A", async () => {
+  await assert.rejects(() => fakeEvent("push",
+    ["docs/frontend/planos/P0_GOV_PLAN_690.json"],701,{
+      apiGet: async (p) => p.endsWith("/pulls")?[]:null,
+      gitFn: (...a) => {
+        if (a[0] === "show") throw new Error("manifest missing in base");
+        return fakeGit(...a);
+      },
+    }), /push de BUILD\/código sem PR autenticada/);
+});
+test("P0 PRE-AUDIT contrato documental #690 nao pode ser atribuido a outra PR", async () => {
+  await assert.rejects(() => fakeEvent("push",
+    ["docs/frontend/governanca/MISSAO_ATIVA_4_1.json"],701,{
+      gitFn: (...a) => {
+        if (a[0] === "show") throw new Error("manifest missing in base");
+        return fakeGit(...a);
+      },
+    }), /associado a outra PR/);
+});
 test("P0 PRE-AUDIT push de código sem PR autenticada nunca N/A", async () => {
   await assert.rejects(()=>fakeEvent("push",["scripts/ci/other.mjs"],701,{
     apiGet:async(p)=>p.endsWith("/pulls")?[]:null,
