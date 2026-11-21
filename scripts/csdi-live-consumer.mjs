@@ -34,7 +34,7 @@ export function validateWitnessContents(w,receipt) {
   if(!w || w.schema!=='contaos.csdi.witnesses.v1' || w.head!==receipt.head || w.base!==receipt.base) return false;
   const axes=['literal','systematic','teleological','temporal','security','operational','adversarial'];
   if(!Array.isArray(w.clauses) || w.clauses.length!==receipt.coverage.clauses_total || !Array.isArray(w.rules) || w.rules.length!==receipt.coverage.rules_total || !Array.isArray(w.pairs) || w.pairs.length!==receipt.coverage.pairs_total) return false;
-  const unique=(arr)=>new Set(arr.map(x=>x.id)).size===arr.length && arr.every(x=>typeof x.id==='string' && x.id.length>0 && x.status==='PASS' && typeof x.evidence_ref==='string' && x.evidence_ref.length>0 && /^[a-f0-9]{64}$/i.test(x.evidence_sha256||''));
+  const unique=(arr)=>arr.every(x=>x && typeof x==='object') && new Set(arr.map(x=>x.id)).size===arr.length && arr.every(x=>typeof x.id==='string' && x.id.length>0 && x.status==='PASS' && typeof x.evidence_ref==='string' && x.evidence_ref.length>0 && /^[a-f0-9]{64}$/i.test(x.evidence_sha256||''));
   if(!unique(w.clauses) || !unique(w.rules) || !unique(w.pairs)) return false;
   // A digest declared by the witness is not evidence unless recomputed from
   // the canonical payload and linked to the exact normative item.
@@ -53,12 +53,12 @@ export function validateWitnessContents(w,receipt) {
   if(![...w.clauses,...w.rules,...w.pairs].every(item=>axes.every(name=>{const x=item.axes[name],e=evidenceById.get(x.evidence_ref);return e && e.subject_id===item.id && e.axis===name && e.sha256.toLowerCase()===x.evidence_sha256.toLowerCase();}))) return false;
   if(!Array.isArray(w.normative_inventory) || !w.normative_inventory.length || !w.normative_source || typeof w.normative_source.sha256!=='string' || !/^[a-f0-9]{64}$/i.test(w.normative_source.sha256)) return false;
   const inventory=w.normative_inventory;
-  if(new Set(inventory.map(x=>x.id)).size!==inventory.length || inventory.some(x=>!['clause','rule','pair'].includes(x.kind) || typeof x.id!=='string' || !x.id || !x.source_ref)) return false;
+  if(inventory.some(x=>!x || typeof x!=='object') || new Set(inventory.map(x=>x.id)).size!==inventory.length || inventory.some(x=>!['clause','rule','pair'].includes(x.kind) || typeof x.id!=='string' || !x.id || !x.source_ref)) return false;
   for(const [kind,items] of [['clause',w.clauses],['rule',w.rules],['pair',w.pairs]]) {
     const expected=new Set(inventory.filter(x=>x.kind===kind).map(x=>x.id));
     if(expected.size!==items.length || items.some(x=>!expected.has(x.id))) return false;
   }
-  if(!Array.isArray(w.axes) || w.axes.length!==7 || new Set(w.axes.map(a=>a?.name)).size!==7 || !axes.every(name=>w.axes.some(a=>a.name===name && a.status==='PASS' && Array.isArray(a.witness_ids) && a.witness_ids.length>0 && a.witness_ids.every(id=>w.clauses.some(c=>c.id===id))))) return false;
+  if(!Array.isArray(w.axes) || w.axes.length!==7 || w.axes.some(a=>!a || typeof a!=='object') || new Set(w.axes.map(a=>a?.name)).size!==7 || !axes.every(name=>w.axes.some(a=>a.name===name && a.status==='PASS' && Array.isArray(a.witness_ids) && a.witness_ids.length>0 && a.witness_ids.every(id=>w.clauses.some(c=>c.id===id))))) return false;
   return true;
 }
 
