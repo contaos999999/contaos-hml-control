@@ -591,7 +591,8 @@ export function validateAssistantPrecertRelease({
     for (const review of [...reviews].sort((a,b) =>
       (a.submitted_at || "").localeCompare(b.submitted_at || "") ||
       (a.id || 0) - (b.id || 0))) {
-      if (review?.commit_id === expectedHead && review?.user?.login)
+      if (review?.commit_id === expectedHead && review?.user?.login &&
+          ["CHANGES_REQUESTED", "APPROVED", "DISMISSED"].includes(review.state))
         lastByReviewer.set(review.user.login, review);
     }
     for (const review of lastByReviewer.values()) {
@@ -692,7 +693,7 @@ export function validateAssistantPrecertRelease({
       const jobId = record.artifact.job_id;
       if (record.artifact.id !== artifact?.id ||
           record.artifact.digest !== artifact?.digest ||
-          artifact?.expired === true ||
+          artifact?.expired !== false ||
           artifact?.workflow_run?.head_sha !== expectedHead ||
           !Number.isSafeInteger(runId) || runId <= 0 ||
           !Number.isSafeInteger(attempt) || attempt <= 0 ||
@@ -821,16 +822,27 @@ export async function verifyAssistantPrecertInGithub({
     expectedHead: head, expectedBase: base,
   });
   // Fail closed if the PR advances between check collection and decision.
-  const [latestPr, latestMain, latestComments, latestReviews, latestChecks] = await Promise.all([
+  const [latestPr, latestMain, latestComments, latestReviews, latestChecks,
+    latestArtifact] = await Promise.all([
     api("/repos/" + REPO + "/pulls/" + number),
     api("/repos/" + REPO + "/git/ref/heads/main"),
     list("/repos/" + REPO + "/issues/" + number + "/comments"),
     list("/repos/" + REPO + "/pulls/" + number + "/reviews"),
     api("/repos/" + REPO + "/commits/" + head + "/check-runs?per_page=100"),
+    Number.isSafeInteger(artifact?.id) && artifact.id > 0
+      ? api("/repos/" + REPO + "/actions/artifacts/" + artifact.id) : Promise.resolve(null),
   ]);
   if (latestPr?.head?.sha !== head || latestPr?.base?.sha !== base ||
       latestPr?.state !== pr?.state ||
+      latestPr?.draft !== pr?.draft || latestPr?.draft !== false ||
+      latestPr?.merged !== pr?.merged ||
       latestMain?.object?.sha !== base ||
+      !latestArtifact || latestArtifact.id !== artifact?.id ||
+      latestArtifact.expired !== false ||
+      latestArtifact.digest !== artifact?.digest ||
+      latestArtifact.name !== artifact?.name ||
+      latestArtifact.workflow_run?.id !== artifact?.workflow_run?.id ||
+      latestArtifact.workflow_run?.head_sha !== head ||
       JSON.stringify(latestComments) !== JSON.stringify(comments) ||
       JSON.stringify(latestReviews) !== JSON.stringify(reviews) ||
       latestChecks?.total_count !== latestChecks?.check_runs?.length ||
