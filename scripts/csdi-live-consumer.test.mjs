@@ -12,7 +12,7 @@ function witnessFixture(){
  const evidence=[];
  const add=(subject_id,axis)=>{const id=subject_id+':'+(axis||'item');const payload='fixture:'+id;const sha256=createHash('sha256').update(payload).digest('hex');evidence.push({id,subject_id,axis,payload,sha256});return {evidence_ref:id,evidence_sha256:sha256};};
  const entry=id=>({id,status:'PASS',...add(id,null),axes:Object.fromEntries(axes.map(axis=>[axis,{status:'PASS',...add(id,axis)}]))});
- return {w:{schema:'contaos.csdi.witnesses.v1',head:'b'.repeat(40),base:'c'.repeat(40),clauses:[entry('c1')],rules:[entry('r1')],pairs:[entry('p1')],evidence,axes:axes.map(name=>({name,status:'PASS',witness_ids:['c1']}))},receipt:{head:'b'.repeat(40),base:'c'.repeat(40),coverage:{clauses_total:1,rules_total:1,pairs_total:1}}};
+ return {w:{schema:'contaos.csdi.witnesses.v1',head:'b'.repeat(40),base:'c'.repeat(40),clauses:[entry('c1')],rules:[entry('r1')],pairs:[entry('p1')],normative_source:{sha256:'a'.repeat(64)},normative_inventory:[{kind:'clause',id:'c1',source_ref:'norm:1'},{kind:'rule',id:'r1',source_ref:'norm:2'},{kind:'pair',id:'p1',source_ref:'norm:3'}],evidence,axes:axes.map(name=>({name,status:'PASS',witness_ids:['c1']}))},receipt:{head:'b'.repeat(40),base:'c'.repeat(40),coverage:{clauses_total:1,rules_total:1,pairs_total:1}}};
 }
 
 test('witness coverage structure with seven axes and digest passes only structural check',()=>{const {w,receipt}=witnessFixture();assert.equal(validateWitnessContents(w,receipt),true)});
@@ -26,3 +26,8 @@ test('witness duplicate clause id blocked',()=>{const {w,receipt}=witnessFixture
 test('witness forged payload digest blocked',()=>{const {w,receipt}=witnessFixture();w.evidence[0].payload='forged';assert.equal(validateWitnessContents(w,receipt),false)});
 test('witness swapped subject blocked',()=>{const {w,receipt}=witnessFixture();w.evidence[0].subject_id='r1';assert.equal(validateWitnessContents(w,receipt),false)});
 test('witness swapped axis blocked',()=>{const {w,receipt}=witnessFixture();w.evidence.find(e=>e.axis==='literal').axis='security';assert.equal(validateWitnessContents(w,receipt),false)});
+
+test('normative inventory absent blocks witness',()=>{const {w,receipt}=witnessFixture();delete w.normative_inventory;assert.equal(validateWitnessContents(w,receipt),false)});
+test('normative inventory missing pair blocks witness',()=>{const {w,receipt}=witnessFixture();w.normative_inventory.pop();assert.equal(validateWitnessContents(w,receipt),false)});
+test('normative inventory duplicate rule blocks witness',()=>{const {w,receipt}=witnessFixture();w.normative_inventory.push({...w.normative_inventory[1]});assert.equal(validateWitnessContents(w,receipt),false)});
+test('normative source digest absent blocks witness',()=>{const {w,receipt}=witnessFixture();delete w.normative_source.sha256;assert.equal(validateWitnessContents(w,receipt),false)});
