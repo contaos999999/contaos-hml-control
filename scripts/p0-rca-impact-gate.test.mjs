@@ -679,7 +679,7 @@ function paFixture() {
     details_url:name.includes("Teste C") ? "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/888" : "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/100",
     status:"completed",conclusion:"success",
   })),
-  artifact:{id:9001,digest:PA_DIGEST,expired:false,
+  artifact:{id:9001,name:"contaos-teste-c-777-1",digest:PA_DIGEST,expired:false,
     workflow_run:{head_sha:PA_HEAD,id:777}},
   testCJob:{id:888,run_id:777,head_sha:PA_HEAD,
     status:"completed",conclusion:"success",
