@@ -678,7 +678,7 @@ function paFixture() {
   },currentMain:PA_BASE,
   manifest:{schema:"contaos.p0.gov-plan.v1",approved:true,pr_number:690,
     full_diff:true,ativacao_autorizada:false,files:[...PA_FILES]},
-  paths:[...PA_FILES],comments:[comment],
+  paths:[...PA_FILES],comments:[comment],reviews:[],
   checkRuns:PRECERT_REQUIRED_CHECKS.map((name,i)=>({
     id:name.includes("Teste C")?888:100+i, name, head_sha:PA_HEAD, app:{id:15368},
     details_url:name.includes("Teste C") ? "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/888" : "https://github.com/contaos999999/contaos-hml-control/actions/runs/777/job/100",
@@ -827,7 +827,7 @@ test("P0 adversarial upload labeled Teste C is not Playwright proof",()=>{
 
 async function paLiveVerification({mutateReadback,manual=false}={}) {
   const f=paFixture();
-  let commentsRead=0, checksRead=0;
+  let commentsRead=0, checksRead=0, reviewsRead=0;
   const fakeApi=async path=>{
     if(path.endsWith("/pulls/690")) return f.pr;
     if(path.endsWith("/git/ref/heads/main")) return {object:{sha:PA_BASE}};
@@ -845,6 +845,14 @@ async function paLiveVerification({mutateReadback,manual=false}={}) {
     throw Error("unmocked GitHub GET "+path);
   };
   const fakeList=async path=>{
+    if(path.endsWith("/pulls/690/reviews")){
+      reviewsRead++;
+      const reviews=structuredClone(f.reviews);
+      if(reviewsRead===2 && mutateReadback==="reviews")
+        reviews.push({id:81,commit_id:PA_HEAD,user:{login:"Edivan5002"},
+          state:"CHANGES_REQUESTED",submitted_at:"2026-11-21T21:00:00Z"});
+      return reviews;
+    }
     if(path.endsWith("/pulls/690/files"))
       return f.paths.map(filename=>({filename,status:"modified"}));
     if(path.endsWith("/issues/690/comments")){
@@ -934,4 +942,17 @@ test("P0 V2 live consumer dispatch verifies current PR rather than stale CI verd
   const revoked=await paLiveVerification({manual:true,mutateReadback:"comments"});
   assert.equal(revoked.pass,false);
   assert.equal(revoked.release,"NO_GO");
+});
+
+test("P0 V2 formal independent review veto invalidates internal PASS on same HEAD",()=>{
+  const f=paFixture();f.reviews=[{id:100,commit_id:PA_HEAD,
+    user:{login:"Edivan5002"},state:"CHANGES_REQUESTED",
+    submitted_at:"2026-11-21T20:00:00Z"}];
+  assert.equal(paCheck(f).pass,false);
+  assert.match(paCheck(f).issues.join(" "),/CHANGES_REQUESTED/);
+});
+test("P0 V2 formal veto submitted while API reads must invalidate",async()=>{
+  const f=await paLiveVerification({mutateReadback:"reviews"});
+  assert.equal(f.pass,false);
+  assert.match(f.issues.join(" "),/changed during pre-cert/);
 });
