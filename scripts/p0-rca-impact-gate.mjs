@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { resolveEventContext } from "./ci/merge-group-context.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const PLAN = "docs/frontend/planos/PLANO_ATIVO.json";
@@ -305,6 +306,107 @@ export function runCase(entry) {
   } catch { return false; }
 }
 function git(...args) { return execFileSync("git", args, { encoding: "utf8" }).trim(); }
+
+// Retorna os DOIS lados de renomeações por tokens NUL: não perder caminho
+// anterior nem aceitar tabs/newlines como delimitadores ambíguos.
+export function parseFullDiffNameStatus(raw) {
+  if (typeof raw !== "string" || (!raw.endsWith("\0") && raw !== ""))
+    throw new Error("diff --name-status -z malformado");
+  const fields = raw === "" ? [] : raw.slice(0, -1).split("\0");
+  const paths = [];
+  for (let i = 0; i < fields.length;) {
+    const status = fields[i++];
+    const renamed = /^[RC]\d{1,3}$/.test(status);
+    if (!renamed && !/^[ACMDT]$/.test(status))
+      throw new Error("tipo de diff não reconhecido: " + status);
+    const size = renamed ? 2 : 1;
+    if (i + size > fields.length)
+      throw new Error("diff truncado");
+    for (let j = 0; j < size; j++) {
+      const path = fields[i++];
+      if (!path || path.startsWith("/") || path.split("/").includes("..") ||
+          path.includes("\n") || path.includes("\r"))
+        throw new Error("caminho suspeito no diff");
+      paths.push(path);
+    }
+  }
+  return [...new Set(paths)];
+}
+function fullDiffPaths(base, head) {
+  const raw = execFileSync("git",
+    ["diff", "--name-status", "-z", "--find-renames", "--diff-filter=ACMRD", base, head],
+    { encoding: "utf8", timeout: 20000 });
+  return parseFullDiffNameStatus(raw);
+}
+async function githubPrFiles(number, token) {
+  const paths = new Set();
+  for (let page = 1; page <= 10; page++) {
+    const chunk = await http("/repos/" + REPO + "/pulls/" + number +
+      "/files?per_page=100&page=" + page, token);
+    if (!Array.isArray(chunk)) throw new Error("lista de arquivos PR inválida");
+    for (const item of chunk) {
+      if (!hasText(item.filename)) throw new Error("nome de arquivo PR ausente");
+      paths.add(item.filename);
+      if (item.status === "renamed") {
+        if (!hasText(item.previous_filename)) throw new Error("origem da renomeação ausente");
+        paths.add(item.previous_filename);
+      }
+    }
+    if (chunk.length < 100) return [...paths];
+  }
+  throw new Error("PR com lista de arquivos não exaustiva (>1000)");
+}
+const setEqual = (a, b) =>
+  a.length === b.length && a.every((p) => b.includes(p));
+async function resolvePrContext(event, base, head, changed, token) {
+  const path = process.env.GITHUB_EVENT_PATH;
+  if (!path) throw new Error("payload GitHub ausente");
+  const payload = JSON.parse(readFileSync(path, "utf8"));
+  if (payload?.repository?.full_name !== REPO)
+    throw new Error("repo GitHub do evento não corresponde");
+  if (event === "pull_request") {
+    const pr = payload.pull_request;
+    const number = pr?.number ?? payload.number;
+    const currentHead = git("rev-parse", head);
+    if (!Number.isInteger(number) || number < 1 ||
+        pr?.base?.ref !== "main" || pr?.head?.sha !== currentHead ||
+        !pr?.base?.sha || git("rev-parse", base) !== pr.base.sha)
+      throw new Error("PR/base/head do evento não comprovados");
+    return { number, manifestBase: base };
+  }
+  if (event === "merge_group") {
+    const group = await resolveEventContext();
+    if (group.base_sha !== git("rev-parse", base) ||
+        group.head_sha !== git("rev-parse", "HEAD"))
+      throw new Error("grupo autenticado não corresponde ao diff");
+    return { number: group.pr, manifestBase: group.base_sha };
+  }
+  if (event === "push") {
+    if (payload.ref !== "refs/heads/main" ||
+        payload.before !== git("rev-parse", base) ||
+        payload.after !== git("rev-parse", "HEAD"))
+      throw new Error("push/HEAD/base não comprovados");
+    const list = await http("/repos/" + REPO + "/commits/" + payload.after + "/pulls", token);
+    if (!Array.isArray(list)) throw new Error("associação autenticada de PR indisponível");
+    if (list.length === 0) {
+      // Uma alteração do BUILD não pode alegar N/A sem resolver a PR.
+      if (changed.some((p) => /mission-supervisor|merge-group-context|P0_AUDITOR_FISCAL_UNIVERSAL|MISSAO_ATIVA_4_1/.test(p)))
+        throw new Error("push do BUILD sem PR comprovada");
+      return { number: null, manifestBase: base };
+    }
+    if (list.length !== 1) throw new Error("push associado a PRs ambíguas");
+    const pr = await http("/repos/" + REPO + "/pulls/" + list[0].number, token);
+    const parents = git("rev-list", "--parents", "-n", "1", "HEAD").split(/\s+/);
+    if (pr.merged_at == null || pr.base?.ref !== "main" ||
+        pr.merge_commit_sha !== payload.after ||
+        parents.length !== 3 || parents[0] !== payload.after ||
+        parents[1] !== payload.before || parents[2] !== pr.head?.sha)
+      throw new Error("push não comprovado por merge de dois pais/PR");
+    return { number: pr.number, manifestBase: payload.before };
+  }
+  throw new Error("evento GitHub sem proveniência validada");
+}
+
 function changes() {
   const prior = String(process.env.FRONTEND_DIFF_BASE || "").trim();
   const event = String(process.env.GITHUB_EVENT_NAME || "");
