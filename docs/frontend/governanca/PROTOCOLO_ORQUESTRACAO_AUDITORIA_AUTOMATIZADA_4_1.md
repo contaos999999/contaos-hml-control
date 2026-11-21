@@ -81,3 +81,8 @@ O ciclo roda enquanto a sessão ativa e as ferramentas autorizadas estiverem dis
 ## 13. Relatório de sessão
 
 Classifique cada etapa como `CONCLUÍDA`, `PENDENTE` ou `BLOQUEADA` e reporte evidência/link/HEAD, perfis e permissões verificados, controlador/worktree, testes, pareceres, reviews efetivamente registrados, arquivos/PRs/commits, riscos corrigidos, pendências, estado da persistência e próxima ação. Separe auditoria técnica, review formal e merge.
+
+
+## 14. Emenda CSDI proposta (PR #692, 21/11/2026)
+
+**PROPOSTA NÃO VIGENTE.** Substituir, após aprovação e integração, o requisito de parecer externo independente no gate de certificação semântica por Certificação Semântica Definitiva Interna (CSDI). A CSDI exige pré-auditoria adversarial, pré-certificação BUILD autenticada, inventário exaustivo de cláusulas e regras, sete eixos, adjudicação das interações, ambiguidades resolvidas, provas positivas e negativas LIVE, segunda leitura crítica interna, recibo autenticado e consumidor fail-closed. A falta de parecer externo não bloqueará o gate semântico após migração, mas ausência de prova semântica sempre bloqueará. BUILD PRE_CERTIFICATION_ONLY não é SEMANTIC_COMPLETENESS=PASS. Revisões formais humanas de outros gates, N17(c), App privilegiado, fila real, HML/RLS, PROD, merge protegido e ativação continuam exigíveis. Até o merge, aplicar o rito vigente. Ver a emenda proposta e inventário na PR #692.
