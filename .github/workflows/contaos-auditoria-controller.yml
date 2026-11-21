@@ -86,6 +86,14 @@ jobs:
           node --test --test-reporter=tap --test-name-pattern="P0 V2 CAUSAL_RED review_comment:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-causal-review.tap
           grep -Fqx '# pass 1' /tmp/p0-causal-review.tap
           grep -Fqx '# fail 0' /tmp/p0-causal-review.tap
+      - name: P0 FULL_PROTOCOL matriz integral e testemunhas executaveis
+        shell: bash
+        env:
+          INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha || 'e007c4bad8f2c66c489c55e4752b71bb19c5ced0' }}
+        run: |
+          set -euo pipefail
+          node scripts/p0-rca-impact-gate.mjs --audit-full-protocol
+
       - name: P0 V2 LAYER 01
         shell: bash
         run: |
