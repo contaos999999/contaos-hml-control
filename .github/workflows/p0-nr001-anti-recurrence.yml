@@ -2,6 +2,8 @@ name: ContaOS P0-NR-001 Anti-Reincidencia
 on:
   pull_request:
     branches: [main]
+  merge_group:
+    types: [checks_requested]
   push:
     branches: [main]
   workflow_dispatch:
@@ -30,6 +32,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: P0-ABS — 20 negativos do contexto de fila
+        run: node --test scripts/ci/merge-group-context.test.mjs
+      - name: P0-ABS — validar grupo e PR unica antes do ledger
+        if: github.event_name == 'merge_group'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci/merge-group-context.mjs
       - name: Testes negativos de classes conhecidas e falso resolvido
         run: node --test scripts/p0-nr001-gate.test.mjs
       - name: P0-NR-001 ledger com comprovantes reais
