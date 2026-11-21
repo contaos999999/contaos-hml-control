@@ -1275,9 +1275,9 @@ export function inventorySemanticSentenceCandidates(inventory){
   for(const row of inventory?.lines||[]){
     const text=row.text;
     if(typeof text!=="string"||!text.length){issues.push("SEMANTIC_ATOM_EMPTY_SOURCE");continue;}
-    const boundaries=[];const re=/[.!?]\\s+(?=[A-ZÀ-Ú0-9])/g;
+    const boundaries=[];const re=/[.!?]\s+(?=[A-ZÀ-Ú0-9])/g;
     for(const match of text.matchAll(re)){
-      if(match.index<4&&/^\\s*\\d+[.]\\s/.test(text))continue;
+      if(match.index<4&&/^\s*\d+[.]\s/.test(text))continue;
       boundaries.push(match.index+match[0].length);
     }
     const ends=[...boundaries,text.length];let start=0;const pieces=[];
@@ -1286,7 +1286,7 @@ export function inventorySemanticSentenceCandidates(inventory){
       if(!segment){issues.push("SEMANTIC_ATOM_EMPTY_SEGMENT");continue;}
       const idx=pieces.length+1;
       const id="ATOM-"+createHash("sha256")
-        .update(row.id+"\\0"+start+"\\0"+segment).digest("hex").slice(0,24);
+        .update(row.id+"\0"+start+"\0"+segment).digest("hex").slice(0,24);
       pieces.push(segment);
       candidates.push({id,source_id:row.id,path:row.path,line:row.line,
         blob:row.blob,start,end,
@@ -1298,7 +1298,7 @@ export function inventorySemanticSentenceCandidates(inventory){
       issues.push("SEMANTIC_ATOM_LOSSY_SPLIT: "+row.id);
   }
   const summaryDigest=createHash("sha256")
-    .update(candidates.map(x=>x.id+"|"+x.text_sha256).join("\\n"))
+    .update(candidates.map(x=>x.id+"|"+x.text_sha256).join("\n"))
     .digest("hex");
   if(new Set(candidates.map(x=>x.id)).size!==candidates.length)
     issues.push("SEMANTIC_ATOM_DUPLICATE_ID");
