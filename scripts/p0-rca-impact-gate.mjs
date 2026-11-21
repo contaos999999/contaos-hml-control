@@ -728,7 +728,7 @@ FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_CRITICAL_TESTS);
 const FULL_PROTOCOL_51_GATES=[
   ["NR-005 / documentos comuns","rca","NR-005 checkpoint documental em PR posterior"],
   ["NR-005 / BUILD válido","rca","P0 PRE-AUDIT PR head/base avançada"],
-  ["NR-005 / falsificações","rca","NR-005 manifesto protegido"],
+  ["NR-005 / falsificações","rca","NR-005 manifesto de outra PR"],
   ["NR-009 / base avançada","python","test_NR009_live_older_target_base"],
   ["Node 24 / testes","rca","P0 RCA runner executa caso exato"],
   ["Segurança runner / N06","python","test_N06_code_without_independent_audit"],
@@ -894,7 +894,7 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
     rows,external:coverage?.external||[],issues,
     suites:Object.fromEntries(suiteKeys.map(k=>[k,suites?.[k]?{
       exitCode:suites[k].exitCode,executed:suites[k].executed,
-      outputSha256:suites[k].outputSha256,passed:suites[k].passed
+      outputSha256:suites[k].outputSha256,passed:suites[k].passed,diagnostic:suites[k].passed?null:suites[k].diagnostic
     }:null]))};
 }
 export function parseFullProtocolSuiteResult(key,result){
@@ -909,7 +909,7 @@ export function parseFullProtocolSuiteResult(key,result){
       successfulNames.length===executed && /(?:^|\n)OK\s*(?:\n|$)/.test(output) &&
       !/\b(?:FAILED|ERROR|FAIL) \(/.test(output);
   }else{
-    successfulNames=[...output.matchAll(/^ok \d+ - (.+)$/gm)].map(x=>x[1].trim());
+    successfulNames=[...output.matchAll(/^ok \d+ - (.+)$/gm)].map(x=>x[1].trim().replaceAll("\\#","#"));
     const n=/# tests (\d+)/.exec(output);
     const passCount=/# pass (\d+)/.exec(output);
     executed=n?Number(n[1]):0;
