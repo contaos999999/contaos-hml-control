@@ -708,6 +708,43 @@ class MissionSupervisorTests(unittest.TestCase):
         self.assertEqual(out["next_action"], "REVALIDATE_HEAD")
 
 
+    def test_v2_red_first_post_merge_is_diagnosable(self):
+        c = contract()
+        api_calls = []
+        def api(path):
+            api_calls.append(path)
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": B}}
+            if path.startswith("/pulls/"):
+                n = int(path.split("/")[-1])
+                merged = n == 690
+                return {"number": n, "base": {"ref": "main", "sha": H},
+                        "head": {"sha": H}, "state": "closed" if merged else "open",
+                        "merged": merged, "merged_at": "2026-11-21T12:00:00Z" if merged else None,
+                        "merge_commit_sha": B if merged else None,
+                        "updated_at": "2026-11-21T12:00:00Z"}
+            return {"total_count": 0, "check_runs": []}
+        result = mod.collect_watchdog(c, api, B)
+        self.assertIn("/git/ref/heads/main", api_calls)
+        self.assertEqual(result[1]["merge_commit_sha"], B)
+        diagnosis = mod.assess_watchdog(c, result, "2026-11-21T13:00:00Z")
+        self.assertEqual(diagnosis["next_action"], "VERIFY_POST_MERGE_READBACK")
+        self.assertFalse(diagnosis["eligible"])
+
+    def test_v2_red_main_advanced_without_proven_merge_must_block(self):
+        def api(path):
+            if path == "/git/ref/heads/main":
+                return {"object": {"sha": B}}
+            if path.startswith("/pulls/"):
+                n = int(path.split("/")[-1])
+                return {"number": n, "base": {"ref": "main", "sha": H},
+                        "head": {"sha": H}, "state": "open", "merged": False,
+                        "updated_at": "2026-11-21T12:00:00Z"}
+            return {"total_count": 0, "check_runs": []}
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.collect_watchdog(contract(), api, B)
+
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
