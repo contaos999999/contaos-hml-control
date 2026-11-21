@@ -37,12 +37,36 @@ export function validateRcaImpact({
   legacyAllowlist = [], expectedFrontendSha = null, expectedBackendSha = null,
   fileExists = existsSync, prNumber = null, governancePlan = null,
   v1Scope = null, v1ScopeChanged = false, addedLines = {},
+  fullDiffPaths = null,
   readBytes = (path) => readFileSync(path),
 }) {
   const errors = [];
   const err = (msg) => errors.push("P0 RCA: " + msg);
   const id = String(planId || "").padStart(2, "0");
   let version = Object.keys(RANGES).find((v) => RANGES[v].includes(id));
+  // NR-005: valida o diff INTEIRO antes de filtrar codigo ou documentos.
+  if (prNumber === 690 || governancePlan?.full_diff === true) {
+    const approved = governancePlan?.approved === true &&
+      governancePlan.pr_number === prNumber &&
+      governancePlan.full_diff === true &&
+      Array.isArray(governancePlan.files) &&
+      governancePlan.files.length === new Set(governancePlan.files).size &&
+      governancePlan.files.every((p) => hasText(p) && !p.includes(".."));
+    if (!approved) err("manifesto full_diff protegido ausente/divergente para PR " + prNumber);
+    if (prNumber === 690 && governancePlan?.files?.length !== 14)
+      err("manifesto #690 deve conter os 14 caminhos exatos.");
+    if (!Array.isArray(fullDiffPaths) || !fullDiffPaths.length ||
+        fullDiffPaths.some((p) => !hasText(p)))
+      err("full_diff de arquivos e renomeações não comprovado.");
+    else if (approved) {
+      const allow = new Set(governancePlan.files);
+      const denied = fullDiffPaths.filter((p) => !allow.has(p));
+      if (denied.length) err("caminho fora da allowlist full_diff: " + denied.join(", "));
+      const incomplete = changed.filter((p) => !fullDiffPaths.includes(p));
+      if (incomplete.length) err("full_diff incompleto: " + incomplete.join(", "));
+    }
+    return { errors, applicable: false, version: "P0_GOV_FULL_DIFF" };
+  }
   let paths = changed.filter(codeFile);
   if (!paths.length) return { errors, applicable: false, version };
   if (!version) {
