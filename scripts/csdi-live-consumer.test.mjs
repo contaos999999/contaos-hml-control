@@ -31,3 +31,5 @@ test('normative inventory absent blocks witness',()=>{const {w,receipt}=witnessF
 test('normative inventory missing pair blocks witness',()=>{const {w,receipt}=witnessFixture();w.normative_inventory.pop();assert.equal(validateWitnessContents(w,receipt),false)});
 test('normative inventory duplicate rule blocks witness',()=>{const {w,receipt}=witnessFixture();w.normative_inventory.push({...w.normative_inventory[1]});assert.equal(validateWitnessContents(w,receipt),false)});
 test('normative source digest absent blocks witness',()=>{const {w,receipt}=witnessFixture();delete w.normative_source.sha256;assert.equal(validateWitnessContents(w,receipt),false)});
+
+test('duplicated semantic axis blocks witness',()=>{const {w,receipt}=witnessFixture();w.axes[6]={...w.axes[0]};assert.equal(validateWitnessContents(w,receipt),false)});
