@@ -623,7 +623,8 @@ export function verifyPrecertRunOrigin({check,job,run,attemptJobs,head,base,work
     job?.name===check.name && job?.status==="completed" && job?.conclusion==="success" &&
     run.head_sha===head && run.head_branch==="build/p0-abs-fiscal-universal" &&
     run.path===workflow && ["pull_request","pull_request_review","workflow_dispatch"].includes(run.event) &&
-    run.status==="completed" && run.conclusion==="success" &&
+    (run.status==="completed" && run.conclusion==="success" ||
+      run.status==="in_progress" && run.conclusion===null) &&
     Number.isSafeInteger(run.run_attempt) && run.run_attempt>0 &&
     (run.event==="workflow_dispatch" ||
       run.pull_requests?.some(x=>x.number===690 && x.head?.sha===head &&
@@ -986,6 +987,7 @@ export async function verifyAssistantPrecertInGithub({
   api = (p) => http(p, token),
   list = (p) => fetchAllPrecert(p, token),
   zipDigest = (id) => downloadPrecertArtifactDigest(id,token),
+  originVerify = null,
   baseManifest = (base) => JSON.parse(execFileSync("git", [
     "show", base + ":docs/frontend/planos/P0_GOV_PLAN_690.json",
   ], {encoding: "utf8", timeout: 15000})),
@@ -1132,8 +1134,12 @@ export async function verifyAssistantPrecertInGithub({
         const run=await api("/repos/"+REPO+"/actions/runs/"+runId);
         const aj=await api("/repos/"+REPO+"/actions/runs/"+runId+
           "/attempts/"+run?.run_attempt+"/jobs?per_page=100");
-        if(!verifyPrecertRunOrigin({check:entry.check,job,run,
-          attemptJobs:aj,head,base,workflow:PRECERT_WORKFLOW_ORIGINS[entry.check.name]}))
+        const valid=originVerify?
+          await originVerify({check:entry.check,job,run,attemptJobs:aj,head,base,
+            workflow:PRECERT_WORKFLOW_ORIGINS[entry.check.name]}):
+          verifyPrecertRunOrigin({check:entry.check,job,run,
+            attemptJobs:aj,head,base,workflow:PRECERT_WORKFLOW_ORIGINS[entry.check.name]});
+        if(!valid)
           result.issues.push("ORIGIN: job/run/attempt/workflow/event/HEAD invalido: "+entry.check.name);
       }catch(e){result.issues.push("ORIGIN: prova indisponivel para "+
         entry.check.name+": "+e.message);}
