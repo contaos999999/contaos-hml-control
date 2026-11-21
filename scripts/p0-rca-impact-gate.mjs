@@ -1333,6 +1333,13 @@ export function buildSevenAxisSemanticBacklog(inventory){
   const provisional_count=normative_rules.filter(row=>
     row.source_link_level==="PROVISIONAL_ONLY").length;
 
+  const normativeIds=normative_rules.map(row=>row.rule_id);
+  const pairCount=normativeIds.length*(normativeIds.length-1)/2;
+  const pairHash=createHash("sha256");
+  for(let i=0;i<normativeIds.length;i++)
+    for(let j=i+1;j<normativeIds.length;j++)
+      pairHash.update(normativeIds[i]+"|"+normativeIds[j]+"\\n");
+  const pairDigest=pairHash.digest("hex");
   const linked_count=normative_rules.filter(row=>row.source_links.length).length;
   const issues=[...(inventory?.issues||[])];
   if(!inventory?.inventory_verified)issues.push("SEMANTIC_SOURCE_NOT_VERIFIED");
@@ -1345,6 +1352,8 @@ export function buildSevenAxisSemanticBacklog(inventory){
     normative_axis_slots:normative_rules.length*SEMANTIC_AXES.length,
     anchored_normative_rules:linked_count,unlinked_normative_rules:normative_rules.length-linked_count,
     provisionally_located_rules:provisional_count,
+    all_possible_rule_pairs:pairCount,untriaged_rule_pairs:pairCount,
+    pair_inventory_sha256:pairDigest,
     source_lines:slots.length,axes_per_source:SEMANTIC_AXES.length,
     axis_slots:slots.length*SEMANTIC_AXES.length,rows:slots,
     co_mentioned_interactions:pairs,issues,
