@@ -1671,6 +1671,9 @@ export async function assessSemanticCompletenessGate({
     typeof p.counterexample==="string"&&p.counterexample.trim().length>=25&&
     typeof p.witness==="object"&&p.witness!==null&&
     !!p.witness.run_url&&p.witness.head===head&&
+    typeof p.negative_witness==="object"&&p.negative_witness!==null&&
+    !!p.negative_witness.run_url&&p.negative_witness.head===head&&
+    p.negative_witness.run_url!==p.witness.run_url&&
     p.independent_review_id===independent?.review_id &&
     p.id===id;
   for(const record of rules){
@@ -1721,8 +1724,11 @@ export async function assessSemanticCompletenessGate({
       const all=[...rules,...sentences,...sources,...interactions];
       if(issues.length===0)
         for(const row of all){
-          if(await authenticateWitness(row.witness,head,row.id)!==true){
-            fail("SEMANTIC_WITNESS_NOT_AUTHENTICATED: "+row.id);break;
+          if(await authenticateWitness(row.witness,head,row.id,"POSITIVE")!==true){
+            fail("SEMANTIC_POSITIVE_WITNESS_NOT_AUTHENTICATED: "+row.id);break;
+          }
+          if(await authenticateWitness(row.negative_witness,head,row.id,"NEGATIVE")!==true){
+            fail("SEMANTIC_NEGATIVE_WITNESS_NOT_AUTHENTICATED: "+row.id);break;
           }
         }
     } catch(e){fail("SEMANTIC_EXTERNAL_AUTHENTICATION_UNAVAILABLE");}
