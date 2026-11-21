@@ -32,13 +32,14 @@ export async function validateLiveCSDI(receipt,{fetchImpl=fetch,token=process.en
       get(`pulls/${receipt.pr_number}/reviews?per_page=100`),
       get(`contents/docs/frontend/planos/P0_GOV_PLAN_${receipt.pr_number}.json?ref=main`)
     ]);
+    if (jobs.total_count>100 || artifacts.total_count>100 || reviews.length===100) issues.push('PAGINATION_INCOMPLETE');
     if (run.head_sha!==receipt.head || run.status!=='completed' || run.conclusion!=='success') issues.push('RUN_NOT_SUCCESS_ON_HEAD');
-    if (!Array.isArray(jobs.jobs) || !jobs.jobs.some(j=>j.id===receipt.github_job_id && j.run_id===receipt.github_run_id && j.conclusion==='success')) issues.push('JOB_NOT_SUCCESS_ON_RUN');
+    if (!Array.isArray(jobs.jobs) || !jobs.jobs.some(j=>j.id===receipt.github_job_id && j.run_id===receipt.github_run_id && j.conclusion==='success' && j.status==='completed')) issues.push('JOB_NOT_SUCCESS_ON_RUN');
     if (commit.sha!==receipt.head) issues.push('COMMIT_MISMATCH');
     if (run.repository?.full_name!==repository) issues.push('RUN_REPOSITORY_MISMATCH');
     if (run.run_attempt!==receipt.github_run_attempt) issues.push('RUN_ATTEMPT_MISMATCH');
-    if (!Array.isArray(artifacts.artifacts) || !artifacts.artifacts.some(a=>a.id===receipt.github_artifact_id && a.workflow_run?.id===receipt.github_run_id && !a.expired)) issues.push('ARTIFACT_NOT_VERIFIED');
-    if (pr.head?.sha!==receipt.head || pr.base?.sha!==receipt.base) issues.push('PR_HEAD_BASE_MISMATCH');
+    if (!Array.isArray(artifacts.artifacts) || !artifacts.artifacts.some(a=>a.id===receipt.github_artifact_id && a.workflow_run?.id===receipt.github_run_id && !a.expired && a.size_in_bytes>0)) issues.push('ARTIFACT_NOT_VERIFIED');
+    if (pr.head?.sha!==receipt.head || pr.base?.sha!==receipt.base || pr.number!==receipt.pr_number) issues.push('PR_HEAD_BASE_MISMATCH');
     if (!Array.isArray(reviews) || !reviews.some(x=>x.user?.login?.toLowerCase()===receipt.reviewer_login.toLowerCase() && x.state==='APPROVED' && x.commit_id===receipt.head && x.user?.login!==pr.user?.login)) issues.push('INDEPENDENT_REVIEW_NOT_VERIFIED');
     if (plan.path!==`docs/frontend/planos/P0_GOV_PLAN_${receipt.pr_number}.json` || !plan.sha || !plan.content) issues.push('PROTECTED_PLAN_NOT_FOUND');
     else {
