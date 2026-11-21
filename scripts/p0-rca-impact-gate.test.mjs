@@ -2008,6 +2008,16 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   assert.equal(backlog.normative_axis_slots,959);
   assert.equal(backlog.anchored_normative_rules,10);
   assert.equal(backlog.unlinked_normative_rules,127);
+  assert.equal(backlog.provisionally_located_rules,127);
+  assert.equal(backlog.normative_rules.filter(x=>x.source_link_level==="DIRECT_NUMBERED").length,10);
+  assert.equal(backlog.normative_rules.filter(x=>x.source_link_level==="PROVISIONAL_ONLY").length,127);
+  assert.ok(backlog.normative_rules.every(x=>x.source_link_level==="DIRECT_NUMBERED"||
+    x.candidate_source_links.length===1));
+  for(const suffix of ["A","B","C","D","E","F"]){
+    const rule=backlog.normative_rules.find(x=>x.rule_id==="EMENDA-N17-"+suffix);
+    assert.equal(rule.source_clause_marker,"("+suffix.toLowerCase()+")");
+  }
+
   for(let n=1;n<=10;n++){
     const rule=backlog.normative_rules.find(x=>x.rule_id==="PLAN-S3-"+String(n).padStart(2,"0"));
     assert.ok(rule);
