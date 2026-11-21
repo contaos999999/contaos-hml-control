@@ -815,6 +815,19 @@ FULL_PROTOCOL_CASES.push(...[
 ].flatMap(([prefix,list])=>list.map(([name,file,pattern])=>({
   id:prefix+name,file,pattern}))));
 
+
+// Blind protocol paragraph audit, complementary to §5.1–§5.5 heading/row
+// inventory. A new or changed rule invalidates the frozen Git blob below,
+// even when all existing names and tests remain green.
+const FULL_PROTOCOL_GIT_BLOB="f63417ee779aa4191e54dd1ee5de414ef038bd35";
+const FULL_PROTOCOL_ROOT_INVARIANTS=[["S1-AUDITOR-ONLY","## 1.","o único perfil de auditoria","python","test_N06_code_without_independent_audit"],["S1-SUPERVISOR-READONLY","## 1.","não aprova PR, não publica status e não executa merge","python","test_watchdog_valid_diagnosis_never_certifies"],["S1-OWNER-AUTH","## 1.","O titular concede decisões específicas","python","test_N17_revoked_specific_authorization"],["S1-AUTHORIZED-BRANCH","## 1.","O implementador altera apenas a branch autorizada","rca","P0 PRE-AUDIT #690 sem associação autenticada"],["S1-REVIEW-SEGREGATION","## 1.","conta revisora elegível, diferente da autora","python","test_N06_author_cannot_review_own_work"],["S1-NO-APP-SETUP","## 1.","Nenhum componente deste BUILD habilita","python","test_activation_cannot_be_enabled_by_candidate"],["S2-CONTRACT-SOURCE","## 2.","A versão integrada na `main` protegida é a autoridade","python","test_N03_changed_contract_source_rejected"],["S2-NO-CANDIDATE","## 2.","É proibido aceitar versão modificada no candidato","python","test_N03_different_contract_blob_rejected"],["S2-ACTIVE","## 2.","`ACTIVE`: missão não certificada","python","test_N01_active_cannot_certify_from_reports"],["S2-BLOCKED-EXTERNAL","## 2.","`BLOCKED_EXTERNAL`: dependência verificável","python","test_N11_missing_tool_blocked"],["S2-CANCEL-OWNER","## 2.","`CANCELLED_BY_OWNER`: somente decisão identificável do titular","python","test_N10_cancel_without_owner_not_success"],["S2-CERTIFIED-TWO-STAGE","## 2.","`CERTIFIED`: exige provas técnicas e administrativas","python","test_N01_certified_without_real_receipts_is_rejected"],["S2-ACTIVATION-NOGO","## 2.","`NO-GO` de ativação: independente do estado operacional","python","test_activation_cannot_be_enabled_by_candidate"],["S2-PROTECTED-BLOB","## 2.","vincula o blob protegido do PLAN #689","python","test_watchdog_source_is_not_trusted_when_only_offline_json_was_used"],["S2-OFFLINE-EXIT-2","## 2.","sempre retorna exit code `2`","python","test_cli_blocked_diagnostic_never_signals_ci_pass"],["S2-WATCHDOG-READONLY","## 2.","sem publicar status de autorização","python","test_watchdog_valid_diagnosis_never_certifies"],["S3-N17C-THIRD-AUTHOR","## 3.","autoria terceira autorizada","python","test_N17_second_approval_not_proxy_for_revoked_auth"],["S3-N17C-TWO-APPROVALS","## 3.","as duas contas `contaos9999` e `Edivan5002`","python","test_N17_approved_review_does_not_replace_authorization"],["S3-N17C-EXTERNAL","## 3.","`N17(c)=BLOCKED_EXTERNAL`","python","test_N17_revoked_specific_authorization_cannot_pass"],["S4-APP-ONLY","## 4.","somente** por App dedicado","python","test_N13_wrong_check_integration_rejected"],["S4-ENTRY-SHA-BASE","## 4.","A avaliação de entrada da PR requer SHA efetivo","queue","N13 positive: PR única autenticada"],["S4-GROUP-REVALIDATE","## 4.","Um novo sucesso separado no SHA do `merge_group`","queue","N13 real resolver rejects removed queue ref"],["S4-NO-APP-ACTIVATION","## 4.","não cria nem ativa** esse App","python","test_activation_cannot_be_enabled_by_candidate"],["S4-NO-FAKE-STATUS","## 4.","jamais checks válidos para alterar proteção","python","test_N16_no_real_group_status_rejected"],["S5-EVENT-MATRIX","## 5.","`pull_request`, `push` e `merge_group`","rca","NR-005 pull_request bloqueia manifesto"],["S5-FULL-DIFF","## 5.","regra `full_diff`","rca","NR-005 full_diff do BUILD"],["S5-PUSH-IDENTITY","## 5.","verificação de auth da PR no push","rca","P0 PRE-AUDIT push da #690"],["S5-PREVIOUS-BASE","## 5.","base anterior ao diff","rca","P0 PRE-AUDIT manifesto ausente no base"],["S5-QUEUE-SINGLE-PR","## 5.","entrada única da fila","queue","N13 positive: PR única autenticada"],["S5-REVOCATION","## 5.","revogação de autorização mesmo após `success`","python","test_N17_revoked_specific_authorization_cannot_pass"],["S5-NO-WEAK-PROVIDER","## 5.","não suportar prova atômica suficientemente segura","python","test_N17_approved_review_does_not_replace_authorization"],["S5-ADMIN-AUTH","## 5.","autorização separada do titular","python","test_activation_cannot_be_enabled_by_candidate"],["S5-RULESET-READBACK","## 5.","readback de enforcement em main","python","test_watchdog_main_authenticated_get_readback_never_certifies"],["S6-IMPLEMENTATION-DIAG-ONLY","## 6.","código de diagnóstico, testes offline","python","test_watchdog_valid_diagnosis_never_certifies"],["S6-NO-APP-SOURCE","## 6.","não editar `src/`, `public/`, backend","rca","NR-005 full_diff do BUILD"],["S6-ALLOWLIST-EMEND","## 6.","solicitar emenda de allowlist","rca","NR-005 documento extra"],["S6-QUEUE-FAIL-NOGO","## 6.","check privilegiado desabilitado","python","test_N16_no_real_group_status_rejected"],["S6-CHECKPOINT-POST-MERGE","## 6.","Após merge protegido e readback","python","test_watchdog_merged_pr_requires_readback_not_new_review"],["S6-ZERODRIFT-NO-VISUAL","## 6.","identidade visual N/A","rca","P0 V2 LENS legitimate_regression:"]];
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_ROOT_INVARIANTS.map(([id,, ,file,pattern])=>({id,file,pattern})));
+function gitBlobId(content){
+  const bytes=Buffer.from(content,"utf8");
+  const header=Buffer.from("blob "+bytes.length+"\0","utf8");
+  return createHash("sha1").update(header).update(bytes).digest("hex");
+}
+
 const FULL_PROTOCOL_EXTERNAL=[
   "N17(c): autoria terceira e duas aprovacoes elegiveis em fila real",
   "HML: sessao autenticada e isolamento RLS/tenant",
@@ -825,6 +838,14 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
     source,manifest,paths}={}){
   const issues=[];
   const rows=[];
+  if(typeof protocol!=="string" || gitBlobId(protocol)!==FULL_PROTOCOL_GIT_BLOB)
+    issues.push("META_PROTOCOL: hash do protocolo integral divergente; nova obrigacao exige remapeamento cego");
+  for(const [id,from,clause] of FULL_PROTOCOL_ROOT_INVARIANTS){
+    const tail=protocol?.split(from)[1]||"";
+    const body=tail.split(/\n## [0-9]/)[0];
+    if(!body.includes(clause))
+      issues.push("META_PROTOCOL: obrigacao raiz ausente/divergente "+id);
+  }
   const expectedSections=["## 1.","## 2.","## 3.","## 4.","## 5.",
     "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 6."];
   // Fail closed when the protected protocol grows without a corresponding
