@@ -859,14 +859,14 @@ const FULL_PROTOCOL_54_RULES=[
   ["Limitações não dispensáveis","rca","P0 V2 LENS operational_environment:"],
 ];
 const FULL_PROTOCOL_56_RULES=[
-  ["Regra de interpretação","rca","P0 META_PROTOCOL exhaustive cross-clause five-dimensional authorization model"],
+  ["Regra de interpretação","rca","P0 META_PROTOCOL exhaustive cross-clause seven-dimensional authorization model"],
   ["V1 versus V2 do recibo","rca","P0 PA positive: recorded assistant PASS"],
   ["Cinco checks versus sete contextos de CI","rca","P0 META_PROTOCOL six predecessor checks plus own gate no cycle"],
   ["Checks duplicados e reexecuções legítimas","rca","P0 NR-006 RED: COMMENTED starts second"],
   ["Estado operacional, certificação e ativação","python","test_activation_cannot_be_enabled_by_candidate"],
   ["Prova semântica por cláusula","rca","P0 META_PROTOCOL root obligations must reject"],
   ["Estados de transporte versus veredito normativo","rca","P0 META_PROTOCOL audit verdict transport separation"],
-  ["Precedência","rca","P0 META_PROTOCOL exhaustive cross-clause five-dimensional authorization model"],
+  ["Precedência","rca","P0 META_PROTOCOL exhaustive cross-clause seven-dimensional authorization model"],
 ];
 const FULL_PROTOCOL_55_RULES=[
   ["Autoridade e limites","python","test_N06_code_without_independent_audit"],
@@ -897,7 +897,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"bce7e7c945a4167cf14c879ac59a87bfa36e1173",
+  rca:"cb2eb04b2e3b1c595d959816b220b116465716b9",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
