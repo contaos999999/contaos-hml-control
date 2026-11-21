@@ -564,7 +564,7 @@ export function parseAssistantPreaudit(body) {
 }
 export function validateAssistantPrecertRelease({
   pr, currentMain, manifest, paths, comments, reviews = [], checkRuns, artifact,
-  testCJob, testCRun, testCAttemptJobs, v2Job, expectedHead, expectedBase,
+  testCJob, testCRun, testCAttemptJobs, v2Job, redProvenance=[], expectedHead, expectedBase,
 } = {}) {
   const issues = [];
   const add = (reason) => issues.push(reason);
@@ -656,6 +656,28 @@ export function validateAssistantPrecertRelease({
         record.adversarial_v2.red_runs.length < 1 ||
         !record.adversarial_v2.red_runs.every(x => Number.isSafeInteger(x) && x > 0))
       add("último parecer V2 não comprova matriz adversarial, RED/GREEN e segunda leitura no HEAD/base");
+    // RED receipts are checked against real failed executions of the
+    // supervisor test step, not merely numeric workflow IDs in a comment.
+    if (!Array.isArray(record.adversarial_v2?.red_runs) ||
+        record.adversarial_v2.red_runs.length < 1 ||
+        !Array.isArray(redProvenance) ||
+        redProvenance.length !== record.adversarial_v2.red_runs.length ||
+        redProvenance.some(({run,jobs},i)=>
+          run?.id !== record.adversarial_v2.red_runs[i] ||
+          run?.head_sha === expectedHead ||
+          !validSha(run?.head_sha) ||
+          run?.event !== "pull_request" ||
+          run?.path !== ".github/workflows/contaos-auditoria-controller.yml" ||
+          run?.status !== "completed" || run?.conclusion !== "failure" ||
+          !Array.isArray(jobs?.jobs) ||
+          jobs.total_count !== jobs.jobs.length ||
+          !jobs.jobs.some(job=>
+            job?.name === "Controlador offline Windows" &&
+            job?.conclusion === "failure" &&
+            job?.steps?.some(step =>
+              step.name === "P0-ABS supervisor universal N01-N17 (RED/GREEN)" &&
+              step.conclusion === "failure"))))
+      add("RED nao vinculado a workflow anterior autenticado e falha real do supervisor");
     if (!record.artifact || !Number.isSafeInteger(record.artifact.id) ||
         record.artifact.id <= 0 || !/^sha256:[0-9a-f]{64}$/.test(record.artifact.digest || ""))
       add("parecer sem recibo de artefato visual");
@@ -757,6 +779,17 @@ export async function verifyAssistantPrecertInGithub({
     typeof x.body === "string" && x.body.includes(ASSISTANT_PREAUDIT_MARKER))
     .sort((a,b) => a.id - b.id).at(-1);
   const record = parseAssistantPreaudit(latest?.body);
+  const redIds = Array.isArray(record?.adversarial_v2?.red_runs) &&
+    record.adversarial_v2.red_runs.length <= 10 &&
+    record.adversarial_v2.red_runs.every(x=>Number.isSafeInteger(x)&&x>0)
+    ? record.adversarial_v2.red_runs : [];
+  const redProvenance = await Promise.all(redIds.map(async id=>{
+    const [run,jobs] = await Promise.all([
+      api("/repos/" + REPO + "/actions/runs/" + id),
+      api("/repos/" + REPO + "/actions/runs/" + id + "/jobs?per_page=100"),
+    ]);
+    return {run,jobs};
+  }));
   const v2Check = checks.check_runs.find(x=>x?.name === ADVERSARIAL_V2_CHECK_NAME);
   const v2Job = Number.isSafeInteger(v2Check?.id) && v2Check.id > 0 ?
     await api("/repos/" + REPO + "/actions/jobs/" + v2Check.id) : null;
@@ -781,7 +814,7 @@ export async function verifyAssistantPrecertInGithub({
     [x.previous_filename, x.filename] : [x?.filename]);
   const result = validateAssistantPrecertRelease({
     pr, currentMain: main?.object?.sha, manifest, paths,
-    comments, reviews, checkRuns: checks.check_runs, artifact, testCJob, testCRun, testCAttemptJobs, v2Job,
+    comments, reviews, checkRuns: checks.check_runs, artifact, testCJob, testCRun, testCAttemptJobs, v2Job, redProvenance,
     expectedHead: head, expectedBase: base,
   });
   // Fail closed if the PR advances between check collection and decision.
