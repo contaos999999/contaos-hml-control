@@ -764,6 +764,50 @@ FULL_PROTOCOL_CASES.push(
     id:"S5.2:"+name,file,pattern})),
 );
 
+
+const FULL_PROTOCOL_53_RULES=[
+  ["Ordem obrigatória","rca","P0 adversarial GitHub live verified snapshot"],
+  ["Matriz do parecer","rca","P0 PA incomplete criteria"],
+  ["Parecer formal e vínculo","rca","P0 PA altered report cannot pass SHA256"],
+  ["Gate executável de liberação","rca","P0 adversarial new CHANGES_REQUESTED"],
+  ["Ciclo de correção","rca","P0 V2 NR-006: case-specific RED"],
+  ["Critério de congelamento","rca","P0 V2 probe evidence is authenticated"],
+  ["Fronteira administrativa","python","test_N17_revoked_specific_authorization"],
+];
+const FULL_PROTOCOL_54_STEPS=[
+  ["Inventário inicial","rca","P0 V2 LAYER 01:"],
+  ["RED reproduzível","rca","P0 V2 LAYER 05:"],
+  ["Correção causal","rca","P0 V2 LAYER 06:"],
+  ["GREEN e negativos adversariais","rca","P0 V2 LAYER 06:"],
+  ["Segunda leitura do diff 14/14","rca","P0 V2 LAYER 08:"],
+  ["Repetição","rca","P0 V2 probe evidence is authenticated"],
+  ["Liberação","rca","P0 adversarial GitHub live verified snapshot"],
+];
+const FULL_PROTOCOL_54_RULES=[
+  ["Prova RED adicional após o parecer externo de 21/11","python","test_v2_causal_watchdog_historical_red_then_green"],
+  ["Limitações não dispensáveis","rca","P0 V2 LENS operational_environment:"],
+];
+const FULL_PROTOCOL_55_RULES=[
+  ["Autoridade e limites","python","test_N06_code_without_independent_audit"],
+  ["Dez camadas, sempre na ordem","rca","P0 V2 LAYER 10:"],
+  ["Doze perspectivas obrigatórias","rca","P0 V2 LENS operational_environment:"],
+  ["Casos RED obrigatórios do parecer de 21/11","rca","P0 V2 CAUSAL_RED artifact_attempt"],
+  ["NR-006, repetição legítima dos checks no mesmo HEAD","rca","P0 NR-006 RED: COMMENTED starts second"],
+  ["NR-006, RED causal por cenário (obrigatório)","rca","P0 V2 NR-006: case-specific RED"],
+  ["NR-006/NR-009, decisões e revalidação","rca","P0 V2 RED NR-006: COMMENTED"],
+  ["Vigência e consumo","rca","P0 V2 live consumer dispatch"],
+  ["Classes de ataques não cobertas apenas por testes existentes","rca","P0 NR-006 fail-closed: duplicate"],
+  ["Quatro resultados somente","rca","P0 V2 negative: no auto PASS"],
+  ["Não habilitar","python","test_activation_cannot_be_enabled_by_candidate"],
+];
+FULL_PROTOCOL_CASES.push(...[
+  ["S5.3:",FULL_PROTOCOL_53_RULES],
+  ["S5.4-STEP:",FULL_PROTOCOL_54_STEPS],
+  ["S5.4-RULE:",FULL_PROTOCOL_54_RULES],
+  ["S5.5:",FULL_PROTOCOL_55_RULES],
+].flatMap(([prefix,list])=>list.map(([name,file,pattern])=>({
+  id:prefix+name,file,pattern}))));
+
 const FULL_PROTOCOL_EXTERNAL=[
   "N17(c): autoria terceira e duas aprovacoes elegiveis em fila real",
   "HML: sessao autenticada e isolamento RLS/tenant",
@@ -798,6 +842,22 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
       declaredRules.some(x=>!rules.includes(x)))
     issues.push("Secao 5.2 tem regra sem testemunha executavel ou regra retirada");
 
+  const sectionRules=[
+    ["## 5.3.","## 5.4.",FULL_PROTOCOL_53_RULES,/^\*\*([^*]+?):\*\*/gm],
+    ["## 5.4.","## 5.5.",FULL_PROTOCOL_54_STEPS,/^\d+\. \*\*([^*]+?):\*\*/gm],
+    ["## 5.4.","## 5.5.",FULL_PROTOCOL_54_RULES,/^\*\*([^*]+?):\*\*/gm],
+    ["## 5.5.","## 6.",FULL_PROTOCOL_55_RULES,/^\*\*([^*]+?):\*\*/gm],
+  ];
+  for(const [from,to,inventory,re] of sectionRules){
+    const part=typeof protocol==="string"?protocol.split(from)[1]?.split(to)[0]:"";
+    const observed=[...part.matchAll(re)].map(m=>m[1].trim());
+    const declared=inventory.map(x=>x[0]);
+    if(observed.length!==declared.length ||
+        new Set(observed).size!==observed.length ||
+        observed.some(x=>!declared.includes(x)) ||
+        declared.some(x=>!observed.includes(x)))
+      issues.push("Requisito sem testemunha em "+from+" / "+inventory.length+" declarados");
+  }
   for(const section of expectedSections)
     if(!protocol?.includes(section))issues.push("Secao do protocolo ausente: "+section);
   for(const item of FULL_PROTOCOL_CASES){
