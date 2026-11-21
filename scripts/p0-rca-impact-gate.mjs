@@ -1197,20 +1197,20 @@ export function inventoryProtectedSemanticLines(sources){
     }
     const bytes=Buffer.from(data.content,"utf8");
     const actualBlob=createHash("sha1").update(
-      Buffer.concat([Buffer.from("blob "+bytes.length+"\\0"),bytes])).digest("hex");
+      Buffer.concat([Buffer.from("blob "+bytes.length+"\0"),bytes])).digest("hex");
     if(actualBlob!==PROTECTED_SEMANTIC_SOURCES[path]||
        (data.blob&&data.blob!==actualBlob)){
       issues.push("SEMANTIC_SOURCE_TAMPERED: "+path);continue;
     }
-    const lines=data.content.split(/\\r?\\n/);
+    const lines=data.content.split(/\r?\n/);
     for(let n=0;n<lines.length;n++){
       const value=lines[n].trim();
-      if(!value||/^#{1,6}\\s/.test(value)||/^[-|: ]+$/.test(value)||
-          /^\\`{3}/.test(value))continue;
+      if(!value||/^#{1,6}\s/.test(value)||/^[-|: ]+$/.test(value)||
+          /^\`{3}/.test(value))continue;
       // Keep descriptive and table rows too: never silently discard a rule
       // merely because it was expressed in prose rather than 'deve'.
-      rows.push({id:"SRC-"+createHash("sha256").update(path+"\\0"+(n+1)+
-          "\\0"+lines[n]).digest("hex").slice(0,20),
+      rows.push({id:"SRC-"+createHash("sha256").update(path+"\0"+(n+1)+
+          "\0"+lines[n]).digest("hex").slice(0,20),
         path,blob:actualBlob,line:n+1,
         text_sha256:createHash("sha256").update(lines[n]).digest("hex"),
         text:lines[n]});
