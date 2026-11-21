@@ -933,7 +933,7 @@ export function classifyGithubReadError(status, headers, path) {
   const retry=get("retry-after") ?? "none";
   const requestId=get("x-github-request-id") ?? "unknown";
   const rateLimited=(status===403 || status===429) && remaining==="0" &&
-    /^\\d{10}$/.test(String(reset));
+    /^\d{10}$/.test(String(reset));
   return {
     rateLimited, status, remaining, reset_at:reset,
     message:"GitHub HTTP "+status+" on "+path+" remaining="+remaining+
