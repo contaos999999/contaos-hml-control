@@ -603,6 +603,66 @@ const v2AttestedJob=(check, job, head)=>
     .every(name=>job.steps.filter(step=>step?.name===name &&
       step.status==="completed" && step.conclusion==="success").length===1);
 
+
+const PRECERT_WORKFLOW_ORIGINS=Object.freeze({
+  "Controlador offline Windows": ".github/workflows/contaos-auditoria-controller.yml",
+  "P0-ABS Adversarial V2 executavel": ".github/workflows/contaos-auditoria-controller.yml",
+  "ContaOS Frontend Zero-Drift": ".github/workflows/contaos-frontend-zero-drift.yml",
+  "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente": ".github/workflows/contaos-frontend-zero-drift.yml",
+  "ContaOS P0-NR-001 Integridade e Provas": ".github/workflows/p0-nr001-anti-recurrence.yml",
+});
+// Real GitHub Actions job->run->attempt chain. No arbitrary workflow may
+// impersonate a required check simply by selecting the same job NAME.
+export function verifyPrecertRunOrigin({check,job,run,attemptJobs,head,base,workflow}={}) {
+  const m=typeof check?.details_url==="string"?
+    /^https:\/\/github[.]com\/contaos999999\/contaos-hml-control\/actions\/runs\/([1-9][0-9]*)\/job\/([1-9][0-9]*)$/.exec(check.details_url):null;
+  return !!m && check.name && PRECERT_WORKFLOW_ORIGINS[check.name]===workflow &&
+    check.head_sha===head && check.app?.id===PRECERT_ISSUER &&
+    Number(m[1])===run?.id && Number(m[2])===check.id &&
+    job?.id===check.id && job?.run_id===run.id && job?.head_sha===head &&
+    job?.name===check.name && job?.status==="completed" && job?.conclusion==="success" &&
+    run.head_sha===head && run.head_branch==="build/p0-abs-fiscal-universal" &&
+    run.path===workflow && ["pull_request","pull_request_review","workflow_dispatch"].includes(run.event) &&
+    run.status==="completed" && run.conclusion==="success" &&
+    Number.isSafeInteger(run.run_attempt) && run.run_attempt>0 &&
+    (run.event==="workflow_dispatch" ||
+      run.pull_requests?.some(x=>x.number===690 && x.head?.sha===head &&
+        x.base?.sha===base)) &&
+    Array.isArray(attemptJobs?.jobs) &&
+    attemptJobs.total_count===attemptJobs.jobs.length &&
+    attemptJobs.jobs.some(x=>x.id===job.id && x.run_id===run.id &&
+      x.name===check.name && x.head_sha===head &&
+      x.status==="completed" && x.conclusion==="success");
+}
+export function classifyPrecertReadiness(checkRuns,name,head){
+  const selected=latestPrecertCheck(checkRuns,name,head);
+  if(!selected)return {state:"TERMINAL",name,reason:"origem/check ausente ou ambiguo"};
+  if(["queued","waiting","pending","requested","in_progress"].includes(selected.status))
+    return {state:"PENDING",name,reason:"check ainda em execucao"};
+  if(selected.status==="completed" && selected.conclusion==="success")
+    return {state:"READY",name,check:selected};
+  return {state:"TERMINAL",name,reason:"check terminal "+selected.status+"/"+selected.conclusion};
+}
+export async function downloadPrecertArtifactDigest(id,token){
+  if(!Number.isSafeInteger(id)||id<=0||!token)
+    throw Error("ZIP: artifact ID/token invalidos");
+  // GitHub REST redirects to signed storage. Never log signed URL or token.
+  const url="https://api.github.com/repos/"+REPO+"/actions/artifacts/"+id+"/zip";
+  const res=await fetch(url,{headers:{
+    Authorization:"Bearer "+token,Accept:"application/vnd.github+json",
+    "X-GitHub-Api-Version":"2022-11-28","User-Agent":"ContaOS-P0-FullAudit",
+  },signal:AbortSignal.timeout(90000)});
+  if(!res.ok||!res.body)throw Error("ZIP: download indisponivel HTTP "+res.status);
+  const hasher=createHash("sha256");let total=0;
+  for await(const chunk of res.body){
+    total+=chunk.length;
+    if(total>100*1024*1024)throw Error("ZIP: limite seguro de bytes excedido");
+    hasher.update(chunk);
+  }
+  if(total<100)throw Error("ZIP: bytes insuficientes");
+  return {digest:"sha256:"+hasher.digest("hex"),bytes:total};
+}
+
 export function parseAssistantPreaudit(body) {
   if (typeof body !== "string") return null;
   const re = new RegExp("<!-- " + ASSISTANT_PREAUDIT_MARKER + "\\s*\\n([\\s\\S]*?)\\n-->", "g");
@@ -808,6 +868,7 @@ export async function verifyAssistantPrecertInGithub({
   env = process.env,
   api = (p) => http(p, token),
   list = (p) => fetchAllPrecert(p, token),
+  zipDigest = (id) => downloadPrecertArtifactDigest(id,token),
   baseManifest = (base) => JSON.parse(execFileSync("git", [
     "show", base + ":docs/frontend/planos/P0_GOV_PLAN_690.json",
   ], {encoding: "utf8", timeout: 15000})),
@@ -844,18 +905,18 @@ export async function verifyAssistantPrecertInGithub({
   // Do not hammer Actions/Jobs/Artifacts while Teste C or the current
   // structured receipt is not ready. This early result NEVER releases.
   const requiredNow=[...PRECERT_REQUIRED_CHECKS,ADVERSARIAL_V2_CHECK_NAME];
-  const pending=requiredNow.filter(name => {
-    const latest=latestPrecertCheck(checks.check_runs,name,head);
-    return !latest || latest.status!=="completed" || latest.conclusion!=="success";
-  });
-  if (pending.length || record?.head!==head || record?.base!==base ||
-      record?.verdict!=="PASS") {
+  const readiness=requiredNow.map(name=>classifyPrecertReadiness(checks.check_runs,name,head));
+  const terminal=readiness.filter(x=>x.state==="TERMINAL");
+  const pending=readiness.filter(x=>x.state==="PENDING");
+  if(terminal.length||pending.length||record?.head!==head||record?.base!==base||
+      record?.verdict!=="PASS"){
     return {pass:false,verdict:"BLOCKED",release:"NO_GO",head,base,
+      waitable:terminal.length===0 && pending.length>0,
       issues:[
-        ...pending.map(name=>"check obrigatorio ainda nao pronto: "+name),
-        ...(record?.head!==head || record?.base!==base ||
-            record?.verdict!=="PASS" ?
-          ["parecer estruturado V2 no HEAD/base atual ainda nao disponivel"] : []),
+        ...terminal.map(x=>"FALHA_TERMINAL: "+x.name+": "+x.reason),
+        ...pending.map(x=>"PENDENTE: "+x.name+": "+x.reason),
+        ...(record?.head!==head||record?.base!==base||record?.verdict!=="PASS"?
+          ["parecer estruturado V2 no HEAD/base atual ainda nao disponivel"]:[]),
       ]};
   }
   const redIds = Array.isArray(record?.adversarial_v2?.red_runs) &&
@@ -928,6 +989,49 @@ export async function verifyAssistantPrecertInGithub({
       latestChecks?.total_count !== latestChecks?.check_runs?.length ||
       JSON.stringify(latestChecks?.check_runs) !== JSON.stringify(checks.check_runs))
     result.issues.push("HEAD/base/parecer/checks changed during pre-cert readback");
+
+  // Authenticate producer workflow, event and exact attempt for EVERY required
+  // check, including Windows (previously authenticated only by its name).
+  if(result.issues.length===0){
+    const selectedChecks=[...new Set([...PRECERT_REQUIRED_CHECKS,
+      ADVERSARIAL_V2_CHECK_NAME,"Controlador offline Windows"])]
+      .map(name=>latestPrecertCheck(checks.check_runs,name,head));
+    const oldV2Check=checks.check_runs.find(x=>x.id===receiptV2Job?.id &&
+      x.name===ADVERSARIAL_V2_CHECK_NAME);
+    if(!oldV2Check)result.issues.push("ORIGIN: recibo V2 historico sem check autenticado");
+    const originPairs=[
+      ...selectedChecks.map(check=>({check,job:
+        check?.id===v2Job?.id?v2Job:
+        check?.id===testCJob?.id?testCJob:null})),
+      {check:oldV2Check,job:receiptV2Job},
+    ];
+    for(const entry of originPairs){
+      if(!entry.check){result.issues.push("ORIGIN: check selecionado ausente");continue;}
+      try{
+        const match=/\/actions\/runs\/([1-9][0-9]*)\/job\//.exec(entry.check.details_url||"");
+        if(!match)throw Error("URL nao vinculada ao GitHub Actions");
+        const runId=Number(match[1]);
+        const job=entry.job??await api("/repos/"+REPO+"/actions/jobs/"+entry.check.id);
+        const run=await api("/repos/"+REPO+"/actions/runs/"+runId);
+        const aj=await api("/repos/"+REPO+"/actions/runs/"+runId+
+          "/attempts/"+run?.run_attempt+"/jobs?per_page=100");
+        if(!verifyPrecertRunOrigin({check:entry.check,job,run,
+          attemptJobs:aj,head,base,workflow:PRECERT_WORKFLOW_ORIGINS[entry.check.name]}))
+          result.issues.push("ORIGIN: job/run/attempt/workflow/event/HEAD invalido: "+entry.check.name);
+      }catch(e){result.issues.push("ORIGIN: prova indisponivel para "+
+        entry.check.name+": "+e.message);}
+    }
+  }
+  // The final check is about the actual BYTES, not GitHub artifact metadata.
+  // Execute only after all other conditions and final readback are satisfied.
+  if(result.issues.length===0){
+    try{
+      const zip=await zipDigest(artifact.id);
+      if(zip?.digest!==artifact.digest || !Number.isSafeInteger(zip.bytes) || zip.bytes<100)
+        result.issues.push("ZIP: bytes/digest nao coincidem com artefato do GitHub");
+    }catch(e){result.issues.push("ZIP: download/readback falhou: "+e.message);}
+  }
+
   result.pass = result.issues.length === 0;
   result.verdict = result.pass ? "PASS" : "BLOCKED";
   result.release = result.pass ? "PRE_CERTIFICATION_ONLY" : "NO_GO";
