@@ -1,5 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { execFileSync } from "node:child_process";
 import { extractHint, verifyMergeGroup } from "./merge-group-context.mjs";
 
 const A = "a".repeat(40), B = "b".repeat(40), C = "c".repeat(40), D = "d".repeat(40);
@@ -85,3 +89,60 @@ test("N13 evento sem merge_group bloqueado", () =>
   check((f) => { f.event.merge_group = null; }, /event\/action/));
 test("N13 checkout com SHA de outra branch é FAIL", () =>
   check((f) => { f.event.merge_group.head_sha = C; }, /checkout/));
+
+test("N13 prova git real: PR multi-commit e grupo isolado, mutante extra rejeitado", () => {
+  const workdir = mkdtempSync(join(tmpdir(), "contaos-merge-group-"));
+  const git = (...args) => execFileSync("git", args, {
+    cwd: workdir, encoding: "utf8", timeout: 20000,
+  }).trim();
+  const write = (name, body) => writeFileSync(join(workdir, name), body);
+  try {
+    git("init", "-q", "-b", "main");
+    git("config", "user.email", "test@invalid.local");
+    git("config", "user.name", "ContaOS Git Test");
+    write("base.txt", "base\n");
+    git("add", ".");
+    git("commit", "-qm", "base");
+    const base = git("rev-parse", "HEAD");
+    git("checkout", "-qb", "feature");
+    for (let i = 1; i <= 3; i++) {
+      write("feature-" + i + ".txt", "feature " + i + "\n");
+      git("add", ".");
+      git("commit", "-qm", "feature " + i);
+    }
+    const prHead = git("rev-parse", "HEAD");
+    git("checkout", "-q", "main");
+    git("merge", "--no-ff", "-m", "synthetic queue group", "feature");
+    const group = git("rev-parse", "HEAD");
+    const parents = git("show", "-s", "--format=%P", group).split(/\s+/);
+    const count = Number(git("rev-list", "--count", base + ".." + group));
+    assert.ok(count > 1, "root cause: commits are not PRs");
+    const observed = git("rev-parse", group + "^{tree}");
+    const expected = git("merge-tree", "--write-tree", base, prHead);
+    assert.equal(observed, expected);
+    const input = build();
+    const groupRef = "refs/heads/gh-readonly-queue/main/pr-690-" + prHead.slice(0, 7);
+    input.event.merge_group.head_ref = groupRef;
+    input.event.merge_group.head_sha = group;
+    input.event.merge_group.base_sha = base;
+    input.entry.baseCommit.oid = base;
+    input.entry.headCommit.oid = group;
+    input.pull.headRefOid = prHead;
+    input.liveBase = base;
+    input.checkoutSha = group;
+    input.checkoutRef = groupRef;
+    input.gitParents = parents;
+    input.observedTree = observed;
+    input.expectedTree = expected;
+    assert.equal(verifyMergeGroup(input).valid, true);
+    write("unauthorized-extra.txt", "other PR should not enter this merge group\n");
+    git("add", ".");
+    git("commit", "-qm", "unauthorized extra PR content");
+    input.observedTree = git("rev-parse", "HEAD^{tree}");
+    const denied = verifyMergeGroup(input);
+    assert.equal(denied.valid, false);
+    assert.match(denied.issues.join("; "), /group tree differs/);
+  } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
