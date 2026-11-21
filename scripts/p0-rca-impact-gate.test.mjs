@@ -741,6 +741,10 @@ function paReviewRerunFixture({state="success", prior="success"}={}){
     conclusion:state==="queued"?null:state,
     details_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/778/job/990"};
   f.checkRuns.push(next);
+  const windows=f.checkRuns.find(x=>x.name==="Controlador offline Windows");
+  f.checkRuns.push({...structuredClone(windows),id:991,
+    status:"completed",conclusion:"success",
+    details_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/778/job/991"});
   f.receiptV2Job=structuredClone(f.v2Job);
   f.v2Job={...structuredClone(f.v2Job),id:990,run_id:778,
     status:state==="queued"?"queued":"completed",
@@ -760,6 +764,18 @@ test("P0 NR-006 RED: most recent failed or queued V2 check defeats older PASS",(
     assert.equal(z.release,"NO_GO");
   }
 });
+
+test("P0 NR-006 review rerun: newer Windows job failed or pending blocks previous green",()=>{
+  for(const status of ["in_progress","completed"]){
+    const f=paReviewRerunFixture();
+    const win=f.checkRuns.find(x=>x.id===991);
+    win.status=status;win.conclusion=status==="completed"?"failure":null;
+    const out=paCheck(f);
+    assert.equal(out.pass,false,JSON.stringify(out));
+    assert.match(out.issues.join(" "),/check exigido/);
+  }
+});
+
 test("P0 NR-006 RED: newer green cannot launder failed recorded historical causal job",()=>{
   const f=paReviewRerunFixture({prior:"failure"});
   assert.equal(paCheck(f).pass,false);
