@@ -543,6 +543,23 @@ export const ADVERSARIAL_V2_STEP_NAMES = Object.freeze([
   ...ADVERSARIAL_V2_LENSES.map(x=>"P0 V2 LENS "+x),
 ]);
 export const ADVERSARIAL_V2_CHECK_NAME = "P0-ABS Adversarial V2 executavel";
+export const ADVERSARIAL_V2_CAUSAL_CASES = Object.freeze([
+  Object.freeze({case_id:"watchdog_postmerge",
+    vulnerable_sha:"54b596f4ae3cce085e79967c4ea8cc4446685d5d",
+    vulnerable_blob:"7f80dd25661a4cd5aebaa9aab40cf47a001623cc",
+    observed:"N05_EXCEPTION_BEFORE_DIAGNOSIS",
+    green:"BLOCKED_EXTERNAL_VERIFY_POST_MERGE_READBACK"}),
+  Object.freeze({case_id:"artifact_attempt",
+    vulnerable_sha:"7e34fe416c30ae38d384aef3084165b2f2e1ffee",
+    vulnerable_blob:"38072d1d3a940d2f722f3e42d1475ab9cb5a04c5",
+    observed:"STALE_ATTEMPT_FALSE_PASS",
+    green:"NO_GO_STALE_ATTEMPT"}),
+  Object.freeze({case_id:"review_comment",
+    vulnerable_sha:"caa351c68a197fec3c7e6a95b8a7de4cfcc9845e",
+    vulnerable_blob:"a85931fbe7215712b2df6d95366f41cc63b7cd29",
+    observed:"COMMENTED_ERASED_CHANGES_REQUESTED",
+    green:"NO_GO_NATIVE_VETO"}),
+]);
 export const PRECERT_REQUIRED_CHECKS = Object.freeze([
   "ContaOS Frontend Zero-Drift",
   "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
@@ -622,14 +639,15 @@ export function validateAssistantPrecertRelease({
       v2Job.head_sha !== expectedHead ||
       v2Job.status !== "completed" || v2Job.conclusion !== "success" ||
       !Array.isArray(v2Job.steps) ||
-      !ADVERSARIAL_V2_STEP_NAMES.every(name =>
-        v2Job.steps.filter(step => step?.name === name &&
+      ![...ADVERSARIAL_V2_STEP_NAMES,
+        ...ADVERSARIAL_V2_CAUSAL_CASES.map(x=>"P0 V2 CAUSAL_RED "+x.case_id)]
+        .every(name=>v2Job.steps.filter(step => step?.name === name &&
           step?.status === "completed" && step?.conclusion === "success").length === 1) ||
       !Number.isSafeInteger(v2Job?.run_id) ||
       v2Checks[0]?.details_url !==
         "https://github.com/" + REPO + "/actions/runs/" +
         v2Job?.run_id + "/job/" + v2Job?.id)
-    add("22 provas executaveis P0-ABS V2 sem autenticacao de JOB/HEAD e steps 10+12");
+    add("25 provas executaveis P0-ABS V2 sem autenticacao de JOB/HEAD: 10+12+3 causal");
   const history = Array.isArray(comments) ? comments
     .filter(x => x?.user?.login === "contaos9999" &&
       typeof x.body === "string" && x.body.includes(ASSISTANT_PREAUDIT_MARKER))
@@ -657,6 +675,27 @@ export function validateAssistantPrecertRelease({
         record.adversarial_v2.red_runs.length < 1 ||
         !record.adversarial_v2.red_runs.every(x => Number.isSafeInteger(x) && x > 0))
       add("último parecer V2 não comprova matriz adversarial, RED/GREEN e segunda leitura no HEAD/base");
+    // NR-006: Every separate causal RED must be independently replayed from a
+    // pinned vulnerable commit/blob and contrasted against current GREEN.
+    // A generic failed job or two runs of one case cannot count three times.
+    const causal=record.adversarial_v2?.red_cases;
+    if (!Array.isArray(causal) ||
+        causal.length !== ADVERSARIAL_V2_CAUSAL_CASES.length ||
+        new Set(causal.map(x=>x?.case_id)).size !== causal.length ||
+        !ADVERSARIAL_V2_CAUSAL_CASES.every(expected=>{
+          const observed=causal.find(x=>x?.case_id===expected.case_id);
+          const stepName="P0 V2 CAUSAL_RED "+expected.case_id;
+          return observed && observed.vulnerable_sha===expected.vulnerable_sha &&
+            observed.vulnerable_blob===expected.vulnerable_blob &&
+            observed.observed===expected.observed &&
+            observed.green===expected.green &&
+            observed.green_head===expectedHead &&
+            observed.run_id===v2Job?.run_id &&
+            observed.job_id===v2Job?.id &&
+            v2Job?.steps?.filter(x=>x?.name===stepName &&
+              x.status==="completed" && x.conclusion==="success").length===1;
+        }))
+      add("NR-006: RED causal nao demonstrado por caso/SHA/blob/resultado e GREEN no mesmo job");
     // RED receipts are checked against real failed executions of the
     // supervisor test step, not merely numeric workflow IDs in a comment.
     if (!Array.isArray(record.adversarial_v2?.red_runs) ||
