@@ -1707,8 +1707,22 @@ async function assessSemanticGate({
     }
   }
   for(const pair of interactions){
-    if(!["INTERACTS","NONINTERACTING","CONFLICT"].includes(pair.decision)||
-       !proofOk(pair,pair.pair_id)){
+    const [left,right]=(pair?.pair_id||"").split("|");
+    const rationale=pair?.pair_rationale;
+    const pairSpecific=typeof rationale==="string" &&
+      rationale.trim().length>=60 &&
+      rationale.includes(left||"___") && rationale.includes(right||"___") &&
+      pair?.left_rule_id===left && pair?.right_rule_id===right &&
+      expectedRules.some(x=>x.rule_id===left) &&
+      expectedRules.some(x=>x.rule_id===right);
+    const applicability=pair?.decision==="NONINTERACTING"?
+      typeof pair?.separation_basis==="string" &&
+        pair.separation_basis.trim().length>=35:
+      Array.isArray(pair?.conflict_conditions) &&
+        pair.conflict_conditions.length>0 &&
+        pair.conflict_conditions.every(x=>typeof x==="string"&&x.trim().length>=15);
+    if(!["INTERACTS","NONINTERACTING","CONFLICT"].includes(pair?.decision)||
+       !pairSpecific||!applicability||!proofOk(pair,pair.pair_id)){
       fail("SEMANTIC_PAIR_UNPROVEN: "+pair?.pair_id);break;
     }
   }
