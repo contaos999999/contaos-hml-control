@@ -248,7 +248,7 @@ jobs:
     if: ((github.event_name == 'pull_request' || github.event_name == 'pull_request_review') && github.event.pull_request.number == 690) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/build/p0-abs-fiscal-universal')
     needs: [controller-offline, adversarial-v2]
     runs-on: ubuntu-22.04
-    timeout-minutes: 25
+    timeout-minutes: 80
     steps:
       - name: Checkout da PR para verificador sem credenciais persistentes
         uses: actions/checkout@v4
@@ -277,10 +277,25 @@ jobs:
               exit 0
             fi
             echo "$output"
-            # Permanent/authorization failures are NOT solved by polling.
-            # Preserve NO-GO and expose a clear root cause for correction.
-            if echo "$output" | grep -Eq 'GitHub HTTP 403|NR-006: RED causal|25 provas executaveis'; then
-              echo "P0-ABS BLOCKED: erro nao transitorio; corrija a causa antes de reexecutar."
+            # A primary rate-limit 403 is a transient EXTERNAL blocker.
+            # Honor GitHub's authenticated reset epoch. Never pretend PASS.
+            if echo "$output" | grep -Eq 'GitHub HTTP (403|429).* remaining=0 reset-at=[0-9]{10}'; then
+              reset=$(printf '%s\n' "$output" | sed -nE 's/.*reset-at=([0-9]{10}).*/\1/p' | tail -n 1)
+              now=$(date -u +%s)
+              delay=$((reset - now + 10))
+              if [ "$delay" -lt 15 ]; then delay=15; fi
+              if [ "$delay" -gt 3900 ]; then
+                echo "P0-ABS BLOCKED_EXTERNAL: reset alem da janela segura."
+                exit 1
+              fi
+              echo "P0-ABS BLOCKED_EXTERNAL: limite GitHub esgotado, retomada somente apos reset autenticado."
+              sleep "$delay"
+              continue
+            fi
+            # Permission denials, invalid causal RED or missing authenticated
+            # steps need a correction, never 24 blind retries.
+            if echo "$output" | grep -Eq 'GitHub HTTP (401|403)|NR-006: RED causal|25 provas executaveis'; then
+              echo "P0-ABS BLOCKED: impedimento tecnico/permissao; nova revisao necessaria."
               exit 1
             fi
             if [ "$attempt" -eq 10 ]; then
