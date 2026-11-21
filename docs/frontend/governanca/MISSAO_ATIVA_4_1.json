@@ -46,7 +46,11 @@
     "Auditoria/revisão independente do BUILD",
     "Prova operacional de fila e revogação",
     "Autorização administrativa expressa para ativação",
-    "Certificado de liberação da #679"
+    "Certificado de liberação da #679",
+    "Revalidar pin da dependência #690 após alterações de HEAD, mediante checkpoint protegido independente"
   ],
-  "next_task": "Implementar PR #690 com ativacao desabilitada; nenhuma conclusão de missão sem certificado e readback"
+  "next_task": "Implementar PR #690 com ativacao desabilitada; nenhuma conclusão de missão sem certificado e readback",
+  "dependency_heads": {
+    "690": "1e4a19028dad1c75212d179d9f3b27333207124b"
+  }
 }
