@@ -45,3 +45,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/p0-nr001-gate.mjs
+      - name: P0-ABS — revalidar grupo vivo imediatamente antes do sucesso do job
+        if: github.event_name == 'merge_group'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci/merge-group-context.mjs

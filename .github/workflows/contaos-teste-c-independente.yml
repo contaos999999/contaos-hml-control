@@ -124,3 +124,8 @@ jobs:
           git diff --exit-code --
           test -z "$(git status --porcelain --untracked-files=no)"
           echo "Teste C somente leitura: PASS."
+      - name: P0-ABS — revalidar grupo vivo imediatamente antes do sucesso do job
+        if: github.event_name == 'merge_group'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci/merge-group-context.mjs

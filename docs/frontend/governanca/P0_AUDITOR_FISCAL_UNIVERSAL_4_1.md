@@ -96,6 +96,8 @@ A ativação e a configuração administrativa requerem autorização separada d
 
 **Ciclo de vida:** preservar `state`, `merged`, `merged_at` e `merge_commit_sha`. PR fechada sem merge indica `REOPEN_OR_REPLAN_CLOSED_PR`; PR efetivamente integrada no GitHub indica `VERIFY_POST_MERGE_READBACK`. Ambos impedem a ação de revisão como próximo passo e não constituem `CERTIFIED`, mesmo com checks verdes. Dados ausentes ou contraditórios falham fechados. Readback da `main` é operação distinta.
 
+**Revalidação no encerramento do job:** Zero-Drift, Teste C e P0-NR repetem a consulta autenticada do resolvedor depois dos seus testes e imediatamente antes de concluir com `success`, apenas no evento `merge_group`. A dupla leitura GraphQL/REST do resolvedor evita aceitar ref removida ou entrada que perdeu elegibilidade durante a execução, sem conferir qualquer privilégio ao workflow. Na ausência de grupo vivo, o job falha fechado. O CI de PR comum continua com os mesmos nomes e permissões de leitura.
+
 **Regressão obrigatória:** executar novos casos nas três suítes Node/Python, incluindo Git temporário, e cinco checks no mesmo HEAD, preservando testes anteriores, estado `skipped`, limitações HML e provas reais de API. Não iniciar auditoria independente antes de a matriz integral estar comprovada.
 
 **Critério de congelamento:** não publicar melhorias cosméticas nem reenviar auditoria sem delta causal. Falha nova exige causa raiz, teste negativo, correção e regressão no mesmo HEAD. Preflight verde não elimina possibilidade de novo achado, nem altera o dever de auditoria independente de código.

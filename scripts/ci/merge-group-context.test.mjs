@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -216,6 +216,28 @@ test("N13 PR HEAD moving during queue verification is FAIL", async () => {
 
 test("N13 real resolver refuses stale GITHUB_SHA even with valid local HEAD", async () => {
   await assert.rejects(()=>resolveEventContext(fakeResolver({env:{GITHUB_SHA:C}})),/GITHUB_SHA event/);
+});
+
+test("N13 protected workflows recheck group after substantive work and before success", () => {
+  const suites = [
+    [".github/workflows/contaos-frontend-zero-drift.yml",
+      "Brand-01, PT-BR, secrets and types integrity"],
+    [".github/workflows/contaos-teste-c-independente.yml",
+      "Confirmar que nenhuma fonte versionada foi editada"],
+    [".github/workflows/p0-nr001-anti-recurrence.yml",
+      "P0-NR-001 ledger com comprovantes reais"],
+  ];
+  for (const [path, lastTask] of suites) {
+    const source = readFileSync(new URL("../../" + path, import.meta.url), "utf8");
+    const finalGuard = "P0-ABS — revalidar grupo vivo imediatamente antes do sucesso do job";
+    assert.equal(source.split(finalGuard).length - 1, 1, path + " must contain one terminal queue guard");
+    assert.ok(source.lastIndexOf(finalGuard) > source.lastIndexOf(lastTask), path + " must end with fresh group verification");
+    const end = source.slice(source.lastIndexOf(finalGuard));
+    assert.match(end, /if: github\.event_name == 'merge_group'/);
+    assert.match(end, /node scripts\/ci\/merge-group-context\.mjs/);
+    assert.match(source, /contents: read/);
+    assert.doesNotMatch(source, /contents: write/);
+  }
 });
 
 test("N13 prova git real: PR multi-commit e grupo isolado, mutante extra rejeitado", () => {
