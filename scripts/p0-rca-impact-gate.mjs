@@ -2139,7 +2139,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) ===
       const base=process.env.INPUT_PREAUDIT_BASE||git("rev-parse","origin/main");
       if(!validSha(base))throw Error("invalid protected base SHA");
       const sources=Object.fromEntries(Object.keys(PROTECTED_SEMANTIC_SOURCES)
-        .map(path=>[path,{content:git("show",base+":"+path),
+        .map(path=>[path,{content:execFileSync("git",["show",base+":"+path],{encoding:"utf8"}),
           blob:git("rev-parse",base+":"+path)}]));
       const inventory=inventoryProtectedSemanticLines(sources);
       const result={schema:inventory.schema,head:git("rev-parse","HEAD"),
