@@ -2976,3 +2976,90 @@ Próxima tarefa: integrarGATEr5 eaditivoPLANO_ATIVO comCI2/revisão/readback; de
 API51original42596392357/art13663262831/SHA5e2177afc72b78e0a8e6109bb8795633886c8052c37a756832f616a8c5066795 eUImultiturnc999ebc9 permanecem aprovados nas origens, semrepetição. UI13 restante(paginação>20/encerramento/revalidação) exige cenário/gate/fixture/cleanuppróprios. Autorização do titular continua. Contexto extenso, semmedidorexato; seguir checkpointsemrecomeçarprovasaprovadas. Esteappend sóécheckpointintegrado apósCI/revisão/merge/readback doPRdocumental; nãoéconclusão da missão.
 
 Emenda de segurança do bootstrap: somente binários diretos Node/Bun fixados por URL/SRI e SHA256, lockfile local exato, npm ci --ignore-scripts com configurações vazias e ambiente mínimo. Nenhum lifecycle de terceiros é executado; os quatro novos negativos complementam os39 casos originais (total43). Aceite operacional da emenda ainda pendente.
+
+
+## CHECKPOINT NÃO INTEGRADO — AUDITORIA SEMÂNTICA INTEGRAL DO PLAN P0-AUD-UNIVERSAL-001 (21/11/2026)
+
+**Natureza:** inventário em branch da PR #690; NÃO é checkpoint integrado à `main` nem certificado semântico. PLAN protegido: `docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md`, blob Git `9d037a37df8ae177f7f02123932e0ca60e7e3f81`. Norma §5.6 do BUILD mantém exigência simultânea de sete eixos por cláusula: **A** ator/autoridade; **P** precondição/estado; **E** consequência positiva e negativa; **I** interação/prevalência; **F** fonte da verdade/prova LIVE; **R** revogação/nova tentativa; **B** fronteira BUILD/independente/merge/ativação.
+
+**Análise de origem de 71 unidades:** versões comentadas integralmente na PR, [parte 1](https://github.com/contaos999999/contaos-hml-control/pull/690#issuecomment-7066368327) e [parte 2](https://github.com/contaos999999/contaos-hml-control/pull/690#issuecomment-7066368917). Para cada uma consta cláusula textual da fonte, A/P/E/I/F/R/B, fonte requerida e o limite da evidência. O inventário abaixo está vinculado às linhas do PLAN pela origem protegida; **não equivale a demonstração independente de que todas as interpretações foram resolvidas**.
+
+| Unidade | Linha PLAN | Trecho normativo | Estado dos sete eixos |
+|---|---:|---|---|
+| `PLAN-S3-01` | 23 | **Contrato imutável por revisão protegida:** `mission_id`, repositório, alvo, objetivo, escopo, critérios de aceite, che | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-02` | 24 | **P0-ABS-001:** antes de retomar implementação funcional da missão atual, comprovar gate contra bypass no GitHub. Condiç | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-03` | 25 | **P0-ABS-002:** missão em estado `ACTIVE`, `BLOCKED_EXTERNAL`, `CANCELLED_BY_OWNER` ou `CERTIFIED`. Não confundir interr | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-04` | 26 | **Mission Lock:** comparar PR/repo/objetivo com contrato na base protegida; bloquear transição para missão incompatível  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-05` | 27 | **Auditoria read-only:** reutilizar `auditar-pr.ps1` e perfil `auditor`; nenhuma escrita em código de app. Se o auditor  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-06` | 28 | **Certificação em duas provas:** (a) código, contrato, testes, CI, Teste C e parecer independente no SHA; (b) revisão fo | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-07` | 29 | **Watchdog:** usar automação existente ou workflow mínimo read-only para identificar missão não certificada, ausência de | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-08` | 30 | **Antiestagnação:** após duas tentativas sem delta causal, proibir repetir o mesmo retry e exigir RCA ampliada. Não usar | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-09` | 31 | **Independência:** o auditor é autoridade de parecer técnico, não substituto de aprovação humana específica, nem adminis | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-10` | 32 | **Transparência:** status `BLOCKED_EXTERNAL` só com impeditivo verificável; preservar próxima ação, HEAD, checkpoints e  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-01` | 36 | O contexto `ContaOS P0-ABS Mission Lock` será vinculado no ruleset `26495643` ao `integration_id` de um GitHub App autor | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-02` | 37 | A regra obrigatória `merge_queue` do ruleset é a barreira de frescor. Configurar `ALLGREEN` e um elemento por grupo, com | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-03` | 38 | O App usa exclusivamente a API de **commit statuses** para esse contexto. Estados possíveis são `pending`, `failure`, `e | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-04` | 40 | **Admissão da PR, antes da fila.** Alterações autenticadas da PR, das revisões e da base protegida disparam a reavaliaçã | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-05` | 41 | **Autorização de merge pelo grupo.** Só um novo `success` no SHA temporário do grupo ativo, após a reavaliação integral  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-06` | 42 | Para cada `merge_group/checks_requested`, autenticar o evento e consultar o grupo ativo no GitHub. Vincular repositório, | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-07` | 44 | O contrato protegido define quando a revisão formal é obrigatória. Em ambos os pontos de publicação, consultar a review  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-08` | 45 | Ensaiar em fila isolada a equivalência com a proteção pretendida. Antes de ativar em `main`, comprovar que todos os requ | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-09` | 46 | Integrar o BUILD revisado e as adaptações necessárias sob a proteção vigente, provar o produtor no ambiente de validação | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-01` | 50 | **Fase PLAN (esta PR):** apenas este documento. Não mudar `AGENTS.md`, executáveis, workflows, checks, configuração de p | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-02` | 52 | **Allowlist candidata para futura PR de BUILD, sujeita à validação após a integração deste PLAN:** | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-03` | 53 | `AGENTS.md` (referência curta, sem duplicar instruções); | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-04` | 54 | `docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md`; | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-05` | 55 | `docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md` (nova norma); | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-06` | 56 | `docs/frontend/governanca/MISSAO_ATIVA_4_1.json` (contrato protegido; missão inicial PR679); | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-07` | 57 | `scripts/auditoria/auditar-pr.ps1` e `scripts/auditoria/test-controller.ps1` somente quando testes demonstraram necessid | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-08` | 58 | `scripts/auditoria/mission-supervisor.py` e `scripts/auditoria/test_mission_supervisor.py` (novo módulo interno, **não** | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-09` | 59 | `.github/workflows/contaos-auditoria-controller.yml` e eventual novo `.github/workflows/contaos-missao-auditoria.yml` (c | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-10` | 60 | `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md` (checkpoint apensado, nunca sobrescrever histórico); | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-11` | 61 | `docs/frontend/governanca/P0_NR_001_LEDGER.json` **somente** com ocorrência real causalmente comprovada; | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-12` | 62 | `docs/frontend/planos/PLANO_ATIVO.json` somente conforme validação do rito ADR-DEV-002, antes de qualquer BUILD. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-13` | 64 | A adaptação à fila exige emenda integrada antes de alterar gates atuais. O inventário inicial confirma que `contaos-fron | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-14` | 66 | **Não autorizados:** `src/`, `public/`, dependências/lockfiles, tipos congelados, layout, rotas, backend `develop`, Supa | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-01` | 71 | N01: relatório DONE sem merge/checkpoint deve continuar ACTIVE. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-02` | 72 | N02: PR divergente do contrato ativo deve FAIL, exceto sub-PR autorizada na base protegida. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-03` | 73 | N03: contrato adulterado na PR não pode alterar decisão do gate. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-04` | 74 | N04: check com SHA anterior, zero seleção, simulação, Check Run `skipped`/`neutral` ou status do App diferente de `succe | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-05` | 75 | N05: mudança de HEAD/base viva invalida parecer e recibo. Em prova com HEAD da PR intacto, avançar a base primeiro a com | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-06` | 76 | N06: auditor que edita mecanismo sob avaliação não pode autocertificar. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-07` | 77 | N07: interrupção de sessão/runner preserva estado e não gera PASS. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-08` | 78 | N08: duas tentativas sem delta exigem investigação causal ampliada, sem loop. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-09` | 79 | N09: dupla execução concorrente não grava estados conflitantes. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-10` | 80 | N10: CANCELLED exige autoridade explícita e mantém histórico. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-11` | 81 | N11: ferramenta sem acesso, erro HTTP ou JSON malformado resulta NO-GO, não PASS. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-12` | 82 | N12: troca de branch/commit após revisão invalida evidência afetada. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-13` | 83 | N13: contexto ausente, resultado homônimo de outra origem, status no HEAD sem resultado no grupo e outra PR ou alvo comp | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-14` | 84 | N14: PR de governança não abre exceção ampla a novas PRs incompatíveis. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-15` | 85 | N15: com o publicador indisponível, grupo sem status válido fica bloqueado. Ensaiar recuperação autorizada, exigir execu | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-16` | 86 | N16: sem o status obrigatório emitido no SHA que o GitHub usa para a PR, inclusive se publicado em SHA alternativo ou po | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-17` | 87 | N17: com checks técnicos verdes, a PR ou o grupo permanecem bloqueados quando a revisão formal aplicável estiver ausente | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-18` | 89 | GREEN: testes existentes do auditor, 17 negativos ou mais, status CI real da PR, Zero-Drift, P0-NR, LOCK, Teste C aplicá | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-01` | 93 | Impacto planejado restrito à orquestração e governança. As regras de app, identidade visual BRAND-01, HML, RBAC/RLS, con | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-02` | 97 | Antes da ativação, registrar um responsável administrativo, o snapshot autenticado do ruleset, a última revisão confiáve | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-03` | 99 | Com o publicador indisponível, deixar a fila bloquear e registrar `BLOCKED_EXTERNAL` com grupo, PR, HEAD, ref viva, erro | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-04` | 100 | Se a instalação do App estiver utilizável, a pessoa autorizada reexecuta a versão confiável do publicador por ambiente p | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-05` | 101 | Se o App não puder publicar, a fila continua bloqueada. A única troca admitida é substituição administrativa expressamen | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-06` | 102 | Recolocar PR elegível na fila conforme o rito e exigir o novo status no SHA do novo grupo. Registrar autorização, ator,  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S7-01` | 106 | **Auditor:** diagnosticar a missão e emitir parecer. **Orquestrador:** conduzir implementação, sub-PRs e correções. **Gi | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S7-02` | 108 | A próxima entrega é a **PR de BUILD**, iniciada somente após este PLAN integrar a main. Depois, comprovar o check e a ef | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S7-03` | 110 | **Não declarar a P0-AUD-001 instalada, o Mission Lock efetivo, o watchdog persistente ou a PR #679 certificada por causa | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-01` | 119 | / Tratar base gravada ou sucesso anterior como prova de contexto atual, CONHECIDO NR-009. Origem indefinida no PLAN, NOV | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-02` | 120 | / Ausência do bloco obrigatório no próprio documento, CONHECIDO pelo precedente do PLAN 42. / Comparar o bloco abaixo co | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-03` | 121 | / Redação de implantação misturava retomada local persistente com watchdog somente leitura, NOVO. / Conferir as seções 3 | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-04` | 124 | Marca: ContaOS Brand v1.0 / BRAND-01; ler 19_IDENTIDADE_VISUAL_OFICIAL_BRAND_1_0.md e 20_PROMPT_000_BRAND_01.md para qua | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-05` | 125 | Economia Lovable: checar turno/estado/commit antes de enviar; usar GitHub e Supabase diretamente quando possível; consol | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-06` | 126 | Entregar evidências e classificar: IDENTIDADE VISUAL PASS/FAIL/NÃO VERIFICADO/N/A; ECONOMIA LOVABLE CONFORME/NÃO CONFORM | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-07` | 128 | `impacto_visual: N/A`. O PLAN é documental e a allowlist candidata se limita à governança, auditoria e workflows. Baseli | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S9-01` | 135 | **NR-009 · frescor.** A primeira correção conferia a ref viva, mas deixava o status de admissão sujeito à identidade do  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S9-02` | 136 | **Recuperação · NOVO.** A reversão por PR dependia do check quebrado. A seção 6.1 exige ensaio prévio da recuperação pro | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S10-01` | 143 | **Admissão · NOVO.** A redação anterior deixava opcional a publicação que precede a fila, criando dependência circular d | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S10-02` | 144 | **Revisão formal · NOVO.** O texto tratava a revisão na certificação, mas deixava implícita sua validação no publicador. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+
+**Grafo de interações obrigatórias:** (i) §3/contrato protegido ↔ N03/NR-005, (ii) estado da missão ↔ N01/N10/certificação em duas provas, (iii) conflito de lease ↔ N09/fila, (iv) auditor read-only ↔ N06/App privilegiado, (v) retry causal ↔ N08, (vi) watchdog ↔ WDG-01 a WDG-07, (vii) admissão PR ↔ N16/check no SHA efetivo, (viii) grupo ↔ N05/N13/NR-009/status próprio, (ix) revisão/autorização ↔ N17/N17(c)/revogação, (x) recuperação do publicador ↔ N15/ruleset/NO-GO, (xi) allowlist ↔ emenda integrada #691/full_diff, (xii) identidade visual N/A ↔ diff e Teste C público sem confundir com HML/RLS. Cada cruzamento necessita prova positiva/negativa por estado e fonte; vínculo nominal não demonstra equivalência.
+
+**Conclusão técnica:** o escopo material identificado do PLAN foi inventariado nas 71 unidades acima, mas os períodos compostos ainda podem requerer desdobramentos adicionais, sobretudo §3.1, recuperação e aprovação. Evidência de BUILDs sintéticos não comprova implantação de App/fila/PROD. Sem contraditório independente, adjudicação de fonte LIVE e demonstração de que todas as cláusulas e interações estão cobertas, o veredito normativo é `SEMANTIC_COMPLETENESS=INCONCLUSIVE`. O verificador de sete eixos permanece `release=NO_GO` mesmo que todos os campos narrativos sejam preenchidos pelo implementador, até auditoria confiável separada. Não publicar PASS semântico com base neste apêndice.
+
+**Próxima tarefa:** fechar decomposição atômica e matriz de contraprovas por relação, congelar HEAD/base, validar GitHub CI completo/ZIP, revalidar parecer V2 LIVE do HEAD atual, executar revisão independente de semântica e solucionar formalmente divergências antes de qualquer certificação. **Proibidos:** autoaprovação, merge, App, alteração ruleset, fila real, HML/RLS autenticado, backend e PROD sem autorização/provas próprias.
