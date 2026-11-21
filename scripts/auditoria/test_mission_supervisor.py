@@ -737,6 +737,11 @@ class MissionSupervisorTests(unittest.TestCase):
         root = HERE.parent.parent
         subprocess.run(["git", "merge-base", "--is-ancestor", vulnerable_sha, "HEAD"],
                        cwd=root, check=True, capture_output=True, timeout=15)
+        blob = subprocess.run(["git", "rev-parse",
+                               vulnerable_sha + ":scripts/auditoria/mission-supervisor.py"],
+                              cwd=root, check=True, capture_output=True, text=True,
+                              timeout=15).stdout.strip()
+        self.assertEqual(blob, "7f80dd25661a4cd5aebaa9aab40cf47a001623cc")
         old_source = subprocess.run(
             ["git", "show", vulnerable_sha + ":scripts/auditoria/mission-supervisor.py"],
             cwd=root, check=True, capture_output=True, timeout=15).stdout
