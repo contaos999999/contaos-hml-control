@@ -1,0 +1,117 @@
+name: ContaOS Missao Auditoria P0-ABS (sem ativacao)
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Numero da PR para analise read-only"
+        type: number
+        required: true
+      executar_codex:
+        description: "Executar Codex 3.1.4 no runner Windows dedicado"
+        type: boolean
+        default: false
+        required: true
+
+# Nao e required check, nao publica status privilegiado nem faz merge.
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
+concurrency:
+  group: contaos-auditor-readonly-\${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: P0-ABS contratos e negativos (offline)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout apenas da base protegida
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Testar supervisor sem executar alteracoes
+        run: python -B scripts/auditoria/test_mission_supervisor.py
+      - name: Validar negativos de contexto da fila
+        run: node --test scripts/ci/merge-group-context.test.mjs
+      - name: Confirmar contrato desativado
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          c=json.load(open("docs/frontend/governanca/MISSAO_ATIVA_4_1.json",encoding="utf-8"))
+          assert c["activation_authorized"] is False
+          assert c["state"] == "ACTIVE"
+          assert c["target"]["pr"] == 679
+          assert c["allowed_dependencies"] == [690]
+          print("P0-ABS contrato read-only presente; ativacao NO-GO")
+          PY
+
+  auditor-local:
+    name: Auditor Codex existente 3.1.4 (somente leitura)
+    needs: preflight
+    if: github.ref == 'refs/heads/main' && inputs.executar_codex == true
+    runs-on: [self-hosted, Windows, X64, contaos-auditoria]
+    timeout-minutes: 120
+    steps:
+      - name: Checkout do controlador da main protegida
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Auditoria em sessao Codex nova, sem APPROVE
+        shell: powershell
+        env:
+          PR_NUMBER: \${{ inputs.pr }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $pr = [int]::Parse($env:PR_NUMBER)
+          if ($pr -lt 1) { throw "Numero de PR invalido" }
+          $folder = Join-Path $HOME "Projetos\ContaOS-4.1\auditorias\PR-$pr"
+          $previous = @{}
+          if (Test-Path $folder) {
+            Get-ChildItem $folder -Directory | ForEach-Object {
+              $previous[$_.FullName] = $true
+            }
+          }
+          $controller = Join-Path $env:GITHUB_WORKSPACE "scripts\auditoria\auditar-pr.ps1"
+          if (-not (Test-Path $controller)) { throw "Controlador protegido ausente" }
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $controller -Pr $pr -Acao Analisar
+          if ($LASTEXITCODE -ne 0) { throw "Codex auditor nao concluiu: exit $LASTEXITCODE" }
+          $new = @(Get-ChildItem $folder -Directory | Where-Object {
+            -not $previous.ContainsKey($_.FullName)
+          })
+          if ($new.Count -ne 1) { throw "Evidencia imutavel nao identificada" }
+          $metaPath = Join-Path $new[0].FullName "metadata.final.json"
+          $reportPath = Join-Path $new[0].FullName "parecer.md"
+          $meta = Get-Content -Raw $metaPath | ConvertFrom-Json
+          if ($meta.state -ne "COMPLETED" -or $meta.pr -ne $pr -or
+              -not (Test-Path $reportPath)) {
+            throw "Parecer incompleto; nao publicar sucesso"
+          }
+          $dest = Join-Path $env:RUNNER_TEMP "contaos-parecer"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Copy-Item $reportPath $dest
+          Copy-Item $metaPath $dest
+          Write-Host "Parecer guardado como artifact. Evento nao registra APPROVE."
+      - name: Publicar somente parecer e hash de auditoria
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contaos-parecer-pr-\${{ inputs.pr }}-\${{ github.run_id }}
+          path: \${{ runner.temp }}/contaos-parecer/
+          if-no-files-found: warn
+          retention-days: 14
