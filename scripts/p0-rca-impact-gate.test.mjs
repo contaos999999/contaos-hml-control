@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry, resolvePrContext, verifyRawFullDiffModes, classifyProtectedPush,
   assertImmutableP0Governance, IMMUTABLE_P0_690_MANIFEST,
   ASSISTANT_PREAUDIT_MARKER, ASSISTANT_PREAUDIT_CRITERIA,
@@ -1005,6 +1010,55 @@ test("P0 V2 RED NR-006: artifact expires between reads must revoke",async()=>{
   const result=await paLiveVerification({mutateReadback:"artifact"});
   assert.equal(result.pass,false);
   assert.equal(result.release,"NO_GO");
+});
+
+
+const CAUSAL_ARTIFACT_VULNERABLE_SHA="7e34fe416c30ae38d384aef3084165b2f2e1ffee";
+const CAUSAL_REVIEW_VULNERABLE_SHA="caa351c68a197fec3c7e6a95b8a7de4cfcc9845e";
+async function historicalGate(sha){
+  assert.match(sha,/^[a-f0-9]{40}$/);
+  execFileSync("git",["merge-base","--is-ancestor",sha,"HEAD"],{timeout:15000});
+  const source=execFileSync("git",["show",sha+":scripts/p0-rca-impact-gate.mjs"],{
+    encoding:"utf8",timeout:15000,maxBuffer:5*1024*1024,
+  });
+  const dependency=pathToFileURL(resolve("scripts/ci/merge-group-context.mjs")).href;
+  const rewritten=source.replaceAll('"./ci/merge-group-context.mjs"',JSON.stringify(dependency));
+  const dir=mkdtempSync(join(tmpdir(),"contaos-vulnerable-"));
+  try {
+    const filename=join(dir,"historical.mjs");
+    writeFileSync(filename,rewritten);
+    return await import(pathToFileURL(filename).href);
+  } finally {rmSync(dir,{recursive:true,force:true});}
+}
+test("P0 V2 CAUSAL_RED artifact_attempt: historical false PASS then GREEN rejects old ZIP",async()=>{
+  const vulnerable=await historicalGate(CAUSAL_ARTIFACT_VULNERABLE_SHA);
+  const f=paFixture();
+  f.record.schema="contaos.assistant-preaudit.v1";
+  f.record.criteria=Object.fromEntries(vulnerable.ASSISTANT_PREAUDIT_CRITERIA.map(x=>[x,"PASS"]));
+  f.artifact.name="contaos-teste-c-777-0";
+  f.comments[0].body="<!-- "+vulnerable.ASSISTANT_PREAUDIT_MARKER+"\\n"+
+    JSON.stringify(f.record)+"\\n-->";
+  const before=vulnerable.validateAssistantPrecertRelease(f);
+  assert.equal(before.pass,true,"RED: vulnerable commit must incorrectly authorize old attempt artifact");
+  const green=paFixture();green.artifact.name=f.artifact.name;
+  const after=paCheck(green);
+  assert.equal(after.pass,false,"GREEN: present gate must reject old attempt ZIP");
+  assert.match(after.issues.join(" "),/artefato/);
+});
+test("P0 V2 CAUSAL_RED review_comment: historical false PASS then GREEN preserves veto",async()=>{
+  const vulnerable=await historicalGate(CAUSAL_REVIEW_VULNERABLE_SHA);
+  const f=paFixture();
+  f.reviews=[
+    {id:40,commit_id:PA_HEAD,user:{login:"auditor"},state:"CHANGES_REQUESTED",
+      submitted_at:"2026-11-21T12:00:00Z"},
+    {id:41,commit_id:PA_HEAD,user:{login:"auditor"},state:"COMMENTED",
+      submitted_at:"2026-11-21T12:30:00Z"},
+  ];
+  assert.equal(vulnerable.validateAssistantPrecertRelease(f).pass,true,
+    "RED: COMMENTED must have erased CHANGES_REQUESTED in historical code");
+  const green=paCheck(f);
+  assert.equal(green.pass,false,"GREEN: comments must not clear the veto");
+  assert.match(green.issues.join(" "),/CHANGES_REQUESTED/);
 });
 
 // Executable adversarial V2: one independently reported CI step per layer/lens.
