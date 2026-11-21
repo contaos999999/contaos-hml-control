@@ -26,7 +26,7 @@ export function validateCSDI(receipt) {
   }
   if (!Array.isArray(obj.positive_tests) || obj.positive_tests.length === 0 || obj.positive_tests.some(x => x?.status !== 'PASS' || !x?.run_id)) issues.push('POSITIVE_TESTS_MISSING');
   if (!Array.isArray(obj.negative_tests) || obj.negative_tests.length === 0 || obj.negative_tests.some(x => x?.status !== 'PASS' || !x?.run_id)) issues.push('NEGATIVE_TESTS_MISSING');
-  if (obj.second_read?.verdict !== 'PASS' || !obj.second_read?.reviewer || !obj.second_read?.evidence_ref) issues.push('SECOND_READ_MISSING');
+  if (obj.second_read?.verdict !== 'PASS' || !obj.second_read?.reviewer || !obj.second_read?.evidence_ref || !/^[a-f0-9]{40}$/i.test(obj.second_read?.commit_sha||'') || obj.second_read?.commit_sha!==obj.head || !Number.isSafeInteger(obj.second_read?.review_id) || obj.second_read.review_id<=0 || !Array.isArray(obj.second_read?.findings) || obj.second_read.findings.some(x=>x?.resolution!=='VERIFIED')) issues.push('SECOND_READ_MISSING');
   if (obj.live_provenance_verified !== true) issues.push('LIVE_PROVENANCE_NOT_VERIFIED');
   if (obj.drift_detected !== false) issues.push('DRIFT_UNRESOLVED');
   if (obj.verdict !== 'PASS') issues.push('RECEIPT_NOT_PASS');
