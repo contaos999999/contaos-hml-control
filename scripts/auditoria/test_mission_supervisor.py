@@ -674,10 +674,6 @@ class MissionSupervisorTests(unittest.TestCase):
                                "--evidence", str(root / "not-found.json")])
             self.assertEqual(result, 2)
 
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
-
     def test_watchdog_dependency_head_drift_is_not_ready(self):
         data = self.watchdog_data()
         data[1]["head_sha"] = C
@@ -700,3 +696,7 @@ if __name__ == "__main__":
             return {"total_count": 0, "check_runs": []}
         with self.assertRaises(mod.InvalidEvidence):
             mod.collect_watchdog(contract(), fake_api, H)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
