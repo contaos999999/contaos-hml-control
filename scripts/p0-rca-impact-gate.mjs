@@ -538,6 +538,11 @@ export const ADVERSARIAL_V2_LENSES = Object.freeze([
   "integration", "resilience", "governance", "supply_chain",
   "legitimate_regression", "observability", "operational_environment",
 ]);
+export const ADVERSARIAL_V2_STEP_NAMES = Object.freeze([
+  ...Array.from({length:10},(_,i)=>"P0 V2 LAYER "+String(i+1).padStart(2,"0")),
+  ...ADVERSARIAL_V2_LENSES.map(x=>"P0 V2 LENS "+x),
+]);
+export const ADVERSARIAL_V2_CHECK_NAME = "P0-ABS Adversarial V2 executavel";
 export const PRECERT_REQUIRED_CHECKS = Object.freeze([
   "ContaOS Frontend Zero-Drift",
   "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
@@ -559,7 +564,7 @@ export function parseAssistantPreaudit(body) {
 }
 export function validateAssistantPrecertRelease({
   pr, currentMain, manifest, paths, comments, reviews = [], checkRuns, artifact,
-  testCJob, testCRun, testCAttemptJobs, expectedHead, expectedBase,
+  testCJob, testCRun, testCAttemptJobs, v2Job, expectedHead, expectedBase,
 } = {}) {
   const issues = [];
   const add = (reason) => issues.push(reason);
@@ -602,6 +607,28 @@ export function validateAssistantPrecertRelease({
         !Number.isSafeInteger(list[0]?.id) || list[0].id <= 0)
       add("check exigido ausente, repetido, sem sucesso ou origem: " + name);
   }
+  // Attest test execution through an authenticated GitHub Actions check and
+  // 22 successful steps on the same immutable commit. A self-authored
+  // "PASS" string cannot substitute for an executed step.
+  const v2Checks = Array.isArray(checkRuns)
+    ? checkRuns.filter(x=>x?.name === ADVERSARIAL_V2_CHECK_NAME) : [];
+  if (v2Checks.length !== 1 || v2Checks[0]?.head_sha !== expectedHead ||
+      v2Checks[0]?.app?.id !== PRECERT_ISSUER ||
+      v2Checks[0]?.status !== "completed" ||
+      v2Checks[0]?.conclusion !== "success" ||
+      !Number.isSafeInteger(v2Checks[0]?.id) ||
+      !v2Job || v2Job.id !== v2Checks[0].id ||
+      v2Job.head_sha !== expectedHead ||
+      v2Job.status !== "completed" || v2Job.conclusion !== "success" ||
+      !Array.isArray(v2Job.steps) ||
+      !ADVERSARIAL_V2_STEP_NAMES.every(name =>
+        v2Job.steps.filter(step => step?.name === name &&
+          step?.status === "completed" && step?.conclusion === "success").length === 1) ||
+      !Number.isSafeInteger(v2Job?.run_id) ||
+      v2Checks[0]?.details_url !==
+        "https://github.com/" + REPO + "/actions/runs/" +
+        v2Job?.run_id + "/job/" + v2Job?.id)
+    add("22 provas executaveis P0-ABS V2 sem autenticacao de JOB/HEAD e steps 10+12");
   const history = Array.isArray(comments) ? comments
     .filter(x => x?.user?.login === "contaos9999" &&
       typeof x.body === "string" && x.body.includes(ASSISTANT_PREAUDIT_MARKER))
@@ -730,6 +757,9 @@ export async function verifyAssistantPrecertInGithub({
     typeof x.body === "string" && x.body.includes(ASSISTANT_PREAUDIT_MARKER))
     .sort((a,b) => a.id - b.id).at(-1);
   const record = parseAssistantPreaudit(latest?.body);
+  const v2Check = checks.check_runs.find(x=>x?.name === ADVERSARIAL_V2_CHECK_NAME);
+  const v2Job = Number.isSafeInteger(v2Check?.id) && v2Check.id > 0 ?
+    await api("/repos/" + REPO + "/actions/jobs/" + v2Check.id) : null;
   const artifact = Number.isSafeInteger(record?.artifact?.id) &&
     record.artifact.id > 0 ?
     await api("/repos/" + REPO + "/actions/artifacts/" + record.artifact.id) : null;
@@ -751,7 +781,7 @@ export async function verifyAssistantPrecertInGithub({
     [x.previous_filename, x.filename] : [x?.filename]);
   const result = validateAssistantPrecertRelease({
     pr, currentMain: main?.object?.sha, manifest, paths,
-    comments, reviews, checkRuns: checks.check_runs, artifact, testCJob, testCRun, testCAttemptJobs,
+    comments, reviews, checkRuns: checks.check_runs, artifact, testCJob, testCRun, testCAttemptJobs, v2Job,
     expectedHead: head, expectedBase: base,
   });
   // Fail closed if the PR advances between check collection and decision.
