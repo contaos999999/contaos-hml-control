@@ -131,6 +131,22 @@ class MissionSupervisorTests(unittest.TestCase):
         obj = mod.evaluate(contract(), e)
         self.assertIn("N04", codes(obj))
 
+    def test_N04_string_check_cannot_be_ignored(self):
+        e = evidence(); e["checks"].append("success")
+        self.assertIn("N04", codes(mod.evaluate(contract(), e)))
+
+    def test_N06_null_audit_fails_closed(self):
+        e = evidence(); e["independent_audit"] = None
+        self.assertIn("N06", codes(mod.evaluate(contract(), e)))
+
+    def test_N11_null_publisher_fails_closed(self):
+        e = evidence(); e["publisher"] = None
+        self.assertIn("N11", codes(mod.evaluate(contract(), e)))
+
+    def test_N08_malformed_attempts_fails_closed(self):
+        e = evidence(); e["attempts_without_delta"] = "2"
+        self.assertIn("N08", codes(mod.evaluate(contract(), e)))
+
     def test_N05_base_advance_not_accepted(self):
         e = evidence(); e["live_base"] = C
         self.assertIn("N05", codes(mod.evaluate(contract(), e)))
