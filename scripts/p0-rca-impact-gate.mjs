@@ -1547,6 +1547,54 @@ export function validateSevenAxisSemanticBacklog(inventory,backlog){
     issues,semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
 }
 
+
+/**
+ * Reverse source-to-rule audit. A mapping from a numbered rule to one text
+ * location cannot prove that every source span was interpreted.
+ * Deliberately reports a non-releasable gap, including gaps not recognized
+ * by the 137-item forward inventory.
+ */
+export function auditSemanticReverseCoverage(inventory,worklist){
+  const issues=[...(inventory?.issues||[]),...(worklist?.issues||[])];
+  const byId=new Map((inventory?.lines||[]).map(row=>[row.id,row]));
+  const references=new Map([...byId.keys()].map(id=>[id,[]]));
+  const invalid=[];
+  for(const rule of worklist?.normative_rules||[]){
+    for(const sourceId of rule.source_links||[]){
+      if(!byId.has(sourceId)){
+        invalid.push({rule_id:rule.rule_id,source_id:sourceId});
+        issues.push("SEMANTIC_REVERSE_INVALID_SOURCE_LINK: "+rule.rule_id);
+      } else references.get(sourceId).push({
+        rule_id:rule.rule_id,kind:rule.source_link_level||"UNKNOWN"
+      });
+    }
+  }
+  const uncovered=(inventory?.lines||[]).filter(row=>
+    !references.get(row.id)?.length).map(row=>({
+      source_id:row.id,path:row.path,blob:row.blob,
+      line:row.line,text_sha256:row.text_sha256
+    }));
+  const covered=[...references.entries()].filter(([,links])=>links.length).length;
+  const extraUnproved=(worklist?.normative_rules||[]).filter(rule=>
+    rule.rule_verdict!=="PASS"||Object.values(rule.axes||{})
+      .some(value=>value==="UNPROVEN")).length;
+  if(uncovered.length)issues.push(
+    "SEMANTIC_REVERSE_UNCOVERED_SOURCE_SPANS: "+uncovered.length);
+  if(extraUnproved)issues.push(
+    "SEMANTIC_REVERSE_UNPROVEN_NORMATIVE_RULES: "+extraUnproved);
+  if(!inventory?.inventory_verified||!worklist?.worklist_verified)
+    issues.push("SEMANTIC_REVERSE_SOURCE_OR_WORKLIST_UNVERIFIED");
+  // A reverse mapping is evidence of traceability, not interpretation.
+  // Never infer semantic PASS from a lack of uncovered lines.
+  return {schema:"contaos.semantic-reverse-coverage.v1",
+    source_count:byId.size,covered_source_count:covered,
+    uncovered_source_count:uncovered.length,uncovered,
+    rule_count:worklist?.normative_rules?.length||0,
+    unproven_rule_count:extraUnproved,invalid,issues,
+    traceability_complete:uncovered.length===0&&invalid.length===0,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+
 export function auditNormativeSemanticCompleteness(matrix,claims={}){
   const rows=Array.isArray(matrix?.rows)?matrix.rows:[];
   const issues=[];
@@ -2438,6 +2486,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) ===
         issues:inventory.issues,source_verified:inventory.inventory_verified,
         axis_backlog:buildSevenAxisSemanticBacklog(inventory),
         sentence_candidates:inventorySemanticSentenceCandidates(inventory),
+        reverse_coverage:auditSemanticReverseCoverage(inventory,buildSevenAxisSemanticBacklog(inventory)),
         semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
       console.log(JSON.stringify(result));
       if(!result.source_verified)process.exitCode=1;
