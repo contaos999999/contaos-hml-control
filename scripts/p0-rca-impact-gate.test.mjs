@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry, resolvePrContext, verifyRawFullDiffModes, classifyProtectedPush,
   assertImmutableP0Governance, IMMUTABLE_P0_690_MANIFEST,
   ASSISTANT_PREAUDIT_MARKER, ASSISTANT_PREAUDIT_CRITERIA,
-  PRECERT_REQUIRED_CHECKS, validateAssistantPrecertRelease,
+  PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
@@ -655,12 +655,17 @@ const PA_REPORT = "Escopo fechado nos 14 arquivos, base viva e checks autenticad
 const PA_DIGEST = "sha256:"+"3".repeat(64);
 function paFixture() {
   const record={
-    schema:"contaos.assistant-preaudit.v1",
+    schema:"contaos.assistant-preaudit.v2",
     kind:"ASSISTANT_PREAUDIT_NOT_INDEPENDENT",
     verdict:"PASS",pr:690,head:PA_HEAD,base:PA_BASE,
     run_id:"PA-690-AUD-001", report:PA_REPORT,
     report_sha256:createHash("sha256").update(PA_REPORT).digest("hex"),
     criteria:Object.fromEntries(ASSISTANT_PREAUDIT_CRITERIA.map(x=>[x,"PASS"])),
+    adversarial_v2:{
+      head:PA_HEAD,base:PA_BASE,second_pass:"PASS",meta_audit:"PASS",red_green:"PASS",
+      red_runs:[44880700882,44880711676],
+      lenses:Object.fromEntries(ADVERSARIAL_V2_LENSES.map(x=>[x,"PASS"])),
+    },
     artifact:{id:9001,digest:PA_DIGEST,run_id:777,run_attempt:1,job_id:888},
   };
   const comment={id:17,user:{login:"contaos9999"},
@@ -904,4 +909,18 @@ test("P0 V2 RED: parent check PASS is not durable authorization after later veto
   later.body=later.body.replace('"verdict":"PASS"','"verdict":"CHANGES_REQUESTED"');
   f.comments.push(later);
   assert.equal(paCheck(f).pass,false);
+});
+
+test("P0 V2 negative: no auto PASS from legacy 8 dimensions",()=>{
+  for(const mutate of [
+    f=>delete f.record.adversarial_v2,
+    f=>f.record.adversarial_v2.lenses.lifecycle="NOT_TESTED",
+    f=>f.record.adversarial_v2.second_pass="CHANGES_REQUESTED",
+    f=>f.record.adversarial_v2.meta_audit="BLOCKED",
+    f=>f.record.adversarial_v2.red_runs=[],
+    f=>f.record.adversarial_v2.head="f".repeat(40),
+  ]){const f=paFixture();mutate(f);setPaRecord(f);
+    assert.equal(paCheck(f).pass,false);
+    assert.match(paCheck(f).issues.join(" "),/parecer V2/);
+  }
 });
