@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, attestFullProtocolExecutions, parseFullProtocolSuiteResult, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -1059,6 +1059,32 @@ test("P0 FULL_PROTOCOL matrix is fail-closed for absent N17 and missing critical
   const unauthorized=auditFullProtocolCoverage({...fixture,
     mission:{activation_authorized:true}});
   assert.equal(unauthorized.verdict,"CHANGES_REQUESTED");
+});
+
+test("P0 META_PROTOCOL authoritative PLAN and amendment must match protected Git blobs",()=>{
+  const base="e007c4bad8f2c66c489c55e4752b71bb19c5ced0";
+  const manifest=JSON.parse(execFileSync("git",["show",base+
+    ":docs/frontend/planos/P0_GOV_PLAN_690.json"],{encoding:"utf8"}));
+  const plan=execFileSync("git",["show",base+":"+manifest.plan_documento],
+    {encoding:"utf8"});
+  const amendment=execFileSync("git",["show",base+":"+manifest.emenda_fila],
+    {encoding:"utf8"});
+  const proof=attestProtectedNormativeSources({manifest,plan,amendment});
+  assert.equal(proof.verdict,"PASS",JSON.stringify(proof.issues));
+  assert.equal(proof.activationAuthorized,false);
+  for(const mutation of [
+    x=>x.manifest={...x.manifest,ativacao_autorizada:true},
+    x=>x.manifest={...x.manifest,plan_blob:"a".repeat(40)},
+    x=>x.plan=x.plan+"silently added exception",
+    x=>x.amendment=x.amendment.replace("autoria terceira","autoria da PR"),
+    x=>x.manifest={...x.manifest,emenda_fila:"docs/foreign.md"},
+  ]){
+    const f={manifest:structuredClone(manifest),plan,amendment};
+    mutation(f);
+    const result=attestProtectedNormativeSources(f);
+    assert.equal(result.verdict,"CHANGES_REQUESTED",JSON.stringify(result));
+    assert.ok(result.issues.length>0);
+  }
 });
 
 test("P0 META_PROTOCOL audit verdict transport separation and V1/V2 precedence",()=>{
