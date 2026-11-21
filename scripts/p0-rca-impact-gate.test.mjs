@@ -5,7 +5,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   assertImmutableP0Governance, IMMUTABLE_P0_690_MANIFEST,
   ASSISTANT_PREAUDIT_MARKER, ASSISTANT_PREAUDIT_CRITERIA,
   PRECERT_REQUIRED_CHECKS, validateAssistantPrecertRelease,
-  parseAssistantPreaudit } from "./p0-rca-impact-gate.mjs";
+  parseAssistantPreaudit, verifyAssistantPrecertInGithub } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -818,4 +818,61 @@ test("P0 adversarial wrong workflow and unrelated PR cannot release",()=>{
 test("P0 adversarial upload labeled Teste C is not Playwright proof",()=>{
   const f=paFixture();f.testCJob.steps=[{name:"Upload Teste C evidence",conclusion:"success"}];
   assert.equal(paCheck(f).pass,false);
+});
+
+async function paLiveVerification({mutateReadback}={}) {
+  const f=paFixture();
+  let commentsRead=0, checksRead=0;
+  const fakeApi=async path=>{
+    if(path.endsWith("/pulls/690")) return f.pr;
+    if(path.endsWith("/git/ref/heads/main")) return {object:{sha:PA_BASE}};
+    if(path.endsWith("/commits/"+PA_HEAD+"/check-runs?per_page=100")){
+      checksRead++;
+      const runs=structuredClone(f.checkRuns);
+      if(checksRead===2 && mutateReadback==="checks") runs[0].conclusion="failure";
+      return {total_count:runs.length,check_runs:runs};
+    }
+    if(path.endsWith("/actions/artifacts/9001")) return f.artifact;
+    if(path.endsWith("/actions/jobs/888")) return f.testCJob;
+    if(path.endsWith("/actions/runs/777")) return f.testCRun;
+    if(path.endsWith("/actions/runs/777/attempts/1/jobs?per_page=100"))
+      return f.testCAttemptJobs;
+    throw Error("unmocked GitHub GET "+path);
+  };
+  const fakeList=async path=>{
+    if(path.endsWith("/pulls/690/files"))
+      return f.paths.map(filename=>({filename,status:"modified"}));
+    if(path.endsWith("/issues/690/comments")){
+      commentsRead++;
+      const comments=structuredClone(f.comments);
+      if(commentsRead===2 && mutateReadback==="comments") {
+        const next=structuredClone(comments[0]);next.id=19;
+        next.body=next.body.replace('"verdict":"PASS"','"verdict":"CHANGES_REQUESTED"');
+        comments.push(next);
+      }
+      return comments;
+    }
+    throw Error("unmocked GitHub list "+path);
+  };
+  return verifyAssistantPrecertInGithub({
+    token:"fixture-only",api:fakeApi,list:fakeList,
+    baseManifest:()=>f.manifest,
+    env:{GITHUB_EVENT_NAME:"pull_request",GITHUB_REPOSITORY:"contaos999999/contaos-hml-control",
+      INPUT_PREAUDIT_PR:"690",INPUT_PREAUDIT_HEAD:PA_HEAD,INPUT_PREAUDIT_BASE:PA_BASE},
+  });
+}
+test("P0 adversarial GitHub live verified snapshot can release precert only",async()=>{
+  const o=await paLiveVerification();
+  assert.equal(o.pass,true);
+  assert.equal(o.release,"PRE_CERTIFICATION_ONLY");
+});
+test("P0 adversarial new CHANGES_REQUESTED during async API collection blocks",async()=>{
+  const o=await paLiveVerification({mutateReadback:"comments"});
+  assert.equal(o.pass,false);
+  assert.equal(o.release,"NO_GO");
+});
+test("P0 adversarial required CI changes during async API collection blocks",async()=>{
+  const o=await paLiveVerification({mutateReadback:"checks"});
+  assert.equal(o.pass,false);
+  assert.equal(o.release,"NO_GO");
 });
