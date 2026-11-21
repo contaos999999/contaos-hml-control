@@ -927,7 +927,7 @@ FULL_PROTOCOL_CASES.push(...[
 // Blind protocol paragraph audit, complementary to §5.1–§5.5 heading/row
 // inventory. A new or changed rule invalidates the frozen Git blob below,
 // even when all existing names and tests remain green.
-const FULL_PROTOCOL_GIT_BLOB="25801fdbeb0efef78600961fb394b33c8747f01a";
+const FULL_PROTOCOL_GIT_BLOB="3e652740fc7a60b5ccd8ca1081529c95cc7d4739";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
   rca:"3125e9dd44c92d508d265b57e380ecbeb60d87a9",
