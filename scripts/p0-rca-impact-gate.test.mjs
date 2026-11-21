@@ -921,6 +921,28 @@ test("P0 FULL_PROTOCOL watchdog read-only permissions and hosted runner",()=>{
       /runs-on: ubuntu-22\.04/.test(bad) &&
       /persist-credentials: false/.test(bad)),"mutant must violate a security invariant");
 });
+test("P0 META_PROTOCOL auditor-only hosted runner and no visual source drift",()=>{
+  const controller=readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8");
+  const watchdog=readFileSync(".github/workflows/contaos-missao-auditoria.yml","utf8");
+  const supervisor=readFileSync("scripts/auditoria/mission-supervisor.py","utf8");
+  for(const workflow of [controller,watchdog]){
+    assert.doesNotMatch(workflow,/runs-on:\s*self-hosted/i);
+    assert.doesNotMatch(workflow,/\bpermissions:\s*write-all\b/i);
+    assert.match(workflow,/pull-requests: read/);
+    assert.match(workflow,/actions: read/);
+    assert.match(workflow,/checks: read/);
+  }
+  assert.match(controller,/runs-on: windows-latest/);
+  assert.match(watchdog,/runs-on: ubuntu-22\.04/);
+  assert.match(supervisor,/Pure read-only evaluation/);
+  assert.match(supervisor,/BUILD is deliberately diagnostic only/);
+  assert.match(supervisor,/activation_authorized=false: diagnostic only/);
+  assert.equal(PA_FILES.length,14);
+  for(const name of PA_FILES)
+    assert.doesNotMatch(name,/^(?:src|public)\/|(?:package|bun|pnpm|yarn)-?lock/);
+  assert.equal(PA_FILES.includes("src/integrations/supabase/types.ts"),false);
+});
+
 test("P0 META_PROTOCOL six predecessor checks plus own gate no cycle",()=>{
   const gate="P0-ABS Preauditoria Assistente (precert apenas)";
   const expected=[
