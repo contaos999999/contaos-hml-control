@@ -30,3 +30,19 @@ for(const [name,mutate,code] of [
  ['veredito',r=>r.verdict='INCONCLUSIVE','RECEIPT_NOT_PASS']
 ])test('fail-closed: '+name,()=>{let r=fixture();mutate(r);let result=validateCSDI(r);assert.equal(result.pass,false);assert.ok(result.issues.includes(code));});
 test('ausencia de auditor externo nao e requisito do gate CSDI',()=>{let r=fixture();r.independent_auditor_report=null;assert.equal(validateCSDI(r).pass,true)});
+
+// Contraprovas independentes por eixo: um único eixo não comprovado bloqueia CSDI.
+for (const axis of axes) {
+  test('contraprova sete eixos: '+axis+' sem testemunho bloqueia PASS',()=>{
+    const receipt=fixture();receipt.axes.find(x=>x.name===axis).witnesses=[];
+    const verdict=validateCSDI(receipt);
+    assert.equal(verdict.pass,false);
+    assert.ok(verdict.issues.includes('INCOMPLETE_SEVEN_AXES'));
+  });
+  test('contraprova sete eixos: '+axis+' com falha bloqueia PASS',()=>{
+    const receipt=fixture();receipt.axes.find(x=>x.name===axis).verdict='FAIL';
+    const verdict=validateCSDI(receipt);
+    assert.equal(verdict.pass,false);
+    assert.ok(verdict.issues.includes('INCOMPLETE_SEVEN_AXES'));
+  });
+}
