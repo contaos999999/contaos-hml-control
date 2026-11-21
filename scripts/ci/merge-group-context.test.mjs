@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { extractHint, verifyMergeGroup } from "./merge-group-context.mjs";
 
-const A = "a".repeat(40), B = "b".repeat(40), C = "c".repeat(40);
+const A = "a".repeat(40), B = "b".repeat(40), C = "c".repeat(40), D = "d".repeat(40);
 const ref = "refs/heads/gh-readonly-queue/main/pr-690-aaaaaaa";
 const build = () => ({
   event: {
@@ -18,7 +18,8 @@ const build = () => ({
   pull: { number: 690, headRefOid: C, baseRefName: "main" },
   liveBase: B,
   repo: "contaos999999/contaos-hml-control",
-  checkoutSha: A, checkoutRef: ref, gitParents: [B, C], commitsFromBase: 1,
+  checkoutSha: A, checkoutRef: ref, gitParents: [B, C],
+  observedTree: D, expectedTree: D,
 });
 const check = (change, expected) => {
   const f = build();
@@ -61,12 +62,19 @@ test("N13 PR sem HEAD válido é FAIL", () =>
   check((f) => { f.pull.headRefOid = "abc"; }, /PR identity/));
 test("N13 event action ausente é FAIL", () =>
   check((f) => { f.event.action = null; }, /event\/action/));
-test("N13 sem prova de grupo de apenas uma PR é FAIL", () =>
-  check((f) => { f.commitsFromBase = 2; }, /exactly one PR/));
-test("N13 commit extra disfarçado no grupo é FAIL", () =>
-  check((f) => { f.gitParents.push("d".repeat(40)); }, /exactly one PR/));
+test("N13 PR com vários commits mantém uma única PR elegível", () => {
+  const f = build();
+  f.pull.commitCount = 57;
+  assert.equal(verifyMergeGroup(f).valid, true);
+});
+test("N13 árvore de grupo com alterações de outra PR não passa", () =>
+  check((f) => { f.observedTree = C; }, /group tree differs/));
+test("N13 sem reprodução exata da árvore não passa", () =>
+  check((f) => { f.expectedTree = null; }, /group tree differs/));
+test("N13 commit extra com terceiro pai é FAIL", () =>
+  check((f) => { f.gitParents.push("d".repeat(40)); }, /group parentage/));
 test("N13 ancestry invertida é FAIL", () =>
-  check((f) => { f.gitParents = [C, B]; }, /exactly one PR/));
+  check((f) => { f.gitParents = [C, B]; }, /group parentage/));
 test("N13 grupo de outra base/ref é FAIL", () =>
   check((f) => { f.event.merge_group.base_ref = "refs/heads/develop"; }, /group base/));
 test("N13 troca de repositório é FAIL", () =>

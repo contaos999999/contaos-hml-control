@@ -15,7 +15,8 @@ export function extractHint(ref) {
 }
 
 export function verifyMergeGroup({ event, entry, pull, liveBase, repo = REPO,
-  checkoutSha, gitParents = [], commitsFromBase = null, checkoutRef } = {}) {
+  checkoutSha, gitParents = [], observedTree = null, expectedTree = null,
+  checkoutRef } = {}) {
   const issues = [];
   const reject = (x) => issues.push(x);
   const group = event?.merge_group;
@@ -43,9 +44,17 @@ export function verifyMergeGroup({ event, entry, pull, liveBase, repo = REPO,
     reject("entry does not belong to target PR");
   if (entry?.baseCommit?.oid !== base || entry?.headCommit?.oid !== head)
     reject("entry/base/head mismatch");
-  if (commitsFromBase !== 1 || gitParents.length !== 2 ||
-      gitParents[0] !== base || gitParents[1] !== pull?.headRefOid)
-    reject("cannot prove exactly one PR in group");
+  // N13: commit count is NOT PR count. One PR can contain many commits.
+  // For MERGE groups, require the exact resulting tree of merging the
+  // authenticated PR HEAD into the live protected base. Extra PR content
+  // changes the tree; missing objects, conflicts or non-MERGE layouts fail.
+  // Group-size configuration alone is not evidence of group composition.
+  if (gitParents.length !== 2 || gitParents[0] !== base ||
+      gitParents[1] !== pull?.headRefOid)
+    reject("group parentage cannot prove isolated PR merge");
+  if (!isSha(observedTree) || !isSha(expectedTree) ||
+      observedTree !== expectedTree)
+    reject("group tree differs from independently reproduced single-PR merge");
   if (issues.length) return { valid: false, issues };
   return {
     valid: true, issues: [],
@@ -105,11 +114,20 @@ export async function resolveEventContext({ env = process.env, http = github, gi
   const entry = pull.mergeQueueEntry;
   const h = event.merge_group.head_sha, b = event.merge_group.base_sha;
   const parents = gitFn("show", "-s", "--format=%P", h).split(/\s+/).filter(Boolean);
-  const deltaCount = Number(gitFn("rev-list", "--count", b + ".." + h));
+  // git merge-tree recomputes the actual merge tree for the *one* PR.
+  // Unlike rev-list, this does not confuse commits with PRs.
+  // If merge-tree conflicts or repo objects are absent, fail closed.
+  let expectedTree;
+  try {
+    expectedTree = gitFn("merge-tree", "--write-tree", b, pull.headRefOid);
+  } catch {
+    fail("cannot reproduce single-PR merge tree from authenticated base/HEAD");
+  }
+  const observedTree = gitFn("rev-parse", h + "^{tree}");
   const result = verifyMergeGroup({
     event, entry, pull, liveBase: live?.object?.sha, repo: env.GITHUB_REPOSITORY,
     checkoutSha: env.GITHUB_SHA, checkoutRef: env.GITHUB_REF,
-    gitParents: parents, commitsFromBase: deltaCount,
+    gitParents: parents, observedTree, expectedTree,
   });
   if (!result.valid) fail(result.issues.join("; "));
   return result;
