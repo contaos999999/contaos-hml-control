@@ -1444,6 +1444,26 @@ export function validateSevenAxisSemanticBacklog(inventory,backlog){
      actualRules.some(x=>SEMANTIC_AXES.some(axis=>!Object.prototype.hasOwnProperty.call(
        x.axes||{},axis))))
     issues.push("SEMANTIC_NORMATIVE_RULE_MATRIX_INCOMPLETE");
+  const positionalRows=actualRules.filter(row=>row.source_link_level==="POSITIONAL_SOURCE_VERIFIED");
+  if(positionalRows.length!==90||backlog?.positionally_verified_rules!==90||
+     backlog?.anchored_normative_rules!==100||
+     backlog?.provisionally_located_rules!==37||
+     backlog?.unlinked_normative_rules!==37)
+    issues.push("SEMANTIC_POSITIONAL_SOURCE_TOTAL_INVALID");
+  for(const row of positionalRows){
+    const src=(inventory?.lines||[]).find(x=>x.id===row.source_links?.[0]);
+    if(row.source_links?.length!==1||!src||
+       src.path!==row.source_location?.path||
+       src.line!==row.source_location?.line||
+       src.blob!==row.source_location?.blob||
+       src.text_sha256!==row.source_location?.text_sha256)
+      issues.push("SEMANTIC_POSITIONAL_SOURCE_INVALID: "+row.rule_id);
+  }
+  const unconfirmed=actualRules.filter(row=>row.source_link_level==="PROVISIONAL_ONLY");
+  if(unconfirmed.length!==37||
+     unconfirmed.some(row=>row.source_links?.length||
+       row.candidate_source_links?.length!==1))
+    issues.push("SEMANTIC_ATOM_SOURCE_NOT_PROVISIONAL");
   for(let i=0;i<10;i++){
     const id="PLAN-S3-"+String(i+1).padStart(2,"0");
     const expectedAnchor=(inventory?.lines||[]).find(x=>
