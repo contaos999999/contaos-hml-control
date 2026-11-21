@@ -10,7 +10,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   assertImmutableP0Governance, IMMUTABLE_P0_690_MANIFEST,
   ASSISTANT_PREAUDIT_MARKER, ASSISTANT_PREAUDIT_CRITERIA,
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
-  ADVERSARIAL_V2_CHECK_NAME, validateAssistantPrecertRelease,
+  ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
@@ -670,6 +670,8 @@ function paFixture() {
     adversarial_v2:{
       head:PA_HEAD,base:PA_BASE,second_pass:"PASS",meta_audit:"PASS",red_green:"PASS",
       red_runs:[44880700882,44880711676],
+      red_cases:ADVERSARIAL_V2_CAUSAL_CASES.map(x=>({...x,green_head:PA_HEAD,
+        run_id:777,job_id:889})),
       lenses:Object.fromEntries(ADVERSARIAL_V2_LENSES.map(x=>[x,"PASS"])),
     },
     artifact:{id:9001,digest:PA_DIGEST,run_id:777,run_attempt:1,job_id:888},
@@ -705,7 +707,8 @@ function paFixture() {
       conclusion:"failure"}]}]},
   })),
   v2Job:{id:889,run_id:777,head_sha:PA_HEAD,status:"completed",conclusion:"success",
-    steps:ADVERSARIAL_V2_STEP_NAMES.map(name=>({name,status:"completed",conclusion:"success"}))},
+    steps:[...ADVERSARIAL_V2_STEP_NAMES,...ADVERSARIAL_V2_CAUSAL_CASES.map(x=>
+      "P0 V2 CAUSAL_RED "+x.case_id)].map(name=>({name,status:"completed",conclusion:"success"}))},
   testCJob:{id:888,run_id:777,head_sha:PA_HEAD,
     status:"completed",conclusion:"success",
     steps:[{name:"Teste C Playwright — 24 telas, 4 larguras, 2 temas",conclusion:"success"}]},
@@ -1096,7 +1099,24 @@ test("P0 V2 probe evidence is authenticated, never self-declared 10+12",()=>{
     f=>f.checkRuns.find(x=>x.name===ADVERSARIAL_V2_CHECK_NAME).app.id=99,
   ]){const f=paFixture();change(f);const o=paCheck(f);
     assert.equal(o.pass,false);
-    assert.match(o.issues.join(" "),/22 provas executaveis/);
+    assert.match(o.issues.join(" "),/25 provas executaveis/);
+  }
+});
+
+
+test("P0 V2 NR-006: case-specific RED proof cannot be relabeled, omitted or reused",()=>{
+  for(const mutate of [
+    f=>f.record.adversarial_v2.red_cases.pop(),
+    f=>f.record.adversarial_v2.red_cases[0].case_id="artifact_attempt",
+    f=>f.record.adversarial_v2.red_cases[1].vulnerable_sha=f.record.adversarial_v2.red_cases[0].vulnerable_sha,
+    f=>f.record.adversarial_v2.red_cases[2].vulnerable_blob="f".repeat(40),
+    f=>f.record.adversarial_v2.red_cases[1].green_head="f".repeat(40),
+    f=>f.record.adversarial_v2.red_cases[0].observed="UNRELATED_FAILURE",
+    f=>f.record.adversarial_v2.red_cases[1].run_id=999,
+    f=>f.v2Job.steps.find(x=>x.name==="P0 V2 CAUSAL_RED review_comment").conclusion="skipped",
+  ]){const f=paFixture();mutate(f);setPaRecord(f);
+    const o=paCheck(f);assert.equal(o.pass,false);
+    assert.match(o.issues.join(" "),/NR-006|25 provas executaveis/);
   }
 });
 
