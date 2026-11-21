@@ -5,9 +5,11 @@ Tests use synthetic data strictly as negative fixtures, not GitHub evidence.
 import copy
 import importlib.util
 import json
+import io
 import pathlib
 import tempfile
 import unittest
+from unittest import mock
 
 HERE = pathlib.Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("contaos_mission_supervisor", HERE / "mission-supervisor.py")
@@ -374,6 +376,42 @@ class MissionSupervisorTests(unittest.TestCase):
             return {"total_count": 101, "check_runs": []}
         with self.assertRaises(mod.InvalidEvidence):
             mod.collect_watchdog(contract(), fake_api, H)
+
+
+    def test_watchdog_main_authenticated_get_readback_never_certifies(self):
+        now = mod.datetime.now(mod.timezone.utc).isoformat()
+        checks = [
+            {"id": 600 + i, "name": name, "head_sha": H,
+             "app": {"id": 15368}, "status": "completed",
+             "conclusion": "success", "started_at": now}
+            for i, name in enumerate(mod.REQUIRED)
+        ]
+        def response(request, timeout):
+            self.assertEqual(request.get_method(), "GET")
+            route = request.full_url.split("/contaos-hml-control", 1)[1]
+            if route == "/git/ref/heads/main":
+                data = {"object": {"sha": H}}
+            elif route.startswith("/pulls/"):
+                n = int(route.split("/")[-1])
+                data = {"number": n, "base": {"ref": "main"},
+                        "head": {"sha": H}, "state": "open",
+                        "updated_at": now}
+            elif route.startswith("/commits/"):
+                data = {"total_count": len(checks), "check_runs": checks}
+            else:
+                raise AssertionError("unauthorized API route " + route)
+            return io.BytesIO(json.dumps(data).encode("utf8"))
+        environment = {"GITHUB_REPOSITORY": mod.REPO,
+                       "GITHUB_TOKEN": "unit-test-token-no-write",
+                       "GITHUB_SHA": H}
+        with mock.patch.dict(mod.os.environ, environment):
+            with mock.patch.object(mod.urllib.request, "urlopen", response):
+                o = mod.watchdog_main(contract())
+        self.assertTrue(o["source_verified"])
+        self.assertTrue(o["required_checks_complete"])
+        self.assertEqual(o["state"], "ACTIVE")
+        self.assertEqual(o["next_action"], "REVIEW_INDEPENDENT_AUDIT_AND_CI")
+        self.assertFalse(o["certified"])
 
     def test_cli_blocked_diagnostic_never_signals_ci_pass(self):
         with tempfile.TemporaryDirectory() as d:

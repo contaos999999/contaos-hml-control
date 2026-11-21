@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry, resolvePrContext } from "./p0-rca-impact-gate.mjs";
+import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStatus, uniquePrAssociation, safeTreeEntry, resolvePrContext, verifyRawFullDiffModes, classifyProtectedPush } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -174,7 +174,7 @@ const files690 = [
   "scripts/p0-rca-impact-gate.test.mjs",
 ];
 const manifest690 = () => ({
-  approved: true, pr_number: 690, full_diff: true, files: [...files690],
+  schema: "contaos.p0.gov-plan.v1", approved: true, pr_number: 690, full_diff: true, files: [...files690],
 });
 const gov690 = (changed, extra = {}) => check(null, changed, "75", [], {
   prNumber: 690, governancePlan: manifest690(), fullDiffPaths: [...changed],
@@ -294,8 +294,14 @@ test("P0 PRE-AUDIT #690 via squash de um pai: FAIL", async () => {
     gitFn:(...a)=>a[0]==="rev-list"?EVT_HEAD+" "+EVT_BASE:fakeGit(...a),
   }),/merge da #690 não comprovado/);
 });
-test("P0 PRE-AUDIT #690 falsificada apenas por mensagem/caminho: FAIL", async () => {
-  await assert.rejects(()=>fakeEvent("push",[files690[2]],701),/outra PR/);
+test("NR-005 manutenção autorizada de script compartilhado usa a própria PR", async () => {
+  const path=files690[2];
+  const result=await fakeEvent("push",[path],701);
+  assert.equal(result.number,701);
+  assert.equal(result.ordinaryDocument,false);
+  assert.deepEqual(check(null,[path],"75",[],{
+    prNumber:701, governancePlan:{approved:true,pr_number:701,files:[path]},
+  }).errors,[]);
 });
 test("P0 PRE-AUDIT #690 sem associação autenticada: FAIL", async () => {
   await assert.rejects(()=>fakeEvent("push",[files690[2]],690,{
@@ -312,14 +318,14 @@ test("P0 PRE-AUDIT manifesto ausente no base e presente no diff nao vira N/A", a
       },
     }), /push de BUILD\/código sem PR autenticada/);
 });
-test("P0 PRE-AUDIT contrato documental #690 nao pode ser atribuido a outra PR", async () => {
+test("NR-005 documento central sem manifesto da base não tem N/A", async () => {
   await assert.rejects(() => fakeEvent("push",
     ["docs/frontend/governanca/MISSAO_ATIVA_4_1.json"],701,{
       gitFn: (...a) => {
         if (a[0] === "show") throw new Error("manifest missing in base");
         return fakeGit(...a);
       },
-    }), /associado a outra PR/);
+    }), /documento central sem manifesto protegido/);
 });
 test("P0 PRE-AUDIT push de código sem PR autenticada nunca N/A", async () => {
   await assert.rejects(()=>fakeEvent("push",["scripts/ci/other.mjs"],701,{
@@ -346,6 +352,75 @@ test("P0 PRE-AUDIT PR com HEAD obsoleto: FAIL", async () => {
     {payload,gitFn:fakeGit,apiGet:async()=>null}),/evento não comprovados/);
 });
 
+
+test("NR-005 checkpoint documental em PR posterior com squash mantém N/A", async () => {
+  const path="docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md";
+  const result=await fakeEvent("push",[path],701,{
+    gitFn:(...a)=>a[0]==="rev-list"?EVT_HEAD+" "+EVT_BASE:fakeGit(...a),
+  });
+  assert.equal(result.number,701);
+  assert.equal(result.ordinaryDocument,true);
+  assert.deepEqual(check(null,[path],"75",[],{prNumber:701}).errors,[]);
+});
+test("NR-005 manutenção autorizada de workflow histórico não é tratada como BUILD #690", async () => {
+  const path=".github/workflows/contaos-frontend-zero-drift.yml";
+  const result=await fakeEvent("push",[path],703);
+  assert.equal(result.number,703);
+  assert.deepEqual(check(null,[path],"75",[],{
+    prNumber:703,governancePlan:{approved:true,pr_number:703,files:[path]},
+  }).errors,[]);
+});
+test("NR-005 manutenção autorizada do contrato central preserva rito posterior", async () => {
+  const result=await fakeEvent("push",
+    ["docs/frontend/governanca/MISSAO_ATIVA_4_1.json"],704);
+  assert.equal(result.number,704);
+  assert.equal(result.ordinaryDocument,true);
+});
+test("NR-005 manifesto imutável da #690 não pode ser trocado por PR posterior", async () => {
+  await assert.rejects(()=>fakeEvent("push",
+    ["docs/frontend/planos/P0_GOV_PLAN_690.json"],705),
+    /manifesto #690 imutavel/);
+});
+test("NR-005 lista histórica não reatribui PR posterior à #690", () => {
+  assert.equal(classifyProtectedPush(705,[files690[6]],true),"REGULAR_PR");
+  assert.equal(classifyProtectedPush(705,[files690[7]],true),"REGULAR_PR");
+  assert.equal(classifyProtectedPush(690,[files690[6]],true),"BUILD_690");
+});
+test("NR-005 schema do manifesto inválido nunca autoriza full_diff", () => {
+  const wrong=manifest690();wrong.schema="contaos.invalid";
+  assert.match(gov690([files690[0]],{governancePlan:wrong}).errors.join(" "),
+    /manifesto full_diff protegido/);
+});
+test("NR-005 Git raw preserva modo existente", () => {
+  const a="a".repeat(40),b="b".repeat(40),p=files690[2];
+  assert.equal(verifyRawFullDiffModes(":100644 100644 "+a+" "+b+" M\0"+p+"\0",[p]),true);
+});
+test("NR-005 chmod 100644 para 100755 é FAIL", () => {
+  const a="a".repeat(40),p=files690[2];
+  assert.throws(()=>verifyRawFullDiffModes(":100644 100755 "+a+" "+a+" M\0"+p+"\0",[p]),
+    /modo Git alterado/);
+});
+test("NR-005 renomeação com bit executável alterado é FAIL", () => {
+  const a="a".repeat(40),p=files690[2],q=files690[3];
+  assert.throws(()=>verifyRawFullDiffModes(":100644 100755 "+a+" "+a+" R100\0"+p+"\0"+q+"\0",[p,q]),
+    /modo Git alterado/);
+});
+test("NR-005 symlink, gitlink e modo histórico inseguro são FAIL", () => {
+  const a="a".repeat(40),p=files690[2];
+  for (const mode of ["120000","160000"]) {
+    assert.throws(()=>verifyRawFullDiffModes(":"+mode+" 100644 "+a+" "+a+" T\0"+p+"\0",[p]),
+      /modo Git alterado/);
+  }
+});
+test("NR-005 divergência no raw e no full_diff é FAIL", () => {
+  assert.throws(()=>verifyRawFullDiffModes("",[files690[2]]),/modo raw difere/);
+});
+test("NR-005 adição/exclusão mantêm modos regulares", () => {
+  const a="a".repeat(40),zeros="0".repeat(40),p=files690[2],q=files690[3];
+  const raw=":000000 100644 "+zeros+" "+a+" A\0"+p+"\0"+
+    ":100644 000000 "+a+" "+zeros+" D\0"+q+"\0";
+  assert.equal(verifyRawFullDiffModes(raw,[p,q]),true);
+});
 test("P0 RCA — falta relatório no diff BUILD V2 falha", () => {
   mustFail(null, /sem ficha RCA/);
 });

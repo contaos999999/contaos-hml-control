@@ -238,45 +238,89 @@ def iso_time(value):
 
 
 def collect_watchdog(contract, api_get, expected_main):
-    """Only authenticated GET responses. Never a certification receipt."""
+    """Collect read-only Github evidence, binding checks to live PR HEADs."""
     check_contract(contract)
     if not sha(expected_main):
         raise InvalidEvidence("N03: main SHA absent")
-    live = api_get("/git/ref/heads/main")
-    if live.get("object", {}).get("sha") != expected_main:
-        raise InvalidEvidence("N05: protected main advanced")
+    def main_oid():
+        live = api_get("/git/ref/heads/main")
+        if not isinstance(live, dict) or live.get("object", {}).get("sha") != expected_main:
+            raise InvalidEvidence("N05: protected main advanced")
+    main_oid()
     data = []
     for number in [contract["target"]["pr"], *contract["allowed_dependencies"]]:
         pr = api_get("/pulls/" + str(number))
-        if pr.get("number") != number or pr.get("base", {}).get("ref") != "main":
+        if (not isinstance(pr, dict) or pr.get("number") != number or
+                pr.get("base", {}).get("ref") != "main"):
             raise InvalidEvidence("N02: wrong PR or base")
         head = pr.get("head", {}).get("sha")
         if not sha(head):
             raise InvalidEvidence("N05: missing PR HEAD")
         runs = api_get("/commits/" + head + "/check-runs?per_page=100")
-        if not isinstance(runs, dict) or runs.get("total_count", 0) > 100 or not isinstance(runs.get("check_runs"), list):
-            raise InvalidEvidence("N04: incomplete GitHub checks")
+        if (not isinstance(runs, dict) or
+                type(runs.get("total_count")) is not int or
+                runs["total_count"] > 100 or
+                runs["total_count"] < 0 or
+                not isinstance(runs.get("check_runs"), list) or
+                runs["total_count"] != len(runs["check_runs"])):
+            raise InvalidEvidence("N04: incomplete or unpaginated GitHub checks")
+        observed = []
+        for check in runs["check_runs"]:
+            if (not isinstance(check, dict) or
+                    type(check.get("id")) is not int or check["id"] <= 0 or
+                    not isinstance(check.get("name"), str) or not check["name"] or
+                    check.get("head_sha") != head or
+                    not isinstance(check.get("app"), dict) or
+                    type(check["app"].get("id")) is not int or
+                    check["app"]["id"] <= 0):
+                raise InvalidEvidence("N13: missing/mismatched check provenance")
+            observed.append({
+                "id": check["id"], "name": check["name"], "head_sha": head,
+                "integration_id": check["app"]["id"],
+                "status": check.get("status"), "conclusion": check.get("conclusion"),
+                "started_at": check.get("started_at"),
+            })
+        current = api_get("/pulls/" + str(number))
+        if (not isinstance(current, dict) or current.get("number") != number or
+                current.get("head", {}).get("sha") != head or
+                current.get("base", {}).get("ref") != "main" or
+                current.get("updated_at") != pr.get("updated_at")):
+            raise InvalidEvidence("N05: PR changed during check collection")
         data.append({
             "repo": REPO, "number": number, "head_sha": head,
             "updated_at": pr.get("updated_at"), "state": pr.get("state"),
-            "checks": [{k: x.get(k) for k in ("name", "status", "conclusion", "started_at")} for x in runs["check_runs"]],
+            "checks": observed,
         })
+    main_oid()
     return data
 
 
 def assess_watchdog(contract, data, now):
-    """Read-only watchdog; decisions are recommendations, never permissions."""
+    """No self-certification: a diagnostic of complete checks and next action."""
     check_contract(contract)
     clock = iso_time(now) if isinstance(now, str) else now
     if not isinstance(clock, datetime) or clock.tzinfo is None:
         raise InvalidEvidence("N07: invalid clock")
     wanted = {contract["target"]["pr"], *contract["allowed_dependencies"]}
-    if not isinstance(data, list) or len(data) != len(wanted) or {x.get("number") for x in data if isinstance(x, dict)} != wanted:
+    if (not isinstance(data, list) or len(data) != len(wanted) or
+            any(not isinstance(x, dict) for x in data) or
+            {x.get("number") for x in data} != wanted):
         raise InvalidEvidence("N02: observations do not cover authorized PRs")
     findings = []
+    state = contract["state"]
+    if state == "CERTIFIED":
+        findings.append({"code": "N01", "pr": contract["target"]["pr"],
+                         "action": "VERIFY_CERTIFICATION_RECEIPT",
+                         "detail": "offline receipt cannot certify mission"})
+    if state == "CANCELLED_BY_OWNER":
+        findings.append({"code": "N10", "pr": contract["target"]["pr"],
+                         "action": "VERIFY_OWNER_CANCELLATION",
+                         "detail": "offline receipt cannot prove owner decision"})
+    all_required_complete = True
     for item in data:
         number = item["number"]
-        if item.get("repo") != REPO or not sha(item.get("head_sha")) or item.get("state") not in ("open", "closed"):
+        if (item.get("repo") != REPO or not sha(item.get("head_sha")) or
+                item.get("state") not in ("open", "closed")):
             raise InvalidEvidence("N02: untrusted PR observation")
         updated = iso_time(item.get("updated_at"))
         if updated > clock:
@@ -286,21 +330,60 @@ def assess_watchdog(contract, data, now):
         checks = item.get("checks")
         if not isinstance(checks, list) or any(not isinstance(x, dict) for x in checks):
             raise InvalidEvidence("N04: invalid check observations")
-        if any(x.get("conclusion") in ("failure", "error", "cancelled") for x in checks):
+        if not checks and item["state"] == "open":
+            all_required_complete = False
+            findings.append({"code": "N04", "pr": number, "action": "VERIFY_MISSING_CI"})
+        for check in checks:
+            if (type(check.get("id")) is not int or check["id"] <= 0 or
+                    check.get("head_sha") != item["head_sha"] or
+                    type(check.get("integration_id")) is not int or
+                    check["integration_id"] <= 0 or
+                    not isinstance(check.get("name"), str) or not check["name"]):
+                all_required_complete = False
+                findings.append({"code": "N13", "pr": number,
+                                 "action": "VERIFY_CHECK_PROVENANCE",
+                                 "detail": "check ID, app or SHA absent/mismatched"})
+        for expected in contract["requirements"]["required_checks"]:
+            matching = [c for c in checks if c.get("name") == expected]
+            if len(matching) != 1:
+                all_required_complete = False
+                findings.append({"code": "N04", "pr": number,
+                                 "action": "VERIFY_REQUIRED_CHECKS",
+                                 "detail": "missing or ambiguous " + expected})
+                continue
+            selected = matching[0]
+            if (selected.get("status") != "completed" or
+                    selected.get("conclusion") != "success"):
+                all_required_complete = False
+                if selected.get("conclusion") in ("failure", "error", "cancelled"):
+                    findings.append({"code": "N04", "pr": number,
+                                     "action": "FIX_FAILED_CI",
+                                     "detail": expected})
+                else:
+                    findings.append({"code": "N04", "pr": number,
+                                     "action": "WAIT_REQUIRED_CHECKS",
+                                     "detail": expected})
+        if any(c.get("conclusion") in ("failure", "error", "cancelled")
+               for c in checks):
             findings.append({"code": "N04", "pr": number, "action": "FIX_FAILED_CI"})
-        if any(x.get("status") in ("in_progress", "queued") and
-               (clock - iso_time(x.get("started_at") or item["updated_at"])).total_seconds() >= 7200
-               for x in checks):
+        if any(c.get("status") in ("in_progress", "queued") and
+               (clock - iso_time(c.get("started_at") or item["updated_at"])).total_seconds() >= 7200
+               for c in checks):
             findings.append({"code": "N07", "pr": number, "action": "INVESTIGATE_CI_STALL"})
         if (clock - updated).total_seconds() >= 86400:
             findings.append({"code": "N08", "pr": number, "action": "INVESTIGATE_NO_PROGRESS"})
-        if not checks and item["state"] == "open":
-            findings.append({"code": "N04", "pr": number, "action": "VERIFY_MISSING_CI"})
-    rank = {"REVALIDATE_HEAD": 0, "FIX_FAILED_CI": 1, "INVESTIGATE_CI_STALL": 2,
-            "VERIFY_MISSING_CI": 3, "INVESTIGATE_NO_PROGRESS": 4}
+    rank = {
+        "VERIFY_CERTIFICATION_RECEIPT": 0, "VERIFY_OWNER_CANCELLATION": 0,
+        "REVALIDATE_HEAD": 1, "VERIFY_CHECK_PROVENANCE": 2,
+        "FIX_FAILED_CI": 3, "VERIFY_MISSING_CI": 4,
+        "VERIFY_REQUIRED_CHECKS": 4, "INVESTIGATE_CI_STALL": 5,
+        "WAIT_REQUIRED_CHECKS": 6, "INVESTIGATE_NO_PROGRESS": 7,
+    }
     findings.sort(key=lambda x: (rank.get(x["action"], 99), x["pr"]))
+    # A pure function evaluating a caller-supplied list does not attest origin.
+    # watchdog_main may mark source_verified after authenticated API readback.
     return {
-        "source_verified": True,
+        "source_verified": False, "required_checks_complete": all_required_complete,
         "state": "BLOCKED_EXTERNAL" if findings else "ACTIVE",
         "certified": False, "eligible": False, "authoritative_for_merge": False,
         "activation_authorized": False, "issues": findings,
@@ -328,7 +411,9 @@ def watchdog_main(contract):
             return json.load(response)
 
     data = collect_watchdog(contract, api_get, head)
-    return assess_watchdog(contract, data, datetime.now(timezone.utc))
+    result = assess_watchdog(contract, data, datetime.now(timezone.utc))
+    result["source_verified"] = True  # authenticated GET, not all-green proof
+    return result
 
 
 def main(argv=None):

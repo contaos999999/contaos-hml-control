@@ -76,6 +76,15 @@ A ativação e a configuração administrativa requerem autorização separada d
 | Regressão global | Rodar cinco checks no mesmo HEAD, incluindo RCA operacional, 1.266 Vitest, lint, typecheck, build, Teste C Playwright, P0-NR, protect-types e controlador Windows offline. |
 | Evidências | Registrar job URLs, SHA dos checks, resultado TAP, hash SHA-256 do artefato visual, diff exato, limitações HML e causa de qualquer skipped. |
 | Revisão independente | Somente com HEAD congelado, matriz comprovada e checks terminais solicitar nova análise Codex 3.1.4. Preservar RunId/hash, não autoconceder APPROVED. |
+| NR-005 / manutenção posterior | PR documental posterior pode alterar o checkpoint original da #690 por squash; PR futura com PLAN próprio pode alterar workflow compartilhado. A identidade do BUILD é o número autenticado da PR, nunca a interseção de caminhos com a antiga allowlist. |
+| NR-005 / modos Git | O diff em modo raw deve vincular old/new para cada caminho e renomeação, bloquear chmod 100644 ↔ 100755, symlink/gitlink e mode change com caminho inalterado. |
+| NR-005 / schema | `schema=contaos.p0.gov-plan.v1` obrigatório na validação pura e na prova operacional do manifesto #690; outros campos corretos não substituem schema. |
+| WDG-04 / checks obrigatórios | Três checks do contrato presentes uma única vez por PR/HEAD vigente, status completed/success; check avulso protect-types não substitui os obrigatórios. Lista incompleta produz BLOCKED_EXTERNAL, próxima ação correta e required_checks_complete=false. |
+| WDG-05 / proveniência | A coleta guarda id, app.id e head_sha, compara check ao HEAD da PR, lê PR/base/main novamente e rejeita paginação incompleta, origem ausente e deriva durante a coleta. |
+| WDG-06 / estados terminais | Contratos CERTIFIED e CANCELLED_BY_OWNER com recibos autodeclarados, mesmo estruturalmente válidos, nunca são retomados como ACTIVE; exigem prova externa. |
+| WDG-07 / permissão REST | O token temporário de `schedule` possui `checks: read` além de contents/actions/pull-requests read, sem escrita; o observador não vira publicador. |
+
+**Condição de aceite dos três achados da auditoria do HEAD 09bf546:** a execução das provas negativas deve incluir manutenção posterior do checkpoint e dos workflows por PR de identidade distinta da #690, checklist dos três required checks com apenas protect-types, contratos terminalmente falsificados, manifesto de schema inválido, chmod e mode change em renomeação. Os casos puramente simulados não substituem API/CI de HEAD real. O diagnóstico pode estar BLOCKED_EXTERNAL e o workflow continuar tecnicamente verde apenas se o relatório preservar a falta de prontidão, nunca emitir PASS de missão.
 
 **Critério de congelamento:** não publicar melhorias cosméticas nem reenviar auditoria sem delta causal. Falha nova exige causa raiz, teste negativo, correção e regressão no mesmo HEAD. Preflight verde não elimina possibilidade de novo achado, nem altera o dever de auditoria independente de código.
 

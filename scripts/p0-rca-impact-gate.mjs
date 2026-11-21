@@ -47,7 +47,8 @@ export function validateRcaImpact({
   let version = Object.keys(RANGES).find((v) => RANGES[v].includes(id));
   // NR-005: valida o diff INTEIRO antes de filtrar codigo ou documentos.
   if (prNumber === 690 || governancePlan?.full_diff === true) {
-    const approved = governancePlan?.approved === true &&
+    const approved = governancePlan?.schema === "contaos.p0.gov-plan.v1" &&
+      governancePlan?.approved === true &&
       governancePlan.pr_number === prNumber &&
       governancePlan.full_diff === true &&
       Array.isArray(governancePlan.files) &&
@@ -338,6 +339,48 @@ export function uniquePrAssociation(list) {
     throw new Error("push sem PR autenticada unica, inclusive diff documental");
   return list[0].number;
 }
+export function verifyRawFullDiffModes(raw, expectedPaths) {
+  if (typeof raw !== "string" || (!raw.endsWith("\0") && raw !== "") ||
+      !Array.isArray(expectedPaths))
+    throw new Error("NR-005 diff --raw -z malformado");
+  const fields = raw ? raw.slice(0, -1).split("\0") : [];
+  const found = [];
+  for (let i = 0; i < fields.length;) {
+    const meta = /^:(\d{6}) (\d{6}) ([0-9a-f]{7,64}) ([0-9a-f]{7,64}) ([ACDMRT]|[RC]\d{1,3})$/.exec(fields[i++]);
+    if (!meta) throw new Error("NR-005 header do modo nao comprovado");
+    const [, oldMode, newMode, , , state] = meta;
+    const safe = new Set(["000000", "100644", "100755"]);
+    if (!safe.has(oldMode) || !safe.has(newMode) ||
+        (oldMode !== "000000" && newMode !== "000000" && oldMode !== newMode))
+      throw new Error("NR-005 modo Git alterado/inseguro " + oldMode + " -> " + newMode);
+    const count = /^[RC]\d{1,3}$/.test(state) ? 2 : 1;
+    if (i + count > fields.length) throw new Error("NR-005 raw truncado");
+    for (let j = 0; j < count; j++) {
+      const path = fields[i++];
+      if (!path || path.startsWith("/") || path.includes("\n") ||
+          path.includes("\r") || path.split("/").includes(".."))
+        throw new Error("NR-005 caminho raw suspeito");
+      found.push(path);
+    }
+  }
+  const actual = [...new Set(found)];
+  if (actual.length !== expectedPaths.length || actual.some(p => !expectedPaths.includes(p)))
+    throw new Error("NR-005 modo raw difere de full_diff");
+  return true;
+}
+export function classifyProtectedPush(number, changed, manifestPresent) {
+  if (!Array.isArray(changed)) throw new Error("NR-005 diff invalido");
+  if (number === 690) return "BUILD_690";
+  if (changed.includes("docs/frontend/planos/P0_GOV_PLAN_690.json"))
+    throw new Error("NR-005 manifesto #690 imutavel em PR posterior");
+  const cores = [
+    "docs/frontend/governanca/MISSAO_ATIVA_4_1.json",
+    "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md",
+  ];
+  if (!manifestPresent && changed.some(p => cores.includes(p)))
+    throw new Error("NR-005 documento central sem manifesto protegido na base");
+  return "REGULAR_PR";
+}
 export function safeTreeEntry(raw, path) {
   if (raw === "") return true; // Deleted path still checked against allowlist.
   if (typeof raw !== "string") return false;
@@ -414,24 +457,21 @@ export async function resolvePrContext(event, base, head, changed, token, eventB
       manifest690 = JSON.parse(gitFn("show", payload.before +
         ":docs/frontend/planos/P0_GOV_PLAN_690.json"));
     } catch { /* A missing protected manifest cannot authorize a BUILD. */ }
-    const protectedPaths = Array.isArray(manifest690?.files) ? manifest690.files : [];
-    // Minimal immutable sentinels: never grant a documentary N/A if the
-    // previously protected manifest is missing but the BUILD contract itself
-    // is being introduced/touched by this very integration.
-    const protectedSentinels = new Set([
-      "docs/frontend/planos/P0_GOV_PLAN_690.json",
-      "docs/frontend/governanca/MISSAO_ATIVA_4_1.json",
-      "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md",
-    ]);
-    const touchesBuild = changed.some((p) =>
-      protectedPaths.includes(p) || protectedSentinels.has(p));
+    // A historical allowlist is not the identity of a future integration.
+    // Only the authenticated merged PR number triggers BUILD #690 rules.
+    const sensitive = changed.some(codeFile) ||
+      changed.some(p => [
+        "docs/frontend/planos/P0_GOV_PLAN_690.json",
+        "docs/frontend/governanca/MISSAO_ATIVA_4_1.json",
+        "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md",
+      ].includes(p));
     if (!list.length) {
-      if (touchesBuild || changed.some(codeFile))
+      if (sensitive)
         throw new Error("push de BUILD/código sem PR autenticada");
       return { number: null, manifestBase: payload.before, ordinaryDocument: true };
     }
     if (list.length !== 1) {
-      if (touchesBuild || changed.some(codeFile))
+      if (sensitive)
         throw new Error("push de BUILD/código com PR ambígua");
       return { number: null, manifestBase: payload.before, ordinaryDocument: true };
     }
@@ -440,16 +480,17 @@ export async function resolvePrContext(event, base, head, changed, token, eventB
     if (pr?.merged_at == null || pr.base?.ref !== "main" ||
         pr.merge_commit_sha !== payload.after || pr.number !== associated)
       throw new Error("associação PR/commit de integração não comprovada");
-    if (touchesBuild || associated === 690) {
-      // The privileged #690 contract is strictly two-parent MERGE. Unrelated
-      // PRs may use squash, but can never borrow #690's protected allowlist.
-      if (associated !== 690) throw new Error("diff protegido da #690 associado a outra PR");
+    const classified = classifyProtectedPush(associated, changed,
+      manifest690?.schema === "contaos.p0.gov-plan.v1");
+    if (classified === "BUILD_690") {
+      // Only authenticated integration #690 requires two-parent MERGE.
+      // Later authorized PRs retain their own governance and merge rite.
       const parents = gitFn("rev-list", "--parents", "-n", "1", "HEAD").split(/\s+/);
       if (parents.length !== 3 || parents[0] !== payload.after ||
           parents[1] !== payload.before || parents[2] !== pr.head?.sha)
         throw new Error("merge da #690 não comprovado por pais/HEAD protegidos");
     }
-    return { number: pr.number, manifestBase: payload.before, ordinaryDocument: !touchesBuild && associated !== 690 };
+    return { number: pr.number, manifestBase: payload.before, ordinaryDocument: classified === "REGULAR_PR" && !changed.some(codeFile) };
   }
   throw new Error("evento GitHub sem proveniência validada");
 }
@@ -537,7 +578,9 @@ async function main() {
           approved.approved === true && Array.isArray(approved.files))
         governancePlan = approved;
       if (prNumber === 690) {
-        if (!governancePlan || governancePlan.full_diff !== true ||
+        if (!governancePlan ||
+            governancePlan.schema !== "contaos.p0.gov-plan.v1" ||
+            governancePlan.full_diff !== true ||
             governancePlan.ativacao_autorizada !== false ||
             governancePlan.plan_blob !==
               git("rev-parse", resolved.manifestBase + ":" +
@@ -551,6 +594,10 @@ async function main() {
         } catch { throw new Error("PLAN #690 não antecede base protegida"); }
       }
       if (governancePlan?.full_diff === true) {
+        const raw = execFileSync("git",
+          ["diff", "--raw", "-z", "--find-renames", "--diff-filter=ACMRTD", base, head],
+          {encoding: "utf8", timeout: 20000});
+        verifyRawFullDiffModes(raw, fullPaths);
         for (const path of fullPaths) {
           const mode = execFileSync("git", ["ls-tree", "-z", head, "--", path],
             {encoding:"utf8", timeout:20000});
