@@ -1168,6 +1168,11 @@ test("P0 §5.6 semantic completeness never inherits PASS from executable matrix"
   const empty=auditNormativeSemanticCompleteness(matrix,{});
   assert.equal(empty.verdict,"INCONCLUSIVE");
   assert.equal(empty.unproven,2);
+  assert.equal(empty.sourceExpected,137,
+    "all 71 PLAN + 29 amendment + 31 critical atomic + 6 N17 cases are mandatory");
+  assert.equal(empty.sourceUnmapped.length,137,
+    "an executable matrix alone cannot claim full source coverage");
+  assert.equal(empty.sourceComplete,false);
   assert.equal(empty.release,"NO_GO");
   const fields={
     authority:{actor:"implementer",source:"PLAN §3"},
@@ -1184,6 +1189,9 @@ test("P0 §5.6 semantic completeness never inherits PASS from executable matrix"
     "S5.6:Prova semântica por cláusula":fields,
   });
   assert.equal(candidate.unproven,0);
+  assert.equal(candidate.sourceComplete,false,
+    "seven axis fields on a partial set may never indicate closed normative scope");
+  assert.equal(candidate.sourceUnmapped.length,137);
   assert.equal(candidate.verdict,"INCONCLUSIVE");
   assert.equal(candidate.release,"NO_GO");
   assert.equal(candidate.reviewRequired,true,
