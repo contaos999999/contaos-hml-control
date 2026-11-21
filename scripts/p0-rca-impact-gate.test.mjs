@@ -915,6 +915,42 @@ test("P0 FULL_PROTOCOL suite output cannot be accepted from names alone",()=>{
   assert.equal(parseFullProtocolSuiteResult("rca",{status:1,stdout:good}).passed,false);
 });
 
+
+test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed PASS",()=>{
+  const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
+  const tests={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
+    rca:readFileSync("scripts/p0-rca-impact-gate.test.mjs","utf8"),
+    queue:readFileSync("scripts/ci/merge-group-context.test.mjs","utf8")};
+  const source=readFileSync("scripts/p0-rca-impact-gate.mjs","utf8");
+  const workflow=readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8");
+  const manifest={full_diff:true,ativacao_autorizada:false,files:[...PA_FILES]};
+  const coverage=auditFullProtocolCoverage({protocol,tests,source,workflow,manifest,
+    mission:{activation_authorized:false},paths:[...PA_FILES]});
+  assert.equal(coverage.verdict,"COVERAGE_MAPPED_NOT_EXECUTED",JSON.stringify(coverage.issues));
+  const suiteKey=x=>x.source.includes("mission_supervisor")?"python":
+    x.source.includes("merge-group-context")?"queue":"rca";
+  const suites=Object.fromEntries(["python","rca","queue"].map(k=>{
+    const names=[...new Set(coverage.rows.filter(x=>x.source&&suiteKey(x)===k)
+      .map(x=>x.witness))];
+    return [k,{exitCode:0,passed:true,successfulNames:names,executed:names.length,
+      outputSha256:"a".repeat(64)}];
+  }));
+  const target={head:PA_HEAD,base:PA_BASE,checkoutSha:PA_HEAD};
+  const valid=attestFullProtocolExecutions(coverage,suites,target);
+  assert.equal(valid.verdict,"EXECUTED_PASS_FOR_BUILD_ONLY",JSON.stringify(valid.issues));
+  assert.equal(valid.rows.filter(x=>x.source&&x.execution!=="EXECUTED_PASS").length,0);
+  assert.ok(valid.external.length>=4);
+  assert.ok(valid.external.every(x=>x.status==="BLOCKED_EXTERNAL_FOR_ACTIVATION"));
+  const noTest=structuredClone(suites);
+  noTest.queue.successfulNames=noTest.queue.successfulNames.filter(x=>!x.includes("N13 prova git real"));
+  noTest.queue.executed=noTest.queue.successfulNames.length;
+  assert.equal(attestFullProtocolExecutions(coverage,noTest,target).verdict,"CHANGES_REQUESTED");
+  const failed=structuredClone(suites);failed.python.exitCode=1;
+  assert.equal(attestFullProtocolExecutions(coverage,failed,target).verdict,"CHANGES_REQUESTED");
+  const mismatched={...target,head:"invalid"};
+  assert.equal(attestFullProtocolExecutions(coverage,suites,mismatched).verdict,"CHANGES_REQUESTED");
+});
+
 test("P0 FULL_PROTOCOL matrix is fail-closed for absent N17 and missing critical control",()=>{
   const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
   const tests={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
