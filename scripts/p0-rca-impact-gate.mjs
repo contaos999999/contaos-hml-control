@@ -930,7 +930,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="a4d12ed7747115a8735dcbb5d678c28c41771a40";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"2c8f82e326b21b49fe5b633c10b1a54aa77fa9ae",
+  rca:"640b6eb8a1dbf74f0c20c9e79bac4e2bc56eccf0",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -1137,6 +1137,30 @@ function nonEmptySemanticValue(value){
   }
   return false;
 }
+// §5.6 positive and negative consequences, source, revocation and
+// counterexamples are mandatory subpredicates of their respective axes.
+function semanticAxisStructurallyComplete(evidence,axis){
+  const value=evidence?.[axis];
+  if(!nonEmptySemanticValue(value)||!value||typeof value!=="object"||
+      Array.isArray(value))return false;
+  const string=x=>typeof x==="string"&&x.trim().length>0;
+  switch(axis){
+    case "authority":return string(value.actor)&&string(value.source);
+    case "antecedent":return string(value.event)&&string(value.source);
+    case "outcomes":return ["positive","negative"].every(key=>
+      value[key]&&typeof value[key]==="object"&&
+      string(value[key].decision)&&string(value[key].source));
+    case "interactions":return Array.isArray(value.clauses)&&
+      value.clauses.length>0&&value.clauses.every(string)&&
+      string(value.counterexample);
+    case "live":return string(value.source)&&string(value.url)&&
+      /^https:\/\/github[.]com\/contaos999999\/contaos-hml-control\//.test(value.url)&&
+      validSha(value.head);
+    case "revocation":return string(value.trigger)&&string(value.source);
+    case "boundary":return string(value.phase)&&string(value.external);
+    default:return false;
+  }
+}
 const CLOSED_PLAN_SEMANTIC_UNITS=Object.freeze([
   ...[
     ["S3",10],["S31",9],["S4",14],["S5",18],["S6",6],
@@ -1170,7 +1194,7 @@ export function auditNormativeSemanticCompleteness(matrix,claims={}){
 
   const findings=rows.map(row=>{
     const evidence=Object.prototype.hasOwnProperty.call(claims,row.id)?claims[row.id]:null;
-    const missing=SEMANTIC_AXES.filter(axis=>!nonEmptySemanticValue(evidence?.[axis]));
+    const missing=SEMANTIC_AXES.filter(axis=>!semanticAxisStructurallyComplete(evidence,axis));
     if(missing.length)issues.push("SEMANTIC: "+row.id+" missing "+missing.join(","));
     return {id:row.id,execution:row.execution,axes:SEMANTIC_AXES.length-missing.length,
       missing,semanticVerdict:missing.length?"INCONCLUSIVE":"REVIEW_REQUIRED"};
