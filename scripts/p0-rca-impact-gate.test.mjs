@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, writeSemanticDossierJsonl, validatePrioritySemanticDisputes, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, writeSemanticDossierJsonl, validatePrioritySemanticDisputes, executePriorityCausalCounterproofs, P0_PRIORITY_CAUSAL_MODELS, P0_PRIORITY_CAUSAL_PROBES, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2496,4 +2496,47 @@ test("P0 SEMANTIC DOSSIER: all 137 E1–E7, 381 clauses, 9316 pairs are source r
   process.stdout.write("P0-SEVEN-AXES-MATERIAL "+JSON.stringify({
     counts:result.counts,source_read_verified:result.source_read_verified,
     external_proofs:0,semantic_completeness:result.semantic_completeness})+"\n");
+});
+
+
+test("P0 TEN CAUSAL MODELS: each source-grounded pair has a positive and discriminating negative counterproof",()=>{
+  const sources=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES).map(
+    ([path,blob])=>[path,{content:readFileSync(path,"utf8"),blob}]));
+  const inventory=inventoryProtectedSemanticLines(sources);
+  const worklist=buildSevenAxisSemanticBacklog(inventory);
+  const sentences=inventorySemanticSentenceCandidates(inventory);
+  const reverse=auditSemanticReverseCoverage(inventory,worklist);
+  const triage=analyzeSemanticCorpusForReview({
+    inventory,worklist,sentenceInventory:sentences,reverseCoverage:reverse});
+  const output=executePriorityCausalCounterproofs(triage);
+  assert.deepEqual(output.issues,[]);
+  assert.equal(output.cases,10);
+  assert.equal(output.offlined_models_tested,20);
+  assert.equal(output.positive_models,10);
+  assert.equal(output.negative_models,10);
+  assert.equal(output.github_authenticated_live_proofs,0);
+  assert.equal(output.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(output.activation,"NO_GO");
+  assert.ok(output.probes.every(x=>
+    x.source_bound&&x.positive.model_allows===true&&
+    x.negative.model_allows===false&&x.real_positive_witness===null&&
+    x.real_negative_witness===null&&
+    x.proof_scope==="OFFLINE_LOGICAL_MODEL_ONLY"));
+  const probes=P0_PRIORITY_CAUSAL_PROBES;
+  assert.equal(new Set(probes.map(x=>x.caseId)).size,10);
+  for(const p of probes){
+    assert.equal(typeof P0_PRIORITY_CAUSAL_MODELS[p.caseId],"function");
+    assert.equal(P0_PRIORITY_CAUSAL_MODELS[p.caseId](p.positive),true);
+    assert.equal(P0_PRIORITY_CAUSAL_MODELS[p.caseId]({
+      ...p.positive,[p.discriminator]:false}),false);
+  }
+  const absent=structuredClone(triage);
+  absent.rules=absent.rules.filter(x=>x.rule_id!=="EMENDA-04");
+  const blocked=executePriorityCausalCounterproofs(absent);
+  assert.ok(blocked.issues.some(x=>x.includes("SEMANTIC_PRIORITY_ANCHOR_INVALID")));
+  assert.equal(blocked.semantic_completeness,"INCONCLUSIVE");
+  process.stdout.write("P0-CAUSAL-MODELS "+JSON.stringify({
+    cases:output.cases,positive:output.positive_models,
+    negative:output.negative_models,live:0,
+    semantic_completeness:output.semantic_completeness})+"\n");
 });

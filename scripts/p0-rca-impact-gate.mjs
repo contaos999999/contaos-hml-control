@@ -3225,3 +3225,112 @@ export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}
     JSON.stringify(manifest,null,2)+"\n",{encoding:"utf8",flag:"w"});
   return manifest;
 }
+
+
+/**
+ * Executable *normative model*, not a GitHub native/production proof.
+ * Each counterexample is run against a closed predicate taken from the
+ * protected PLAN/EMENDA. These computations cannot change LIVE fields.
+ */
+export const P0_PRIORITY_CAUSAL_MODELS=Object.freeze({
+  AUTHORIZATION_OUTLIVES_REVIEW: f=>
+    f.reviewApproved===true&&f.authorizationCurrent===true&&
+    f.headCurrent===true&&f.groupFresh===true&&f.gatesPass===true,
+  N17_TWO_REVIEWS_AUTHORIZATION_ONLY: f=>
+    f.authorDistinct===true&&f.approvals===2&&
+    f.authorizationCurrent===true&&f.nativeEligibilityCurrent===true,
+  ADMISSION_VERSUS_MERGE_GROUP: f=>
+    f.admissionApproved===true&&f.groupShaFresh===true&&
+    f.parentsMatch===true&&f.groupCheckSuccess===true,
+  ACTIVE_VERSUS_CERTIFIED: f=>
+    f.buildPass===true&&f.independentReview===true&&f.merged===true&&
+    f.mainReadback===true&&f.checkpointIntegrated===true,
+  APP_IDENTITY_VERSUS_CHECK_NAME: f=>
+    f.expectedIntegrationId!==null&&f.expectedIntegrationId!==undefined&&
+    f.emitterIntegrationId===f.expectedIntegrationId&&
+    f.isCommitStatus===true&&f.statusSuccess===true,
+  FULL_DIFF_NO_DOCUMENTAL_ESCAPE: f=>
+    f.manifestFromProtectedBase===true&&f.fullDiffIncluded===true&&
+    f.everyChangedPathAllowlisted===true,
+  WATCHDOG_VERSUS_ANTISTAGNATION: f=>
+    f.missionActive===true&&f.ownerCancelled===false&&
+    (f.retryCount<2||f.newCausalDelta===true),
+  REVOCATION_AFTER_GREEN_STATUS: f=>
+    f.statusSuccess===true&&f.authorizationCurrent===true&&
+    f.groupCurrent===true&&f.nativeEligibilityCurrent===true,
+  VISUAL_NA_WITH_REAL_APP_DIFF: f=>
+    f.scopeAllowlisted===true&&
+    (f.productDiff===false||f.visualGateExecuted===true),
+  CERTIFICATION_VERSUS_RECOVERY: f=>
+    f.buildPass===true&&f.independentReview===true&&
+    f.mainReadback===true&&f.checkpointIntegrated===true
+});
+export const P0_PRIORITY_CAUSAL_PROBES=Object.freeze([
+  ["AUTHORIZATION_OUTLIVES_REVIEW",
+    {reviewApproved:true,authorizationCurrent:true,headCurrent:true,
+      groupFresh:true,gatesPass:true},"authorizationCurrent"],
+  ["N17_TWO_REVIEWS_AUTHORIZATION_ONLY",
+    {authorDistinct:true,approvals:2,authorizationCurrent:true,
+      nativeEligibilityCurrent:true},"authorizationCurrent"],
+  ["ADMISSION_VERSUS_MERGE_GROUP",
+    {admissionApproved:true,groupShaFresh:true,parentsMatch:true,
+      groupCheckSuccess:true},"groupShaFresh"],
+  ["ACTIVE_VERSUS_CERTIFIED",
+    {buildPass:true,independentReview:true,merged:true,mainReadback:true,
+      checkpointIntegrated:true},"mainReadback"],
+  ["APP_IDENTITY_VERSUS_CHECK_NAME",
+    {expectedIntegrationId:101,emitterIntegrationId:101,
+      isCommitStatus:true,statusSuccess:true},"isCommitStatus"],
+  ["FULL_DIFF_NO_DOCUMENTAL_ESCAPE",
+    {manifestFromProtectedBase:true,fullDiffIncluded:true,
+      everyChangedPathAllowlisted:true},"everyChangedPathAllowlisted"],
+  ["WATCHDOG_VERSUS_ANTISTAGNATION",
+    {missionActive:true,ownerCancelled:false,retryCount:2,
+      newCausalDelta:true},"newCausalDelta"],
+  ["REVOCATION_AFTER_GREEN_STATUS",
+    {statusSuccess:true,authorizationCurrent:true,groupCurrent:true,
+      nativeEligibilityCurrent:true},"authorizationCurrent"],
+  ["VISUAL_NA_WITH_REAL_APP_DIFF",
+    {scopeAllowlisted:true,productDiff:true,
+      visualGateExecuted:true},"visualGateExecuted"],
+  ["CERTIFICATION_VERSUS_RECOVERY",
+    {buildPass:true,independentReview:true,
+      mainReadback:true,checkpointIntegrated:true},"checkpointIntegrated"]
+].map(([caseId,positive,discriminator])=>
+  Object.freeze({caseId,positive:Object.freeze(positive),discriminator})));
+export function executePriorityCausalCounterproofs(triage){
+  const validation=validatePrioritySemanticDisputes(triage);
+  const issues=[...validation.issues];
+  const outputs=[];
+  for(const probe of P0_PRIORITY_CAUSAL_PROBES){
+    const f=P0_PRIORITY_CAUSAL_MODELS[probe.caseId];
+    if(typeof f!=="function"){
+      issues.push("SEMANTIC_MODEL_MISSING: "+probe.caseId);continue;
+    }
+    const positive=Object.fromEntries(Object.entries(probe.positive));
+    const negative={...positive,[probe.discriminator]:false};
+    const positiveDecision=f(positive),negativeDecision=f(negative);
+    if(positiveDecision!==true||negativeDecision!==false)
+      issues.push("SEMANTIC_MODEL_COUNTEREXAMPLE_FAILED: "+probe.caseId);
+    outputs.push({
+      case_id:probe.caseId,
+      positive:{facts:positive,model_allows:positiveDecision},
+      negative:{facts:negative,model_allows:negativeDecision},
+      source_bound:validation.anchors_valid,
+      native_github_run:null,real_positive_witness:null,real_negative_witness:null,
+      live_enforcement_verified:false,
+      proof_scope:"OFFLINE_LOGICAL_MODEL_ONLY",
+      verdict:"LIVE_CONTRAPROOF_REQUIRED"
+    });
+  }
+  if(outputs.length!==10||new Set(outputs.map(x=>x.case_id)).size!==10||
+     outputs.some(x=>!P0_SEMANTIC_PRIORITY_DISPUTES.some(y=>y.case===x.case_id)))
+    issues.push("SEMANTIC_MODEL_COVERAGE_DRIFT");
+  return {schema:"contaos.semantic-priority-causal-probes.v1",
+    cases:outputs.length,offlined_models_tested:outputs.length*2,
+    positive_models:outputs.filter(x=>x.positive.model_allows===true).length,
+    negative_models:outputs.filter(x=>x.negative.model_allows===false).length,
+    github_authenticated_live_proofs:0,
+    issues,probes:outputs,
+    semantic_completeness:"INCONCLUSIVE",activation:"NO_GO"};
+}
