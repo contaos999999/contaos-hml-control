@@ -485,15 +485,38 @@ test("P0 RCA runner executa caso exato no Node sem vazar tokens", () => {
   process.env.GITHUB_TOKEN = "fake-token-test-only";
   process.env.CONTAOS_CANONICAL_READ_TOKEN = "fake-norm-test-only";
   try {
-    assert.equal(
-      runCase({
-        id: "EXEC-01",
-        runner: "node",
-        arquivo: "scripts/p0-rca-impact-gate.test.mjs",
-        caso: "P0 RCA fixture teste real e isolado de token",
-      }),
-      true,
-    );
+    const runnerFixture = {
+      id: "EXEC-01",
+      runner: "node",
+      arquivo: "scripts/p0-rca-impact-gate.test.mjs",
+      caso: "P0 RCA fixture teste real e isolado de token",
+    };
+    const selected = runCase(runnerFixture);
+    if (!selected) {
+      // Diagnóstico estritamente booleano em caso de falha, sem stdout, stderr ou token.
+      const env = { ...process.env };
+      for (const k of Object.keys(env))
+        if (/(?:TOKEN|SECRET|PASSWORD|API_KEY|AUTH_KEY|PRIVATE_KEY)/i.test(k)) delete env[k];
+      delete env.NODE_TEST_CONTEXT;
+      const raw = spawnSync(
+        process.execPath,
+        ["--test", "--experimental-test-isolation=none", "--test-reporter=tap",
+          "--test-name-pattern=^P0 RCA fixture teste real e isolado de token$", runnerFixture.arquivo],
+        { env, encoding: "utf8", timeout: 120000 },
+      );
+      const lines = String(raw.stdout || "").split("\n");
+      assert.equal(selected, true, JSON.stringify({
+        diagnostic: "RCA_NESTED_NODE_CASE",
+        status: raw.status,
+        signalPresent: raw.signal !== null,
+        spawnError: Boolean(raw.error),
+        selected: lines.some((x) => x.trimEnd() === "# Subtest: " + runnerFixture.caso),
+        green: lines.some((x) => /^ok [1-9]\\d* - /.test(x) && x.trimEnd().endsWith(" - " + runnerFixture.caso)),
+        passSummary: /(?:^|\\n)# pass [1-9]\\d*\\r?(?:\\n|$)/.test(raw.stdout || ""),
+        failZero: /(?:^|\\n)# fail 0\\r?(?:\\n|$)/.test(raw.stdout || ""),
+      }));
+    }
+    assert.equal(selected, true);
     assert.equal(
       runCase({
         id: "EXEC-02",
