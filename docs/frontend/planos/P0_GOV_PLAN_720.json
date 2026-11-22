@@ -1,0 +1,19 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 720,
+  "approved": true,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs"
+  ],
+  "purpose": "Corrigir F3_DRIVER_PENDING incondicional sem permitir PASS falso; preparar BUILD-2b-2b da integração V1 Fase 3",
+  "authorization": "Titular solicitou expressamente correção do runner e continuidade do BUILD-2b-2b; escopo exato dos scripts e testes, sem desabilitar gates de segurança ou mudar ledger.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Preservar F1/F2",
+    "Preservar provas CODE vs LIVE da PR718",
+    "Exigir ledger rastreável e testes não simulados antes do certificado",
+    "F4 permanece bloqueada"
+  ]
+}
