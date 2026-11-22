@@ -5537,7 +5537,9 @@ test("F3 C0455/C0463: visão geral bloqueia portão e apresentação após V117"
     { contractId: uuid(877102) },
     { competenceId: uuid(877103) },
     { after: { ...after, portao: { liberado: true } } },
-    { after: { ...after, blocking_summary: { ...after.blocking_summary, parecer_aprovado: true } } },
+    {
+      after: { ...after, blocking_summary: { ...after.blocking_summary, parecer_aprovado: true } },
+    },
     {
       after: {
         ...after,
