@@ -1543,7 +1543,7 @@ export const F3_MUTATION_FLOWS = Object.freeze({
           free: ["p_request_id"],
           inventory: { p_id_lista: 11, p_id_contrato: 7 },
           derived: { p_versao_esperada: "p_id_lista" },
-          source: "src/components/contratos/GerenciarListas.tsx:517-530",
+          source: "src/lib/contratos/listaOperacionalDados.ts:275-317",
         }),
       ],
       publicacao: [
@@ -1551,7 +1551,7 @@ export const F3_MUTATION_FLOWS = Object.freeze({
           free: ["p_request_id"],
           inventory: { p_id_lista: 11, p_id_contrato: 7 },
           derived: { p_versao_esperada: "p_id_lista" },
-          source: "src/components/contratos/GerenciarListas.tsx:506-514",
+          source: "src/lib/contratos/listaOperacionalDados.ts:275-317",
         }),
       ],
     },
