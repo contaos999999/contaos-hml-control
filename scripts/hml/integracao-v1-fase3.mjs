@@ -4634,6 +4634,25 @@ export async function f3S5ApproveOpinion({
     if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
       fail("F3_V118_OPINION_UNCERTAIN");
     }
+    const reread = page.waitForResponse(
+      (response) => {
+        const url = new URL(response.url());
+        return (
+          response.request().method() === "GET" &&
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/pareceres_internos" &&
+          url.searchParams.get("id_competencia") === "eq." + competenceId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const response = await reread;
+    if (response.status() !== 200) fail("F3_V118_OPINION_READBACK");
+    const rows = await response.json();
+    const matches = Array.isArray(rows) ? rows.filter((row) => row?.id === opinionId) : [];
+    if (matches.length !== 1) fail("F3_V118_OPINION_READBACK");
+    assertF3S5OpinionReadback({ before, after: matches[0], opinionId, competenceId });
     book.confirm(requestId, { entityId: opinionId, organizationId });
     book.assertIsolation();
     return requestId;
@@ -4668,6 +4687,7 @@ export async function f3S5RegisterPresentation({
   book,
   organizationId,
   competenceId,
+  contractId,
 }) {
   if (
     !page ||
@@ -4676,6 +4696,15 @@ export async function f3S5RegisterPresentation({
     !BOOKS.has(book) ||
     organizationId !== book.organizationF3() ||
     !isUuid(competenceId) ||
+    !isUuid(contractId) ||
+    !book.created().some(
+      (entry) =>
+        entry.id === contractId &&
+        entry.organizationId === organizationId &&
+        book.summary().requests.some(
+          (q) => q.requestId === entry.requestId && q.producerOrder === 7 && q.outcome === "confirmed",
+        ),
+    ) ||
     !book.summary().requests.some(
       (q) =>
         q.producerOrder === 19 &&
@@ -4715,6 +4744,30 @@ export async function f3S5RegisterPresentation({
     if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
       fail("F3_V119_PRESENTATION_UNCERTAIN");
     }
+    const listed = page.waitForResponse(
+      (r) => {
+        const url = new URL(r.url());
+        return (
+          r.request().method() === "GET" &&
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/apresentacoes_contratante" &&
+          url.searchParams.get("id_competencia") === "eq." + competenceId &&
+          url.searchParams.get("id_organizacao") === "eq." + organizationId &&
+          url.searchParams.get("id_contrato") === "eq." + contractId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.goto(HML_ORIGIN + "/competencias/" + competenceId, {
+      waitUntil: "networkidle",
+    });
+    const response = await listed;
+    if (response.status() !== 200) fail("F3_V119_PRESENTATION_READBACK");
+    assertF3S5PresentationReadback({
+      presentationId,
+      rows: await response.json(),
+      competenceId,
+    });
     book.confirm(requestId, { entityId: presentationId, organizationId });
     book.assertIsolation();
     return presentationId;
