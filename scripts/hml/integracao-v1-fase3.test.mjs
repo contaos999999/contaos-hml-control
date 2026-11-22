@@ -5202,3 +5202,97 @@ test("F3 S1 RBAC: actual AppShell consumer calls effective permissions RPC adapt
   assert.match(shell, /consultarPermissoesEfetivas\(organizacao, contextoAtual\.contrato\)/);
   assert.match(rpc, /chamar\("consultar_permissoes_efetivas", \{/);
 });
+
+test("F3 V117: resposta da revisão correlaciona contexto, documento e comando sem certificar caso", () => {
+  const competenceId = uuid(891014);
+  const requirementId = uuid(891017);
+  const contractId = uuid(891016);
+  const documentVersionId = uuid(891015);
+  const previousExecution = uuid(891116);
+  const requestId = uuid(891117);
+  const resultId = uuid(891218);
+  const context = {
+    schema_versao: "revisao-v117",
+    id_organizacao: F3,
+    id_contrato: contractId,
+    id_competencia: competenceId,
+    id_requisito: requirementId,
+    id_execucao_esperada: previousExecution,
+    id_resultado_esperado: null,
+    hash_esperado: "a".repeat(64),
+    pode_revisar: true,
+  };
+  const command = {
+    p_id_competencia: competenceId,
+    p_id_requisito: requirementId,
+    p_id_execucao_esperada: previousExecution,
+    p_id_resultado_esperado: null,
+    p_hash_esperado: context.hash_esperado,
+    p_resultado: "conforme",
+    p_justificativa: "Conferido no documento sintético isolado",
+    p_fundamento: "Rastreabilidade F3 CODE",
+    p_evidencias: [{ id_versao_documento: documentVersionId }],
+    p_request_id: requestId,
+  };
+  const result = {
+    schema_versao: "revisao-v117",
+    request_id: requestId,
+    id_competencia: competenceId,
+    id_requisito: requirementId,
+    id_execucao: uuid(891217),
+    id_resultado: resultId,
+  };
+  const input = {
+    context,
+    command,
+    result,
+    organizationId: F3,
+    contractId,
+    competenceId,
+    requirementId,
+    documentVersionId,
+  };
+  assert.deepEqual(sut.assertF3V117ReviewReceipt(input), {
+    state: "CONTRACT_CORRELATED_NOT_CERTIFIED",
+    requestId,
+    executionId: result.id_execucao,
+    resultId,
+  });
+  const reject = (overrides) => {
+    assert.throws(() => sut.assertF3V117ReviewReceipt({ ...input, ...overrides }), {
+      code: "F3_V117_RECEIPT_MISMATCH",
+    });
+  };
+  const bad = [
+    { organizationId: uuid(891901) },
+    { contractId: uuid(891911) },
+    { context: { ...context, id_contrato: uuid(891912) } },
+    { competenceId: uuid(891902) },
+    { requirementId: uuid(891903) },
+    { documentVersionId: uuid(891904) },
+    { context: { ...context, pode_revisar: false } },
+    { context: { ...context, hash_esperado: "b".repeat(64) } },
+    { context: { ...context, id_execucao_esperada: uuid(891905) } },
+    { command: { ...command, p_request_id: uuid(891906) } },
+    { command: { ...command, p_request_id: previousExecution } },
+    { command: { ...command, p_request_id: documentVersionId } },
+    { command: { ...command, p_hash_esperado: "b".repeat(64) } },
+    { command: { ...command, p_resultado: "nao_aplicavel" } },
+    { command: { ...command, p_evidencias: [{ id_versao_documento: uuid(891907) }] } },
+    { command: { ...command, p_justificativa: "x" } },
+    { command: { ...command, extra: "PASS" } },
+    { result: { ...result, schema_versao: "outro" } },
+    { result: { ...result, request_id: uuid(891908) } },
+    { result: { ...result, id_competencia: uuid(891909) } },
+    { result: { ...result, id_requisito: uuid(891910) } },
+    { result: { ...result, id_execucao: previousExecution } },
+    { result: { ...result, id_resultado: "not-uuid" } },
+  ];
+  for (const altered of bad) reject(altered);
+  const prevResult = uuid(891320);
+  reject({
+    context: { ...context, id_resultado_esperado: prevResult },
+    command: { ...command, p_id_resultado_esperado: prevResult },
+    result: { ...result, id_resultado: prevResult },
+  });
+});
