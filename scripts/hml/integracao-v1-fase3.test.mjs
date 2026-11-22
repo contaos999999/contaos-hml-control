@@ -726,6 +726,123 @@ test("F3 S2 V103: readback valida ID original, versão incrementada, perfil e fa
   }
 });
 
+test("F3 S2 V103: UI observa versão antes de editar e relê mesmo UUID após RPC", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  const contractorId = uuid(889005);
+  seal(book, 5, 5);
+  book.confirm(uuid(5), { entityId: contractorId, organizationId: F3 });
+  const fence = sut.createF3MutationFence({ book });
+  const initial = {
+    id: contractorId,
+    id_organizacao: F3,
+    versao_registro: 1,
+    tipo_pessoa: "juridica",
+    documento: null,
+    razao_social: "ContaOS HML F3 " + PROV.workflowRunId + " Contratante",
+    nome_fantasia: null,
+    contato: {},
+    situacao: "ativo",
+  };
+  const fantasy = "ContaOS HML F3 " + PROV.workflowRunId + " Atualizado";
+  const updated = { ...initial, versao_registro: 2, nome_fantasia: fantasy };
+  const listeners = [];
+  const fields = {};
+  const events = [];
+  let reads = 0;
+  const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const readUrl = api + "/rest/v1/contratantes?select=id&id_organizacao=eq." + F3 +
+    "&id=eq." + contractorId;
+  const emit = (url, method, data, status = 200) => {
+    const response = {
+      url: () => url,
+      status: () => status,
+      request: () => ({ method: () => method, url: () => url }),
+      json: async () => data,
+    };
+    for (let i = listeners.length - 1; i >= 0; i--) {
+      if (listeners[i].predicate(response)) {
+        listeners.splice(i, 1)[0].resolve(response);
+      }
+    }
+  };
+  const page = {
+    async goto(url) {
+      assert.ok(url.includes("/contratantes/" + contractorId + "/editar"));
+      events.push("GET");
+      emit(readUrl, "GET", ++reads === 1 ? initial : updated);
+    },
+    locator(selector) {
+      return {
+        fill: async (value) => {
+          fields[selector] = value;
+        },
+        inputValue: async () => fields[selector],
+      };
+    },
+    waitForResponse(predicate) {
+      return new Promise((resolve) => listeners.push({ predicate, resolve }));
+    },
+    getByRole(role, options) {
+      if (role === "heading") {
+        return {
+          waitFor: async () => {
+            assert.ok(
+              ["Editar contratante", "Contratante atualizado com sucesso."].includes(options.name),
+            );
+          },
+        };
+      }
+      if (role !== "button" || options.name !== "Salvar") {
+        throw Error("BAD_ROLE");
+      }
+      return {
+        click: async () => {
+          const payload = {
+            p_id_organizacao: F3,
+            p_id_contratante: contractorId,
+            p_versao_esperada: 1,
+            p_tipo_pessoa: "juridica",
+            p_documento: "",
+            p_razao_social: initial.razao_social,
+            p_nome_fantasia: fields["#v103-fantasia"],
+            p_contato: {},
+            p_situacao: "ativo",
+          };
+          const request = {
+            url: api + "/rest/v1/rpc/atualizar_contratante",
+            method: "POST",
+            postData: JSON.stringify(payload),
+            sessionId: "test_native_session",
+            interceptionId: "v103_write",
+          };
+          assert.equal(fence.policy({ ...request, stage: "REQUEST" }), true);
+          assert.equal(fence.policy({ ...request, stage: "RESPONSE" }), true);
+          events.push("POST");
+          emit(request.url, "POST", { schema_versao: "v103-v1", contratante: updated });
+        },
+      };
+    },
+  };
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  assert.equal(
+    await sut.f3S2UpdateContractor({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      organizationId: F3,
+      contractorId,
+    }),
+    contractorId,
+  );
+  assert.deepEqual(events, ["GET", "POST", "GET"]);
+  assert.equal(book.summary().sent, 3);
+  assert.equal(book.created().at(-1).id, contractorId);
+  assert.equal(book.created().at(-1).kind, "registro");
+  assert.equal(listeners.length, 0);
+});
+
 const ledgerWith = ({ runs = [], entries = [] }) =>
   JSON.stringify({ ...JSON.parse(LEDGER_RAW), runs, entries }, null, 2) + "\n";
 const ledgerOf = (runs, entries = []) =>
