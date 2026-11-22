@@ -2439,6 +2439,17 @@ test("P0 SEMANTIC DOSSIER: all 137 E1–E7, 381 clauses, 9316 pairs are source r
   assert.ok(result.interactions.every(x=>x.source_a&&x.source_b&&
     x.rule_a_text&&x.rule_b_text&&x.relationship&&
     x.judgement==="UNADJUDICATED"&&x.positive_witness===null));
+  assert.equal(new Set(result.interactions.map(x=>x.applicability_hypothesis)).size,9316,
+    "each source pair requires a discriminating applicability comparison");
+  assert.ok(result.interactions.every(x=>
+    x.applicability_hypothesis.includes(x.rule_a)&&
+    x.applicability_hypothesis.includes(x.rule_b)&&
+    x.discriminating_probes.positive.includes(x.rule_a)&&
+    x.discriminating_probes.positive.includes(x.rule_b)&&
+    x.discriminating_probes.negative.includes(x.rule_a)&&
+    x.discriminating_probes.missing.length===3&&
+    x.discriminating_probes.positive!==x.discriminating_probes.negative&&
+    x.judgement==="UNADJUDICATED"));
   assert.equal(result.rules_certified,0);
   assert.equal(result.sentences_certified,0);
   assert.equal(result.interactions_certified,0);
@@ -2474,6 +2485,11 @@ test("P0 SEMANTIC DOSSIER: all 137 E1–E7, 381 clauses, 9316 pairs are source r
     const wrongPair=structuredClone(result);
     wrongPair.interactions[0].rule_a_text="texto adulterado";
     assert.throws(()=>writeSemanticDossierJsonl(wrongPair,directory),
+      /SEMANTIC_DOSSIER_CONTENT_INVALID/);
+    const claimWithoutCausality=structuredClone(result);
+    claimWithoutCausality.interactions[7].discriminating_probes.positive="FAKE";
+    assert.throws(
+      ()=>writeSemanticDossierJsonl(claimWithoutCausality,directory),
       /SEMANTIC_DOSSIER_CONTENT_INVALID/);
     const reusedPair=structuredClone(result);
     reusedPair.interactions[9315].pair_id=reusedPair.interactions[0].pair_id;
