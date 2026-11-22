@@ -71,7 +71,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test --test-reporter=tap --test-name-pattern="P0 FULL_PROTOCOL" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-fullprotocol-context.tap
+          node --test --test-reporter=tap --test-name-pattern="^P0 FULL_PROTOCOL (manual workflow_dispatch|PR merge checkout)" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-fullprotocol-context.tap
           grep -Fqx '# pass 2' /tmp/p0-fullprotocol-context.tap
           grep -Fqx '# fail 0' /tmp/p0-fullprotocol-context.tap
       - name: P0 V2 CAUSAL_RED watchdog_postmerge
