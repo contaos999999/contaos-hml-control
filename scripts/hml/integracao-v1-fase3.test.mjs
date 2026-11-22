@@ -8,8 +8,6 @@ const root = new URL("../../", import.meta.url);
 const csv = await readFile(new URL(sut.F3_MATRIX.path, root), "utf8");
 const published = JSON.parse(await readFile(new URL(sut.F3_CASES_PATH, root), "utf8"));
 
-
-
 test("F3 B1: catálogo publicado é exatamente a derivação da matriz aceita", () => {
   assert.equal(createHash("sha256").update(csv).digest("hex"), sut.F3_MATRIX.sha256);
   assert.equal(sut.validateF3Cases(published, csv), true);
