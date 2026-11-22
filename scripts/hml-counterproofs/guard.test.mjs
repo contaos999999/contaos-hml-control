@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { preflight, fixtureProofValid, verifyAttestationDigest } from './guard.mjs';
+import { preflight, fixtureProofValid, verifyAttestationDigest, verifyBrowserReport } from './guard.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 const sha = 'a'.repeat(40);
@@ -67,4 +67,33 @@ test('RED/GREEN: live attestation checksum must match exact bytes',()=>{
  assert.equal(verifyAttestationDigest(raw+'x',hash+'  fixture-attestation.json'+newline),false);
  assert.equal(verifyAttestationDigest(raw,hash+'  other-file.json'),false);
  assert.equal(verifyAttestationDigest(raw,'0'.repeat(64)+'  fixture-attestation.json'),false);
+});
+
+function sampleBrowserReport() {
+ const make=id=>({title:id+': authenticated live proof',ok:true,tests:[{status:'expected',results:[{status:'passed'}]}]});
+ return { errors:[],stats:{expected:3,unexpected:0,flaky:0,skipped:0},
+          suites:[{specs:['HML-AUTH-001','HML-AUTH-002','HML-AUTH-003'].map(make),suites:[]}]};
+}
+test('GREEN: three Playwright JSON specs are individually executed and passed',()=>{
+ assert.equal(verifyBrowserReport(sampleBrowserReport()),true);
+});
+for (const [name,mutate] of [
+ ['missing report',r=>r.suites=[]],
+ ['missing spec',r=>r.suites[0].specs.pop()],
+ ['duplicate spec',r=>r.suites[0].specs[2].title=r.suites[0].specs[1].title],
+ ['unknown extra',r=>r.suites[0].specs.push({title:'HML-AUTH-004: forged',ok:true,tests:[{status:'expected',results:[{status:'passed'}]}]})],
+ ['skipped result',r=>r.suites[0].specs[1].tests[0].results[0].status='skipped'],
+ ['skipped stats',r=>r.stats.skipped=1],
+ ['unexpected stats',r=>r.stats.unexpected=1],
+ ['flaky stats',r=>r.stats.flaky=1],
+ ['test failed',r=>r.suites[0].specs[0].ok=false],
+ ['not expected',r=>r.suites[0].specs[0].tests[0].status='unexpected'],
+ ['two retries',r=>r.suites[0].specs[0].tests[0].results.push({status:'passed'})],
+ ['provider error',r=>r.errors.push({message:'hidden'})],
+]) test('RED: browser cannot certify: '+name,()=>{
+ const report=sampleBrowserReport(); mutate(report);
+ assert.equal(verifyBrowserReport(report),false);
+});
+test('RED: null browser evidence blocks, regardless of exit code',()=>{
+ assert.equal(verifyBrowserReport(null),false);
 });
