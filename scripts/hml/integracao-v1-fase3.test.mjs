@@ -540,6 +540,154 @@ test("F3 S1: login UI autentica por POST real e recusa 401 sem expor credenciais
   assert.equal(JSON.stringify(actions).includes(credentials.password), false);
 });
 
+test("F3 S2 V102: UI faz POST cercado uma vez e só confirma após releitura", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  const fence = sut.createF3MutationFence({ book });
+  const org = book.organizationF3();
+  const name = "ContaOS HML F3 " + PROV.workflowRunId + " Contratante";
+  const entity = uuid(889005);
+  const listeners = [];
+  const fields = {};
+  const actions = [];
+  let rowVisible = false;
+  const endpoint = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const emit = (url, method, status, data) => {
+    const response = {
+      url: () => url,
+      request: () => ({ method: () => method }),
+      status: () => status,
+      json: async () => data,
+    };
+    for (let i = listeners.length - 1; i >= 0; i--) {
+      if (listeners[i].predicate(response)) {
+        listeners.splice(i, 1)[0].resolve(response);
+      }
+    }
+  };
+  const page = {
+    async goto(url) {
+      actions.push(["goto", new URL(url).pathname]);
+      if (new URL(url).pathname === "/contratantes") {
+        rowVisible = true;
+        emit(
+          endpoint + "/rest/v1/contratantes?select=id%2Crazao_social&id_organizacao=eq." + org,
+          "GET",
+          200,
+          [{ id: entity, razao_social: name, situacao: "ativo" }],
+        );
+      }
+    },
+    getByRole(role, options) {
+      if (role === "heading") {
+        return {
+          waitFor: async () => {
+            assert.ok(["Novo contratante", "Contratante cadastrado com sucesso."].includes(options.name));
+          },
+        };
+      }
+      if (role === "row") {
+        return {
+          filter: ({ hasText }) => ({
+            waitFor: async () => assert.equal(rowVisible && hasText === name, true),
+            count: async () => (rowVisible && hasText === name ? 1 : 0),
+          }),
+        };
+      }
+      if (role === "button" && options.name === "Salvar") {
+        return {
+          click: async () => {
+            const payload = {
+              id_organizacao: org,
+              tipo_pessoa: "juridica",
+              documento: null,
+              razao_social: fields["#v102-razao"],
+              nome_fantasia: null,
+              contato: {},
+              situacao: "ativo",
+            };
+            const req = {
+              url: endpoint + "/rest/v1/contratantes?select=id%2Crazao_social%2Csituacao",
+              method: "POST",
+              postData: JSON.stringify(payload),
+              sessionId: "test_native_session",
+              interceptionId: "contratante_1",
+            };
+            actions.push(["POST", payload.razao_social]);
+            assert.equal(fence.policy({ ...req, stage: "REQUEST" }), true);
+            assert.equal(fence.policy({ ...req, stage: "RESPONSE" }), true);
+            emit(req.url, "POST", 201, { id: entity, razao_social: name, situacao: "ativo" });
+          },
+        };
+      }
+      throw Error("UNEXPECTED_ROLE: " + role);
+    },
+    locator(selector) {
+      return {
+        fill: async (value) => {
+          fields[selector] = value;
+        },
+        selectOption: async (value) => {
+          fields[selector] = value;
+        },
+      };
+    },
+    waitForResponse(predicate) {
+      return new Promise((resolve) => listeners.push({ predicate, resolve }));
+    },
+  };
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  assert.equal(
+    await sut.f3S2CreateContractor({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      organizationId: org,
+      name,
+    }),
+    entity,
+  );
+  assert.equal(book.summary().sent, 1);
+  assert.equal(book.created().at(-1).kind, "registro");
+  assert.equal(book.created().at(-1).id, entity);
+  assert.equal(actions.filter((x) => x[0] === "POST").length, 1);
+  assert.equal(listeners.length, 0);
+});
+
+test("F3 S2 V102: readback rejeita organização, identidade e cardinalidade divergentes", () => {
+  const org = F3;
+  const name = "ContaOS HML F3 43509322900 Contratante";
+  const id = uuid(889005);
+  const created = { id, razao_social: name, situacao: "ativo" };
+  const row = { id, razao_social: name, situacao: "ativo" };
+  const query = new URL(
+    "https://gklhhhyosgasnyoxlrui.supabase.co/rest/v1/contratantes?id_organizacao=eq." + org,
+  );
+  const read = (data) => sut.assertF3S2ContractorReadback({
+    created,
+    rows: [row],
+    organizationId: org,
+    name,
+    query,
+    ...data,
+  });
+  assert.equal(read({}), id);
+  const bad = [
+    { created: { ...created, id: uuid(99) } },
+    { rows: [] },
+    { rows: [row, row] },
+    { rows: [{ ...row, situacao: "inativo" }] },
+    { rows: [{ ...row, id: uuid(2) }] },
+    { organizationId: uuid(3) },
+    { query: new URL(query.origin + query.pathname + "?id_organizacao=eq." + uuid(3)) },
+    { query: new URL(query.origin + "/rest/v1/contratos?id_organizacao=eq." + org) },
+  ];
+  for (const value of bad) {
+    assert.throws(() => read(value), { code: "F3_S2_V102_READBACK" });
+  }
+});
+
 const ledgerWith = ({ runs = [], entries = [] }) =>
   JSON.stringify({ ...JSON.parse(LEDGER_RAW), runs, entries }, null, 2) + "\n";
 const ledgerOf = (runs, entries = []) =>
