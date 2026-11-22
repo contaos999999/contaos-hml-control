@@ -37,10 +37,10 @@ async function verifyActor(client, { email, password }) {
   proof.synthetic = data.user.app_metadata?.synthetic === true;
   return { proof, client, user: data.user };
 }
-async function visibleActiveOrgs(client) {
-  const { data, error } = await client.from('vinculos_usuarios').select('id_organizacao,ativo').eq('ativo', true);
+async function visibleActiveOrgs(client, userId) {
+  const { data, error } = await client.from('vinculos_usuarios').select('id_organizacao,ativo,id_usuario').eq('id_usuario', userId).eq('ativo', true);
   if (error || !Array.isArray(data)) return null;
-  return [...new Set(data.filter(x => x.ativo === true).map(x => x.id_organizacao))];
+  return [...new Set(data.filter(x => x.ativo === true && x.id_usuario === userId).map(x => x.id_organizacao))];
 }
 async function visibleOrg(client, org) {
   if (!org) return null;
@@ -89,7 +89,7 @@ export async function main() {
     Object.assign(aProof, a.proof); Object.assign(bProof, b.proof);
     if (classifyActor(aProof) && classifyActor(bProof)) {
       isolation.distinctUsers = a.user.id !== b.user.id;
-      const [aLinks, bLinks] = await Promise.all([visibleActiveOrgs(ac), visibleActiveOrgs(bc)]);
+      const [aLinks, bLinks] = await Promise.all([visibleActiveOrgs(ac, a.user.id), visibleActiveOrgs(bc, b.user.id)]);
       isolation.noExtraTenantLinks = aLinks?.length === 1 && bLinks?.length === 1;
       if (isolation.distinctUsers && isolation.noExtraTenantLinks) {
         const aOrg = aLinks[0], bOrg = bLinks[0];
