@@ -4925,6 +4925,7 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
   const declared = [];
   for (const [order, f] of Object.entries(sut.F3_MUTATION_FLOWS)) {
     const stageLabels = {
+      9: { proposta: 1, versao: 2, rubrica: 3 },
       10: { fonte: 1, versao: 2, aprovacao: 3 },
       18: { parecer: 1 },
       19: { aprovacao: 1 },
@@ -4987,10 +4988,6 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
   // Linhas ainda sem fluxo: lista fechada, por linha, do 2b-2b (variante) e do 2b-2c em diante.
   const PENDING = [
     "4 ADM01, variante sem convite",
-    "9 V108, pré-requisito 1",
-    "9 V108, pré-requisito 2",
-    "9 V108, pré-requisito 3",
-    "9 V108, principal",
     "11 V109, principal",
     "11 V109, pré-requisito 1",
     "11 V109, pré-requisito 2",
@@ -5968,4 +5965,32 @@ test("F3 V119: apresentação exige aprovação V118 confirmada, não V119", () 
   ]) {
     assert.equal(sut.hasF3V118ConfirmedApproval(requests), false);
   }
+});
+
+test("F3 V108: mutações armadas apenas para quatro RPCs do produto e versão prévia", () => {
+  const flow = sut.F3_MUTATION_FLOWS[9];
+  assert.deepEqual(
+    flow.principal.map((step) => step.name),
+    ["publicar_versao_proposta_v108"],
+  );
+  assert.deepEqual(
+    Object.keys(flow.prerequisito),
+    ["proposta", "versao", "rubrica"],
+  );
+  assert.deepEqual(
+    Object.values(flow.prerequisito).map((steps) => steps[0].name),
+    [
+      "salvar_proposta_orcamentaria_v108",
+      "registrar_versao_proposta_v108",
+      "salvar_linha_orcamentaria_v108",
+    ],
+  );
+  assert.deepEqual(flow.principal[0].inventory.p_id_versao, {
+    producerOrder: 9,
+    action: "versao",
+  });
+  assert.deepEqual(
+    flow.prerequisito.versao[0].inventory.p_id_proposta,
+    { producerOrder: 9, action: "proposta" },
+  );
 });
