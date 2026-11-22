@@ -2,10 +2,12 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
+import { parseCsv } from "./integracao-v1-fase3.mjs";
 
 export const F3_CODE_SCHEMA = "contaos.ifv1.f3.code-coverage-matrix.v1";
 export const F3_CODE_LEDGER_SCHEMA = "contaos.ifv1.f3.code-evidence-ledger.v1";
 export const F3_CODE_SCOPE = "INTEGRACAO_V1_FASE3_CODE";
+export const F3_CODE_CSV_PATH = "docs/frontend/planos/INTEGRACAO_V1_7_FASES_MATRIZ_EXECUCAO_PROPOSTA.csv";
 export const F3_CODE_CASES_PATH = "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json";
 export const F3_CODE_MATRIX_PATH = "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json";
 export const F3_CODE_LEDGER_PATH = "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_EVIDENCE_LEDGER.json";
@@ -27,8 +29,9 @@ const sha256 = (v) => createHash("sha256").update(v).digest("hex");
  * proof. This function never emits PASS, even if caller supplies forged entries or booleans.
  * A separate trusted, independently reviewed CI evidence attestation is required by F3 CODE PLAN.
  */
-export function assessF3CodeInventory(catalogueRaw, coverageRaw, ledgerRaw) {
+export function assessF3CodeInventory(catalogueRaw, coverageRaw, ledgerRaw, csvRaw) {
   if (sha256(catalogueRaw) !== F3_CODE_CATALOGUE_HASH) reject("F3_CODE_CASES_DRIFT");
+  if (sha256(csvRaw) !== F3_CODE_CSV_HASH) reject("F3_CODE_MATRIX_SOURCE_DRIFT");
   const catalogue = JSON.parse(catalogueRaw);
   const coverage = JSON.parse(coverageRaw);
   const ledger = JSON.parse(ledgerRaw);
@@ -47,6 +50,13 @@ export function assessF3CodeInventory(catalogueRaw, coverageRaw, ledgerRaw) {
       coverage.mandatory !== 120 || coverage.conditional !== 18 ||
       catalogue.cases.length !== 138 || coverage.cases.length !== 138)
     reject("F3_CODE_MATRIX_DRIFT");
+  const [csvHeader, ...csvRows] = parseCsv(csvRaw);
+  const caseIndex = csvHeader.indexOf("caso_fase3");
+  const sourceIndex = csvHeader.indexOf("evidencia_codigo_original");
+  if (csvRows.length !== 138 || caseIndex < 0 || sourceIndex < 0)
+    reject("F3_CODE_MATRIX_SOURCE_DRIFT");
+  const sourceByCase = new Map(csvRows.map((row) => [row[caseIndex], row[sourceIndex]]));
+  if (sourceByCase.size !== 138) reject("F3_CODE_MATRIX_SOURCE_DRIFT");
   const seen = new Set();
   let sourceHints = 0;
   for (let i = 0; i < 138; i++) {
@@ -65,6 +75,10 @@ export function assessF3CodeInventory(catalogueRaw, coverageRaw, ledgerRaw) {
         seen.has(actual.caseId) ||
         !Array.isArray(actual.sourceHints) || actual.sourceHints.length !== 2 ||
         !actual.sourceHints.every((s) => /^src\/[A-Za-z0-9_./-]+\.(?:ts|tsx):[0-9]+$/.test(s)))
+      reject("F3_CODE_SOURCE_MAP");
+    const referenced = sourceByCase.get(actual.caseId);
+    if (typeof referenced !== "string" ||
+        !exact(actual.sourceHints, referenced.split(";").map((hint) => hint.trim())))
       reject("F3_CODE_SOURCE_MAP");
     seen.add(actual.caseId);
     sourceHints += actual.sourceHints.length;
@@ -94,7 +108,7 @@ export function assessF3CodeInventory(catalogueRaw, coverageRaw, ledgerRaw) {
 
 export async function assessF3CodeInventoryFromRepo(root = fileURLToPath(new URL("../../", import.meta.url))) {
   const files = await Promise.all(
-    [F3_CODE_CASES_PATH, F3_CODE_MATRIX_PATH, F3_CODE_LEDGER_PATH]
+    [F3_CODE_CASES_PATH, F3_CODE_MATRIX_PATH, F3_CODE_LEDGER_PATH, F3_CODE_CSV_PATH]
       .map((path) => readFile(join(root, path), "utf8")),
   );
   return assessF3CodeInventory(...files);
