@@ -3180,6 +3180,112 @@ const shuffle = (o) =>
       .map(([k, v]) => [k, v && typeof v === "object" && !Array.isArray(v) ? shuffle(v) : v]),
   );
 
+test("F3 S2 V107: três ações prévias distintas e principal com isolamento e cadeia de origem", (t) => {
+  const f = fenceWith(t, withContract);
+  const stages = [
+    {
+      action: "fonte",
+      order: 10,
+      name: "salvar_fonte_normativa_v107",
+      id: uuid(81010),
+      body: {
+        p_id_organizacao: F3,
+        p_id_contrato: uuid(107),
+        p_id_fonte: null,
+        p_tipo: "lei",
+        p_titulo: "Norma de teste F3",
+        p_referencia: null,
+        p_descricao: null,
+        p_situacao: "rascunho",
+        p_versao_esperada: null,
+        p_chave_idempotencia: sut.f3Slot("uuid", "fontekey"),
+      },
+    },
+    {
+      action: "versao",
+      order: 10,
+      name: "registrar_versao_fonte_v107",
+      id: uuid(81011),
+      body: {
+        p_id_organizacao: F3,
+        p_id_fonte: uuid(81010),
+        p_inicio_vigencia: "2026-11-01",
+        p_fim_vigencia: null,
+        p_id_arquivo: null,
+        p_conteudo_texto: "Norma sintética F3",
+        p_metadados: {},
+        p_chave_idempotencia: sut.f3Slot("uuid", "versaokey"),
+      },
+    },
+    {
+      action: "aprovacao",
+      order: 10,
+      name: "aprovar_versao_fonte_v107",
+      id: uuid(81011),
+      body: {
+        p_id_organizacao: F3,
+        p_id_versao: uuid(81011),
+        p_hash_esperado: "a".repeat(64),
+        p_fundamento: "Verificação sintética F3",
+        p_chave_idempotencia: sut.f3Slot("uuid", "approvalkey"),
+      },
+    },
+  ];
+  let callN = 0;
+  for (const stage of stages) {
+    const requestId = f.fence.arm({
+      producerOrder: stage.order,
+      kind: "prerequisito",
+      action: stage.action,
+      bodies: [stage.body],
+    });
+    const body = {
+      ...stage.body,
+      p_chave_idempotencia: uuid(82000 + ++callN),
+    };
+    const mutation = req({
+      url: RPC(stage.name),
+      method: "POST",
+      postData: JSON.stringify(body),
+    });
+    assert.equal(f.fence.policy(mutation), true);
+    assert.equal(f.fence.policy(respond(mutation)), true);
+    const settled = f.fence.settle();
+    assert.equal(settled.requestId, requestId);
+    assert.equal(settled.sealed, true);
+    assert.equal(settled.complete, true);
+    f.book.confirm(requestId, { entityId: stage.id, organizationId: F3 });
+    assert.equal(f.book.summary().requests.at(-1).action, stage.action);
+  }
+  const main = {
+    p_id_organizacao: F3,
+    p_id_contrato: uuid(107),
+    p_id_versao: uuid(81011),
+    p_aplicavel: true,
+    p_fundamento: "Aplicabilidade sintética F3",
+    p_atualizado_em_esperado: null,
+    p_chave_idempotencia: sut.f3Slot("uuid", "applicabilitykey"),
+  };
+  const requestId = f.fence.arm({ producerOrder: 10, bodies: [main] });
+  const sent = req({
+    url: RPC("definir_aplicabilidade_fonte_v107"),
+    postData: JSON.stringify({ ...main, p_chave_idempotencia: uuid(82009) }),
+  });
+  assert.equal(f.fence.policy(sent), true);
+  assert.equal(f.fence.policy(respond(sent)), true);
+  assert.equal(f.fence.settle().complete, true);
+  f.book.confirm(requestId, { entityId: uuid(81019), organizationId: F3 });
+  assert.equal(f.book.assertIsolation(), true);
+  const recorded = f.book.summary().requests.filter((q) => q.producerOrder === 10);
+  assert.deepEqual(recorded.map((q) => q.action ?? "principal"), [
+    "fonte",
+    "versao",
+    "aprovacao",
+    "principal",
+  ]);
+  assert.equal(recorded.filter((q) => q.outcome === "confirmed").length, 4);
+});
+
 test("F3 B2b2a RED: cerca só aceita opções de produção e um livro do módulo", (t) => {
   const f = fenceWith(t);
   for (const extra of [{ readPolicy: () => true }, { now: () => 0 }, { newId: () => uuid(1) }])
