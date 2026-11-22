@@ -4475,9 +4475,7 @@ export async function f3S3SetApplicability({
   ) {
     fail("F3_V107_APPLICABILITY_PRECONDITION");
   }
-  if (
-    before !== null && before?.id_fonte_versao !== versionId
-  ) {
+  if (before !== null && before?.id_fonte_versao !== versionId) {
     fail("F3_V107_APPLICABILITY_PRECONDITION");
   }
   await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/base-normativa", {
@@ -4537,11 +4535,12 @@ export async function f3S3SetApplicability({
       : [];
     if (relevant.length !== 1) fail("F3_V107_APPLICABILITY_READBACK");
     assertF3S3ApplicabilityReadback({ before, after: relevant[0], versionId });
+    if (!isUuid(relevant[0].id)) fail("F3_V107_APPLICABILITY_READBACK");
     await fence.drain();
     fence.assertSafe();
-    book.confirm(requestId, { entityId: versionId, organizationId });
+    book.confirm(requestId, { entityId: relevant[0].id, organizationId });
     book.assertIsolation();
-    return requestId;
+    return relevant[0].id;
   } catch (error) {
     try {
       if (book.state(requestId) === "sealed") book.uncertain(requestId);
