@@ -7,6 +7,7 @@
 import { createHash } from "node:crypto";
 
 export const F3_CODE_EXECUTION_SCHEMA = "contaos.ifv1.f3.code-execution.v1";
+export const F3_CODE_CATALOGUE_SHA256 = "bce15980d31ce22c8836e26621b267951296e905139b9833c8db4a7400c9ecbb";
 const SHA40 = /^[a-f0-9]{40}$/;
 const SHA64 = /^[a-f0-9]{64}$/;
 const ID = /^IFV1-F3-C[0-9]{4}$/;
@@ -23,7 +24,16 @@ function exactKeys(value, keys, code) {
   assert(plain(value), code);
   assert(JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort()), code);
 }
-function assertCatalogue(catalogue) {
+function assertCatalogue(catalogue, catalogueRaw) {
+  assert(typeof catalogueRaw === "string" &&
+    hash(catalogueRaw) === F3_CODE_CATALOGUE_SHA256, "F3_CODE_CATALOGUE_DRIFT");
+  let parsed;
+  try {
+    parsed = JSON.parse(catalogueRaw);
+  } catch {
+    assert(false, "F3_CODE_CATALOGUE_DRIFT");
+  }
+  assert(JSON.stringify(parsed) === JSON.stringify(catalogue), "F3_CODE_CATALOGUE_DRIFT");
   assert(plain(catalogue) && catalogue.count === 138 &&
     Array.isArray(catalogue.cases) && catalogue.cases.length === 138, "F3_CODE_CATALOGUE");
   const unique = new Set();
@@ -52,6 +62,8 @@ function validEvidence(test, kind, caseId) {
     typeof test.testId === "string" && /^[A-Za-z0-9_.:/#-]{3,240}$/.test(test.testId) &&
     typeof test.sourcePath === "string" &&
     /^src\/[A-Za-z0-9_./-]+\.(ts|tsx)$/.test(test.sourcePath) &&
+    !test.sourcePath.split("/").includes("..") &&
+    !test.sourcePath.split("/").includes(".") &&
     SHA64.test(test.outputSha256);
 }
 /**
@@ -61,12 +73,13 @@ function validEvidence(test, kind, caseId) {
  *
  * @param {object} params
  * @param {object} params.catalogue Catálogo F3_CASES.json previamente validado contra o CSV.
+ * @param {string} params.catalogueRaw Bytes UTF-8 canônicos, SHA-256 fixo e conferido.
  * @param {object} params.provenance HEAD real e IDs do workflow/job.
  * @param {function} params.executeCase Executa os testes e retorna provas observadas.
  * @param {function} params.verifyCase Verificador independente do contrato do caso.
  */
-export async function collectF3CodeEvidence({ catalogue, provenance, executeCase, verifyCase }) {
-  assertCatalogue(catalogue);
+export async function collectF3CodeEvidence({ catalogue, catalogueRaw, provenance, executeCase, verifyCase }) {
+  assertCatalogue(catalogue, catalogueRaw);
   assertProvenance(provenance);
   assert(typeof executeCase === "function" && typeof verifyCase === "function", "F3_CODE_RUNNERS");
   const entries = [];
