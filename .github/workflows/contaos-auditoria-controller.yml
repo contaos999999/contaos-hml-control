@@ -90,6 +90,7 @@ jobs:
         shell: bash
         env:
           INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha || 'e007c4bad8f2c66c489c55e4752b71bb19c5ced0' }}
+          INPUT_PREAUDIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
           node scripts/p0-rca-impact-gate.mjs --audit-full-protocol

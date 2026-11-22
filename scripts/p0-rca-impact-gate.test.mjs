@@ -22,6 +22,39 @@ const proofBytes = Buffer.from("preflight verificavel");
 const proofHash = createHash("sha256").update(proofBytes).digest("hex");
 const SHA = "a".repeat(40);
 const BACKEND = "b".repeat(40);
+
+import { resolveFullProtocolAuditHead } from "./p0-rca-impact-gate.mjs";
+
+test("P0 FULL_PROTOCOL manual workflow_dispatch verifies branch SHA without HEAD^2",()=>{
+  const good={event:"workflow_dispatch",
+    ref:"refs/heads/build/p0-abs-fiscal-universal",
+    githubSha:SHA,checkoutSha:SHA,declaredHead:SHA};
+  assert.equal(resolveFullProtocolAuditHead(good),SHA);
+  for(const broken of [
+    {ref:"refs/heads/main"},{githubSha:BACKEND},
+    {checkoutSha:BACKEND},{declaredHead:BACKEND},
+    {githubSha:""},{declaredHead:"invalid"},
+  ]) assert.throws(()=>resolveFullProtocolAuditHead({...good,...broken}),
+    /full protocol:/);
+});
+
+test("P0 FULL_PROTOCOL PR merge checkout keeps authenticated second-parent check",()=>{
+  const merge={event:"pull_request",checkoutSha:SHA,
+    declaredHead:BACKEND,mergeSecondParent:BACKEND};
+  assert.equal(resolveFullProtocolAuditHead(merge),BACKEND);
+  assert.equal(resolveFullProtocolAuditHead({
+    event:"pull_request_review",checkoutSha:SHA,mergeSecondParent:BACKEND}),BACKEND);
+  assert.throws(()=>resolveFullProtocolAuditHead({...merge,
+    declaredHead:"c".repeat(40)}),/checkout\/PR head mismatch/);
+  assert.throws(()=>resolveFullProtocolAuditHead({...merge,
+    mergeSecondParent:null}),/checkout\/PR head mismatch/);
+  assert.throws(()=>resolveFullProtocolAuditHead({...merge,
+    event:"push"}),/unsupported GitHub event/);
+  // A directly checked-out PR head remains legitimate only if explicitly bound.
+  assert.equal(resolveFullProtocolAuditHead({
+    event:"pull_request_review",checkoutSha:SHA,declaredHead:SHA}),SHA);
+});
+
 const ci = "https://github.com/contaos999999/contaos-hml-control/actions/runs/123";
 const ref = (id) => ({
   id, runner: "node", arquivo: "scripts/p0-rca-impact-gate.test.mjs",

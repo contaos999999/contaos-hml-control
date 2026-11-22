@@ -1989,6 +1989,34 @@ export function attestProtectedNormativeSources({manifest,plan,amendment,canonic
     activationAuthorized:false,issues};
 }
 
+/**
+ * Check the GitHub event provenance before interpreting FULL_PROTOCOL evidence.
+ * Manual dispatch checks out a branch commit (no HEAD^2); PR jobs normally
+ * check out a merge commit. Never make a missing merge parent a PASS.
+ */
+export function resolveFullProtocolAuditHead({
+  event, ref, githubSha, checkoutSha, declaredHead, mergeSecondParent,
+} = {}) {
+  if (!validSha(checkoutSha))
+    throw Error("full protocol: checkout SHA invalid");
+  if (event === "workflow_dispatch") {
+    if (ref !== "refs/heads/build/p0-abs-fiscal-universal" ||
+        !validSha(githubSha) || githubSha !== checkoutSha)
+      throw Error("full protocol: manual dispatch ref/SHA mismatch");
+    if (declaredHead &&
+        (!validSha(declaredHead) || declaredHead !== checkoutSha))
+      throw Error("full protocol: manual declared head mismatch");
+    return checkoutSha;
+  }
+  if (!["pull_request", "pull_request_review"].includes(event))
+    throw Error("full protocol: unsupported GitHub event");
+  const head = declaredHead || mergeSecondParent;
+  if (!validSha(head) ||
+      (checkoutSha !== head && mergeSecondParent !== head))
+    throw Error("full protocol: checkout/PR head mismatch");
+  return head;
+}
+
 function fullProtocolAuditFromCheckout(){
   const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
   const mission=JSON.parse(readFileSync("docs/frontend/governanca/MISSAO_ATIVA_4_1.json","utf8"));
@@ -2015,14 +2043,18 @@ function fullProtocolAuditFromCheckout(){
   const coverage=auditFullProtocolCoverage({protocol,tests,mission,workflow,source,manifest,paths});
   const checkoutSha=execFileSync("git",["rev-parse","HEAD"],
     {encoding:"utf8",timeout:15000}).trim();
-  const head=process.env.INPUT_PREAUDIT_HEAD ||
+  const event=String(process.env.GITHUB_EVENT_NAME||"");
+  const declaredHead=process.env.INPUT_PREAUDIT_HEAD||null;
+  // A direct workflow_dispatch checkout has no second parent. In a PR
+  // merge checkout, retain the second-parent provenance check unchanged.
+  const mergeSecondParent=event==="workflow_dispatch" ||
+      (declaredHead===checkoutSha) ? null :
     execFileSync("git",["rev-parse","HEAD^2"],
       {encoding:"utf8",timeout:15000}).trim();
-  if(!validSha(head)||!validSha(checkoutSha)||
-      (checkoutSha!==head &&
-        execFileSync("git",["rev-parse","HEAD^2"],
-          {encoding:"utf8",timeout:15000}).trim()!==head))
-    throw Error("full protocol: checkout/head mismatch");
+  const head=resolveFullProtocolAuditHead({
+    event,ref:process.env.GITHUB_REF,githubSha:process.env.GITHUB_SHA,
+    checkoutSha,declaredHead,mergeSecondParent,
+  });
   const suites=runFullProtocolSuites();
   return {...attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha}),
     normative_sources:normative};
