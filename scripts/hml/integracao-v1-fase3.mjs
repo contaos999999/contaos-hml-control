@@ -4253,6 +4253,127 @@ export function assertF3V117V116ConsumerReadback({
   });
 }
 
+/** C0455 / C0463: visão geral após V117 invalida os portões anteriores.
+ * A tela de origem distingue os caseIds; a RPC consumidora é a mesma V114.
+ * Contrato CODE não comprova execução dos dois perfis nem libera o ledger. */
+export function assertF3V117OverviewConsumer({
+  before,
+  after,
+  organizationId,
+  contractId,
+  competenceId,
+  caseId,
+}) {
+  if (
+    !["IFV1-F3-C0455", "IFV1-F3-C0463"].includes(caseId) ||
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(competenceId) ||
+    before?.competencia?.id !== competenceId ||
+    before.competencia.id_organizacao !== organizationId ||
+    before.competencia.id_contrato !== contractId ||
+    after?.competencia?.id !== competenceId ||
+    after.competencia.id_organizacao !== organizationId ||
+    after.competencia.id_contrato !== contractId ||
+    after.portao?.liberado !== false ||
+    after.blocking_summary?.parecer_aprovado !== false ||
+    after.blocking_summary?.aprovacao_apresentacao_atual !== false ||
+    after.allowed_actions?.apresentar !== false
+  ) {
+    fail("F3_V117_OVERVIEW_CONSUMER_MISMATCH");
+  }
+  return Object.freeze({
+    state: "CONSUMER_CODE_CONTRACT_NOT_CERTIFIED",
+    caseId,
+    competenceId,
+  });
+}
+
+/** C0461: a revisão substitui pareceres antigos, nunca produz aprovação nova. */
+export function assertF3V117OpinionsConsumer({
+  before,
+  after,
+  organizationId,
+  contractId,
+  competenceId,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(competenceId) ||
+    !Array.isArray(before) ||
+    !Array.isArray(after) ||
+    before.some(
+      (row) =>
+        !isUuid(row?.id) ||
+        row.id_organizacao !== organizationId ||
+        row.id_contrato !== contractId ||
+        row.id_competencia !== competenceId,
+    ) ||
+    after.some(
+      (row) =>
+        !isUuid(row?.id) ||
+        row.id_organizacao !== organizationId ||
+        row.id_contrato !== contractId ||
+        row.id_competencia !== competenceId,
+    ) ||
+    new Set(after.map((row) => row.id)).size !== after.length ||
+    after.some((row) => row.status === "aprovado")
+  ) {
+    fail("F3_V117_OPINION_CONSUMER_MISMATCH");
+  }
+  const oldApproved = before.filter(
+    (row) => row.status === "aprovado" || row.status === "rascunho",
+  );
+  if (
+    oldApproved.some(
+      (row) =>
+        after.filter((later) => later.id === row.id && later.status === "substituido").length !== 1,
+    )
+  ) {
+    fail("F3_V117_OPINION_CONSUMER_MISMATCH");
+  }
+  return Object.freeze({
+    state: "CONSUMER_CODE_CONTRACT_NOT_CERTIFIED",
+    caseId: "IFV1-F3-C0461",
+    competenceId,
+    replaced: oldApproved.length,
+  });
+}
+
+/** C0465: prova de payload do evento, não prova autenticada RBAC do leitor.
+ * O contrato da superfície de auditoria exige DENY para leitor no catálogo. */
+export function assertF3V117AuditConsumer({
+  events,
+  receipt,
+  organizationId,
+  queryOrganizationId,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    queryOrganizationId !== organizationId ||
+    !isUuid(receipt?.resultId) ||
+    !Array.isArray(events) ||
+    events.filter(
+      (row) =>
+        row?.evento === "RevisaoRequisitoRegistrada" &&
+        row.entidade === "resultados_requisitos" &&
+        row.id_entidade === receipt.resultId &&
+        isUuid(row.id) &&
+        typeof row.correlation_id === "string" &&
+        row.correlation_id.length > 0,
+    ).length !== 1
+  ) {
+    fail("F3_V117_AUDIT_CONSUMER_MISMATCH");
+  }
+  return Object.freeze({
+    state: "CONSUMER_CODE_CONTRACT_NOT_CERTIFIED",
+    caseId: "IFV1-F3-C0465",
+    auditRoleContract: Object.freeze({ master: "ALLOW", leitor: "DENY" }),
+    resultId: receipt.resultId,
+  });
+}
+
 async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }
