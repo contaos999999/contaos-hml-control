@@ -57,10 +57,11 @@ test('RED: missing immutable GitHub provenance blocks',()=>{
 });
 
 test('RED/GREEN: live attestation checksum must match exact bytes',()=>{
- const raw=JSON.stringify(proof)+'\\n';
+ const newline=String.fromCharCode(10);
+ const raw=JSON.stringify(proof)+newline;
  const hash=createHash('sha256').update(raw).digest('hex');
- assert.equal(verifyAttestationDigest(raw,hash+'  fixture-attestation.json\\n'),true);
- assert.equal(verifyAttestationDigest(raw+'x',hash+'  fixture-attestation.json\\n'),false);
+ assert.equal(verifyAttestationDigest(raw,hash+'  fixture-attestation.json'+newline),true);
+ assert.equal(verifyAttestationDigest(raw+'x',hash+'  fixture-attestation.json'+newline),false);
  assert.equal(verifyAttestationDigest(raw,hash+'  other-file.json'),false);
  assert.equal(verifyAttestationDigest(raw,'0'.repeat(64)+'  fixture-attestation.json'),false);
 });
