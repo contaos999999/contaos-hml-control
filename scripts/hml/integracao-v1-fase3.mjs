@@ -4374,6 +4374,346 @@ export function assertF3V117AuditConsumer({
   });
 }
 
+/**
+ * SYS04 preferência: estado local de navegação, jamais prova de autorização/RLS.
+ * Lê a escolha que a tela realmente persistiu, em vez de inferir pelo clique.
+ */
+export function assertF3S1PreferenceReadback({ value, userId, organizationId }) {
+  if (
+    !isUuid(userId) ||
+    !isUuid(organizationId) ||
+    value?.idUsuario !== userId ||
+    value?.idOrganizacao !== organizationId
+  ) {
+    fail("F3_SYS04_PREFERENCE_READBACK");
+  }
+  return organizationId;
+}
+export async function f3S1SelectPreference({ page, fence, book, userId, organizationId, name }) {
+  if (
+    !page ||
+    !fence ||
+    !BOOKS.has(book) ||
+    !isUuid(userId) ||
+    !isUuid(organizationId) ||
+    organizationId !== book.organizationF3() ||
+    typeof name !== "string" ||
+    !name.trim()
+  ) {
+    fail("F3_SYS04_PREFERENCE_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/selecionar-organizacao", { waitUntil: "networkidle" });
+  const radio = page.getByRole("radio").filter({ hasText: name });
+  if ((await radio.count()) !== 1) fail("F3_SYS04_PREFERENCE_CARD");
+  await fence.drain();
+  fence.assertSafe();
+  await radio.click();
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.waitForURL((url) => url.origin === HML_ORIGIN && url.pathname === "/");
+  const stored = await page.evaluate(() => sessionStorage.getItem("contaos.preferenciaOrganizacao"));
+  let value;
+  try {
+    value = JSON.parse(stored);
+  } catch {
+    fail("F3_SYS04_PREFERENCE_READBACK");
+  }
+  assertF3S1PreferenceReadback({ value, userId, organizationId });
+  await fence.drain();
+  fence.assertSafe();
+  book.assertIsolation();
+  return organizationId;
+}
+
+/** A aplicabilidade V107 só pode ser salva depois de fonte, versão e aprovação no livro. */
+export function assertF3S3ApplicabilityReadback({ before, after, organizationId, contractId, versionId }) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(versionId) ||
+    before?.id_organizacao !== organizationId ||
+    before.id_contrato !== contractId ||
+    before.id_versao !== versionId ||
+    after?.id_organizacao !== organizationId ||
+    after.id_contrato !== contractId ||
+    after.id_versao !== versionId ||
+    after.aplicavel !== true ||
+    !after.atualizado_em ||
+    after.atualizado_em === before.atualizado_em
+  ) {
+    fail("F3_V107_APPLICABILITY_READBACK");
+  }
+  return versionId;
+}
+export async function f3S3SetApplicability({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  versionId,
+  versionNumber,
+  before,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    organizationId !== book.organizationF3() ||
+    !isUuid(contractId) ||
+    !isUuid(versionId) ||
+    !Number.isSafeInteger(versionNumber) ||
+    versionNumber < 1 ||
+    !book.created().some(
+      (entry) =>
+        entry.id === versionId &&
+        entry.organizationId === organizationId &&
+        book.summary().requests.some(
+          (q) =>
+            q.requestId === entry.requestId &&
+            q.producerOrder === 10 &&
+            q.action === "versao" &&
+            q.outcome === "confirmed",
+        ),
+    )
+  ) {
+    fail("F3_V107_APPLICABILITY_PRECONDITION");
+  }
+  if (
+    before?.id_organizacao !== organizationId ||
+    before.id_contrato !== contractId ||
+    before.id_versao !== versionId
+  ) {
+    fail("F3_V107_APPLICABILITY_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/base-normativa", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", {
+    name: "Definir aplicabilidade da versão " + versionNumber,
+    exact: true,
+  }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Aplicável", { exact: true }).check();
+  await dialog.getByLabel("Fundamento").fill("Teste funcional isolado F3 CODE");
+  await fence.drain();
+  fence.assertSafe();
+  const body = {
+    p_id_organizacao: organizationId,
+    p_id_contrato: contractId,
+    p_id_versao: versionId,
+    p_aplicavel: true,
+    p_fundamento: "Teste funcional isolado F3 CODE",
+    p_atualizado_em_esperado: before.atualizado_em ?? null,
+    p_chave_idempotencia: f3Slot("uuid", "v107_aplicabilidade"),
+  };
+  const requestId = mutationFence.arm({ producerOrder: 10, bodies: [body] });
+  try {
+    const posted = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/definir_aplicabilidade_fonte_v107",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Salvar aplicabilidade", exact: true }).click();
+    const response = await posted;
+    if (response.status() !== 200) fail("F3_V107_APPLICABILITY_HTTP");
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V107_APPLICABILITY_UNCERTAIN");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: versionId, organizationId });
+    book.assertIsolation();
+    return requestId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Falha incerta: nenhuma repetição com outra chave.
+    }
+    throw error;
+  }
+}
+
+/** V118: aprovação é sobre o parecer real do job e exige leitura posterior. */
+export function assertF3S5OpinionReadback({ before, after, opinionId, competenceId }) {
+  if (
+    !isUuid(opinionId) ||
+    !isUuid(competenceId) ||
+    before?.id !== opinionId ||
+    before.id_competencia !== competenceId ||
+    before.status === "aprovado" ||
+    after?.id !== opinionId ||
+    after.id_competencia !== competenceId ||
+    after.status !== "aprovado" ||
+    !after.aprovado_em ||
+    after.versao < before.versao
+  ) {
+    fail("F3_V118_OPINION_READBACK");
+  }
+  return opinionId;
+}
+export async function f3S5ApproveOpinion({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  competenceId,
+  opinionId,
+  before,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    organizationId !== book.organizationF3() ||
+    !isUuid(competenceId) ||
+    !isUuid(opinionId) ||
+    before?.id !== opinionId ||
+    before.id_competencia !== competenceId ||
+    !book.created().some(
+      (entry) =>
+        entry.id === opinionId &&
+        entry.organizationId === organizationId &&
+        book.summary().requests.some(
+          (q) =>
+            q.requestId === entry.requestId &&
+            q.producerOrder === 18 &&
+            q.action === "parecer" &&
+            q.outcome === "confirmed",
+        ),
+    )
+  ) {
+    fail("F3_V118_OPINION_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/competencias/" + competenceId + "/parecer", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Aprovar parecer", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Confirmar aprovação" });
+  await dialog.locator("#v118-fundamento").fill("Revisão técnica isolada F3 CODE");
+  await fence.drain();
+  fence.assertSafe();
+  const payload = {
+    p_id_parecer: opinionId,
+    p_aprovar: true,
+    p_fundamento: "Revisão técnica isolada F3 CODE",
+  };
+  const requestId = mutationFence.arm({ producerOrder: 18, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/aprovar_parecer_interno",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Confirmar decisão", exact: true }).click();
+    if ((await posted).status() !== 200) fail("F3_V118_OPINION_HTTP");
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V118_OPINION_UNCERTAIN");
+    }
+    book.confirm(requestId, { entityId: opinionId, organizationId });
+    book.assertIsolation();
+    return requestId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Não repetir aprovação incerta.
+    }
+    throw error;
+  }
+}
+
+/** V119: registro gera um pacote novo e não é confirmação da aprovação anterior. */
+export function assertF3S5PresentationReadback({ presentationId, rows, competenceId }) {
+  if (
+    !isUuid(presentationId) ||
+    !isUuid(competenceId) ||
+    !Array.isArray(rows) ||
+    rows.filter(
+      (row) => row?.id === presentationId && row.id_competencia === competenceId,
+    ).length !== 1
+  ) {
+    fail("F3_V119_PRESENTATION_READBACK");
+  }
+  return presentationId;
+}
+export async function f3S5RegisterPresentation({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  competenceId,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    organizationId !== book.organizationF3() ||
+    !isUuid(competenceId) ||
+    !book.summary().requests.some(
+      (q) =>
+        q.producerOrder === 19 &&
+        q.action === "aprovacao" &&
+        q.outcome === "confirmed",
+    )
+  ) {
+    fail("F3_V119_PRESENTATION_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/competencias/" + competenceId + "/apresentar", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Registrar apresentação", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Confirmar envio ao contratante" });
+  await fence.drain();
+  fence.assertSafe();
+  const payload = {
+    p_id_competencia: competenceId,
+    p_idempotency_key: f3Slot("uuid", "v119_presentation"),
+  };
+  const requestId = mutationFence.arm({ producerOrder: 19, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/registrar_apresentacao",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Confirmar registro", exact: true }).click();
+    const response = await posted;
+    if (response.status() !== 200) fail("F3_V119_PRESENTATION_HTTP");
+    const presentationId = await response.json();
+    if (!isUuid(presentationId)) fail("F3_V119_PRESENTATION_RESPONSE");
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V119_PRESENTATION_UNCERTAIN");
+    }
+    book.confirm(requestId, { entityId: presentationId, organizationId });
+    book.assertIsolation();
+    return presentationId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Uma apresentação incerta não pode ser repetida com nova chave.
+    }
+    throw error;
+  }
+}
+
 async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }
