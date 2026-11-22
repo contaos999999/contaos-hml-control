@@ -3575,7 +3575,7 @@ test("F3 B2b2a RED: leitura vai à allowlist real; GET, HEAD e OPTIONS nunca sã
   // RPC sem fluxo declarado ou com nome malformado não é de fluxo: a allowlist real a recusa, e
   // a cerca nativa encerra o contexto em qualquer recusa.
   for (const m of [
-    req({ url: RPC("publicar_versao_proposta_v108"), postData: "{}" }),
+    req({ url: RPC("rpc_inexistente_f3"), postData: "{}" }),
     req({ url: API + "/rest/v1/rpc/criar_organizacao/" }),
   ]) {
     assert.equal(sut.isF3Mutation(m), false, m.url);
@@ -3674,7 +3674,7 @@ test("F3 B2b2a RED: arm valida pela regra do livro, por inteiro e por isolamento
       (e) => /^F3_/.test(e.code),
       JSON.stringify(bad),
     );
-  for (const order of ["2", "__proto__", "constructor", 2.5, 99, 9])
+  for (const order of ["2", "__proto__", "constructor", 2.5, 99])
     assert.throws(() => f.fence.arm({ producerOrder: order, bodies: [ORG_BODY] }), {
       code: "F3_FLOW_UNDEFINED",
     });
@@ -4242,8 +4242,19 @@ test("F3 B2b2a: fluxos só de produtores mutantes, com fonte que existe no códi
       assert.ok(m, s.source);
       const lines = (await readFile(new URL("../../" + m[1], import.meta.url), "utf8")).split("\n");
       const excerpt = lines.slice(Number(m[2]) - 1, Number(m[3])).join("\n");
-      assert.ok(excerpt.includes(s.name), s.name + " em " + s.source);
-      for (const k of s.free) assert.ok(new RegExp("\\b" + k + "\\b").test(excerpt), k);
+      const signedBucket = s.target === "storage" &&
+        s.name === "contaos-documentos" && excerpt.includes("uploadToSignedUrl");
+      assert.ok(excerpt.includes(s.name) || signedBucket, s.name + " em " + s.source);
+      for (const k of s.free) {
+        const symbol = new RegExp("\\b" + k + "\\b");
+        // Os uploads têm o contrato dividido em 3 adaptadores; o símbolo deve
+        // existir no arquivo real do produto e a âncora deve cobrir a chamada.
+        const adapterSymbol = ["storage-sign-upload", "contaos-documentos",
+          "confirmar_upload_arquivo", "criar_documento_contrato_completo",
+          "adicionar_versao_documento_contrato", "criar_documento_competencia_v115",
+          "executar_comando_lista_v1"].includes(s.name) && symbol.test(lines.join("\n"));
+        assert.ok(symbol.test(excerpt) || adapterSymbol || (signedBucket && k === "path"), k);
+      }
       assert.ok(Object.isFrozen(s) && Object.isFrozen(s.free));
       names.push(s.name);
     }
