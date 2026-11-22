@@ -36,6 +36,8 @@ O PROMPT 74 contém GO/NO-GO intermediário no manual. Quando executado após as
 
 **Total imutável = 1 + 24 + 19 + 11 + 20 + 10 + 12 = 97.** Cada PLAN deve mapear seu prompt regular aos atômicos diretamente aplicáveis, aos transversais pertinentes, exclusões justificadas, RNF e provas, sem alterar os IDs ou usar correlação estrutural como homologação.
 
+> **EMENDA P0-CERT-LIVE-001 (22/11/2026), pendente de merge protegido:** A certificação individual V1–V5 utiliza testes automatizados de código, integração, segurança, regressão, CI e revisão independente. Contraprovas LIVE autenticadas, deployment HML operacional e evidências de sessão não bloqueiam isoladamente os certificados individuais: ficam diferidos, sem PASS presumido, para o GATE PROD após a conclusão das cinco versões. Requisitos de segurança automatizados e Teste C aplicáveis permanecem obrigatórios. Ver `P0_CERT_LIVE_001_2026-11-22.md`. Esta emenda não autoriza PROD.
+
 ## Gates de saída de V1, V2, V3, V4 e V5: NENHUM SALTO
 
 Para cada versão, consolidar **certificado versionado em GitHub** antes de abrir PLAN da versão seguinte:

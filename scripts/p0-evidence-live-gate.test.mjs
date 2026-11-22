@@ -342,3 +342,30 @@ test("P0 LIVE — alteração em script após teste HML impede reutilizar prova"
     [{filename:"scripts/frontend-zero-drift.mjs"}];
   await assertFail(x,/SHA\/contrato estáveis/);
 });
+
+test("P0-CERT-LIVE-001 — CI certifica código sem contraprova HML autenticada", async () => {
+  const x = fixture();
+  delete x.finalReceipt.hml_e2e;
+  const result = await verifyEvidenceLive(x.manifest, {
+    apiGet: async (path) => {
+      if (path.startsWith("/contents/")) {
+        const key = path.slice("/contents/".length).split("?ref=")[0];
+        if (!x.remoteFiles.has(key)) throw new Error("GitHub REST HTTP 404");
+        return { encoding: "base64", content: x.remoteFiles.get(key).toString("base64") };
+      }
+      if (!(path in x.responses)) throw new Error("GitHub REST HTTP 404");
+      return x.responses[path];
+    },
+    fileExists: path => x.files.has(path),
+    readBytes: path => x.files.get(path),
+    requireLive: false,
+  });
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.checked, 1);
+});
+test("P0-CERT-LIVE-001 — GATE PROD continua NO-GO sem LIVE", async () => {
+  const x = fixture();
+  delete x.finalReceipt.hml_e2e;
+  const result = await x.run();
+  assert.match(result.errors.join(" "), /HML autenticado/);
+});
