@@ -2915,7 +2915,7 @@ export const P0_SEMANTIC_PRIORITY_DISPUTES=Object.freeze([
     E7:"A identidade privilegiada não é instalada nem ativada pelo BUILD da #690."
   },
   {
-    rules:["PLAN-S4-13","EMENDA-12"],case:"FULL_DIFF_NO_DOCUMENTAL_ESCAPE",
+    rules:["EMENDA-04","EMENDA-11"],case:"FULL_DIFF_NO_DOCUMENTAL_ESCAPE",
     E1:"Guard RCA obedece ao manifesto protegido da base anterior, não à PR avaliada.",
     E2:"Diff inclui caminho extra não autorizado, apesar de a PR alegar mudança documental.",
     E3:"full_diff=true impõe recusa antes da saída N/A visual, mesmo se os checks existentes estiverem verdes.",
@@ -2945,7 +2945,7 @@ export const P0_SEMANTIC_PRIORITY_DISPUTES=Object.freeze([
     E7:"Sem prova de atomicidade da barreira, ativação permanece NO-GO."
   },
   {
-    rules:["PLAN-S4-14","EMENDA-11"],case:"VISUAL_NA_WITH_REAL_APP_DIFF",
+    rules:["PLAN-S4-14","EMENDA-29"],case:"VISUAL_NA_WITH_REAL_APP_DIFF",
     E1:"Guard e Teste C verificam o diff, não apenas o rótulo do autor.",
     E2:"Governança declara impacto_visual N/A mas diff inclui mudança de UI não prevista.",
     E3:"Escopo extra e classificação visual falsa devem falhar independentemente de CI verde.",
@@ -2965,6 +2965,20 @@ export const P0_SEMANTIC_PRIORITY_DISPUTES=Object.freeze([
     E7:"Recuperação não é certificação nem dispensa fila/HML/PROD."
   },
 ]);
+// Material linkage: terms must actually exist in BOTH protected source clauses.
+// It is insufficient for a rule ID to resolve to an arbitrary, unrelated line.
+const P0_PRIORITY_SOURCE_TERMS=Object.freeze({
+  AUTHORIZATION_OUTLIVES_REVIEW:[["grupo","success"],["revisão","autorização"]],
+  N17_TWO_REVIEWS_AUTHORIZATION_ONLY:[["outra aprovação","revogar"],["autorização","review"]],
+  ADMISSION_VERSUS_MERGE_GROUP:[["Admissão","HEAD"],["merge_group","base"]],
+  ACTIVE_VERSUS_CERTIFIED:[["ACTIVE","CERTIFIED"],["CERTIFIED","readback"]],
+  APP_IDENTITY_VERSUS_CHECK_NAME:[["GitHub App","integration_id"],["commit statuses","Check Run"]],
+  FULL_DIFF_NO_DOCUMENTAL_ESCAPE:[["full_diff","manifesto"],["full_diff","documental"]],
+  WATCHDOG_VERSUS_ANTISTAGNATION:[["Watchdog","heartbeat"],["Antiestagnação","retry"]],
+  REVOCATION_AFTER_GREEN_STATUS:[["success","grupo"],["revogação","status"]],
+  VISUAL_NA_WITH_REAL_APP_DIFF:[["src/","Não autorizados"],["impacto_visual","Teste C"]],
+  CERTIFICATION_VERSUS_RECOVERY:[["Certificação","readback"],["BLOCKED_EXTERNAL","HEAD"]]
+});
 export function validatePrioritySemanticDisputes(triage){
   const issues=[];const selected=new Set();
   const byId=new Map((triage?.rules||[]).map(x=>[x.rule_id,x]));
@@ -2976,6 +2990,11 @@ export function validatePrioritySemanticDisputes(triage){
     const pair=byPair.get(ordered.join("|"));
     if(!a?.anchor||!b?.anchor||!pair||selected.has(pair.pair_id))
       issues.push("SEMANTIC_PRIORITY_ANCHOR_INVALID: "+d.case);
+    const expected=P0_PRIORITY_SOURCE_TERMS[d.case];
+    if(!expected||!a||!b||!expected.every((terms,index)=>
+      terms.every(word=>(index===0?a.exact_text:b.exact_text)
+        .toLocaleLowerCase("pt-BR").includes(word.toLocaleLowerCase("pt-BR")))))
+      issues.push("SEMANTIC_PRIORITY_TEXT_MISMATCH: "+d.case);
     if(Object.keys(d).filter(x=>/^E[1-7]$/.test(x)).length!==7||
        ["E1","E2","E3","E4","E5","E6","E7"].some(k=>
          typeof d[k]!=="string"||d[k].length<55))
