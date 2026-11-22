@@ -2464,6 +2464,21 @@ test("P0 SEMANTIC DOSSIER: all 137 E1–E7, 381 clauses, 9316 pairs are source r
     assert.throws(
       ()=>writeSemanticDossierJsonl({...result,counts:{...result.counts,pairs:9315}},directory),
       /SEMANTIC_DOSSIER_UNVERIFIED/);
+    assert.throws(
+      ()=>writeSemanticDossierJsonl(result,process.cwd()),
+      /SEMANTIC_DOSSIER_OUT_OF_TREE_REQUIRED/);
+    const wrongBlob=structuredClone(result);
+    wrongBlob.rules[0].source_anchor.blob="0".repeat(40);
+    assert.throws(()=>writeSemanticDossierJsonl(wrongBlob,directory),
+      /SEMANTIC_DOSSIER_CONTENT_INVALID/);
+    const wrongPair=structuredClone(result);
+    wrongPair.interactions[0].rule_a_text="texto adulterado";
+    assert.throws(()=>writeSemanticDossierJsonl(wrongPair,directory),
+      /SEMANTIC_DOSSIER_CONTENT_INVALID/);
+    const reusedPair=structuredClone(result);
+    reusedPair.interactions[9315].pair_id=reusedPair.interactions[0].pair_id;
+    assert.throws(()=>writeSemanticDossierJsonl(reusedPair,directory),
+      /SEMANTIC_DOSSIER_CONTENT_INVALID/);
   }finally{rmSync(directory,{recursive:true,force:true});}
   for(const [type,mutation] of [
     ["rule",x=>x.rules.pop()],
