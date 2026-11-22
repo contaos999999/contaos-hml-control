@@ -757,6 +757,29 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
   assert.equal(sut.assertF3SecondUserProfile("leitor"), true);
 });
 
+test("F3 B2b2 RED: intenção abandonada admite somente uma releitura por execução", () => {
+  const first = sut.createF3IntentBook({ ledger: EMPTY });
+  createOrg(first);
+  seal(first, 5, 5);
+  first.uncertain(uuid(5));
+  first.reconcile(uuid(5), { found: false, entityId: null, organizationId: null });
+  first.abandon(uuid(5));
+  const prior = ledgerOf([run(1, first)]);
+  const next = sut.createF3IntentBook({ ledger: prior });
+  assert.equal(next.state(uuid(5)), "abandoned");
+  next.reconcile(uuid(5), { found: false, entityId: null, organizationId: null });
+  const previous = JSON.stringify([next.summary(), next.created()]);
+  assert.throws(
+    () => next.reconcile(uuid(5), { found: true, entityId: uuid(50005), organizationId: F3 }),
+    { code: "F3_INTENT_STATE" },
+  );
+  assert.equal(JSON.stringify([next.summary(), next.created()]), previous);
+  // Não impedir a descoberta positiva como PRIMEIRA leitura da execução seguinte.
+  const next2 = sut.createF3IntentBook({ ledger: prior });
+  next2.reconcile(uuid(5), { found: true, entityId: uuid(50005), organizationId: F3 });
+  assert.equal(next2.state(uuid(5)), "confirmed");
+});
+
 test("F3 B2b2 R2: orçamento de 40 por execução e 60 no total, acumulado pelo ledger", () => {
   // 40 envios: organização, 17 principais, 11 pre-requisitos e 11 duplicidades.
   const first = sut.createF3IntentBook({ ledger: EMPTY });
