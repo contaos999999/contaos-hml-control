@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, validatePrioritySemanticDisputes, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, writeSemanticDossierJsonl, validatePrioritySemanticDisputes, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2445,6 +2445,26 @@ test("P0 SEMANTIC DOSSIER: all 137 E1–E7, 381 clauses, 9316 pairs are source r
   assert.equal(result.semantic_preaudit,"INCONCLUSIVE");
   assert.equal(result.semantic_completeness,"INCONCLUSIVE");
   assert.equal(result.release,"NO_GO");
+  const directory=mkdtempSync(join(tmpdir(),"contaos-semantic-corpus-"));
+  try{
+    const manifest=writeSemanticDossierJsonl(result,directory,{
+      head:"a".repeat(40),base:"b".repeat(40)});
+    assert.equal(manifest.semantic_completeness,"INCONCLUSIVE");
+    assert.equal(manifest.release,"NO_GO");
+    assert.deepEqual(Object.values(manifest.files).map(x=>x.rows),[137,381,9316]);
+    for(const [file,metadata] of Object.entries(manifest.files)){
+      const contents=readFileSync(join(directory,file),"utf8");
+      assert.equal(metadata.sha256,
+        createHash("sha256").update(contents).digest("hex"));
+      assert.equal(contents.trimEnd().split("\n").length,metadata.rows);
+      assert.equal(metadata.bytes,Buffer.byteLength(contents,"utf8"));
+    }
+    const diskManifest=JSON.parse(readFileSync(join(directory,"manifest.json"),"utf8"));
+    assert.deepEqual(diskManifest,manifest);
+    assert.throws(
+      ()=>writeSemanticDossierJsonl({...result,counts:{...result.counts,pairs:9315}},directory),
+      /SEMANTIC_DOSSIER_UNVERIFIED/);
+  }finally{rmSync(directory,{recursive:true,force:true});}
   for(const [type,mutation] of [
     ["rule",x=>x.rules.pop()],
     ["sentence",x=>x.sentences.splice(75,1)],
