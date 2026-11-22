@@ -37,6 +37,20 @@ function itemsFor(m) {
   return items;
 }
 
+export function validateProdReadiness(m) {
+  const errors = [];
+  const versions = ['V1', 'V2', 'V3', 'V4', 'V5'];
+  for (const version of versions) {
+    if (m?.controle?.certificados_por_versao?.[version]?.status !== 'PASS')
+      errors.push('GATE PROD bloqueado: certificado de código ' + version + ' não é PASS.');
+    if (m?.controle?.integracao_por_versao?.[version]?.interna?.status !== 'PASS')
+      errors.push('GATE PROD bloqueado: integração interna ' + version + ' não é PASS.');
+    if (version !== 'V1' && m?.controle?.integracao_por_versao?.[version]?.cumulativa?.status !== 'PASS')
+      errors.push('GATE PROD bloqueado: integração cumulativa ' + version + ' não é PASS.');
+  }
+  return errors;
+}
+
 export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gate = 'CODE_CERTIFICATION' } = {}) {
   if (!['CODE_CERTIFICATION', 'GATE_PROD'].includes(gate))
     return { errors: ['P0 LIVE: gate desconhecido, operação bloqueada.'], checks: [], checked: 0 };
@@ -45,18 +59,6 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gat
   const checks = [];
   const fail = (msg) => errors.push("P0 LIVE: " + msg);
   const items = itemsFor(m);
-  if (requireLive) {
-    const versions = ['V1', 'V2', 'V3', 'V4', 'V5'];
-    for (const version of versions) {
-      if (m?.controle?.certificados_por_versao?.[version]?.status !== 'PASS')
-        fail('GATE PROD bloqueado: certificado de código ' + version + ' não é PASS.');
-      if (m?.controle?.integracao_por_versao?.[version]?.interna?.status !== 'PASS')
-        fail('GATE PROD bloqueado: integração interna ' + version + ' não é PASS.');
-      if (version !== 'V1' && m?.controle?.integracao_por_versao?.[version]?.cumulativa?.status !== 'PASS')
-        fail('GATE PROD bloqueado: integração cumulativa ' + version + ' não é PASS.');
-    }
-    if (errors.length) return { errors, checks, checked: 0 };
-  }
   if (!items.length) return { errors, checks, checked: 0 };
   if (typeof apiGet !== "function") return { errors: ["P0 LIVE: serviço GitHub autenticado indisponível."], checks, checked: 0 };
   const read = readBytes || ((path) => readFileSync(path));
@@ -354,6 +356,12 @@ async function main() {
   catch (e) { console.error("P0 LIVE FAIL: manifesto inválido " + e.message); process.exitCode = 1; return; }
   const token = String(process.env.GITHUB_TOKEN || "");
   const gate = process.env.CONTAOS_CERTIFICATION_GATE || "CODE_CERTIFICATION";
+  const readiness = gate === "GATE_PROD" ? validateProdReadiness(m) : [];
+  if (readiness.length) {
+    readiness.forEach((msg) => console.error("P0 LIVE FAIL: " + msg));
+    process.exitCode = 1;
+    return;
+  }
   const result = await verifyEvidenceLive(m, { apiGet: (path) => githubGet(path, token), gate });
   if (result.errors.length) {
     result.errors.forEach((msg) => console.error(msg));
