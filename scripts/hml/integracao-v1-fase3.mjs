@@ -2968,10 +2968,14 @@ export async function runF3Session({
       else signal?.addEventListener("abort", onAbort, { once: true });
     });
     stop.catch(() => {});
-    await Promise.race([Promise.resolve().then(() => drive(book)), stop]);
+    const result = await Promise.race([Promise.resolve().then(() => drive(book)), stop]);
     if (book.frozen()) fail("F3_FENCE_FROZEN");
     book.assertIsolation();
-    fail("F3_DRIVER_PENDING");
+    // Um driver parcial (inclusive S1) nunca pode certificar os 138 casos.
+    // O retorno completo deve trazer relatório validado pelo gate existente.
+    if (result?.state !== "F3_COMPLETE" || !result.report) fail("F3_DRIVER_PENDING");
+    if (f3Gate(result.report, catalogue, { ledger }) !== "PASS") fail("F3_GATE_INCOMPLETE");
+    return { code: "F3_COMPLETE", report: result.report };
   } catch (error) {
     let code = CODE.test(error?.code || "") ? error.code : "F3_FAILURE";
     // Congelamento por desvio da cerca é a causa, não o sintoma que o driver viu depois.
