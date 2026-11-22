@@ -1,0 +1,25 @@
+{
+  "schema": "contaos.csdi.counterproof-execution-summary.v1",
+  "scope": "197 original prompts x seven axes",
+  "original_ledger_sha256": "d144e13362d74e00ef982c4c931db675b8c2763d2d34bccb38ea7c12eb14a6d5",
+  "literal_integrity_cells_checked": 1379,
+  "literal_integrity_pass": 1379,
+  "negative_mutation_controls": 1379,
+  "negative_mutation_rejected": 1379,
+  "normative_counterproofs_executed": 0,
+  "semantic_decisions_certified": 0,
+  "semantic_completeness": "INCONCLUSIVE",
+  "limitations": [
+    "The 1.3 MB source ledger and per-cell results are currently local artifacts; not integrated into this PR.",
+    "Literal integrity and mutation controls do not demonstrate correctness of interpretation against 25 canonical documents.",
+    "The normative counterproofs remain unexecuted; no semantic PASS is justified."
+  ],
+  "ci_prior_head": "84bc5d3f5821a046b1155c01d41afa1195942c95",
+  "ci_prior": {
+    "normative_extraction": "SUCCESS",
+    "structural_validator": "SUCCESS",
+    "p0": "SUCCESS",
+    "lock_types": "SUCCESS",
+    "zero_drift": "FAILURE"
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "schema": "csdi.axis.lexical-inventory.v1",
+  "method": "pattern-index only; NOT semantic proof",
+  "source_commit": "ffb9fa0558f87925ed5b9bf945a96741c1fa5ae6",
+  "documents": [
+    {
+      "path": "08D_REQUISITOS_073_096_4_1.md",
+      "sha": "46d720921f27cdf9ff15c5730d7b67a6005ca34b",
+      "chars": 9025,
+      "sections": 1,
+      "axes": {
+        "norma": 14,
+        "excecao": 0,
+        "temporalidade": 11,
+        "seguranca": 28,
+        "integracao": 50,
+        "teste": 38,
+        "conflito": 3
+      }
+    },
+    {
+      "path": "09_RASTREABILIDADE_FONTES_AUDITORIA_4_1.md",
+      "sha": "8aeb6c650d0373a491a4367393cecb52756eea2f",
+      "chars": 3485,
+      "sections": 13,
+      "axes": {
+        "norma": 9,
+        "excecao": 1,
+        "temporalidade": 11,
+        "seguranca": 1,
+        "integracao": 1,
+        "teste": 10,
+        "conflito": 1
+      }
+    },
+    {
+      "path": "10_IA_OCR_RAG_E_PRECEDENTES_4_1.md",
+      "sha": "9d49f59ca840d92d7e381bbb84255a54228ce538",
+      "chars": 2685,
+      "sections": 9,
+      "axes": {
+        "norma": 7,
+        "excecao": 0,
+        "temporalidade": 12,
+        "seguranca": 2,
+        "integracao": 1,
+        "teste": 3,
+        "conflito": 3
+      }
+    },
+    {
+      "path": "11_RNF_PERFORMANCE_CONCORRENCIA_RESILIENCIA_4_1.md",
+      "sha": "0bf4eeaa33b9d44c744b0b38eb4481a2ccd5d6b5",
+      "chars": 2703,
+      "sections": 16,
+      "axes": {
+        "norma": 3,
+        "excecao": 0,
+        "temporalidade": 1,
+        "seguranca": 3,
+        "integracao": 15,
+        "teste": 3,
+        "conflito": 1
+      }
+    },
+    {
+      "path": "12_PROMPTS_PROTOCOLO_IMPLEMENTACAO_4_1.md",
+      "sha": "a199be35a87647220ed60a35a4ed9696581f5f68",
+      "chars": 6442,
+      "sections": 13,
+      "axes": {
+        "norma": 13,
+        "excecao": 0,
+        "temporalidade": 2,
+        "seguranca": 9,
+        "integracao": 10,
+        "teste": 31,
+        "conflito": 1
+      }
+    },
+    {
+      "path": "13_MAPA_DOCUMENTOS_PACOTE_4_1.md",
+      "sha": "5143fbba70a56932ee09f67d7caac74211b26e58",
+      "chars": 4538,
+      "sections": 3,
+      "axes": {
+        "norma": 0,
+        "excecao": 0,
+        "temporalidade": 1,
+        "seguranca": 1,
+        "integracao": 8,
+        "teste": 12,
+        "conflito": 0
+      }
+    },
+    {
+      "path": "14_CHECKLIST_PRE_ALTERACAO.md",
+      "sha": "ebf7f3348b4b0f409845649495c50670828d0f00",
+      "chars": 2561,
+      "sections": 10,
+      "axes": {
+        "norma": 4,
+        "excecao": 0,
+        "temporalidade": 2,
+        "seguranca": 4,
+        "integracao": 6,
+        "teste": 7,
+        "conflito": 0
+      }
+    },
+    {
+      "path": "15_ESTADO_CERTIFICADO_HML_4_1.md",
+      "sha": "0f7974ccc2f7b3ff9d0e72056029387e89970c55",
+      "chars": 2131,
+      "sections": 6,
+      "axes": {
+        "norma": 4,
+        "excecao": 0,
+        "temporalidade": 1,
+        "seguranca": 5,
+        "integracao": 6,
+        "teste": 17,
+        "conflito": 0
+      }
+    },
+    {
+      "path": "16_CUSTOS_E_PLANOS_REFERENCIA_4_1.md",
+      "sha": "5618a8ef93973ad8093005ef8525f2d2b34125c4",
+      "chars": 1568,
+      "sections": 6,
+      "axes": {
+        "norma": 0,
+        "excecao": 0,
+        "temporalidade": 2,
+        "seguranca": 1,
+        "integracao": 2,
+        "teste": 3,
+        "conflito": 0
+      }
+    },
+    {
+      "path": "17_FONTES_TECNICAS_E_QA_4_1.md",
+      "sha": "31c580b014338349251e622d8c9fe9e13607ed64",
+      "chars": 2337,
+      "sections": 9,
+      "axes": {
+        "norma": 5,
+        "excecao": 1,
+        "temporalidade": 0,
+        "seguranca": 2,
+        "integracao": 6,
+        "teste": 6,
+        "conflito": 2
+      }
+    },
+    {
+      "path": "18_SCHEMA_RLS_EDGE_QUEUES_CRON_4_1.md",
+      "sha": "b5fd6b94c2894aed87ae73076c47dadba20def3a",
+      "chars": 3952,
+      "sections": 21,
+      "axes": {
+        "norma": 7,
+        "excecao": 0,
+        "temporalidade": 5,
+        "seguranca": 9,
+        "integracao": 20,
+        "teste": 10,
+        "conflito": 0
+      }
+    },
+    {
+      "path": "19_IDENTIDADE_VISUAL_OFICIAL_BRAND_1_0.md",
+      "sha": "a5e26aa52bee5b3184443b5c9f13728501eee701",
+      "chars": 3776,
+      "sections": 10,
+      "axes": {
+        "norma": 7,
+        "excecao": 0,
+        "temporalidade": 2,
+        "seguranca": 0,
+        "integracao": 5,
+        "teste": 11,
+        "conflito": 0
+      }
+    },
+    {
+      "path": "20_PROMPT_000_BRAND_01.md",
+      "sha": "44aa2b4cde873f1a218ef8e705fc2b5f07d4cdc5",
+      "chars": 18076,
+      "sections": 61,
+      "axes": {
+        "norma": 27,
+        "excecao": 0,
+        "temporalidade": 13,
+        "seguranca": 13,
+        "integracao": 21,
+        "teste": 31,
+        "conflito": 5
+      }
+    }
+  ],
+  "semantic_completeness": "INCONCLUSIVE"
+}
