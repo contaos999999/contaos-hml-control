@@ -108,8 +108,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test --test-name-pattern="P0 SEMANTIC DOSSIER:" scripts/p0-rca-impact-gate.test.mjs
-          node --test --test-name-pattern="P0 TEN MATERIAL DISPUTES:" scripts/p0-rca-impact-gate.test.mjs
+          node --test --test-reporter=tap --test-name-pattern="P0 (MATERIAL TRIAGE|TEN MATERIAL DISPUTES|SEMANTIC DOSSIER|TEN CAUSAL MODELS|REVERSE 18 MATERIAL|MUTATION FULL CORPUS)" scripts/p0-rca-impact-gate.test.mjs | tee "$RUNNER_TEMP/p0-semantic-material-tests.tap"
 
       - name: P0 SEMANTIC DOSSIER - export read-only SHA256 manifest NO-GO
         shell: bash
