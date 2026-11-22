@@ -1242,18 +1242,34 @@ const BINDS = new Map();
 const missing = () => {
   throw Object.assign(new Error("F3_FOREIGN_ORG"), { code: "F3_FOREIGN_ORG" });
 };
-function bindsFor(book, producerOrder, kind) {
+function bindsFor(book, producerOrder, kind, action) {
   const f = sut.F3_MUTATION_FLOWS[producerOrder];
-  const steps = f && (kind === "prerequisito" ? f.prerequisito : f.principal);
+  const steps =
+    f &&
+    (kind === "prerequisito"
+      ? Array.isArray(f.prerequisito)
+        ? f.prerequisito
+        : f.prerequisito?.[action]
+      : f.principal);
   if (!steps) return [{ step: 0, bodySha256: freshSha(), slots: [freshSha()], refs: [] }];
-  const orderOf = new Map(book.summary().requests.map((q) => [q.requestId, q.producerOrder]));
-  const pick = (origin) =>
-    origin === 2
-      ? book.organizationF3()
-      : book
-          .created()
-          .filter((c) => c.kind === "registro" && orderOf.get(c.requestId) === origin)
-          .at(-1)?.id;
+  const orderOf = new Map(
+    book.summary().requests.map((q) => [q.requestId, { order: q.producerOrder, action: q.action }]),
+  );
+  const pick = (origin) => {
+    if (origin === 2) return book.organizationF3();
+    const order = typeof origin === "number" ? origin : origin.producerOrder;
+    return book
+      .created()
+      .filter((c) => {
+        const maker = orderOf.get(c.requestId);
+        return (
+          c.kind === "registro" &&
+          maker?.order === order &&
+          (typeof origin === "number" || maker.action === origin.action)
+        );
+      })
+      .at(-1)?.id;
+  };
   return steps.map((st, step) => ({
     step,
     bodySha256: freshSha(),
@@ -1278,7 +1294,7 @@ const seal = (book, n, producerOrder, extra = {}) => {
   // ID já usado: a recusa é a do livro (replay), antes de qualquer vínculo.
   if (book.summary().requests.some((q) => q.requestId === requestId))
     return book.seal({ ...args, ...extra });
-  const binds = bindsFor(book, producerOrder, extra.kind ?? "principal");
+  const binds = bindsFor(book, producerOrder, extra.kind ?? "principal", extra.action);
   book.seal({
     requestId,
     producerOrder,
@@ -1332,6 +1348,17 @@ function referenceBook(ledger = EMPTY, extra = () => {}, skip = []) {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger });
   createOrg(book);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 10) {
+      const stages = [
+        { action: "fonte", id: uuid(81010), requestId: uuid(81110) },
+        { action: "versao", id: uuid(81011), requestId: uuid(81111) },
+        { action: "aprovacao", id: uuid(81011), requestId: uuid(81112) },
+      ];
+      for (const stage of stages) {
+        seal(book, 0, 10, { requestId: stage.requestId, kind: "prerequisito", action: stage.action });
+        book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
+      }
+    }
     seal(book, o, o);
     if (skip.includes(o)) continue;
     book.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
@@ -3839,7 +3866,13 @@ test("F3 B2b2a: fluxos só de produtores mutantes, com fonte que existe no códi
   for (const [order, flow] of Object.entries(sut.F3_MUTATION_FLOWS)) {
     assert.ok(sut.F3_MUTATING_ORDERS.includes(Number(order)), order);
     assert.deepEqual(Object.keys(flow), ["principal", "prerequisito"]);
-    for (const s of [...flow.principal, ...(flow.prerequisito ?? [])]) {
+    const steps = [
+      ...flow.principal,
+      ...(Array.isArray(flow.prerequisito)
+        ? flow.prerequisito
+        : Object.values(flow.prerequisito ?? {}).flat()),
+    ];
+    for (const s of steps) {
       const m = /^(src\/[^:]+):(\d+)-(\d+)$/.exec(s.source);
       assert.ok(m, s.source);
       const lines = (await readFile(new URL("../../" + m[1], import.meta.url), "utf8")).split("\n");
@@ -4530,7 +4563,26 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
   // Fluxo declarado ↔ linha "N ORIGEM, principal": alvo e posições tipadas constam da linha.
   const declared = [];
   for (const [order, f] of Object.entries(sut.F3_MUTATION_FLOWS)) {
-    assert.equal(f.prerequisito, null, "pré-requisito exige linha própria: " + order);
+    const stageLabels = {
+      10: { fonte: 1, versao: 2, aprovacao: 3 },
+    };
+    if (f.prerequisito !== null) {
+      assert.ok(stageLabels[order], "pré-requisito sem mapa fechado: " + order);
+      for (const [action, steps] of Object.entries(f.prerequisito)) {
+        const number = stageLabels[order][action];
+        assert.ok(Number.isSafeInteger(number), "ação não declarada: " + order + ":" + action);
+        const extraKey = order + " " + sut.F3_PRODUCERS.find((p) => p.order === Number(order)).origin +
+          ", pré-requisito " + number;
+        const source = rows.find((r) => r.key === extraKey);
+        assert.ok(source, "pré-requisito sem fonte: " + extraKey);
+        for (const st of steps) {
+          assert.ok(source.target.includes(st.name), "alvo não declarado: " + st.name);
+          for (const field of [...st.free, ...Object.keys(st.inventory), ...Object.keys(st.derived)])
+            assert.ok(source.fields.includes("`" + field + "`"), field + " ausente em " + extraKey);
+        }
+        declared.push(extraKey);
+      }
+    }
     const p = sut.F3_PRODUCERS.find((x) => x.order === Number(order));
     const key = order + " " + p.origin + ", principal";
     const row = rows.find((r) => r.key === key);
@@ -4559,10 +4611,6 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     "9 V108, pré-requisito 2",
     "9 V108, pré-requisito 3",
     "9 V108, principal",
-    "10 V107, pré-requisito 1",
-    "10 V107, pré-requisito 2",
-    "10 V107, pré-requisito 3",
-    "10 V107, principal",
     "11 V109, principal",
     "11 V109, pré-requisito 1",
     "11 V109, pré-requisito 2",
