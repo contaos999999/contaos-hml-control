@@ -1,0 +1,27 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 725,
+  "approved": true,
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_EVIDENCE_LEDGER.json",
+    "scripts/hml/integracao-v1-fase3-code-gate.mjs",
+    "scripts/hml/integracao-v1-fase3-code-gate.test.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs"
+  ],
+  "purpose": "Criar inventário integral rastreável das 138 relações da F3 e verificador fail-closed, sem transformar referências de código em resultados de execução nem declarar certificado F3.",
+  "authorization": "Titular determinou completar drivers, executar/comprovar os 138 casos e emitir certificado apenas após evidências; este BUILD é a etapa estruturante da matriz CODE separada das contraprovas GATE PROD.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Preservar F1/F2 e escopo normativo da emenda #722",
+    "Nenhum CASE_PASS por fonte existente, mock ou skipped",
+    "Ledger HML F3_LEDGER permanece imutável",
+    "Não ligar HML credentials nem liberar GATE PROD",
+    "Somente CODE com evidências verificáveis, CI e revisão"
+  ],
+  "normative_plan": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba"
+  }
+}
