@@ -3952,3 +3952,106 @@ test("F3 CLI: COMPLETE persists artifacts before success", async () => {
     /if \(session\.code === "F3_COMPLETE"\) \{[\s\S]*?await writeF3Artifacts\([\s\S]*?return true;\s*\}\s*fail\(session\.code\);/,
   );
 });
+
+test("F3 S1 RBAC: MASTER catalogue matches actual frontend RPC adapter source", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+    new URL("../../src/lib/administracao/rbacRpc.ts", import.meta.url),
+    "utf8",
+  );
+  const body = /const CATALOGO: Record<string, string\[\]> = \{([\s\S]*?)\n\};/.exec(source)?.[1];
+  assert.ok(body);
+  const parsed = Object.fromEntries(
+    [...body.matchAll(/^\s+([a-z_]+): \[([^\]]+)\],?$/gm)].map((m) => [
+      m[1],
+      [...m[2].matchAll(/"([a-z_]+)"/g)].map((x) => x[1]),
+    ]),
+  );
+  assert.deepEqual(parsed, sut.F3_RBAC_MASTER_CATALOG);
+  assert.equal(sut.F3_RBAC_MASTER_ALLOWED.length, 48);
+});
+
+test("F3 S1 RBAC: reader and MASTER responses are strictly checked", () => {
+  const reader = {
+    schema_versao: "rbac-v1",
+    versao: 6,
+    master: false,
+    permissoes: [...sut.F3_RBAC_LEITOR.allowed].reverse().map((pair) => {
+      const [recurso, acao] = pair.split("/");
+      return { recurso, acao };
+    }),
+  };
+  const normalized = sut.parseF3S1EffectiveRbac(reader, false);
+  assert.deepEqual(normalized.allowed, sut.F3_RBAC_LEITOR.allowed);
+  assert.equal(normalized.version, 6);
+  const master = {
+    ...reader,
+    master: true,
+    permissoes: sut.F3_RBAC_MASTER_ALLOWED.map((pair) => {
+      const [recurso, acao] = pair.split("/");
+      return { recurso, acao };
+    }),
+  };
+  const baseline = sut.parseF3S1EffectiveRbac(master, true);
+  assert.equal(sut.assertF3S1MasterRbacUnchanged(baseline, baseline), true);
+  assert.throws(
+    () => sut.assertF3S1MasterRbacUnchanged(baseline, { ...baseline, allowed: [] }),
+    { code: "F3_UI_MASTER_RBAC_DRIFT" },
+  );
+  for (const invalid of [
+    { ...reader, master: true },
+    { ...reader, versao: 7 },
+    { ...reader, permissoes: [...reader.permissoes, reader.permissoes[0]] },
+    { ...reader, permissoes: reader.permissoes.slice(1) },
+    { ...reader, unexpected: true },
+  ])
+    assert.throws(() => sut.parseF3S1EffectiveRbac(invalid, false));
+  assert.throws(
+    () => sut.parseF3S1EffectiveRbac({ ...master, permissoes: master.permissoes.slice(1) }, true),
+    { code: "F3_UI_RBAC_RESPONSE" },
+  );
+});
+
+test("F3 S1 RBAC: real UI reload must observe exact org-bound RPC", async () => {
+  const organizationId = uuid(7002);
+  const dto = {
+    schema_versao: "rbac-v1",
+    versao: 6,
+    master: false,
+    permissoes: sut.F3_RBAC_LEITOR.allowed.map((pair) => {
+      const [recurso, acao] = pair.split("/");
+      return { recurso, acao };
+    }),
+  };
+  let reloads = 0;
+  const makePage = (args, status = 200) => {
+    const response = {
+      url: () => API + "/rest/v1/rpc/consultar_permissoes_efetivas",
+      status: () => status,
+      request: () => ({ method: () => "POST", postDataJSON: () => args }),
+      json: async () => dto,
+    };
+    return {
+      waitForResponse: async (accept) => {
+        assert.equal(accept(response), true);
+        return response;
+      },
+      reload: async ({ waitUntil }) => {
+        assert.equal(waitUntil, "networkidle");
+        reloads++;
+      },
+    };
+  };
+  const good = makePage({ p_id_organizacao: organizationId, p_id_contrato: null });
+  const observed = await sut.readF3S1EffectiveRbac(good, organizationId, false);
+  assert.deepEqual(observed.allowed, sut.F3_RBAC_LEITOR.allowed);
+  assert.equal(reloads, 1);
+  await assert.rejects(
+    sut.readF3S1EffectiveRbac(makePage({ p_id_organizacao: uuid(7003), p_id_contrato: null }), organizationId, false),
+    { code: "F3_UI_RBAC_READBACK" },
+  );
+  await assert.rejects(
+    sut.readF3S1EffectiveRbac(makePage({ p_id_organizacao: organizationId, p_id_contrato: null }, 403), organizationId, false),
+    { code: "F3_UI_RBAC_READBACK" },
+  );
+});
