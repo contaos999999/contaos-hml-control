@@ -7,6 +7,7 @@ jobs:
   authenticated-hml:
     name: Authenticated HML counterproofs (NO-GO on missing prerequisites)
     runs-on: ubuntu-24.04
+    # Pin Playwright-supported runner; RED evidence: 44977265839
     timeout-minutes: 25
     environment: hml-counterproofs
     steps:
