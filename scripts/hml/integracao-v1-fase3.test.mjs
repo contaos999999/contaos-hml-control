@@ -19,6 +19,7 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
   const fields = new Map();
   const listeners = [];
   let selected = null;
+  let organizationVisible = false;
   const response = (url, data) => {
     const value = {
       url: () => url,
@@ -52,7 +53,7 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
           fragment += hasText;
           return this;
         },
-        count: async () => (fragment.includes("ContaOS HML F3") ? 1 : 0),
+        count: async () => (fragment.includes("ContaOS HML F3") && organizationVisible ? 1 : 0),
         waitFor: async () => undefined,
         click: async () => { selected = "organizacao"; },
       };
@@ -104,6 +105,7 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
             invoke(api + "/rest/v1/rpc/criar_organizacao", {
               p_razao_social: name, p_timezone: "America/Sao_Paulo",
             });
+            organizationVisible = true;
             response(api + "/rest/v1/rpc/criar_organizacao", organizationId);
             response(api + "/rest/v1/rpc/listar_organizacoes_disponiveis", [
               { id: organizationId, razao_social: name, perfil: "administrador_master" },
