@@ -1,0 +1,24 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 710,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs"
+  ],
+  "plan_documento": "docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md",
+  "plan_secao": "Seções 12.2 e 12.5-12.6 aprovadas: 11 pré-requisitos, no máximo 40 intenções por execução e 60 na fase, 39 planejadas. F3_FLUXOS_PRODUTORES.md R2 define distribuição dos onze pré-requisitos.",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/710",
+  "plan_base_sha": "8159c56fd90db656c8178a1c3e9e8120ecfdace9",
+  "plan_aprovacao": "Em 22/11/2026 o titular autorizou executar em fatias a certificação funcional V1, corrigindo causas raiz, preservando o PLAN F3 já aprovado e os certificados F1/F2. Somente autorização de escopo de código/teste, nunca PASS de runtime.",
+  "justificativa": "RED estático verificado: executor da F3 ainda usa 5/33/30 embora o PLAN F3 §12.2 e §12.5 exija 11/39/40, impossibilitando executar os 20 produtores. BUILD #710 aplica correção mínima com limitação de pré-requisitos por produtor e regressões de 41ª intenção, 12º pré-requisito, teto global e replay. Não altera dados nem autenticação, RLS, SQL, produto ou deploy.",
+  "full_diff": true,
+  "ativacao_autorizada": false,
+  "prohibitions": [
+    "No PROD or release",
+    "No change to Auth/RLS/DB/Storage or Edge functions",
+    "No weakening of 60 global budget, 40 per-run cap or allowed producer slots",
+    "No fixture creation, HML mutation or fake LIVE PASS by this BUILD",
+    "No merge without native CI, Edivan5002 independent review and protected readback"
+  ]
+}
