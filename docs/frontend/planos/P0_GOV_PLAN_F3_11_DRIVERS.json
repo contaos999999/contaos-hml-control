@@ -1,0 +1,26 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "purpose": "Implementar e disponibilizar em CODE todos os 11 drivers produtores faltantes da Fase 3: SYS04 preferência, V107, V108, V109, V110, V111, V115, V117, V118, V119, V122, com a cerca de mutação, livro de intenções e regressões da fonte canônica.",
+  "authorization": "Ordem expressa do titular para liberar exatamente os 11 drivers, sem desenvolver outras frentes. HML LIVE autenticado reservado ao pós-V5.",
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD_F3_11_DRIVERS_CODE.md"
+  ],
+  "strict_scope": "Somente 11 produtores listados e seus pré-requisitos canônicos; não produzir certificado de 138 casos.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Não alterar backend ou RLS",
+    "Não utilizar nem executar login autenticado HML antes de V5",
+    "Não alterar catálogo 138, matriz/ledger canônicos nem forjar PASS",
+    "Não enfraquecer mutação fenced nem colapsar reenvios incertos",
+    "Pré-requisitos e uploads somente conforme F3_FLUXOS_PRODUTORES.md revisão 3",
+    "Testes CODE positivos e negativos para cada driver, não confundir testes mockados com prova HML",
+    "Revisão independente por Edivan5002 e CI exato no HEAD antes de merge",
+    "Sem mudança fora dos 3 arquivos de escopo"
+  ],
+  "source": "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md",
+  "status": "PROPOSED",
+  "main_sha_at_creation": "b643c88577d0aaae7e73ce4965f13f83118969b5"
+}
