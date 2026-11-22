@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, writeSemanticDossierJsonl, validatePrioritySemanticDisputes, executePriorityCausalCounterproofs, materialReviewOfReverseGaps, executeSemanticCorpusIntegrityMutants, P0_REVERSE_GAP_REVIEWS, P0_PRIORITY_CAUSAL_MODELS, P0_PRIORITY_CAUSAL_PROBES, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, writeSemanticDossierJsonl, validatePrioritySemanticDisputes, executePriorityCausalCounterproofs, materialReviewOfReverseGaps, executeSemanticCorpusIntegrityMutants, P0_REVERSE_GAP_REVIEWS, P0_PRIORITY_CAUSAL_MODELS, P0_PRIORITY_CAUSAL_PROBES, analyzePrioritySemanticProposals, P0_PRIORITY_SEMANTIC_PROPOSALS, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2601,4 +2601,37 @@ test("P0 MUTATION FULL CORPUS: 959 axes, 381 clauses and 9316 pairs, each with a
   process.stdout.write("P0-CORPUS-STRUCTURAL-MUTANTS "+JSON.stringify({
     axes:run.axis_slots,sentences:run.sentence_slots,pairs:run.pair_slots,
     tests:run.total_executed_model_probes,live:0})+"\n");
+});
+
+
+test("P0 TEN REASONED INTERPRETATIONS: ten priority conflicts have source-bound explanations and negative causal model",()=>{
+  const sources=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES).map(
+    ([path,blob])=>[path,{content:readFileSync(path,"utf8"),blob}]));
+  const inv=inventoryProtectedSemanticLines(sources);
+  const work=buildSevenAxisSemanticBacklog(inv);
+  const sentences=inventorySemanticSentenceCandidates(inv);
+  const reverse=auditSemanticReverseCoverage(inv,work);
+  const triage=analyzeSemanticCorpusForReview({
+    inventory:inv,worklist:work,sentenceInventory:sentences,reverseCoverage:reverse});
+  const analysis=analyzePrioritySemanticProposals(triage);
+  assert.deepEqual(analysis.issues,[]);
+  assert.equal(analysis.proposals.length,10);
+  assert.equal(P0_PRIORITY_SEMANTIC_PROPOSALS.length,10);
+  assert.ok(analysis.proposals.every(x=>x.pair_id&&x.source_anchors.length===2&&
+    x.reasoned_interpretation.length>=75&&
+    x.critical_failure_mode.length>=75&&
+    x.discriminating_proof_required.length>=75&&
+    x.offline_model_positive.model_allows===true&&
+    x.offline_model_negative.model_allows===false&&
+    x.authenticated_live_positive===null&&
+    x.independent_contradictory_review===null));
+  assert.equal(analysis.materially_interpreted_by_author,10);
+  assert.equal(analysis.adjudicated_independently,0);
+  assert.equal(analysis.authenticated_live_pairs,0);
+  assert.equal(analysis.semantic_completeness,"INCONCLUSIVE");
+  const bad=structuredClone(triage);
+  bad.interactions=bad.interactions.filter(x=>
+    x.pair_id!=="PLAN-S31-05|PLAN-S31-07");
+  assert.ok(analyzePrioritySemanticProposals(bad).issues.length>0);
+  assert.equal(analysis.release,"NO_GO");
 });

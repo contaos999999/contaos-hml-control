@@ -3481,3 +3481,41 @@ export function executeSemanticCorpusIntegrityMutants(dossier){
     issues,real_semantic_adjudications:0,live_github_witnesses:0,
     semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
 }
+
+/** Authored, source-linked substantive proposals for ten priority conflicts; not independent final adjudications. */
+export const P0_PRIORITY_SEMANTIC_PROPOSALS=Object.freeze([["AUTHORIZATION_OUTLIVES_REVIEW","CUMULATIVE_AUTHORIZATION","APPROVED vigente é condição necessária mas não suficiente: a autorização específica do titular deve continuar válida no mesmo repo, PR, HEAD e base.","Após a revogação, o status positivo anterior não sustenta nova publicação nem admite a PR na fila.","A autorização vigente, a revisão elegível e os checks atuais devem coincidir antes de qualquer tentativa.","A review histórica continua existente, mas a autorização temporalmente revogada tem precedência para bloquear o próximo passo."],["N17_TWO_REVIEWS_AUTHORIZATION_ONLY","NATIVE_ENFORCEMENT_GAP","Duas aprovações elegíveis com autoria terceira não restauram uma autorização específica que o titular revogou.","O estado nativo de revisão pode permanecer satisfeito; é necessário bloqueio próprio e nativo da entrada no grupo.","Somente a manutenção simultânea das duas aprovações e a retirada efetiva da autorização em fonte autenticada distingue o caso de um simples dismiss.","Sem terceiro autor autorizado e sem prova do veto nativo antes do merge, N17(c) continua sem execução e ativação proibida."],["ADMISSION_VERSUS_MERGE_GROUP","SEQUENTIAL_GATE_DEPENDENCE","Admissão da PR e autorização no SHA efêmero do merge_group são fases cumulativas com proveniência distinta.","O success de admissão não pode ser reutilizado quando o grupo, os pais ou o HEAD mudarem.","Composição autenticada da base e da PR, seguida de status do grupo para o SHA realmente ativo.","Qualquer mudança do grupo exige nova avaliação, sem transferir o status anterior."],["ACTIVE_VERSUS_CERTIFIED","LIFECYCLE_PRECEDENCE","A missão ACTIVE pode ter BUILD e testes aprovados sem ter cumprido merge, readback e checkpoint protegido.","A transição a CERTIFIED depende das duas provas aplicáveis e de parecer independente no HEAD.","Readback pós-merge e checkpoint integrado são fatos distintos do parecer e do resultado CI.","Relatório local DONE ou encerramento de sessão não cancelam nem certificam a missão."],["APP_IDENTITY_VERSUS_CHECK_NAME","AUTHENTICITY_REQUIREMENT","A igualdade textual do nome de um check não comprova sua origem autorizada.","Somente commit status do App dedicado com integration_id exigido e SHA correto atende a identidade do publicador.","Check Run homônimo de Actions e status do integration_id errado devem falhar mesmo com conclusão verde.","Instalar App, credencial e required check requer gate administrativo de ativação separado do BUILD."],["FULL_DIFF_NO_DOCUMENTAL_ESCAPE","FULL_SCOPE_PRECEDENCE","Um manifesto full_diff verdadeiro obriga a verificar todos os caminhos, inclusive documentos extras.","Marcar a mudança como documental ou visual N/A não autoriza arquivo fora da lista protegida.","Comparar diff total com manifesto obtido na base protegida anterior, antes de qualquer filtro por código.","Tentativa de manifesto autocriado no HEAD candidato não substitui a origem protegida."],["WATCHDOG_VERSUS_ANTISTAGNATION","MONITORING_NOT_AUTHORITY","O watchdog pode diagnosticar falta de progresso; não é executor, aprovador ou certificador.","Duas tentativas sem delta causal exigem RCA ampliada e vedam retry idêntico.","Nova evidência causal permite examinar nova tentativa, mas não substitui lock, contrato e critérios de conclusão.","Heartbeat sem evidência de avanço não altera estado formal de missão."],["REVOCATION_AFTER_GREEN_STATUS","TEMPORAL_SAFETY_OBLIGATION","A revogação após status verde deve impedir nativamente a tentativa ativa antes do merge.","Novo status ou polling tardio não comprovam bloqueio atômico de entrada já elegível.","Somente recibo de retirada/invalidação com confronto de tempo anterior ao merge comprova efetividade.","Sem garantia verificável da plataforma contra a corrida revogação/merge, manter NO-GO de ativação."],["VISUAL_NA_WITH_REAL_APP_DIFF","SCOPE_GUARD_DOMINATES_NA","A dispensa de avaliação visual só cabe no diff estritamente não visual autorizado.","Mudar src/public ou interface de produto com rótulo visual N/A deve reprovar o gate de escopo.","Teste C verifica a natureza do diff do HEAD real e exige plano visual para mudanças aplicáveis.","O campo de impacto visual da PR é alegação, não prova de ausência de impacto."],["CERTIFICATION_VERSUS_RECOVERY","CERTIFICATION_EVIDENCE_CHAIN","Recuperar um processo ou concluir BUILD não produz certificado sem revisão e integração.","Certificação exige readback da main, evidência independente e checkpoint preservado no GitHub.","HEAD/base divergentes reabrem as verificações sem descartar o último checkpoint comprovado.","Encerramento de agente, retry e atualização documental não dispensam o rito de aprovação e integração."]].map(
+  ([caseId,classification,interpretation,risk,evidence,precedence])=>
+    Object.freeze({caseId,classification,interpretation,risk,evidence,precedence})));
+export function analyzePrioritySemanticProposals(triage){
+  const binding=validatePrioritySemanticDisputes(triage);
+  const probe=executePriorityCausalCounterproofs(triage);
+  const issues=[...binding.issues,...probe.issues];
+  const byCase=new Map(P0_SEMANTIC_PRIORITY_DISPUTES.map(x=>[x.case,x]));
+  const byProbe=new Map(probe.probes.map(x=>[x.case_id,x]));
+  const byRule=new Map((triage?.rules||[]).map(x=>[x.rule_id,x]));
+  const proposals=P0_PRIORITY_SEMANTIC_PROPOSALS.map(p=>{
+    const d=byCase.get(p.caseId),f=byProbe.get(p.caseId);
+    const pair=d&&(triage?.interactions||[]).find(x=>
+      x.pair_id===(triage?.rules||[]).filter(r=>d.rules.includes(r.rule_id))
+        .map(r=>r.rule_id).join("|"));
+    const anchors=(d?.rules||[]).map(x=>byRule.get(x)?.anchor??null);
+    if(!pair||anchors.length!==2||anchors.some(x=>!x)||
+       !f||!f.positive.model_allows||f.negative.model_allows||
+       [p.interpretation,p.risk,p.evidence,p.precedence].some(x=>x.length<75))
+      issues.push("SEMANTIC_PROPOSAL_INCOMPLETE: "+p.caseId);
+    return {case_id:p.caseId,pair_id:pair?.pair_id??null,
+      source_anchors:anchors,proposed_relationship:p.classification,
+      reasoned_interpretation:p.interpretation,critical_failure_mode:p.risk,
+      discriminating_proof_required:p.evidence,revocation_or_precedence:p.precedence,
+      offline_model_positive:f?.positive??null,offline_model_negative:f?.negative??null,
+      material_author_analysis:"PROVISIONAL_NOT_INDEPENDENT",
+      authenticated_live_positive:null,authenticated_live_negative:null,
+      independent_contradictory_review:null,semantic_adjudication:"PENDING"};
+  });
+  if(proposals.length!==10||new Set(proposals.map(x=>x.pair_id)).size!==10)
+    issues.push("SEMANTIC_PROPOSALS_COUNT_OR_DUPLICATE");
+  return {schema:"contaos.semantic-priority-substantive-proposals.v1",
+    proposals,materially_interpreted_by_author:proposals.length,
+    adjudicated_independently:0,authenticated_live_pairs:0,issues,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
