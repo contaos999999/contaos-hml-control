@@ -5296,3 +5296,141 @@ test("F3 V117: resposta da revisão correlaciona contexto, documento e comando s
     result: { ...result, id_resultado: prevResult },
   });
 });
+
+test("F3 S4 V116: readback do consumidor deve observar execução nova e competência correta", () => {
+  const competenceId = uuid(880014);
+  const rpcId = uuid(880016);
+  const before = {
+    competencia: { id: competenceId },
+    estado_analise: "not_analyzed",
+    execucao_atual: null,
+    allowed_actions: { executar_analise: true },
+  };
+  const after = {
+    competencia: { id: competenceId },
+    estado_analise: "queued",
+    execucao_atual: { id: rpcId },
+    stale: false,
+  };
+  const input = { before, after, rpcId, competenceId };
+  assert.equal(sut.assertF3S4AnalysisReadback(input), rpcId);
+  for (const changed of [
+    { competenceId: uuid(881014) },
+    { rpcId: uuid(881016) },
+    { rpcId: "not-uuid" },
+    { before: { ...before, estado_analise: "complete" } },
+    { before: { ...before, execucao_atual: { id: uuid(880018) } } },
+    { before: { ...before, allowed_actions: { executar_analise: false } } },
+    { before: { ...before, competencia: { id: uuid(881014) } } },
+    { after: { ...after, competencia: { id: uuid(881014) } } },
+    { after: { ...after, estado_analise: "failed" } },
+    { after: { ...after, estado_analise: "stale" } },
+    { after: { ...after, execucao_atual: null } },
+    { after: { ...after, stale: true } },
+  ]) {
+    assert.throws(() => sut.assertF3S4AnalysisReadback({ ...input, ...changed }), {
+      code: "F3_S4_V116_READBACK",
+    });
+  }
+});
+
+test("F3 S4 V116: UI nativa solicita uma análise sob a cerca e aguarda consumidor", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  seal(book, 5, 5);
+  book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+  seal(book, 7, 7);
+  book.confirm(uuid(7), { entityId: uuid(880007), organizationId: F3 });
+  const competenceId = uuid(880014);
+  seal(book, 14, 14);
+  book.confirm(uuid(14), { entityId: competenceId, organizationId: F3 });
+  const guarded = sut.createF3MutationFence({ book });
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  const executionId = uuid(880016);
+  const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const readUrl = api + "/rest/v1/rpc/obter_analise_competencia_v116";
+  const mutationUrl = api + "/rest/v1/rpc/solicitar_analise_competencia";
+  const initial = {
+    competencia: { id: competenceId },
+    estado_analise: "not_analyzed",
+    execucao_atual: null,
+    allowed_actions: { executar_analise: true },
+  };
+  const after = {
+    competencia: { id: competenceId },
+    estado_analise: "queued",
+    execucao_atual: { id: executionId },
+    stale: false,
+  };
+  const listeners = [];
+  let calls = 0;
+  const emit = (url, data, status = 200) => {
+    const response = {
+      url: () => url,
+      request: () => ({ method: () => "POST" }),
+      status: () => status,
+      json: async () => data,
+    };
+    for (let i = listeners.length - 1; i >= 0; i--) {
+      if (listeners[i].predicate(response)) {
+        listeners.splice(i, 1)[0].resolve(response);
+      }
+    }
+  };
+  const page = {
+    async goto(url) {
+      assert.equal(new URL(url).pathname, "/competencias/" + competenceId + "/analise");
+      emit(readUrl, initial);
+    },
+    waitForResponse(predicate) {
+      return new Promise((resolve) => listeners.push({ predicate, resolve }));
+    },
+    getByRole(role, options) {
+      assert.equal(role, "button");
+      assert.equal(options.name, "Executar análise");
+      return {
+        waitFor: async () => undefined,
+        click: async () => {
+          const request = {
+            url: mutationUrl,
+            method: "POST",
+            postData: JSON.stringify({ p_id_competencia: competenceId, p_tipo: "completa" }),
+            sessionId: "f3_v116_test",
+            interceptionId: "start_analysis",
+          };
+          assert.equal(guarded.policy({ ...request, stage: "REQUEST" }), true);
+          assert.equal(guarded.policy({ ...request, stage: "RESPONSE" }), true);
+          calls += 1;
+          emit(mutationUrl, executionId);
+          emit(readUrl, after);
+        },
+      };
+    },
+  };
+  assert.equal(
+    await sut.f3S4RequestAnalysis({
+      page,
+      fence: native,
+      mutationFence: guarded,
+      book,
+      organizationId: F3,
+      competenceId,
+    }),
+    executionId,
+  );
+  assert.equal(calls, 1);
+  assert.equal(listeners.length, 0);
+  assert.equal(book.created().at(-1).id, executionId);
+  assert.equal(book.summary().requests.at(-1).producerOrder, 16);
+  await assert.rejects(
+    sut.f3S4RequestAnalysis({
+      page,
+      fence: native,
+      mutationFence: guarded,
+      book,
+      organizationId: uuid(880099),
+      competenceId,
+    }),
+    { code: "F3_S4_V116_PRECONDITION" },
+  );
+});

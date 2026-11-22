@@ -3998,6 +3998,131 @@ export async function f3S4CreateCompetence({
   }
 }
 
+/** V116: a resposta de solicitação não comprova, sozinha, que a análise foi enfileirada.
+ * Exigir uma leitura posterior do consumidor oficial, ancorada na mesma competência.
+ * Não equivale a execução concluída do motor ou a PASS de qualquer caseId. */
+export function assertF3S4AnalysisReadback({ before, after, rpcId, competenceId }) {
+  if (
+    !isUuid(rpcId) ||
+    !isUuid(competenceId) ||
+    before?.competencia?.id !== competenceId ||
+    before.estado_analise !== "not_analyzed" ||
+    before.execucao_atual !== null ||
+    before.allowed_actions?.executar_analise !== true ||
+    after?.competencia?.id !== competenceId ||
+    !["queued", "processing", "complete"].includes(after.estado_analise) ||
+    after.stale !== false ||
+    after.execucao_atual?.id !== rpcId ||
+    before.execucao_atual?.id === rpcId
+  ) {
+    fail("F3_S4_V116_READBACK");
+  }
+  return rpcId;
+}
+
+/** V116: aciona a UI nativa sob a cerca CDP e confirma pela RPC leitora da própria tela.
+ * V113 deve ter criado a competência no livro isolado. W3 continuará obrigatório
+ * posteriormente para qualquer prova dos consumidores V114/V117/V118/V119/V123. */
+export async function f3S4RequestAnalysis({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  competenceId,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(organizationId) ||
+    !isUuid(competenceId) ||
+    book.organizationF3() !== organizationId ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === competenceId &&
+          entry.organizationId === organizationId &&
+          entry.kind === "registro" &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 14 &&
+                q.kind === "principal" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_S4_V116_PRECONDITION");
+  }
+  const readRpc = (response) =>
+    response.request().method() === "POST" &&
+    response.url() === API_ORIGIN + "/rest/v1/rpc/obter_analise_competencia_v116";
+  const initial = page.waitForResponse(readRpc, { timeout: F3_S1_UI.timeout });
+  await page.goto(HML_ORIGIN + "/competencias/" + competenceId + "/analise", {
+    waitUntil: "networkidle",
+  });
+  const original = await initial;
+  if (original.status() !== 200) fail("F3_S4_V116_INITIAL");
+  const before = await original.json();
+  if (
+    before?.competencia?.id !== competenceId ||
+    before.estado_analise !== "not_analyzed" ||
+    before.execucao_atual !== null ||
+    before.allowed_actions?.executar_analise !== true
+  ) {
+    fail("F3_S4_V116_PRECONDITION");
+  }
+  const button = page.getByRole("button", { name: "Executar análise", exact: true });
+  await button.waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+  await fence.drain();
+  fence.assertSafe();
+  const payload = { p_id_competencia: competenceId, p_tipo: "completa" };
+  const requestId = mutationFence.arm({ producerOrder: 16, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/solicitar_analise_competencia",
+      { timeout: F3_S1_UI.timeout },
+    );
+    const fresh = page.waitForResponse(readRpc, { timeout: F3_S1_UI.timeout });
+    await button.click();
+    const submitted = await posted;
+    if (submitted.status() !== 200) fail("F3_S4_V116_HTTP");
+    const rpcId = await submitted.json();
+    if (!isUuid(rpcId)) fail("F3_S4_V116_RESPONSE");
+    const read = await fresh;
+    if (read.status() !== 200) fail("F3_S4_V116_READBACK");
+    const id = assertF3S4AnalysisReadback({
+      before,
+      after: await read.json(),
+      rpcId,
+      competenceId,
+    });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_S4_V116_UNCERTAIN");
+    }
+    book.confirm(requestId, { entityId: id, organizationId });
+    book.assertIsolation();
+    return id;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Não reenviar execução incerta: primeiro confirmar com leitura autoritativa.
+    }
+    throw error;
+  }
+}
+
 /** V117: conferir a resposta RPC com o comando e o contexto que a UI realmente leu.
  * Esta verificação de contrato NÃO substitui execução integrada de seus cinco caseIds.
  * O resultado só é correlacionado; não é uma aprovação funcional nem certificado CODE. */
