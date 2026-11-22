@@ -582,7 +582,9 @@ test("F3 S2 V102: UI faz POST cercado uma vez e só confirma após releitura", a
       if (role === "heading") {
         return {
           waitFor: async () => {
-            assert.ok(["Novo contratante", "Contratante cadastrado com sucesso."].includes(options.name));
+            assert.ok(
+              ["Novo contratante", "Contratante cadastrado com sucesso."].includes(options.name),
+            );
           },
         };
       }
@@ -664,14 +666,15 @@ test("F3 S2 V102: readback rejeita organização, identidade e cardinalidade div
   const query = new URL(
     "https://gklhhhyosgasnyoxlrui.supabase.co/rest/v1/contratantes?id_organizacao=eq." + org,
   );
-  const read = (data) => sut.assertF3S2ContractorReadback({
-    created,
+  const read = (data) =>
+    sut.assertF3S2ContractorReadback({
+      created,
     rows: [row],
     organizationId: org,
-    name,
-    query,
-    ...data,
-  });
+      name,
+      query,
+      ...data,
+    });
   assert.equal(read({}), id);
   const bad = [
     { created: { ...created, id: uuid(99) } },
@@ -700,15 +703,16 @@ test("F3 S2 V103: readback valida ID original, versão incrementada, perfil e fa
   };
   const after = { ...before, versao_registro: 4, nome_fantasia: fantasy };
   const result = { schema_versao: "v103-v1", contratante: after };
-  const verify = (change = {}) => sut.assertF3S2ContractorUpdate({
-    before,
-    result,
-    after,
+  const verify = (change = {}) =>
+    sut.assertF3S2ContractorUpdate({
+      before,
+      result,
+      after,
     organizationId: org,
-    contractorId,
-    fantasy,
-    ...change,
-  });
+      contractorId,
+      fantasy,
+      ...change,
+    });
   assert.equal(verify(), contractorId);
   const invalid = [
     { before: { ...before, versao_registro: 0 } },
@@ -751,7 +755,8 @@ test("F3 S2 V103: UI observa versão antes de editar e relê mesmo UUID após RP
   const events = [];
   let reads = 0;
   const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
-  const readUrl = api + "/rest/v1/contratantes?select=id&id_organizacao=eq." + F3 +
+  const readUrl =
+    api + "/rest/v1/contratantes?select=id&id_organizacao=eq." + F3 +
     "&id=eq." + contractorId;
   const emit = (url, method, data, status = 200) => {
     const response = {
@@ -859,15 +864,16 @@ test("F3 S2 V105: POST sem RETURNING exige UUID da lista real e organização co
     "https://gklhhhyosgasnyoxlrui.supabase.co/rest/v1/contratos?id_organizacao=eq." +
       organizationId,
   );
-  const read = (changed = {}) => sut.assertF3S2ContractReadback({
+  const read = (changed = {}) =>
+    sut.assertF3S2ContractReadback({
     rows: [row],
-    query,
-    organizationId,
-    contractorId,
-    number,
-    object,
-    ...changed,
-  });
+      query,
+      organizationId,
+      contractorId,
+      number,
+      object,
+      ...changed,
+    });
   assert.equal(read(), contractId);
   const negatives = [
     { rows: [] },
@@ -893,7 +899,12 @@ test("F3 S2 V106: versão, requestId, evento e contrato são observados sem dupl
   const before = {
     schema_versao: "crud-cadastro-v1",
     entidade: "contratos",
-    registro: { id: contractId, id_organizacao: organizationId, versao_registro: 3, objeto: "Antes" },
+    registro: {
+      id: contractId,
+      id_organizacao: organizationId,
+      versao_registro: 3,
+      objeto: "Antes",
+    },
   };
   const after = {
     schema_versao: "crud-cadastro-v1",
@@ -901,16 +912,17 @@ test("F3 S2 V106: versão, requestId, evento e contrato são observados sem dupl
     registro: { ...before.registro, versao_registro: 4, objeto: object },
   };
   const result = { ...after, request_id: requestId, evento_id: uuid(889099) };
-  const verify = (changed = {}) => sut.assertF3S2ContractUpdate({
-    before,
-    result,
-    after,
-    organizationId,
-    contractId,
-    object,
-    requestId,
-    ...changed,
-  });
+  const verify = (changed = {}) =>
+    sut.assertF3S2ContractUpdate({
+      before,
+      result,
+      after,
+      organizationId,
+      contractId,
+      object,
+      requestId,
+      ...changed,
+    });
   assert.equal(verify(), contractId);
   const bad = [
     { result: { ...result, request_id: uuid(32) } },

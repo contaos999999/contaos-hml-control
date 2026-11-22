@@ -2933,12 +2933,12 @@ export function assertF3S2ContractorReadback({ created, rows, organizationId, na
     fail("F3_S2_V102_READBACK");
   }
   const matches = rows.filter(
-    (row) =>
-      row?.id === created.id &&
-      row.razao_social === name &&
-      row.situacao === "ativo",
+    (row) => row?.id === created.id && row.razao_social === name && row.situacao === "ativo",
   );
-  if (matches.length !== 1 || rows.some((row) => row?.id === created.id && !matches.includes(row))) {
+  if (
+    matches.length !== 1 ||
+    rows.some((row) => row?.id === created.id && !matches.includes(row))
+  ) {
     fail("F3_S2_V102_READBACK");
   }
   return created.id;
@@ -3101,15 +3101,22 @@ export async function f3S2UpdateContractor({
     !BOOKS.has(book) ||
     !isUuid(contractorId) ||
     book.organizationF3() !== organizationId ||
-    !book.created().some(
-      (e) =>
-        e.id === contractorId &&
-        e.kind === "registro" &&
-        e.organizationId === organizationId &&
-        book.summary().requests.some(
-          (q) => q.requestId === e.requestId && q.producerOrder === 5 && q.outcome === "confirmed",
-        ),
-    )
+    !book
+      .created()
+      .some(
+        (e) =>
+          e.id === contractorId &&
+          e.kind === "registro" &&
+          e.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === e.requestId &&
+                q.producerOrder === 5 &&
+                q.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_S2_V103_PRECONDITION");
   }
@@ -3278,15 +3285,22 @@ export async function f3S2CreateContract({
     !isUuid(contractorId) ||
     organizationId !== book.organizationF3() ||
     contractorName !== "ContaOS HML F3 " + book.provenance().workflowRunId + " Contratante" ||
-    !book.created().some(
-      (entry) =>
-        entry.id === contractorId &&
-        entry.kind === "registro" &&
-        entry.organizationId === organizationId &&
-        book.summary().requests.some(
-          (q) => q.requestId === entry.requestId && q.producerOrder === 5 && q.outcome === "confirmed",
-        ),
-    )
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === contractorId &&
+          entry.kind === "registro" &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 5 &&
+                q.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_S2_V105_PRECONDITION");
   }
@@ -3317,9 +3331,7 @@ export async function f3S2CreateContract({
   const requestId = mutationFence.arm({ producerOrder: 7, bodies: [payload] });
   try {
     const posted = page.waitForResponse(
-      (r) =>
-        r.request().method() === "POST" &&
-        r.url() === API_ORIGIN + "/rest/v1/contratos",
+      (r) => r.request().method() === "POST" && r.url() === API_ORIGIN + "/rest/v1/contratos",
       { timeout: F3_S1_UI.timeout },
     );
     await page.getByRole("button", { name: "Salvar", exact: true }).click();
@@ -3434,15 +3446,22 @@ export async function f3S2UpdateContract({
     !BOOKS.has(book) ||
     !isUuid(contractId) ||
     organizationId !== book.organizationF3() ||
-    !book.created().some(
-      (entry) =>
-        entry.id === contractId &&
-        entry.organizationId === organizationId &&
-        entry.kind === "registro" &&
-        book.summary().requests.some(
-          (q) => q.requestId === entry.requestId && q.producerOrder === 7 && q.outcome === "confirmed",
-        ),
-    )
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === contractId &&
+          entry.organizationId === organizationId &&
+          entry.kind === "registro" &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 7 &&
+                q.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_S2_V106_PRECONDITION");
   }
