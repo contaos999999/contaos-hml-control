@@ -104,8 +104,8 @@ export async function main() {
     // Sanitized classification only. Never echo sensitive transport errors or credentials.
   } finally {
     // No browser persistence, no storageState and no token serialization. Revoke these temporary sessions.
-    if (a?.client) await a.client.auth.signOut().catch(() => {});
-    if (b?.client) await b.client.auth.signOut().catch(() => {});
+    if (a?.client) await a.client.auth.signOut({ scope: 'local' }).catch(() => {});
+    if (b?.client) await b.client.auth.signOut({ scope: 'local' }).catch(() => {});
   }
   const receipt = safeReceipt(aProof, bProof, isolation, provenance);
   writeSanitized(receipt);
