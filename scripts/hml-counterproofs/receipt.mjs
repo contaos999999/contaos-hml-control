@@ -1,12 +1,20 @@
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, statSync, unlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { fixtureProofValid, loadAttestation } from './guard.mjs';
+import { fixtureProofValid, loadAttestation, verifyBrowserReport } from './guard.mjs';
 const output = 'artifacts/hml-counterproofs';
 mkdirSync(output, { recursive:true });
 const context = {sha:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,repository:process.env.GITHUB_REPOSITORY};
 const fixture=loadAttestation();
 const liveFixturePass=fixtureProofValid(fixture,context);
-const browserCasesExecuted=process.env.CONTAOS_HML_TEST_EXIT==='0';
+const browserReportPath=output+'/playwright-results.json';
+let browserReport=null;
+try {
+  if(statSync(browserReportPath).size <= 4*1024*1024) {
+    browserReport=JSON.parse(readFileSync(browserReportPath,'utf8'));
+  }
+} catch { /* fail closed, no provider output */ }
+finally { try { unlinkSync(browserReportPath); } catch { /* missing is a failure */ } }
+const browserCasesExecuted=process.env.CONTAOS_HML_TEST_EXIT==='0' && verifyBrowserReport(browserReport);
 const status = liveFixturePass && browserCasesExecuted ? 'AUTH_RLS_BROWSER_CASES_EXECUTED' : 'BLOCKED_OR_FAILED';
 const receipt={
   schema:'contaos.hml.counterproofs.v2',repository:context.repository??null,
