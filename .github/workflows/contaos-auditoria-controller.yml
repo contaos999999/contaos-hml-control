@@ -67,6 +67,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: P0 FULL_PROTOCOL source pins fail-fast
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/p0-rca-impact-gate.mjs --verify-full-protocol-pins
       - name: P0 FULL_PROTOCOL provenance manual and PR regression
         shell: bash
         run: |
@@ -103,6 +108,7 @@ jobs:
           node scripts/p0-rca-impact-gate.mjs --audit-full-protocol
 
       - name: P0 SEMANTIC SOURCE protected inventory (NO-GO for semantic certification)
+        if: ${{ always() && !cancelled() }}
         shell: bash
         env:
           INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha || 'e007c4bad8f2c66c489c55e4752b71bb19c5ced0' }}
@@ -113,12 +119,14 @@ jobs:
 
       # Dossiê textual completo, NÃO certificação semântica; sem privilégio de publicação.
       - name: P0 SEMANTIC DOSSIER - negative tests E1-E7 381 9316
+        if: ${{ always() && !cancelled() }}
         shell: bash
         run: |
           set -euo pipefail
           node --test --test-reporter=tap --test-name-pattern="P0 (MATERIAL TRIAGE|TEN MATERIAL DISPUTES|SEMANTIC DOSSIER|TEN CAUSAL MODELS|REVERSE 18 MATERIAL|MUTATION FULL CORPUS|TEN REASONED INTERPRETATIONS|CRYPTO SNAPSHOT)" scripts/p0-rca-impact-gate.test.mjs | tee "$RUNNER_TEMP/p0-semantic-material-tests.tap"
 
       - name: P0 SEMANTIC DOSSIER - export read-only SHA256 manifest NO-GO
+        if: ${{ always() && !cancelled() }}
         shell: bash
         env:
           INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha || 'e007c4bad8f2c66c489c55e4752b71bb19c5ced0' }}
@@ -128,6 +136,7 @@ jobs:
           node -e 'const fs=require("fs");const p=process.env.RUNNER_TEMP+"/contaos-semantic-corpus/manifest.json";const m=JSON.parse(fs.readFileSync(p,"utf8"));if(m.counts?.rules!==137||m.counts?.axes!==959||m.counts?.sentences!==381||m.counts?.pairs!==9316||m.counts?.unique_pairs!==9316||m.semantic_completeness!=="INCONCLUSIVE"||m.release!=="NO_GO")process.exit(1);console.log("SEMANTIC DOSSIER MATERIALIZED, SHA256 VERIFIED, SEMANTIC_CERTIFICATION NO-GO")'
 
       - name: P0 SEMANTIC DOSSIER - upload source-bound worklist
+        if: ${{ always() && !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: contaos-p0-semantic-${{ github.run_id }}-${{ github.run_attempt }}

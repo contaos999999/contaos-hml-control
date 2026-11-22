@@ -925,13 +925,31 @@ FULL_PROTOCOL_CASES.push(...[
   id:prefix+name,file,pattern}))));
 
 
+
+// §5.10–5.12 added material dossier is review evidence, not semantic approval.
+// Require all ten executable BUILD witnesses, not only source-file existence.
+FULL_PROTOCOL_CASES.push(...[
+  ["S5.10-RULES","P0 MATERIAL TRIAGE:"],
+  ["S5.10-SENTENCES-PAIRS","P0 SEMANTIC DOSSIER:"],
+  ["S5.10-PRIORITY","P0 TEN MATERIAL DISPUTES:"],
+  ["S5.11-MODEL","P0 TEN CAUSAL MODELS:"],
+  ["S5.11-REVERSE","P0 REVERSE 18 MATERIAL:"],
+  ["S5.11-NEGATIVE-MUTANTS","P0 MUTATION FULL CORPUS:"],
+  ["S5.11-INTERPRETATIONS","P0 TEN REASONED INTERPRETATIONS:"],
+  ["S5.11-SHA256","P0 CRYPTO SNAPSHOT:"],
+  ["S5.12-DISPATCH","P0 FULL_PROTOCOL manual workflow_dispatch"],
+  ["S5.12-PR-MERGE","P0 FULL_PROTOCOL PR merge checkout"],
+].map(([id,pattern])=>({id,file:"rca",pattern})));
+
 // Blind protocol paragraph audit, complementary to §5.1–§5.5 heading/row
 // inventory. A new or changed rule invalidates the frozen Git blob below,
 // even when all existing names and tests remain green.
-const FULL_PROTOCOL_GIT_BLOB="8450b1552006ecfc4f092b7e986436215e11816f";
+// Candidate protocol snapshot §5.10–5.12: append-only material evidence,
+// still NO-GO. Binding is reviewed in PR #690, not independently approved.
+const FULL_PROTOCOL_GIT_BLOB="bd9a19c4cb798884224813b4670bb62636d81504";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"312575bfdc33383c9a4c6afe3b175d3f14193828",
+  rca:"2b367d10461fcf0b04138b8e2cf9e9348c173936",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -944,6 +962,24 @@ function gitBlobId(content){
   const bytes=Buffer.from(content,"utf8");
   const header=Buffer.from("blob "+bytes.length+"\0","utf8");
   return createHash("sha1").update(header).update(bytes).digest("hex");
+}
+
+
+/**
+ * Fast, read-only, fail-closed preflight of all reviewed sources.
+ * A candidate pin update is not an independent sign-off, and never opens PROD.
+ */
+export function verifyFullProtocolSourcePins({protocol,tests}={}){
+  const sources={protocol,python:tests?.python,rca:tests?.rca,queue:tests?.queue};
+  const expected={protocol:FULL_PROTOCOL_GIT_BLOB,...FULL_PROTOCOL_REVIEWED_SUITE_BLOBS};
+  const pins=Object.fromEntries(Object.entries(expected).map(([name,sha])=>{
+    const actual=typeof sources[name]==="string"?gitBlobId(sources[name]):null;
+    return [name,{expected:sha,actual,matches:actual===sha}];
+  }));
+  const issues=Object.entries(pins).filter(([,p])=>!p.matches)
+    .map(([name,p])=>"PIN_DRIFT "+name+" expected="+p.expected+" actual="+p.actual);
+  return {schema:"contaos.p0.full-protocol-source-pins.v1",
+    verdict:issues.length?"PIN_DRIFT":"PIN_MATCH",pins,issues,release:"NO_GO"};
 }
 
 // Normative BUILD tests prove NO-GO behavior for future activation, not
@@ -982,7 +1018,8 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
       issues.push("META_PROTOCOL: obrigacao raiz ausente/divergente "+id);
   }
   const expectedSections=["## 1.","## 2.","## 3.","## 4.","## 5.",
-    "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 5.6.","## 5.7.","## 5.8.","## 6."];
+    "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 5.6.",
+    "## 5.7.","## 5.8.","## 5.9.","## 5.10.","## 5.11.","## 5.12.","## 6."];
   // Fail closed when the protected protocol grows without a corresponding
   // executable authorization requirement. A summary checkbox is insufficient.
   const section51=typeof protocol==="string"?
@@ -2704,7 +2741,15 @@ async function main() {
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) ===
   fileURLToPath(new URL("file://" + process.argv[1]))) {
-  if (process.argv.includes("--export-semantic-dossier")) {
+  if (process.argv.includes("--verify-full-protocol-pins")) {
+    const protocol=readFileSync(
+      "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
+    const tests=Object.fromEntries(Object.entries(PROTOCOL_FULL_AUDIT_FILES)
+      .map(([name,path])=>[name,readFileSync(path,"utf8")]));
+    const audit=verifyFullProtocolSourcePins({protocol,tests});
+    console.log(JSON.stringify(audit));
+    if(audit.verdict!=="PIN_MATCH")process.exitCode=1;
+  } else if (process.argv.includes("--export-semantic-dossier")) {
     try{
       const dest=process.argv.find(x=>x.startsWith("--dossier-dir="))?.slice(14);
       if(!dest)throw Error("missing --dossier-dir=<out-of-tree-path>");

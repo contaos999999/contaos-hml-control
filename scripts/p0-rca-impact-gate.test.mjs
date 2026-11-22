@@ -14,6 +14,31 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
   auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, writeSemanticDossierJsonl, validatePrioritySemanticDisputes, executePriorityCausalCounterproofs, materialReviewOfReverseGaps, executeSemanticCorpusIntegrityMutants, P0_REVERSE_GAP_REVIEWS, P0_PRIORITY_CAUSAL_MODELS, P0_PRIORITY_CAUSAL_PROBES, analyzePrioritySemanticProposals, P0_PRIORITY_SEMANTIC_PROPOSALS, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
+
+test("P0 FULL_PROTOCOL PIN PREFLIGHT must detect actual source drift without disabling freeze",()=>{
+  const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
+  const suites={python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),
+    rca:readFileSync("scripts/p0-rca-impact-gate.test.mjs","utf8"),
+    queue:readFileSync("scripts/ci/merge-group-context.test.mjs","utf8")};
+  const ok=verifyFullProtocolSourcePins({protocol,tests:suites});
+  assert.equal(ok.verdict,"PIN_MATCH",JSON.stringify(ok.issues));
+  assert.equal(ok.release,"NO_GO","pin match never certifies semantics or activation");
+  assert.equal(Object.keys(ok.pins).length,4);
+  assert.ok(Object.values(ok.pins).every(row=>row.matches));
+  for(const mutant of [
+    {protocol:protocol+"\\nSynthetic unreviewed new clause"},
+    {tests:{...suites,rca:suites.rca.replace("P0 CRYPTO SNAPSHOT","P0 FAKE SNAPSHOT")}},
+    {tests:{...suites,python:suites.python+"\\n# injected"}},
+    {tests:{...suites,queue:suites.queue+"\\n# injected"}},
+  ]){
+    const negative=verifyFullProtocolSourcePins({
+      protocol:mutant.protocol??protocol,tests:mutant.tests??suites});
+    assert.equal(negative.verdict,"PIN_DRIFT");
+    assert.equal(negative.release,"NO_GO");
+    assert.ok(negative.issues.length>=1);
+  }
+});
+
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
 const V1 = "src/components/v1/Competencias.tsx";
@@ -23,7 +48,7 @@ const proofHash = createHash("sha256").update(proofBytes).digest("hex");
 const SHA = "a".repeat(40);
 const BACKEND = "b".repeat(40);
 
-import { resolveFullProtocolAuditHead } from "./p0-rca-impact-gate.mjs";
+import { resolveFullProtocolAuditHead, verifyFullProtocolSourcePins } from "./p0-rca-impact-gate.mjs";
 
 test("P0 FULL_PROTOCOL manual workflow_dispatch verifies branch SHA without HEAD^2",()=>{
   const good={event:"workflow_dispatch",
