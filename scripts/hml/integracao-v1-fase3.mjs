@@ -3033,6 +3033,13 @@ export async function runCli(args = process.argv.slice(2), env = process.env) {
       process.off("SIGTERM", onSignal);
       process.off("SIGINT", onSignal);
     }
+    if (session.code === "F3_COMPLETE") {
+      // O resultado aprovado é persistido antes de retornar sucesso ao workflow.
+      await writeF3Artifacts(join(root, F3_ARTIFACT_DIR), session.report, catalogue, casesRaw, {
+        ledger,
+      });
+      return true;
+    }
     fail(session.code);
   } catch (error) {
     // Resultado parcial ou bloqueado também gera F3_REPORT.json e SHA256SUMS (BUILD-1, obrigação 1).
