@@ -1295,7 +1295,14 @@ const step = (target, name, { query = "", free = [], inventory = {}, derived = {
     name,
     query,
     free: Object.freeze([...free]),
-    inventory: Object.freeze({ ...inventory }),
+    inventory: Object.freeze(
+      Object.fromEntries(
+        Object.entries(inventory).map(([field, origin]) => [
+          field,
+          typeof origin === "number" ? origin : Object.freeze({ ...origin }),
+        ]),
+      ),
+    ),
     derived: Object.freeze({ ...derived }),
     source,
   });
