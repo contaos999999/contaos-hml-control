@@ -8,8 +8,8 @@ Arquivos escopados: executor F3 existente, seus testes e este documento. CI, rev
 
 ## Implementação verificada no diff
 
-`assertF3V117ReviewReceipt` vincula `context`, `command` e `result` da RPC oficial `registrar_revisao_requisito_v117`, exigindo mesma organização, competência, requisito, execução esperada, resultado esperado, hash do contexto, ID da versão documental e request_id. Recusa a resposta sem identidade de execução/resultado novas. O retorno é explicitamente `CONTRACT_CORRELATED_NOT_CERTIFIED`.
+`assertF3V117ReviewReceipt` vincula `context`, `command` e `result` da RPC oficial `registrar_revisao_requisito_v117`, exigindo mesma organização, contrato, competência, requisito, execução esperada, resultado esperado, hash do contexto, ID da versão documental e request_id. Recusa a resposta sem identidade de execução/resultado novas. O retorno é explicitamente `CONTRACT_CORRELATED_NOT_CERTIFIED`.
 
-O teste `F3 V117: resposta da revisão correlaciona contexto, documento e comando sem certificar caso` executa uma hipótese positiva de contrato e vinte negativas de adulteração, cruzamento de organização, comando, evidência, replay e identidade de resposta. Os dados são sintéticos, exclusivamente em teste de contrato.
+O teste `F3 V117: resposta da revisão correlaciona contexto, documento e comando sem certificar caso` executa uma hipótese positiva de contrato e 24 negativas de adulteração, cruzamento de organização, comando, evidência, replay e identidade de resposta. Os dados são sintéticos, exclusivamente em teste de contrato.
 
 **Gates que permanecem faltando:** driver autenticado pela interface original V117, contexto de análise concluída, documento da V115 aprovado, cinco consumidores V114/V116/V118/V119/V123, checks RBAC de MASTER/leitor, evidências positivas/negativas reais individualizadas, manifesto por `caseId` e parecer de certificação CODE. Este incremento não marca nenhum dos cinco casos como PASS nem autoriza emissão de certificado.
