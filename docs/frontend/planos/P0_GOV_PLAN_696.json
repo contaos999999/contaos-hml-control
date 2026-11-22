@@ -1,0 +1,20 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 696,
+  "files": [
+    ".github/workflows/contaos-hml-authenticated-counterproofs.yml",
+    "scripts/hml-counterproofs/guard.mjs",
+    "scripts/hml-counterproofs/guard.test.mjs",
+    "scripts/hml-counterproofs/receipt.mjs",
+    "playwright.hml-counterproofs.config.ts",
+    "tests/hml/counterproofs/authenticated.spec.ts"
+  ],
+  "plan_documento": "docs/frontend/planos/PLAN_P0_HML_AUTHENTICATED_COUNTERPROOFS_2026-11-21.md",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/696",
+  "plan_base_sha": "79e5cc09e12568ffdf4815707a99273cc5bb388b",
+  "justificativa": "HML authenticated tests, protected environment, synthetic fixtures, negative guards, SHA-bound receipt; no PROD",
+  "ativacao_autorizada": false,
+  "full_diff": true,
+  "plan_aprovacao": "Autorização expressa do titular para concluir BUILD HML, conforme PLAN P0 integrado pela PR #695. Não autoriza bypass, auto-PASS, merge sem CI ou PROD."
+}
