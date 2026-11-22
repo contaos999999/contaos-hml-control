@@ -480,50 +480,37 @@ test("P0 RCA fixture teste real e isolado de token", () => {
   assert.equal(process.env.CONTAOS_CANONICAL_READ_TOKEN, undefined);
 });
 test("P0 RCA runner executa caso exato no Node sem vazar tokens", () => {
+  const dir = mkdtempSync(join(tmpdir(), "rca-runner-isolado-"));
+  const path = join(dir, "fixture.test.mjs");
   const before = process.env.GITHUB_TOKEN;
   const beforeNorm = process.env.CONTAOS_CANONICAL_READ_TOKEN;
-  process.env.GITHUB_TOKEN = "fake-token-test-only";
-  process.env.CONTAOS_CANONICAL_READ_TOKEN = "fake-norm-test-only";
   try {
-    const runnerFixture = {
-      id: "EXEC-01",
-      runner: "node",
-      arquivo: "scripts/p0-rca-impact-gate.test.mjs",
-      caso: "P0 RCA fixture teste real e isolado de token",
-    };
-    const selected = runCase(runnerFixture);
-    if (!selected) {
-      // Diagnóstico estritamente booleano em caso de falha, sem stdout, stderr ou token.
-      const env = { ...process.env };
-      for (const k of Object.keys(env))
-        if (/(?:TOKEN|SECRET|PASSWORD|API_KEY|AUTH_KEY|PRIVATE_KEY)/i.test(k)) delete env[k];
-      delete env.NODE_TEST_CONTEXT;
-      const raw = spawnSync(
-        process.execPath,
-        ["--test", "--experimental-test-isolation=none", "--test-reporter=tap",
-          "--test-name-pattern=^P0 RCA fixture teste real e isolado de token$", runnerFixture.arquivo],
-        { env, encoding: "utf8", timeout: 120000 },
-      );
-      const lines = String(raw.stdout || "").split("\n");
-      assert.equal(selected, true, JSON.stringify({
-        diagnostic: "RCA_NESTED_NODE_CASE",
-        status: raw.status,
-        signalPresent: raw.signal !== null,
-        spawnError: Boolean(raw.error),
-        selected: lines.some((x) => x.trimEnd() === "# Subtest: " + runnerFixture.caso),
-        green: lines.some((x) => x.startsWith("ok ") && x.trimEnd().endsWith(" - " + runnerFixture.caso)),
-        passSummary: lines.some((x) => x.startsWith("# pass ") && x.trimEnd() !== "# pass 0"),
-        failZero: lines.some((x) => x.trimEnd() === "# fail 0"),
-      }));
-    }
-    assert.equal(selected, true);
+    // Prova em arquivo temporário independente: não chamar novamente esta suíte
+    // de testes, pois o runner recursivo pode falhar antes de registrar o TAP.
+    writeFileSync(
+      path,
+      [
+        'import { test } from "node:test";',
+        'import assert from "node:assert/strict";',
+        'test("P0 RCA fixture teste real e isolado de token", () => {',
+        '  assert.equal(process.env.GITHUB_TOKEN, undefined);',
+        '  assert.equal(process.env.CONTAOS_CANONICAL_READ_TOKEN, undefined);',
+        "});",
+      ].join("\n"),
+    );
+    process.env.GITHUB_TOKEN = "fake-token-test-only";
+    process.env.CONTAOS_CANONICAL_READ_TOKEN = "fake-norm-test-only";
     assert.equal(
       runCase({
-        id: "EXEC-02",
+        id: "EXEC-01",
         runner: "node",
-        arquivo: "scripts/p0-rca-impact-gate.test.mjs",
-        caso: "CASO RCA INEXISTENTE",
+        arquivo: path,
+        caso: "P0 RCA fixture teste real e isolado de token",
       }),
+      true,
+    );
+    assert.equal(
+      runCase({ id: "EXEC-02", runner: "node", arquivo: path, caso: "CASO RCA INEXISTENTE" }),
       false,
     );
   } finally {
@@ -531,6 +518,7 @@ test("P0 RCA runner executa caso exato no Node sem vazar tokens", () => {
     else process.env.GITHUB_TOKEN = before;
     if (beforeNorm === undefined) delete process.env.CONTAOS_CANONICAL_READ_TOKEN;
     else process.env.CONTAOS_CANONICAL_READ_TOKEN = beforeNorm;
+    rmSync(dir, { recursive: true, force: true });
   }
 });
 
