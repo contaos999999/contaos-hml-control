@@ -352,10 +352,10 @@ test("P0 separation — CODE_CERTIFICATION accepts verified CI without authentic
   assert.deepEqual(result.errors, []);
   assert.equal(result.checked, 1);
 });
-test("P0 separation — GATE_PROD still blocks missing authenticated LIVE evidence", async () => {
+test("P0 separation — GATE_PROD fails closed until all five versions and integrations PASS", async () => {
   const x = fixture();
-  delete x.finalReceipt.hml_e2e;
-  await assertFail({run:()=>x.run("GATE_PROD")}, /sem casos e escopo HML autenticado/);
+  const result = await x.run("GATE_PROD");
+  assert.match(result.errors.join(" "), /GATE PROD bloqueado: certificado de código V2/);
 });
 test("P0 separation — unknown gate fails closed", async () => {
   const result = await fixture().run("UNAUTHORIZED");
@@ -365,4 +365,11 @@ test("P0 separation — CODE_CERTIFICATION still rejects failing CI", async () =
   const x = fixture();
   x.responses["/actions/runs/789"].conclusion = "failure";
   await assertFail({run:()=>x.run("CODE_CERTIFICATION")}, /não está SUCCESS/);
+});
+
+test("P0 separation — GATE_PROD refuses zero certified items", async () => {
+  const x = fixture();
+  x.manifest.controle.integracao_por_versao = {};
+  const result = await x.run("GATE_PROD");
+  assert.notEqual(result.errors.length, 0);
 });
