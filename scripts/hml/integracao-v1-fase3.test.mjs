@@ -4,6 +4,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import * as sut from "./integracao-v1-fase3.mjs";
+import { collectF3CodeEvidence as realCollector } from "./integracao-v1-fase3-code-executor.mjs";
 
 const root = new URL("../../", import.meta.url);
 const csv = await readFile(new URL(sut.F3_MATRIX.path, root), "utf8");
@@ -6072,6 +6073,7 @@ test("F3 CODE: coletor acionado por caseId e ausência de driver nunca vira PASS
     catalogue: published,
     caseDrivers: {},
     caseVerifiers: {},
+    collector: realCollector,
   });
   assert.deepEqual(noDrivers.registeredCaseIds, []);
   await assert.rejects(noDrivers.executeCase(published.cases[0]), {
