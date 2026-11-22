@@ -4002,13 +4002,36 @@ export async function f3S4CreateCompetence({
  * Esta verificação de contrato NÃO substitui execução integrada de seus cinco caseIds.
  * O resultado só é correlacionado; não é uma aprovação funcional nem certificado CODE. */
 export function assertF3V117ReviewReceipt({
-  context, command, result, organizationId, contractId, competenceId, requirementId, documentVersionId,
+  context,
+  command,
+  result,
+  organizationId,
+  contractId,
+  competenceId,
+  requirementId,
+  documentVersionId,
 }) {
   const invalid = () => fail("F3_V117_RECEIPT_MISMATCH");
+  const required = [
+    "p_id_competencia",
+    "p_id_requisito",
+    "p_id_execucao_esperada",
+    "p_id_resultado_esperado",
+    "p_hash_esperado",
+    "p_resultado",
+    "p_justificativa",
+    "p_fundamento",
+    "p_evidencias",
+    "p_request_id",
+  ];
   if (
-    !isUuid(organizationId) || !isUuid(contractId) || !isUuid(competenceId) ||
-    !isUuid(requirementId) || !isUuid(documentVersionId) ||
-    !context || typeof context !== "object" ||
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(competenceId) ||
+    !isUuid(requirementId) ||
+    !isUuid(documentVersionId) ||
+    !context ||
+    typeof context !== "object" ||
     context.schema_versao !== "revisao-v117" ||
     context.id_organizacao !== organizationId ||
     context.id_contrato !== contractId ||
@@ -4018,12 +4041,11 @@ export function assertF3V117ReviewReceipt({
     !isUuid(context.id_execucao_esperada) ||
     !(context.id_resultado_esperado === null || isUuid(context.id_resultado_esperado)) ||
     !/^[a-f0-9]{64}$/i.test(context.hash_esperado ?? "") ||
-    !command || typeof command !== "object" || Array.isArray(command) ||
-    JSON.stringify(Object.keys(command).sort()) !== JSON.stringify([
-      "p_id_competencia", "p_id_requisito", "p_id_execucao_esperada",
-      "p_id_resultado_esperado", "p_hash_esperado", "p_resultado",
-      "p_justificativa", "p_fundamento", "p_evidencias", "p_request_id",
-    ].sort()) ||
+    !command ||
+    typeof command !== "object" ||
+    Array.isArray(command) ||
+    Object.keys(command).length !== required.length ||
+    required.some((key) => !Object.hasOwn(command, key)) ||
     command.p_id_competencia !== competenceId ||
     command.p_id_requisito !== requirementId ||
     command.p_id_execucao_esperada !== context.id_execucao_esperada ||
@@ -4039,16 +4061,20 @@ export function assertF3V117ReviewReceipt({
     !Array.isArray(command.p_evidencias) ||
     command.p_evidencias.length !== 1 ||
     command.p_evidencias[0]?.id_versao_documento !== documentVersionId ||
-    !result || typeof result !== "object" ||
+    !result ||
+    typeof result !== "object" ||
     result.schema_versao !== "revisao-v117" ||
     result.request_id !== command.p_request_id ||
     result.id_competencia !== competenceId ||
     result.id_requisito !== requirementId ||
-    !isUuid(result.id_execucao) || !isUuid(result.id_resultado) ||
+    !isUuid(result.id_execucao) ||
+    !isUuid(result.id_resultado) ||
     result.id_execucao === context.id_execucao_esperada ||
     (context.id_resultado_esperado !== null &&
       result.id_resultado === context.id_resultado_esperado)
-  ) invalid();
+  ) {
+    invalid();
+  }
   return Object.freeze({
     state: "CONTRACT_CORRELATED_NOT_CERTIFIED",
     requestId: command.p_request_id,
