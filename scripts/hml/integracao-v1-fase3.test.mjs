@@ -2500,6 +2500,8 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
         assert.throws(
           () => sut.validateF3Report(tamper, catalogue, { ledger }),
           (e) => ["F3_REPORT", "F3_ISOLATION"].includes(e.code),
+          "F3 replay tamper k=" + k + " run=" + r + " type=" + t +
+            " delta=" + JSON.stringify({ before: report.intents, after: tamper.intents }).slice(0, 1200),
         );
         tampers += 1;
       }
