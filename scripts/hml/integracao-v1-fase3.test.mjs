@@ -59,6 +59,9 @@ test("F3 B1: CSV estrito rejeita aspas soltas e aceita campos com vírgula entre
 test("F3 B1: orçamento de intenções conta tentativas e recusa excesso", () => {
   assert.equal(sut.F3_BUDGET.total, 60);
   assert.equal(sut.F3_BUDGET.perRun, 30);
+  assert.equal(sut.F3_BUDGET.planned, 39);
+  assert.equal(sut.F3_MAX_PREREQUISITES, 11);
+  assert.deepEqual(sut.F3_PREREQUISITES_BY_PRODUCER, { 9: 3, 10: 3, 11: 2, 18: 1, 19: 1, 20: 1 });
   assert.ok(sut.assertF3Budget({ priorSent: 0, newIntents: 30 }));
   assert.ok(sut.assertF3Budget({ priorSent: 30, newIntents: 30 }));
   for (const bad of [
@@ -466,16 +469,23 @@ test("F3 B2b1: a organização F3 nasce na execução; rejeitada ou abandonada l
   assert.equal(accepted.created()[1].kind, "organizacao_duplicada");
 });
 
-test("F3 B2b1 RED: tipos de intenção, uma principal por produtor, 5 pré-requisitos e 1 duplicidade", () => {
+test("F3 B2b2 R2: uma principal por produtor, 11 prerequisitos limitados pela origem e 1 duplicidade", () => {
   const book = sut.createF3IntentBook({ ledger: EMPTY });
   createOrg(book);
   seal(book, 5, 5);
   assert.throws(() => seal(book, 6, 5), { code: "F3_INTENT_PRODUCER" });
   book.confirm(uuid(5), { entityId: entity(5), organizationId: F3 });
   assert.throws(() => seal(book, 6, 5), { code: "F3_INTENT_PRODUCER" });
-  for (let i = 0; i < 5; i++) seal(book, 300 + i, 18, { kind: "prerequisito" });
-  assert.throws(() => seal(book, 399, 18, { kind: "prerequisito" }), {
-    code: "F3_INTENT_PREREQUISITES",
+  let next = 300;
+  for (const [order, cap] of Object.entries(sut.F3_PREREQUISITES_BY_PRODUCER)) {
+    for (let i = 0; i < cap; i++) seal(book, next++, Number(order), { kind: "prerequisito" });
+    assert.throws(() => seal(book, next++, Number(order), { kind: "prerequisito" }), {
+      code: "F3_INTENT_PREREQUISITES",
+    });
+  }
+  assert.equal(book.summary().requests.filter((r) => r.kind === "prerequisito").length, 11);
+  assert.throws(() => seal(book, 399, 5, { kind: "prerequisito" }), {
+    code: "F3_INTENT_PRODUCER",
   });
   dup(book, 7, 5, uuid(5));
   book.rejected(uuid(7));
