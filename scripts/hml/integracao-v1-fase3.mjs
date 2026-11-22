@@ -1351,6 +1351,48 @@ export const F3_MUTATION_FLOWS = Object.freeze({
       source: "src/lib/cadastros/cadastroOperacionalDados.ts:210-225",
     }),
   ]),
+  10: flow(
+    [
+      step("rpc", "definir_aplicabilidade_fonte_v107", {
+        free: ["p_chave_idempotencia"],
+        inventory: {
+          p_id_organizacao: 2,
+          p_id_contrato: 7,
+          p_id_versao: { producerOrder: 10, action: "versao" },
+        },
+        source: "src/components/contratos/BaseNormativaContrato.tsx:1465-1472",
+      }),
+    ],
+    {
+      fonte: [
+        step("rpc", "salvar_fonte_normativa_v107", {
+          free: ["p_chave_idempotencia"],
+          inventory: { p_id_organizacao: 2, p_id_contrato: 7 },
+          source: "src/components/contratos/BaseNormativaContrato.tsx:921-942",
+        }),
+      ],
+      versao: [
+        step("rpc", "registrar_versao_fonte_v107", {
+          free: ["p_chave_idempotencia"],
+          inventory: {
+            p_id_organizacao: 2,
+            p_id_fonte: { producerOrder: 10, action: "fonte" },
+          },
+          source: "src/components/contratos/BaseNormativaContrato.tsx:1098-1110",
+        }),
+      ],
+      aprovacao: [
+        step("rpc", "aprovar_versao_fonte_v107", {
+          free: ["p_chave_idempotencia"],
+          inventory: {
+            p_id_organizacao: 2,
+            p_id_versao: { producerOrder: 10, action: "versao" },
+          },
+          source: "src/components/contratos/BaseNormativaContrato.tsx:1366-1375",
+        }),
+      ],
+    },
+  ),
 });
 export const F3_FENCE_WINDOW_MS = 60000;
 const STORAGE_ORIGIN = API_ORIGIN.replace(/\.supabase\.co$/, ".storage.supabase.co");
