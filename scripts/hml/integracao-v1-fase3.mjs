@@ -888,8 +888,7 @@ function authorizedF3IdentityReuse(state, event, intent) {
       entry.organizationId === event.organizationId &&
       entry.kind === "registro" &&
       (approval
-        ? maker?.producerOrder === 10 && maker.kind === "prerequisito" &&
-          maker.action === "versao"
+        ? maker?.producerOrder === 10 && maker.kind === "prerequisito" && maker.action === "versao"
         : maker?.producerOrder === source && maker.kind === "principal")
     );
   });
