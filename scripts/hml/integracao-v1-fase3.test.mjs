@@ -5668,23 +5668,21 @@ test("F3 SYS04 preference: local selection is bound to the current user and orga
 });
 
 test("F3 V107 applicability: rejects stale and crossed version readback", () => {
-  const organizationId = F3;
-  const contractId = uuid(900701);
   const versionId = uuid(900702);
   const before = {
-    id_organizacao: organizationId,
-    id_contrato: contractId,
-    id_versao: versionId,
+    id_fonte_versao: versionId,
     atualizado_em: null,
   };
-  const after = { ...before, aplicavel: true, atualizado_em: "2026-11-22T20:00:00Z" };
-  const input = { before, after, organizationId, contractId, versionId };
+  const after = {
+    ...before,
+    aplicavel: true,
+    atualizado_em: "2026-11-22T20:00:00Z",
+  };
+  const input = { before, after, versionId };
   assert.equal(sut.assertF3S3ApplicabilityReadback(input), versionId);
   for (const changed of [
-    { organizationId: uuid(900703) },
-    { contractId: uuid(900704) },
     { versionId: uuid(900705) },
-    { after: { ...after, id_contrato: uuid(900706) } },
+    { after: { ...after, id_fonte_versao: uuid(900706) } },
     { after: { ...after, aplicavel: false } },
     { after: { ...after, atualizado_em: null } },
     { after: { ...after, atualizado_em: before.atualizado_em } },
