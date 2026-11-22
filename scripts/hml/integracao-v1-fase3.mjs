@@ -2098,7 +2098,7 @@ export function createF3MutationFence(options = {}) {
             if (typeof b.path !== "string" || !b.path.startsWith(SLOT + "path:"))
               fail("F3_FENCE_ARM");
             if (!SLOT_RE.test(b.path)) fail("F3_FENCE_ARM");
-            return null;
+            return bindOf(s, i, b, true);
           }
           for (const field of Object.keys(s.inventory))
             if (!isUuid(b[field])) fail("F3_FOREIGN_ORG");
