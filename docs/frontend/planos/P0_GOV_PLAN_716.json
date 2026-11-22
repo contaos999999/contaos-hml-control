@@ -1,0 +1,23 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 716,
+  "files": [
+    "scripts/p0-cert-live-policy.mjs",
+    "scripts/p0-cert-live-policy.test.mjs",
+    "scripts/p0-evidence-live-gate.mjs",
+    "scripts/p0-evidence-live-gate.test.mjs"
+  ],
+  "plan_documento": "docs/frontend/planos/P0_CERT_LIVE_001_PLAN_2026-11-22.md",
+  "plan_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/716",
+  "plan_aprovacao": "Eficácia exclusivamente após CI, revisão independente e merge protegido desta PR documental; approved é campo de autorização de escopo, não substitui recibos.",
+  "justificativa": "P0-CERT-LIVE-001: diferir HML autenticado até pré-PROD preservando CI, SHA, revisão e segurança. Sem bypass e sem PROD.",
+  "regras_preservadas": [
+    "P0-NR-001",
+    "P0-RCA-001",
+    "ZERO-DRIFT",
+    "LOCK-TYPES",
+    "TESTE C",
+    "PROD NO-GO"
+  ]
+}
