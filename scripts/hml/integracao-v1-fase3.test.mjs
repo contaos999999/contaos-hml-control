@@ -648,7 +648,7 @@ test("F3 S2 V102: UI faz POST cercado uma vez e só confirma após releitura", a
     }),
     entity,
   );
-  assert.equal(book.summary().sent, 1);
+  assert.equal(book.summary().sent, 2); // SYS04 criado na preparação + V102 do piloto.
   assert.equal(book.created().at(-1).kind, "registro");
   assert.equal(book.created().at(-1).id, entity);
   assert.equal(actions.filter((x) => x[0] === "POST").length, 1);
