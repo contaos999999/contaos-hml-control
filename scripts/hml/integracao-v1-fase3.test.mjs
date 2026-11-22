@@ -5511,7 +5511,6 @@ test("F3 C0458 V117->V116: consumidor confirma identidade do resultado novo", ()
   }
 });
 
-
 test("F3 C0455/C0463: visão geral bloqueia portão e apresentação após V117", () => {
   const organizationId = F3;
   const contractId = uuid(877007);
@@ -5552,16 +5551,24 @@ test("F3 C0455/C0463: visão geral bloqueia portão e apresentação após V117"
     { after: { ...after, competencia: { ...before.competencia, id: uuid(877104) } } },
   ];
   for (const changed of bad) {
-    assert.throws(() => sut.assertF3V117OverviewConsumer({
-      ...input,
-      caseId: "IFV1-F3-C0455",
-      ...changed,
-    }), { code: "F3_V117_OVERVIEW_CONSUMER_MISMATCH" });
+    assert.throws(
+      () =>
+        sut.assertF3V117OverviewConsumer({
+          ...input,
+          caseId: "IFV1-F3-C0455",
+          ...changed,
+        }),
+      { code: "F3_V117_OVERVIEW_CONSUMER_MISMATCH" },
+    );
   }
-  assert.throws(() => sut.assertF3V117OverviewConsumer({
-    ...input,
-    caseId: "IFV1-F3-C9999",
-  }), { code: "F3_V117_OVERVIEW_CONSUMER_MISMATCH" });
+  assert.throws(
+    () =>
+      sut.assertF3V117OverviewConsumer({
+        ...input,
+        caseId: "IFV1-F3-C9999",
+      }),
+    { code: "F3_V117_OVERVIEW_CONSUMER_MISMATCH" },
+  );
 });
 
 test("F3 C0461: revisão substitui parecer anterior sem criar aprovação", () => {
