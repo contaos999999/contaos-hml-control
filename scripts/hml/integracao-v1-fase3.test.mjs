@@ -6151,3 +6151,91 @@ test("F3 UP: V110 V111 V115 V122 exigem quatro passos e bucket homologado", () =
     "enfileirar_ingestao_historica_hml",
   ]);
 });
+
+test("F3 UP: sequência Edge→PUT org F3→confirmar→V110 e leitura do slot de path", (t) => {
+  const f = fenceWith(t, withContract);
+  const path = F3 + "/uploads/" + uuid(974110) + "/evidencia.pdf";
+  const sign = {
+    id_organizacao: F3, id_contrato: uuid(107),
+    nome_arquivo: "evidencia.pdf", mime: "application/pdf", tamanho: 12,
+  };
+  const confirmation = {
+    p_id_organizacao: F3, p_id_contrato: uuid(107),
+    p_path: sut.f3Slot("path", "f3_upload_path"),
+    p_nome_original: "evidencia.pdf", p_mime: "application/pdf", p_tamanho: 12,
+    p_sha256: "a".repeat(64), p_origem: "upload_usuario",
+  };
+  const business = {
+    p_id_contrato: uuid(107), p_tipo: "outro", p_titulo: "Evidencia F3",
+    p_categoria: "hml", p_vigencia_inicio: null, p_vigencia_fim: null,
+    p_observacoes: null, p_id_arquivo: sut.f3Slot("uuid", "f3_file"),
+    p_chave_idempotencia: sut.f3Slot("uuid", "f3_document_key"),
+  };
+  const intent = f.fence.arm({
+    producerOrder: 12,
+    bodies: [
+      sign,
+      { path: sut.f3Slot("path", "f3_upload_path") },
+      confirmation,
+      business,
+    ],
+  });
+  const requests = [
+    req({ url: API + "/functions/v1/storage-sign-upload", postData: JSON.stringify(sign) }),
+    req({
+      url: API + "/storage/v1/object/upload/sign/contaos-documentos/" + path + "?token=test",
+      method: "PUT", postData: "%PDF test",
+    }),
+    req({ url: RPC("confirmar_upload_arquivo"),
+      postData: JSON.stringify({ ...confirmation, p_path: path }) }),
+    req({ url: RPC("criar_documento_contrato_completo"),
+      postData: JSON.stringify({
+        ...business, p_id_arquivo: uuid(974111), p_chave_idempotencia: uuid(974112),
+      }) }),
+  ];
+  for (const request of requests) {
+    assert.equal(f.fence.policy(request), true, request.url);
+    assert.equal(f.fence.policy(respond(request)), true, request.url);
+  }
+  const settled = f.fence.settle();
+  assert.equal(settled.complete, true);
+  assert.equal(settled.sealed, true);
+  assert.equal(settled.requestId, intent);
+  f.book.confirm(intent, { entityId: uuid(974113), organizationId: F3 });
+  assert.equal(f.book.assertIsolation(), true);
+});
+
+test("F3 UP: um path de outra organização nunca atravessa a cerca", (t) => {
+  const f = fenceWith(t, withContract);
+  const sign = {
+    id_organizacao: F3, id_contrato: uuid(107),
+    nome_arquivo: "evidencia.pdf", mime: "application/pdf", tamanho: 12,
+  };
+  const business = {
+    p_id_contrato: uuid(107), p_tipo: "outro", p_titulo: "Evidencia F3",
+    p_categoria: "hml", p_vigencia_inicio: null, p_vigencia_fim: null,
+    p_observacoes: null, p_id_arquivo: sut.f3Slot("uuid", "negative_file"),
+    p_chave_idempotencia: sut.f3Slot("uuid", "negative_key"),
+  };
+  f.fence.arm({
+    producerOrder: 12,
+    bodies: [sign, { path: sut.f3Slot("path", "negative_path") }, {
+      p_id_organizacao: F3, p_id_contrato: uuid(107),
+      p_path: sut.f3Slot("path", "negative_path"), p_nome_original: "evidencia.pdf",
+      p_mime: "application/pdf", p_tamanho: 12, p_sha256: "a".repeat(64),
+      p_origem: "upload_usuario",
+    }, business],
+  });
+  const signed = req({
+    url: API + "/functions/v1/storage-sign-upload", postData: JSON.stringify(sign),
+  });
+  assert.equal(f.fence.policy(signed), true);
+  assert.equal(f.fence.policy(respond(signed)), true);
+  const foreign = req({
+    method: "PUT", postData: "%PDF test",
+    url: API + "/storage/v1/object/upload/sign/contaos-documentos/" +
+      uuid(999998) + "/uploads/" + uuid(974111) + "/evidencia.pdf?token=test",
+  });
+  assert.equal(f.fence.policy(foreign), false);
+  assert.equal(f.book.frozen(), true);
+});
