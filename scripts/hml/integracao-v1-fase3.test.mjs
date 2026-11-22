@@ -4992,7 +4992,6 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     "12 V110, principal",
     "13 V111, principal",
     "15 V115, principal",
-    "17 V117, principal",
     "20 V122, pré-requisito 1",
     "20 V122, principal",
   ];
@@ -6005,4 +6004,14 @@ test("F3 V109: três transições declaradas e vinculadas ao contrato e à lista
     assert.equal(step.derived.p_versao_esperada, "p_id_lista");
     assert.deepEqual(step.free, ["p_request_id"]);
   }
+});
+
+test("F3 V117: revisão funcional só arma RPC da competência vinculada à F3", () => {
+  const flow = sut.F3_MUTATION_FLOWS[17];
+  assert.deepEqual(flow.principal.map((s) => s.name), [
+    "registrar_revisao_requisito_v117",
+  ]);
+  assert.equal(flow.principal[0].target, "rpc");
+  assert.equal(flow.principal[0].inventory.p_id_competencia, 14);
+  assert.deepEqual(flow.principal[0].free, ["p_request_id"]);
 });
