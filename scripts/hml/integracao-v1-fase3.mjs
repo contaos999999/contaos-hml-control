@@ -18,6 +18,7 @@ import { isProxy } from "node:util/types";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { resolve, join } from "node:path";
+import { collectF3CodeEvidence } from "./integracao-v1-fase3-code-executor.mjs";
 import {
   API_ORIGIN,
   HML_ORIGIN,
@@ -5236,6 +5237,82 @@ export function assertF3V122HistoricalReadback({ before, after, reportId, fileId
     fail("F3_V122_HISTORICAL_READBACK");
   }
   return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 20, reportId });
+}
+
+/**
+ * Liga o coletor CODE aos contratos exatos de cada caseId, sem atalhos por produtor.
+ * Ausência de driver falha; verificador ausente jamais aprova um recibo.
+ * Somente drivers reais geram provas. A coleta continua UNREVIEWED_NOT_CERTIFIED.
+ */
+export function bindF3CodeCaseDrivers({ catalogue, caseDrivers, caseVerifiers }) {
+  if (
+    !catalogue ||
+    catalogue.count !== 138 ||
+    !Array.isArray(catalogue.cases) ||
+    catalogue.cases.length !== 138 ||
+    !caseDrivers ||
+    typeof caseDrivers !== "object" ||
+    Array.isArray(caseDrivers) ||
+    !caseVerifiers ||
+    typeof caseVerifiers !== "object" ||
+    Array.isArray(caseVerifiers)
+  ) {
+    fail("F3_CODE_DRIVER_REGISTRY");
+  }
+  const cases = new Map(catalogue.cases.map((c) => [c.caseId, c]));
+  if (
+    cases.size !== 138 ||
+    Object.keys(caseDrivers).some((id) => !cases.has(id)) ||
+    Object.keys(caseVerifiers).some((id) => !cases.has(id))
+  ) {
+    fail("F3_CODE_DRIVER_REGISTRY");
+  }
+  const assertCase = (c) => {
+    const expected = cases.get(c?.caseId);
+    if (!expected || canonicalJson(expected) !== canonicalJson(c)) {
+      fail("F3_CODE_CASE_MISMATCH");
+    }
+  };
+  return Object.freeze({
+    executeCase: async (c) => {
+      assertCase(c);
+      const run = Object.getOwnPropertyDescriptor(caseDrivers, c.caseId)?.value;
+      if (typeof run !== "function") fail("F3_DRIVER_PENDING");
+      return run(Object.freeze(structuredClone(c)));
+    },
+    verifyCase: async (c, tests) => {
+      assertCase(c);
+      const verify = Object.getOwnPropertyDescriptor(caseVerifiers, c.caseId)?.value;
+      if (typeof verify !== "function") return false;
+      return (await verify(Object.freeze(structuredClone(c)), Object.freeze(structuredClone(tests)))) === true;
+    },
+    registeredCaseIds: Object.freeze(
+      catalogue.cases
+        .filter((c) =>
+          typeof Object.getOwnPropertyDescriptor(caseDrivers, c.caseId)?.value === "function" &&
+          typeof Object.getOwnPropertyDescriptor(caseVerifiers, c.caseId)?.value === "function",
+        )
+        .map((c) => c.caseId),
+    ),
+  });
+}
+
+/** Executor CODE, com validação do catálogo e dos recibos pelo coletor existente. */
+export async function collectF3CodeCaseEvidence({
+  catalogue,
+  catalogueRaw,
+  provenance,
+  caseDrivers,
+  caseVerifiers,
+}) {
+  const binding = bindF3CodeCaseDrivers({ catalogue, caseDrivers, caseVerifiers });
+  return collectF3CodeEvidence({
+    catalogue,
+    catalogueRaw,
+    provenance,
+    executeCase: binding.executeCase,
+    verifyCase: binding.verifyCase,
+  });
 }
 
 async function pendingDriver() {
