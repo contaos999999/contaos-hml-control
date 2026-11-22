@@ -2547,6 +2547,8 @@ export function parseF3S1EffectiveRbac(dto, expectMaster) {
   const code = "F3_UI_RBAC_RESPONSE";
   if (
     !dto ||
+    typeof expectMaster !== "boolean" ||
+    Object.keys(dto).sort().join(",") !== "master,permissoes,schema_versao,versao" ||
     dto.schema_versao !== "rbac-v1" ||
     dto.versao !== F3_RBAC_LEITOR.version ||
     dto.master !== expectMaster ||
