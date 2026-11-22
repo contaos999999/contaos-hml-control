@@ -4425,20 +4425,15 @@ export async function f3S1SelectPreference({ page, fence, book, userId, organiza
 }
 
 /** A aplicabilidade V107 só pode ser salva depois de fonte, versão e aprovação no livro. */
-export function assertF3S3ApplicabilityReadback({ before, after, organizationId, contractId, versionId }) {
+export function assertF3S3ApplicabilityReadback({ before, after, versionId }) {
   if (
-    !isUuid(organizationId) ||
-    !isUuid(contractId) ||
     !isUuid(versionId) ||
-    before?.id_organizacao !== organizationId ||
-    before.id_contrato !== contractId ||
-    before.id_versao !== versionId ||
-    after?.id_organizacao !== organizationId ||
-    after.id_contrato !== contractId ||
-    after.id_versao !== versionId ||
+    (before !== null && before?.id_fonte_versao !== versionId) ||
+    after?.id_fonte_versao !== versionId ||
     after.aplicavel !== true ||
+    typeof after.atualizado_em !== "string" ||
     !after.atualizado_em ||
-    after.atualizado_em === before.atualizado_em
+    after.atualizado_em === before?.atualizado_em
   ) {
     fail("F3_V107_APPLICABILITY_READBACK");
   }
@@ -4481,9 +4476,7 @@ export async function f3S3SetApplicability({
     fail("F3_V107_APPLICABILITY_PRECONDITION");
   }
   if (
-    before?.id_organizacao !== organizationId ||
-    before.id_contrato !== contractId ||
-    before.id_versao !== versionId
+    before !== null && before?.id_fonte_versao !== versionId
   ) {
     fail("F3_V107_APPLICABILITY_PRECONDITION");
   }
@@ -4523,6 +4516,27 @@ export async function f3S3SetApplicability({
     if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
       fail("F3_V107_APPLICABILITY_UNCERTAIN");
     }
+    const listed = page.waitForResponse(
+      (r) => {
+        const u = new URL(r.url());
+        return (
+          r.request().method() === "GET" &&
+          u.origin === API_ORIGIN &&
+          u.pathname === "/rest/v1/aplicabilidades_fonte" &&
+          u.searchParams.get("id_contrato") === "eq." + contractId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const listResponse = await listed;
+    if (listResponse.status() !== 200) fail("F3_V107_APPLICABILITY_READBACK");
+    const rows = await listResponse.json();
+    const relevant = Array.isArray(rows)
+      ? rows.filter((row) => row?.id_fonte_versao === versionId)
+      : [];
+    if (relevant.length !== 1) fail("F3_V107_APPLICABILITY_READBACK");
+    assertF3S3ApplicabilityReadback({ before, after: relevant[0], versionId });
     await fence.drain();
     fence.assertSafe();
     book.confirm(requestId, { entityId: versionId, organizationId });
