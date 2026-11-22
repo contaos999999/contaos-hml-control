@@ -360,8 +360,8 @@ Esta seção **não modifica o escopo, os critérios de PASS, os certificados v�
 
 | Fatia | Parte das sete fases | Resultado verificável |
 |---|---|---|
-| S0 | Prontidão transversal para F3–F6 | Frontend HML realmente implantado; backend/Edge relevantes identificados; identidades reais autorizadas e fixtures isoladas; Auth e RLS verificados nas condições exigidas; segredos apenas no ambiente protegido |
-| S1 | F3, produtores 1–4 | Login, seleção e criação da organização sintética, vínculo do leitor e negativas; BUILD-2b-2 implementado sem duplicar o harness |
+| S0 | Prontidão transversal para F3–F6 | Frontend HML realmente implantado; backend/Edge relevantes identificados; autenticação real do MASTER e credenciais protegidas do usuário sintético leitor inicialmente não vinculado; autorização para criar organização pela UI; **não exigir RLS bilateral antes da criação em S1** |
+| S1 | F3, produtores 1–4 | MASTER faz login e cria pela UI a organização sintética; vincula o leitor; dois logins/logouts e isolamento bilateral após provisionamento, com negativas; BUILD-2b-2 sem duplicar harness |
 | S2 | F3, produtores 5–10 | Fluxos de contratantes, contratos, proposta e normativos, com readback no consumidor |
 | S3 | F3, produtores 11–16 | Listas, documentos, competências e análises, com contratos negativos e persistência |
 | S4 | F3, produtores 17–20 | Parecer, apresentação e histórico; todos os 138 casos decididos com provas, revisão e certificado F3 |
@@ -388,6 +388,6 @@ S0–S8 são **fatias de entrega**, não nove novas fases. As fases permanecem r
 - SELECT HML sem alteração de dados: 308 contas Auth, 238 marcadas `app_metadata.synthetic=true`, todas as 238 confirmadas, mas **0 vínculo ativo de conta sintética**; 1 vínculo ativo geral em 1 organização, pertencente a conta não marcada sintética. Há 121 organizações cadastradas; não confundir existência com isolamento válido.
 - PR [frontend #704](https://github.com/contaos999999/contaos-hml-control/pull/704) fornece harness Auth/RLS ainda não integrado nem executado verde contra pares isolados. Este instrumento pode fornecer prova de prontidão quando de fato certificado, sem substituir a semântica de MASTER/leitor fixada pelo PLAN F3.
 - PR [backend #226](https://github.com/contaos999999/develop/pull/226) possui Restore Isolado PASS no [run 44987846263](https://github.com/contaos999999/develop/actions/runs/44987846263) sobre seu HEAD; isso não é autorização de deploy e não prova Auth/RLS dos usuários.
-- **Próxima ação executiva:** S0, regularizar pelo fluxo autorizado um par de identidades e organizações de teste aderente aos perfis exigidos; em paralelo, implementar S1/BUILD-2b-2 em PR pequena sem credenciais. Nunca executar mutação no HML ou atualizar ledger com PASS sem o par e os testes reais.
+- **Próxima ação executiva:** S0 verificar MASTER e conta sintética não vinculada + credenciais protegidas, SEM exigir duas organizações antes da execução; em paralelo, implementar S1/BUILD-2b-2 na branch. S1 cria a organização e o vínculo pela UI autorizada e então comprova RLS bilateral. Nunca atualizar ledger com PASS sem essas provas. Nunca executar mutação no HML ou atualizar ledger com PASS sem o par e os testes reais.
 
 O issue #708 permanece como **único painel de continuidade**, com links para HEAD, PR, CI, runs, resultados, blockers e próxima ação. Esta seção é apenas a extensão operacional do plano mestre aprovado; não adiciona um novo plano normativo autônomo.
