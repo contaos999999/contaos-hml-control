@@ -3377,3 +3377,107 @@ export function materialReviewOfReverseGaps(inventory,worklist,reverse){
     issues,adjudicated_independently:0,uncovered_spans_remaining:18,
     semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
 }
+
+
+/**
+ * Executes 21,312 POSITIVE/NEGATIVE *integrity* probes over the actual corpus.
+ * It does not test normative truth or native GitHub enforcement. The verifier
+ * must never grant semantic PASS regardless of a structurally clean corpus.
+ */
+export function executeSemanticCorpusIntegrityMutants(dossier){
+  const issues=[];
+  const ruleMap=new Map((dossier?.rules||[]).map(r=>[r.rule_id,r]));
+  const names=["E1","E2","E3","E4","E5","E6","E7"];
+  const checkRule=(r,axis)=>{
+    const x=r?.axes?.[axis];
+    if(!x||!r.source_anchor?.blob||!r.exact_text||r.decision!=="INCONCLUSIVE")
+      return false;
+    switch(axis){
+      case "E1":
+        return x.source?.blob===r.source_anchor.blob&&
+          x.source?.line===r.source_anchor.line&&x.authority_decision===null;
+      case "E2":
+        return x.source_clause===r.exact_text&&Array.isArray(x.conditions)&&
+          x.state_transition===null;
+      case "E3":
+        return Array.isArray(x.positive_indicators)&&Array.isArray(x.negative_indicators)&&
+          x.legitimate_effect===null&&x.forbidden_effect===null;
+      case "E4":
+        return Array.isArray(x.rule_references)&&Array.isArray(x.concepts)&&
+          x.conflict_or_precedence_decision===null;
+      case "E5":
+        return x.head===null&&x.run_id===null&&x.job_id===null&&
+          x.log_sha256===null&&x.positive_witness===null&&x.negative_witness===null;
+      case "E6":
+        return Array.isArray(x.temporal_qualifiers)&&
+          typeof x.revocation_mentioned==="boolean"&&
+          x.native_revocation_verified===false;
+      case "E7":
+        return Array.isArray(x.source_stages)&&Array.isArray(x.topics)&&
+          x.boundary_verified===false;
+      default:return false;
+    }
+  };
+  const alteredAxis=(r,axis)=>{
+    const mutant={...r,axes:{...r.axes,[axis]:{...r.axes[axis]}}};
+    const x=mutant.axes[axis];
+    switch(axis){
+      case "E1":x.authority_decision="APPROVED";break;
+      case "E2":x.source_clause="INVENTED_STATE";break;
+      case "E3":x.legitimate_effect="VERIFIED";break;
+      case "E4":x.conflict_or_precedence_decision="NONINTERACTING";break;
+      case "E5":x.positive_witness={run_id:123};break;
+      case "E6":x.native_revocation_verified=true;break;
+      case "E7":x.boundary_verified=true;break;
+    }
+    return mutant;
+  };
+  const checkSentence=x=>!!x?.sentence_id&&!!x?.source_id&&
+    x.text_sha256===createHash("sha256").update(x.exact_text||"").digest("hex")&&
+    Array.isArray(x.subordinate_clauses)&&
+    x.subordinate_clauses.map(p=>p.text).join("")===x.exact_text&&
+    x.subordinate_clauses.every(p=>p.text_sha256===
+      createHash("sha256").update(p.text).digest("hex"))&&
+    x.human_classification===null&&x.positive_witness===null&&
+    x.negative_witness===null&&x.verdict==="INCONCLUSIVE";
+  const checkPair=x=>{
+    const a=ruleMap.get(x?.rule_a),b=ruleMap.get(x?.rule_b);
+    return !!a&&!!b&&x.rule_a!==x.rule_b&&
+      x.pair_id===x.rule_a+"|"+x.rule_b&&
+      x.source_a?.blob===a.source_anchor?.blob&&
+      x.source_b?.blob===b.source_anchor?.blob&&
+      x.rule_a_text===a.exact_text&&x.rule_b_text===b.exact_text&&
+      x.judgement==="UNADJUDICATED"&&x.positive_witness===null&&
+      x.negative_witness===null;
+  };
+  let pos=0,neg=0,slots=0;
+  for(const r of dossier?.rules||[])for(const axis of names){
+    slots++;
+    if(checkRule(r,axis))pos++;else issues.push("AXIS_BASELINE_FAIL:"+r.rule_id+":"+axis);
+    if(!checkRule(alteredAxis(r,axis),axis))neg++;else
+      issues.push("AXIS_MUTANT_ESCAPED:"+r.rule_id+":"+axis);
+  }
+  for(const sentence of dossier?.sentences||[]){
+    if(checkSentence(sentence))pos++;else
+      issues.push("SENTENCE_BASELINE_FAIL:"+sentence.sentence_id);
+    if(!checkSentence({...sentence,text_sha256:"0".repeat(64)}))neg++;else
+      issues.push("SENTENCE_MUTANT_ESCAPED:"+sentence.sentence_id);
+  }
+  for(const pair of dossier?.interactions||[]){
+    if(checkPair(pair))pos++;else issues.push("PAIR_BASELINE_FAIL:"+pair.pair_id);
+    if(!checkPair({...pair,rule_b_text:"MUTATED"+pair.rule_b_text}))neg++;else
+      issues.push("PAIR_MUTANT_ESCAPED:"+pair.pair_id);
+  }
+  const expected=959+381+9316;
+  if(slots!==959||pos!==expected||neg!==expected||
+     dossier?.rules?.length!==137||dossier?.sentences?.length!==381||
+     dossier?.interactions?.length!==9316)
+    issues.push("SEMANTIC_INTEGRITY_PROBE_COUNT_DRIFT");
+  return {schema:"contaos.semantic-corpus-integrity-mutations.v1",
+    axis_slots:slots,sentence_slots:dossier?.sentences?.length??0,
+    pair_slots:dossier?.interactions?.length??0,
+    positive_model_integrity_probes:pos,negative_model_integrity_probes:neg,
+    total_executed_model_probes:pos+neg,expected_model_probes:expected*2,
+    issues,real_semantic_adjudications:0,live_github_witnesses:0,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}

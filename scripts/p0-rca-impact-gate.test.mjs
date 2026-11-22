@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, writeSemanticDossierJsonl, validatePrioritySemanticDisputes, executePriorityCausalCounterproofs, materialReviewOfReverseGaps, P0_REVERSE_GAP_REVIEWS, P0_PRIORITY_CAUSAL_MODELS, P0_PRIORITY_CAUSAL_PROBES, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, writeSemanticDossierJsonl, validatePrioritySemanticDisputes, executePriorityCausalCounterproofs, materialReviewOfReverseGaps, executeSemanticCorpusIntegrityMutants, P0_REVERSE_GAP_REVIEWS, P0_PRIORITY_CAUSAL_MODELS, P0_PRIORITY_CAUSAL_PROBES, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2571,4 +2571,34 @@ test("P0 REVERSE 18 MATERIAL: provenance and distinct interpretations for all re
   assert.equal(result.release,"NO_GO");
   process.stdout.write("P0-REVERSE-MATERIAL "+JSON.stringify({
     reviewed:result.total,independent:0,remaining:18,release:"NO_GO"})+"\\n");
+});
+
+
+test("P0 MUTATION FULL CORPUS: 959 axes, 381 clauses and 9316 pairs, each with a negative mutation",()=>{
+  const sources=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES).map(
+    ([path,blob])=>[path,{content:readFileSync(path,"utf8"),blob}]));
+  const inv=inventoryProtectedSemanticLines(sources);
+  const work=buildSevenAxisSemanticBacklog(inv);
+  const sentences=inventorySemanticSentenceCandidates(inv);
+  const reverse=auditSemanticReverseCoverage(inv,work);
+  const triage=analyzeSemanticCorpusForReview({
+    inventory:inv,worklist:work,sentenceInventory:sentences,reverseCoverage:reverse});
+  const dossier=assembleSemanticContradictionDossier(triage);
+  const run=executeSemanticCorpusIntegrityMutants(dossier);
+  assert.deepEqual(run.issues,[]);
+  assert.deepEqual([run.axis_slots,run.sentence_slots,run.pair_slots],[959,381,9316]);
+  assert.deepEqual(
+    [run.positive_model_integrity_probes,run.negative_model_integrity_probes,
+      run.total_executed_model_probes],[10656,10656,21312]);
+  assert.equal(run.live_github_witnesses,0);
+  assert.equal(run.real_semantic_adjudications,0);
+  assert.equal(run.semantic_completeness,"INCONCLUSIVE");
+  const falsified=structuredClone(dossier);
+  falsified.interactions[27].rule_b_text="NOT_IN_PROTECTED_SOURCE";
+  const failed=executeSemanticCorpusIntegrityMutants(falsified);
+  assert.ok(failed.issues.includes("PAIR_BASELINE_FAIL:"+falsified.interactions[27].pair_id));
+  assert.equal(failed.release,"NO_GO");
+  process.stdout.write("P0-CORPUS-STRUCTURAL-MUTANTS "+JSON.stringify({
+    axes:run.axis_slots,sentences:run.sentence_slots,pairs:run.pair_slots,
+    tests:run.total_executed_model_probes,live:0})+"\n");
 });
