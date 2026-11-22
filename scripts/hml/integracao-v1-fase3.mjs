@@ -902,11 +902,16 @@ function applyEvent(st, run, e) {
     const steps = stepsOf(i);
     if (!i.binds.length || (steps && i.binds.length !== steps.length)) fail("F3_INTENT_BIND");
   }
-  // Releitura de uma abandonada ocorre UMA vez por execução, seja positiva ou negativa.
-  // O par absent -> found no mesmo run era aceito e permitia apagar o absent do relatório
-  // sem mudar o estado final, violando o replay canônico e sua contraprova adversarial.
-  if ((e.op === "absent" || e.op === "found") &&
-      i.state === "abandoned" && i.rechecked) fail("F3_INTENT_STATE");
+  // Abandono trazido de execução ANTERIOR exige uma só releitura por novo run.
+  // A intenção abandonada dentro do run atual ainda admite materialização tardia, sem
+  // suprimir o evento absent que precedeu o abandon e é necessário ao replay.
+  if (
+    (e.op === "absent" || e.op === "found") &&
+    i.state === "abandoned" &&
+    i.prior &&
+    i.rechecked
+  )
+    fail("F3_INTENT_STATE");
   if (e.op === "found" || e.op === "absent") i.rechecked = true;
   if (e.op === "resend") {
     // Reenvio só de ação com chave, uma vez. A intenção sempre tem vínculo registrado (o
