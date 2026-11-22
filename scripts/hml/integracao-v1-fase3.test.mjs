@@ -3880,3 +3880,75 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     PENDING,
   );
 });
+
+test("F3 driver completion: partial S1 never certifies phase 3", async () => {
+  const result = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async () => ({ state: "S1_UI_OBSERVED_NOT_CERTIFIED" }),
+  });
+  assert.equal(result.code, "F3_DRIVER_PENDING");
+  assert.equal(result.report.state, "BLOCKED");
+});
+
+test("F3 driver completion: forged complete result fails closed without validated receipts", async () => {
+  const result = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async () => ({ state: "F3_COMPLETE", report: { state: "PASS" } }),
+  });
+  assert.notEqual(result.code, "F3_COMPLETE");
+  assert.equal(result.report.state, "BLOCKED");
+});
+
+test("F3 driver completion: BLOCKED receipts never certify", async () => {
+  const result = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async (book) => ({
+      state: "F3_COMPLETE",
+      report: sut.blockedF3Report({
+        code: "F3_DRIVER_PENDING",
+        catalogue,
+        provenance: PROV,
+        ledger: EMPTY,
+        book,
+      }),
+    }),
+  });
+  assert.equal(result.code, "F3_GATE_INCOMPLETE");
+  assert.equal(result.report.state, "BLOCKED");
+});
+
+test("F3 driver completion: provenance mismatch is blocked", async () => {
+  const result = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async (book) => {
+      const report = sut.blockedF3Report({
+        code: "F3_DRIVER_PENDING",
+        catalogue,
+        provenance: PROV,
+        ledger: EMPTY,
+        book,
+      });
+      report.provenance = { ...report.provenance, frontendSha: "f".repeat(40) };
+      return { state: "F3_COMPLETE", report };
+    },
+  });
+  assert.equal(result.code, "F3_DRIVER_REPORT_MISMATCH");
+  assert.equal(result.report.state, "BLOCKED");
+});
+
+test("F3 CLI: COMPLETE persists artifacts before success", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("./integracao-v1-fase3.mjs", import.meta.url), "utf8");
+  assert.match(
+    source,
+    /if \(session\.code === "F3_COMPLETE"\) \{[\s\S]*?await writeF3Artifacts\([\s\S]*?return true;\s*\}\s*fail\(session\.code\);/,
+  );
+});
