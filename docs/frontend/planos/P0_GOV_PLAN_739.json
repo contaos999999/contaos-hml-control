@@ -1,0 +1,27 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 739,
+  "approved": true,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD_V116_ANALYSIS_UI_DRIVER.md"
+  ],
+  "purpose": "Implementar o driver UI real do produtor V116 e sua releitura no consumidor de análise da mesma competência, com autenticação/cerca/livro herdados, isolamento, regressões e rejeições. Não executar LIVE nesta etapa.",
+  "authorization": "Pedido direto do titular para executar integralmente os drivers e os testes positivos/negativos dos 138 casos da Fase 3 CODE. Este PLAN autoriza exclusivamente V116 e seus testes, sem certificar os demais grupos.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Manter imutáveis F3_CASES, matriz e ledgers CODE/LIVE",
+    "Sem backend, sem secrets, sem mudanças em RLS ou fixtures",
+    "Não forjar status PASS nem inventar evidências de 138 casos",
+    "Não alterar proteção de branches ou CI P0",
+    "Preservar F3_DRIVER_PENDING até prova integral de todos os produtores e consumidores",
+    "Driver de UI do CODE implementado sem execução HML LIVE antes de GATE PROD",
+    "Somente os 3 arquivos listados; CI/regressões e revisão externa antes de merge"
+  ],
+  "normative_plan": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba"
+  }
+}
