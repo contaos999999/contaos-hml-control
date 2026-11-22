@@ -3375,6 +3375,171 @@ export async function f3S2CreateContract({
   }
 }
 
+/** V106: alteração do mesmo contrato V105, com versão derivada da leitura UI. */
+export function assertF3S2ContractUpdate({
+  before,
+  result,
+  after,
+  organizationId,
+  contractId,
+  object,
+  requestId,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(requestId) ||
+    !before ||
+    before.schema_versao !== "crud-cadastro-v1" ||
+    before.entidade !== "contratos" ||
+    before.registro?.id !== contractId ||
+    before.registro?.id_organizacao !== organizationId ||
+    !Number.isSafeInteger(before.registro.versao_registro) ||
+    before.registro.versao_registro < 1 ||
+    !result ||
+    result.schema_versao !== "crud-cadastro-v1" ||
+    result.entidade !== "contratos" ||
+    result.request_id !== requestId ||
+    !isUuid(result.evento_id) ||
+    result.registro?.id !== contractId ||
+    result.registro?.id_organizacao !== organizationId ||
+    !after ||
+    after.schema_versao !== "crud-cadastro-v1" ||
+    after.entidade !== "contratos" ||
+    after.registro?.id !== contractId ||
+    after.registro?.id_organizacao !== organizationId ||
+    after.registro?.objeto !== object ||
+    !Number.isSafeInteger(after.registro.versao_registro) ||
+    after.registro.versao_registro !== before.registro.versao_registro + 1 ||
+    result.registro?.versao_registro !== after.registro.versao_registro ||
+    result.registro.objeto !== object
+  ) {
+    fail("F3_S2_V106_READBACK");
+  }
+  return contractId;
+}
+
+export async function f3S2UpdateContract({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(contractId) ||
+    organizationId !== book.organizationF3() ||
+    !book.created().some(
+      (entry) =>
+        entry.id === contractId &&
+        entry.organizationId === organizationId &&
+        entry.kind === "registro" &&
+        book.summary().requests.some(
+          (q) => q.requestId === entry.requestId && q.producerOrder === 7 && q.outcome === "confirmed",
+        ),
+    )
+  ) {
+    fail("F3_S2_V106_PRECONDITION");
+  }
+  const route = HML_ORIGIN + "/contratos/" + contractId;
+  const rpcRead = (r) =>
+    r.request().method() === "POST" &&
+    r.url() === API_ORIGIN + "/rest/v1/rpc/obter_cadastro_operacional_v1";
+  const native = page.waitForResponse(rpcRead, { timeout: F3_S1_UI.timeout });
+  await page.goto(route, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Editar e gerenciar contrato" }).click();
+  const first = await native;
+  if (first.status() !== 200 || !(await mutationFence.observeVersion(first))) {
+    fail("F3_S2_V106_VERSION");
+  }
+  const before = await first.json();
+  if (
+    before?.schema_versao !== "crud-cadastro-v1" ||
+    before.entidade !== "contratos" ||
+    before.registro?.id !== contractId ||
+    before.registro.id_organizacao !== organizationId ||
+    !before.pode_editar
+  ) {
+    fail("F3_S2_V106_VERSION");
+  }
+  await fence.drain();
+  fence.assertSafe();
+  const object = "Contrato sintético F3 " + book.provenance().workflowRunId + " atualizado";
+  const selector = "#cadastro-contratos-" + contractId;
+  await page.locator(selector + "-objeto").fill(object);
+  await page.locator(selector + "-motivo").fill("Validação integrada F3");
+  await page.getByRole("button", { name: "Revisar edição", exact: true }).click();
+  const confirm = page.getByRole("group", { name: "Confirmar alteração" });
+  await confirm.waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+  const payload = {
+    p_id_organizacao: organizationId,
+    p_id_contrato: contractId,
+    p_versao_esperada: before.registro.versao_registro,
+    p_motivo: "Validação integrada F3",
+    p_request_id: f3Slot("uuid", "v106request"),
+    p_alteracoes: { objeto: object },
+  };
+  const requestId = mutationFence.arm({ producerOrder: 8, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/atualizar_contrato_v1",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await confirm.getByRole("button", { name: "Confirmar edição", exact: true }).click();
+    const submitted = await posted;
+    if (submitted.status() !== 200) fail("F3_S2_V106_HTTP");
+    const result = await submitted.json();
+    await page
+      .getByText("Alteração confirmada e registrada na auditoria.", { exact: true })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_S2_V106_UNCERTAIN");
+    }
+    const idempotency = settled.slots.v106request;
+    if (!isUuid(idempotency)) fail("F3_S2_V106_IDEMPOTENCY");
+    await page.getByRole("button", { name: "Fechar gestão" }).click();
+    const reopened = page.waitForResponse(rpcRead, { timeout: F3_S1_UI.timeout });
+    await page.getByRole("button", { name: "Editar e gerenciar contrato" }).click();
+    const read = await reopened;
+    if (read.status() !== 200) fail("F3_S2_V106_READBACK");
+    const after = await read.json();
+    assertF3S2ContractUpdate({
+      before,
+      result,
+      after,
+      organizationId,
+      contractId,
+      object,
+      requestId: idempotency,
+    });
+    if ((await page.locator(selector + "-objeto").inputValue()) !== object) {
+      fail("F3_S2_V106_UI_READBACK");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: contractId, organizationId });
+    book.assertIsolation();
+    return contractId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Reenvio só com mesma chave após readback, nunca novo UUID automático.
+    }
+    throw error;
+  }
+}
+
 async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }
