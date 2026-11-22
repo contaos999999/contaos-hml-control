@@ -78,7 +78,7 @@ jobs:
           private_log="$(mktemp "$RUNNER_TEMP/contaos-playwright-private-XXXXXX")"
           bunx playwright test --config=playwright.hml-counterproofs.config.ts > "$private_log" 2>&1
           code=$?
-          rm -f "$private_log" artifacts/hml-counterproofs/playwright-results.json
+          rm -f "$private_log" # JSON stays private until the receipt verifies and deletes it
           echo "CONTAOS_HML_TEST_EXIT=$code" >> "$GITHUB_ENV"
           if [ "$code" -ne 0 ]; then echo "::error::HML browser proof FAIL; private details suppressed"; fi
           exit "$code"
