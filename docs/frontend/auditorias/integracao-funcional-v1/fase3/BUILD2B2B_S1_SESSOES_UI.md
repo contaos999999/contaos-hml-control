@@ -19,3 +19,8 @@
 
 ## Dependências da sequência
 S0: deployment HML SHA/paridade e identidades efetivas; S1: este driver; S2–S4: produtores 5–20 e fechamento; S5–S8: F4–F7. Critério funcional F3 continua `138/138` com todas as negativas.
+
+## Rito de verificação do BUILD S1
+- Validar o HEAD exato desta PR com Zero-Drift, Teste C, P0-NR-001, LOCK-TYPES e protocolo Trilha A/Node Test/ESLint/Prettier. O último ajuste de formatação só é aceito com nova execução verde, sem reciclar checks de SHA anterior.
+- Exigir revisão registrada por conta diferente da autora, vinculada ao HEAD revisado, antes de merge protegido na main.
+- Manter `F3_DRIVER_PENDING` e os 138 casos sem PASS de HML enquanto os produtores 5–20 e respectivas negativas não estiverem implementados e aprovados. A validação offline desta fatia não autoriza mutação em HML.
