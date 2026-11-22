@@ -1227,6 +1227,7 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
         assert.throws(
           () => sut.validateF3Report(tamper, catalogue, { ledger }),
           (e) => ["F3_REPORT", "F3_ISOLATION"].includes(e.code),
+          `F3_MUTANT_UNREJECTED variant=${t} scenario=${scenarios} run=${r} events=${summary.events.length}`,
         );
         tampers += 1;
       }
