@@ -1,11 +1,10 @@
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { fixtureProofValid } from './guard.mjs';
+import { fixtureProofValid, loadAttestation } from './guard.mjs';
 const output = 'artifacts/hml-counterproofs';
 mkdirSync(output, { recursive:true });
 const context = {sha:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,repository:process.env.GITHUB_REPOSITORY};
-let fixture=null;
-try { fixture=JSON.parse(readFileSync(output+'/fixture-attestation.json','utf8')); } catch { /* fail closed */ }
+const fixture=loadAttestation();
 const liveFixturePass=fixtureProofValid(fixture,context);
 const browserCasesExecuted=process.env.CONTAOS_HML_TEST_EXIT==='0';
 const status = liveFixturePass && browserCasesExecuted ? 'AUTH_RLS_BROWSER_CASES_EXECUTED' : 'BLOCKED_OR_FAILED';
