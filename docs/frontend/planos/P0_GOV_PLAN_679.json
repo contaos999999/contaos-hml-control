@@ -16,7 +16,8 @@
     "docs/frontend/governanca/P0_NR_001_LEDGER.json",
     "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md",
     "scripts/frontend-scope-gate.mjs",
-    "scripts/frontend-scope-gate.test.mjs"
+    "scripts/frontend-scope-gate.test.mjs",
+    "scripts/hml/authenticated-visual-audit.test.mjs"
   ],
   "plan_documento": "docs/frontend/planos/PR679_R5_1_COMPATIBILIDADE_PUSH_PLAN_2026-11-15.md",
   "plan_secao": "Emenda R5.1 completa, complementa R5 integrada pela PR687; eficácia após CI/auditoria/review autorizada/merge antes do novo BUILD",
@@ -32,5 +33,13 @@
     "LOCK-TYPES",
     "TESTE C",
     "PROD PROIBIDO"
-  ]
+  ],
+  "emenda_ifv1_hml_probe": {
+    "origem": "Plano operacional de 7 fases autorizado em 22/11/2026, issue #708 e plano mestre seção 19; revisão independente e integração da PR #709 são pré-requisito de eficácia",
+    "arquivo_exclusivo": "scripts/hml/authenticated-visual-audit.test.mjs",
+    "causa": "O teste herdado 'Current phase 2 HML public deployment is discovered live before any new nonce' exige o deployment histórico da Fase 2 no domínio HML atual. O HML avançou; a asserção de igualdade viva é contraditória com o contrato do pin, gerando DEPLOYMENT_PIN_STALE a cada CI da Fase 3",
+    "escopo": "Somente corrigir a asserção de TESTE: descoberta pública atesta identidade do HML presente, e pin F2 histórico deve falhar com DEPLOYMENT_PIN_STALE se já não é o atual. Se o HML realmente ainda corresponder ao mesmo pin, exigir igualdade. Nenhuma alteração de execução de segredo, PROD, módulo autenticado, hashes e certificado histórico da Fase 2",
+    "procedimento": "A PR #679 só pode modificar o arquivo APÓS a integração protegida deste manifesto; manter todas as outras contraprovas, Teste C, revisão independente e CI; nenhum skip ou variável que force PASS",
+    "eficacia": "NO-GO até CI, revisão Edivan5002 da PR documental #709, merge e readback de P0_GOV_PLAN_679 na main"
+  }
 }
