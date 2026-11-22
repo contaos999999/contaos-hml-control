@@ -1,8 +1,23 @@
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { classifyActor, classifyIsolation } from './fixture-attestation.mjs';
 
 const ATTESTATION = 'artifacts/hml-counterproofs/fixture-attestation.json';
+const ATTESTATION_SHA = 'artifacts/hml-counterproofs/fixture-attestation.SHA256';
+export function verifyAttestationDigest(raw, checksumLine) {
+ if (typeof raw !== 'string' || typeof checksumLine !== 'string') return false;
+ const hash=createHash('sha256').update(raw).digest('hex');
+ return checksumLine.trim() === hash + '  fixture-attestation.json';
+}
+export function loadAttestation() {
+ try {
+  const raw=readFileSync(ATTESTATION,'utf8');
+  const checksum=readFileSync(ATTESTATION_SHA,'utf8');
+  if (!verifyAttestationDigest(raw,checksum)) return null;
+  return JSON.parse(raw);
+ } catch {return null;}
+}
 export const REQUIRED = [
   'CONTAOS_HML_FRONTEND_URL', 'CONTAOS_HML_ALLOWED_HOST',
   'CONTAOS_HML_USER_A_EMAIL', 'CONTAOS_HML_USER_A_PASSWORD',
@@ -41,8 +56,7 @@ export function preflight(env, context = {}, evidence = null) {
   return { pass: errors.length === 0, errors, release: 'HML_AUTH_RLS_ONLY_NO_BACKEND_CERTIFICATION' };
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  let proof = null;
-  try { proof = JSON.parse(readFileSync(ATTESTATION, 'utf8')); } catch { /* fail closed */ }
+  const proof = loadAttestation();
   const context = { sha: process.env.GITHUB_SHA, runId: process.env.GITHUB_RUN_ID, runAttempt: process.env.GITHUB_RUN_ATTEMPT, repository: process.env.GITHUB_REPOSITORY };
   const result = preflight(process.env, context, proof);
   console.log(JSON.stringify({status: result.pass ? 'PREFLIGHT_HML_AUTH_RLS_PASS' : 'BLOCKED', release: result.release, errors: result.errors}));
