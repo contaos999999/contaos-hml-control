@@ -16,5 +16,10 @@
     "Não preencher ledger sem run",
     "F4 bloqueada até certificado",
     "GATE PROD LIVE distinto"
-  ]
+  ],
+  "normative_code_gate_parent": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba",
+    "note": "BUILD-2b-2b dos drivers; nenhum teste LIVE é condição da certificação de código V1–V5. Contraprovas LIVE no GATE PROD."
+  }
 }
