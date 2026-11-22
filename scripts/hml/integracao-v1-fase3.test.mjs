@@ -1457,6 +1457,8 @@ const seal = (book, n, producerOrder, extra = {}) => {
   // ID já usado: a recusa é a do livro (replay), antes de qualquer vínculo.
   if (book.summary().requests.some((q) => q.requestId === requestId))
     return book.seal({ ...args, ...extra });
+  // Verifica a intenção antes de preparar vínculos sintéticos, como a cerca real.
+  book.check({ op: "seal", ...args, ...extra });
   const binds = bindsFor(book, producerOrder, extra.kind ?? "principal", extra.action);
   book.seal({
     requestId,
@@ -1791,7 +1793,7 @@ test("F3 B2b1: relatório completo montado pelo livro valida e cumpre todos os c
   assert.deepEqual(report.summary, { PASS: 138, FAIL: 0, BLOCKED: 0, N_A_JUSTIFICADO: 0 });
   assert.deepEqual(
     [report.intents.sent, report.intents.confirmed, report.intents.rejected],
-    [33, 23, 10],
+    [37, 27, 10],
   );
   assert.equal(report.ledgerSha256, sut.F3_LEDGER_SHA256);
   // O gate de produção usa a política de produção (null nos mutantes): nunca PASS no 2b-1.
@@ -2080,6 +2082,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   const noDup = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(noDup);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 9) ensureV108Prerequisites(noDup);
     if (o === 10) ensureV107Prerequisites(noDup);
     seedF3NoUploadPrereq(noDup, o);
     seal(noDup, o, o);
@@ -2188,6 +2191,7 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
   assert.throws(() => book.resend(uuid(8)), { code: "F3_UNCERTAIN_RESEND" });
   book.confirm(uuid(8), { entityId: uuid(80), organizationId: F3 });
   assert.equal(book.summary().requests.find((q) => q.requestId === uuid(8)).sends, 2);
+  ensureV108Prerequisites(book);
   seal(book, 9, 9);
   book.uncertain(uuid(9));
   // Entidade achada na e87f7e68 é fato observado, registrado fora da F3.
@@ -2391,7 +2395,7 @@ test("F3 B2b1: relatório bloqueado, com e sem ledger lido, gravado com SHA256SU
     provenance: PROV,
     ledger: l1,
   });
-  assert.deepEqual([later.intents.priorSent, later.intents.uncertain], [34, 1]);
+  assert.deepEqual([later.intents.priorSent, later.intents.uncertain], [38, 1]);
   assert.equal(later.isolation.organizationF3, F3);
   assert.equal(sut.validateF3Report(later, catalogue, { ledger: l1 }), true);
   assert.throws(() => sut.validateF3Report(later, catalogue, NP), { code: "F3_REPORT" });
@@ -3125,12 +3129,12 @@ test("F3 B2b1 RED: relatório parcial com o livro preserva envios, eventos e inv
     provenance: PROV,
     book,
   });
-  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [34, true]);
+  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [38, true]);
   assert.equal(partial.isolation.created.at(-1).kind, "fora_da_f3");
   assert.equal(sut.validateF3Report(partial, catalogue, NP), true);
   // O ledger montado com os eventos desse artefato conta os 34 envios de fixture.
   const l1 = ledgerOf([{ ...run(PROV.workflowRunId, book) }]);
-  assert.equal(sut.f3LedgerState(l1).priorSent, 34);
+  assert.equal(sut.f3LedgerState(l1).priorSent, 38);
   // Livro estranho ou ledger diferente do livro são recusados.
   assert.throws(
     () =>
@@ -3889,11 +3893,11 @@ test("F3 §12.6: ações sem chave rejeitam reenvio no livro após readback", ()
   ]) {
     const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
     if (order !== 2) createOrg(book);
-    if ([6, 7, 14, 16, 18, 19].includes(order)) {
+    if ([6, 7, 14, 16, 18, 19, 20].includes(order)) {
       seal(book, 5, 5);
       book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
     }
-    if ([14, 16, 18, 19].includes(order)) {
+    if ([14, 16, 18, 19, 20].includes(order)) {
       seal(book, 7, 7);
       book.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
     }
@@ -3902,6 +3906,7 @@ test("F3 §12.6: ações sem chave rejeitam reenvio no livro após readback", ()
       book.confirm(uuid(14), { entityId: uuid(114), organizationId: F3 });
     }
     if (order === 18 && kind === "principal") seedF3NoUploadPrereq(book, 18);
+    if (order === 20 && kind === "principal") seedF3NoUploadPrereq(book, 20);
     const extra =
       kind === "prerequisito" && order === 18
         ? { kind, action: "parecer" }
@@ -4603,7 +4608,12 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
     book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
     seal(book, 7, 7);
     book.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
+    ensureV108Prerequisites(book);
     ensureV107Prerequisites(book);
+    seal(book, 12, 12);
+    book.confirm(uuid(12), { entityId: uuid(112), organizationId: F3 });
+    seal(book, 220, 20, { kind: "prerequisito", action: "documento" });
+    book.confirm(uuid(220), { entityId: uuid(12020), organizationId: F3 });
     seal(book, 14, 14);
     book.confirm(uuid(14), { entityId: uuid(114), organizationId: F3 });
     seal(book, 218, 18, { kind: "prerequisito", action: "parecer" });
