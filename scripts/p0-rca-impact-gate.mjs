@@ -2918,7 +2918,7 @@ export const P0_SEMANTIC_PRIORITY_DISPUTES=Object.freeze([
     rules:["PLAN-S4-13","EMENDA-12"],case:"FULL_DIFF_NO_DOCUMENTAL_ESCAPE",
     E1:"Guard RCA obedece ao manifesto protegido da base anterior, não à PR avaliada.",
     E2:"Diff inclui caminho extra não autorizado, apesar de a PR alegar mudança documental.",
-    E3:"full_diff=true impõe recusa antes da saída N/A visual.",
+    E3:"full_diff=true impõe recusa antes da saída N/A visual, mesmo se os checks existentes estiverem verdes.",
     E4:"Adicionar décimo quinto caminho e manifesto falsificado no próprio HEAD deve FAIL.",
     E5:"Diff paginado e manifesto da base pré-integração, identidades/SHAs LIVE.",
     E6:"Novo diff/HEAD requer reavaliação integral, não pode reutilizar avaliação anterior.",
