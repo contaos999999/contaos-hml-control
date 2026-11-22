@@ -1946,6 +1946,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   createOrg(acceptedBook);
   for (const o of MUT.filter((x) => x !== 2)) {
     if (o === 10) ensureV107Prerequisites(acceptedBook);
+    seedF3NoUploadPrereq(acceptedBook, o);
     seal(acceptedBook, o, o);
     acceptedBook.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
     if (REJ(o)) {
