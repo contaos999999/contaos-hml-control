@@ -20,6 +20,7 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { resolve, join } from "node:path";
 import {
   API_ORIGIN,
+  HML_ORIGIN,
   INTEGRACAO_V1_FASE3_SCOPE,
   loadSingleRequestProof,
   requestAllowed,
@@ -2505,6 +2506,388 @@ export function assertF3WorkflowContract(yaml) {
 }
 
 /** Driver de produção: até os incrementos seguintes do BUILD-2b-2, nenhum produtor roda. */
+
+/**
+ * BUILD-2b-2b S1: piloto UI de quatro produtores. Sem fetch de mutação, sem SQL e sem
+ * acesso direto a segredo por este módulo. O navegador chega com a cerca CDP instalada.
+ * F3 --run-f3 continua bloqueado até todos os 20 produtores estarem implementados.
+ */
+export const F3_S1_UI = Object.freeze({
+  login: "/login",
+  organizations: "/selecionar-organizacao",
+  users: "/administracao/usuarios",
+  originalMasterOrganization: "ContaOS HML Teste",
+  originalMasterRole: "Administrador Master",
+  secondRole: "leitor",
+  timeout: 15000,
+});
+const F3_S1_AUTH = API_ORIGIN + "/auth/v1/token?grant_type=password";
+const F3_S1_ORGS = API_ORIGIN + "/rest/v1/rpc/listar_organizacoes_disponiveis";
+const F3_S1_CREATE = API_ORIGIN + "/rest/v1/rpc/criar_organizacao";
+const F3_S1_EDGE = API_ORIGIN + "/functions/v1/admin-invite-user";
+const F3_S1_LINK = API_ORIGIN + "/rest/v1/rpc/salvar_vinculo_usuario_adm";
+const F3_S1_LIST = API_ORIGIN + "/rest/v1/rpc/listar_usuarios_vinculos_adm";
+
+function f3S1Credentials(credentials) {
+  if (
+    !credentials ||
+    typeof credentials.email !== "string" ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email) ||
+    typeof credentials.password !== "string" ||
+    !credentials.password ||
+    credentials.password.length > 4096
+  )
+    fail("F3_UI_CREDENTIALS");
+}
+
+/** Login exclusivamente pela interface. Não retorna token, email nem dados de Auth. */
+export async function f3S1Login(page, credentials, { readerBeforeLink = false } = {}) {
+  f3S1Credentials(credentials);
+  await page.goto(HML_ORIGIN + F3_S1_UI.login, { waitUntil: "networkidle" });
+  await page.locator("#login-email").fill(credentials.email);
+  await page.locator("#login-senha").fill(credentials.password);
+  const auth = page.waitForResponse(
+    (r) => r.url() === F3_S1_AUTH && r.request().method() === "POST",
+    { timeout: F3_S1_UI.timeout },
+  );
+  await page.getByRole("button", { name: "Entrar", exact: true }).click();
+  if ((await auth).status() !== 200) fail("F3_UI_LOGIN_FAILED");
+  if (readerBeforeLink) {
+    await page
+      .getByText(
+        "Seu usuário não possui acesso ativo a nenhuma organização. Procure o administrador.",
+        { exact: true },
+      )
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    const logout = page.waitForResponse(
+      (r) => r.url() === API_ORIGIN + "/auth/v1/logout" && r.request().method() === "POST",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.getByRole("button", { name: "Sair", exact: true }).click();
+    if ((await logout).status() !== 204) fail("F3_UI_LOGOUT");
+    await page.locator("#login-senha").waitFor({ state: "visible" });
+    return "NO_ACTIVE_MEMBERSHIP";
+  }
+  await page.waitForURL((url) => url.origin === HML_ORIGIN && url.pathname !== F3_S1_UI.login, {
+    timeout: F3_S1_UI.timeout,
+  });
+  return "AUTHENTICATED";
+}
+
+async function f3S1Logout(page, fence) {
+  const logout = page.waitForResponse(
+    (r) => r.url() === API_ORIGIN + "/auth/v1/logout" && r.request().method() === "POST",
+    { timeout: F3_S1_UI.timeout },
+  );
+  await page
+    .getByRole("navigation", { name: "Ações da sessão", exact: true })
+    .getByRole("button", { name: "Sair", exact: true })
+    .click();
+  if ((await logout).status() !== 204) fail("F3_UI_LOGOUT");
+  await page.waitForURL((u) => u.origin === HML_ORIGIN && u.pathname === F3_S1_UI.login);
+  await fence.drain();
+  fence.assertSafe();
+  return true;
+}
+
+async function f3S1MasterSelect(page, fence) {
+  await page.goto(HML_ORIGIN + F3_S1_UI.organizations, { waitUntil: "networkidle" });
+  await fence.drain();
+  fence.assertSafe();
+  const master = page
+    .getByRole("radio")
+    .filter({ hasText: F3_S1_UI.originalMasterOrganization })
+    .filter({ hasText: F3_S1_UI.originalMasterRole });
+  if ((await master.count()) !== 1) fail("F3_UI_MASTER_ROLE");
+  return true;
+}
+
+export async function f3S1CreateOrganization({ page, fence, mutationFence, book, name }) {
+  if (!/^ContaOS HML F3 [1-9][0-9]{3,19}$/.test(name) || book.organizationF3() !== null)
+    fail("F3_UI_ORG_PRECONDITION");
+  if ((await page.getByRole("radio").filter({ hasText: name }).count()) !== 0)
+    fail("F3_UI_ORG_RECONCILE_REQUIRED");
+  await page.getByRole("button", { name: "Nova organização", exact: true }).click();
+  await page.locator("#org-criar-razao").fill(name);
+  await page.locator("#org-criar-nome").fill("");
+  await page.locator("#org-criar-cnpj").fill("");
+  const requestId = mutationFence.arm({
+    producerOrder: 2,
+    bodies: [{ p_razao_social: name, p_timezone: "America/Sao_Paulo" }],
+  });
+  try {
+    const created = page.waitForResponse(
+      (r) => r.url() === F3_S1_CREATE && r.request().method() === "POST",
+      { timeout: F3_S1_UI.timeout },
+    );
+    const listed = page.waitForResponse(
+      (r) => r.url() === F3_S1_ORGS && r.request().method() === "POST",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.getByRole("button", { name: "Criar organização", exact: true }).click();
+    const response = await created;
+    if (response.status() !== 200) fail("F3_UI_ORG_HTTP");
+    const organizationId = await response.json();
+    if (!isUuid(organizationId)) fail("F3_UI_ORG_RESPONSE");
+    const readback = await listed;
+    if (readback.status() !== 200) fail("F3_UI_ORG_READBACK");
+    const rows = await readback.json();
+    if (
+      !Array.isArray(rows) ||
+      rows.filter(
+        (v) =>
+          v?.id === organizationId &&
+          v.razao_social === name &&
+          v.perfil === "administrador_master",
+      ).length !== 1
+    )
+      fail("F3_UI_ORG_READBACK");
+    const card = page.getByRole("radio").filter({ hasText: name });
+    await card.waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    if ((await card.count()) !== 1) fail("F3_UI_ORG_READBACK");
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId)
+      fail("F3_UI_ORG_UNCERTAIN");
+    book.confirm(requestId, { entityId: organizationId, organizationId });
+    await card.click();
+    await page.getByRole("button", { name: "Continuar", exact: true }).click();
+    await page.waitForURL((u) => u.origin === HML_ORIGIN && u.pathname === "/");
+    await fence.drain();
+    fence.assertSafe();
+    return organizationId;
+  } catch (error) {
+    // criar_organizacao não tem chave: nenhuma repetição automática em falha incerta.
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Selo não emitido: não inventar envio nem mascarar a falha original.
+    }
+    throw error;
+  }
+}
+
+/** Conferência posterior à escrita: o retorno do save, sozinho, não é persistência. */
+export function assertF3S1ReaderReadback(snapshot, userId, email) {
+  if (
+    !isUuid(userId) ||
+    typeof email !== "string" ||
+    !email ||
+    snapshot?.schema_versao !== "adm01-v2" ||
+    !Array.isArray(snapshot?.itens)
+  ) {
+    fail("F3_UI_READER_READBACK");
+  }
+  const matching = snapshot.itens.filter(
+    (item) =>
+      item?.id_usuario === userId &&
+      typeof item.email === "string" &&
+      item.email.toLowerCase() === email.toLowerCase() &&
+      item.vinculo?.perfil === "leitor" &&
+      item.vinculo?.ativo === true &&
+      item.vinculo?.escopo_todos_contratos === false,
+  );
+  if (matching.length !== 1) {
+    fail("F3_UI_READER_READBACK");
+  }
+  return true;
+}
+
+export async function f3S1LinkReader({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  readerEmail,
+}) {
+  if (!isUuid(organizationId) || book.organizationF3() !== organizationId) fail("F3_UI_READER_ORG");
+  await page.goto(HML_ORIGIN + F3_S1_UI.users, { waitUntil: "networkidle" });
+  await fence.drain();
+  fence.assertSafe();
+  await page.getByRole("button", { name: "Convidar ou vincular usuário", exact: true }).click();
+  await page.locator("#adm01-email").fill(readerEmail);
+  await page.locator("#adm01-nome").fill("");
+  await page.locator("#adm01-perfil").selectOption("leitor");
+  const dialog = page.getByRole("dialog", { name: "Convidar ou vincular usuário" });
+  if ((await dialog.count()) !== 1) fail("F3_UI_READER_DIALOG");
+  if (!(await dialog.getByLabel("Vínculo ativo", { exact: true }).isChecked()))
+    fail("F3_UI_READER_INACTIVE");
+  if (await dialog.getByLabel("Acesso a todos os contratos", { exact: true }).isChecked())
+    fail("F3_UI_READER_SCOPE");
+  const requestId = mutationFence.arm({
+    producerOrder: 4,
+    bodies: [
+      {
+        id_organizacao: organizationId,
+        email: readerEmail,
+        chave_idempotencia: f3Slot("uuid", "convite"),
+      },
+      {
+        p_id_organizacao: organizationId,
+        p_id_usuario: f3Slot("uuid", "usuario"),
+        p_email: readerEmail,
+        p_perfil: "leitor",
+        p_escopo_todos_contratos: false,
+        p_ativo: true,
+        p_ids_contratos_ativar: [],
+        p_ids_contratos_revogar: [],
+        p_versao_esperada: null,
+        p_chave_idempotencia: f3Slot("uuid", "vinculo"),
+      },
+    ],
+  });
+  try {
+    const invite = page.waitForResponse(
+      (r) => r.url() === F3_S1_EDGE && r.request().method() === "POST",
+      { timeout: F3_S1_UI.timeout },
+    );
+    const save = page.waitForResponse(
+      (r) => r.url() === F3_S1_LINK && r.request().method() === "POST",
+      { timeout: F3_S1_UI.timeout },
+    );
+    const readback = page.waitForResponse(
+      (r) => r.url() === F3_S1_LIST && r.request().method() === "POST",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Salvar vínculo", exact: true }).click();
+    const invited = await invite;
+    if (invited.status() !== 200) fail("F3_UI_READER_INVITE");
+    const invitedBody = await invited.json();
+    const userId = invitedBody?.usuario?.id_usuario;
+    if (invitedBody?.codigo !== "USUARIO_EXISTENTE" || !isUuid(userId))
+      fail("F3_UI_READER_PREEXISTENCE");
+    const saved = await save;
+    if (saved.status() !== 200) fail("F3_UI_READER_LINK_HTTP");
+    const data = await saved.json();
+    if (
+      data?.schema_versao !== "adm01-v2" ||
+      data?.id_usuario !== userId ||
+      data?.vinculo?.perfil !== "leitor" ||
+      data?.vinculo?.ativo !== true
+    )
+      fail("F3_UI_READER_LINK_RESPONSE");
+    const listed = await readback;
+    if (listed.status() !== 200) {
+      fail("F3_UI_READER_READBACK");
+    }
+    const query = listed.request().postDataJSON();
+    if (query?.p_id_organizacao !== organizationId || query?.p_pagina !== 1) {
+      fail("F3_UI_READER_READBACK");
+    }
+    assertF3S1ReaderReadback(await listed.json(), userId, readerEmail);
+    await dialog.waitFor({ state: "hidden", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId)
+      fail("F3_UI_READER_LINK_UNCERTAIN");
+    book.confirm(requestId, { entityId: userId, organizationId });
+    return userId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Selo não emitido: não inventar envio.
+    }
+    throw error;
+  }
+}
+
+/** Executa S1 sem produzir PASS das 138 linhas, sem logar tokens nem credenciais. */
+export async function driveF3S1Ui({
+  masterPage,
+  readerPage,
+  masterFence,
+  readerFence,
+  mutationFence,
+  book,
+  masterCredentials,
+  readerCredentials,
+} = {}) {
+  if (
+    !masterPage ||
+    !readerPage ||
+    masterPage === readerPage ||
+    masterPage.context() === readerPage.context() ||
+    !masterFence ||
+    !readerFence ||
+    !mutationFence ||
+    !BOOKS.has(book)
+  )
+    fail("F3_UI_SESSION_CONFIGURATION");
+  f3S1Credentials(masterCredentials);
+  f3S1Credentials(readerCredentials);
+  if (masterCredentials.email === readerCredentials.email) fail("F3_UI_SAME_USER");
+  const name = "ContaOS HML F3 " + book.provenance().workflowRunId;
+  if (!/^ContaOS HML F3 [1-9][0-9]{3,19}$/.test(name)) fail("F3_UI_ORG_NONCE");
+  let masterSignedIn = false;
+  let readerSignedIn = false;
+  try {
+    // Antes de mutações: leitor preexistente autentica e não possui vínculo ativo.
+    const before = await f3S1Login(readerPage, readerCredentials, { readerBeforeLink: true });
+    await readerFence.drain();
+    readerFence.assertSafe();
+    if (before !== "NO_ACTIVE_MEMBERSHIP") fail("F3_UI_READER_PRELINK");
+    await f3S1Login(masterPage, masterCredentials);
+    masterSignedIn = true;
+    await f3S1MasterSelect(masterPage, masterFence);
+    const organizationId = await f3S1CreateOrganization({
+      page: masterPage,
+      fence: masterFence,
+      mutationFence,
+      book,
+      name,
+    });
+    const userId = await f3S1LinkReader({
+      page: masterPage,
+      fence: masterFence,
+      mutationFence,
+      book,
+      organizationId,
+      readerEmail: readerCredentials.email,
+    });
+    await f3S1Login(readerPage, readerCredentials);
+    readerSignedIn = true;
+    await readerPage.goto(HML_ORIGIN + F3_S1_UI.organizations, { waitUntil: "networkidle" });
+    await readerFence.drain();
+    readerFence.assertSafe();
+    const cards = readerPage.getByRole("radio");
+    if ((await cards.count()) !== 1) fail("F3_UI_READER_ORGANIZATION_LEAK");
+    const card = cards.filter({ hasText: name }).filter({ hasText: "leitor" });
+    if ((await card.count()) !== 1) fail("F3_UI_READER_ROLE");
+    await card.click();
+    await readerPage.getByRole("button", { name: "Continuar", exact: true }).click();
+    await readerPage.waitForURL((u) => u.origin === HML_ORIGIN && u.pathname === "/");
+    await readerFence.drain();
+    readerFence.assertSafe();
+    await readerPage.goto(HML_ORIGIN + F3_S1_UI.users, { waitUntil: "networkidle" });
+    await readerPage
+      .getByText("Você não tem permissão para administrar usuários desta organização.", {
+        exact: true,
+      })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await readerFence.drain();
+    readerFence.assertSafe();
+    await f3S1Logout(readerPage, readerFence);
+    readerSignedIn = false;
+    await f3S1Logout(masterPage, masterFence);
+    masterSignedIn = false;
+    book.assertIsolation();
+    return Object.freeze({
+      state: "S1_UI_OBSERVED_NOT_CERTIFIED",
+      organizationId,
+      userId,
+      masterLogout: true,
+      readerLogout: true,
+    });
+  } finally {
+    if (readerSignedIn) await f3S1Logout(readerPage, readerFence).catch(() => undefined);
+    if (masterSignedIn) await f3S1Logout(masterPage, masterFence).catch(() => undefined);
+  }
+}
+
 async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }

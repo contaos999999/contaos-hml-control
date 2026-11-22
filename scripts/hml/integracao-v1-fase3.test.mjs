@@ -210,6 +210,336 @@ const POLICY = Object.freeze({
 const entity = (o) => (o === 2 ? F3 : uuid(100 + o));
 const LEDGER_RAW = await readFile(new URL(sut.F3_LEDGER_PATH, root), "utf8");
 const EMPTY = sut.validateF3Ledger(LEDGER_RAW, catalogue);
+
+test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não pelo backend do runner", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  const fence = sut.createF3MutationFence({ book });
+  const organizationId = uuid(889001);
+  const userId = uuid(889002);
+  const actions = [];
+  const fields = new Map();
+  const listeners = [];
+  let selected = null;
+  let organizationVisible = false;
+  const response = (url, data, body = {}) => {
+    const value = {
+      url: () => url,
+      request: () => ({ method: () => "POST", postDataJSON: () => body }),
+      status: () => 200,
+      json: async () => data,
+    };
+    for (let i = listeners.length - 1; i >= 0; i--) {
+      if (listeners[i].predicate(value)) {
+        const waiter = listeners.splice(i, 1)[0];
+        waiter.resolve(value);
+      }
+    }
+  };
+  let sequence = 0;
+  const invoke = (url, body) => {
+    const requestId = "interception_" + ++sequence;
+    const message = {
+      url,
+      method: "POST",
+      postData: JSON.stringify(body),
+      sessionId: "test_native_session",
+      interceptionId: requestId,
+    };
+    assert.equal(fence.policy({ ...message, stage: "REQUEST" }), true);
+    assert.equal(fence.policy({ ...message, stage: "RESPONSE" }), true);
+  };
+  const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const role = (type, options = {}) => {
+    if (type === "radio") {
+      let fragment = "";
+      return {
+        filter({ hasText }) {
+          fragment += hasText;
+          return this;
+        },
+        count: async () => (fragment.includes("ContaOS HML F3") && organizationVisible ? 1 : 0),
+        waitFor: async () => undefined,
+        click: async () => {
+          selected = "organizacao";
+        },
+      };
+    }
+    if (type === "dialog") {
+      return {
+        count: async () => 1,
+        getByLabel: (name) => ({
+          isChecked: async () => name === "Vínculo ativo",
+        }),
+        getByRole: (_kind, target) => ({
+          click: async () => {
+            assert.equal(target.name, "Salvar vínculo");
+            invoke(api + "/functions/v1/admin-invite-user", {
+              id_organizacao: organizationId,
+              email: fields.get("#adm01-email"),
+              chave_idempotencia: uuid(789001),
+            });
+            response(api + "/functions/v1/admin-invite-user", {
+              codigo: "USUARIO_EXISTENTE",
+              usuario: { id_usuario: userId },
+            });
+            invoke(api + "/rest/v1/rpc/salvar_vinculo_usuario_adm", {
+              p_id_organizacao: organizationId,
+              p_id_usuario: userId,
+              p_email: fields.get("#adm01-email"),
+              p_perfil: "leitor",
+              p_escopo_todos_contratos: false,
+              p_ativo: true,
+              p_ids_contratos_ativar: [],
+              p_ids_contratos_revogar: [],
+              p_versao_esperada: null,
+              p_chave_idempotencia: uuid(789002),
+            });
+            response(api + "/rest/v1/rpc/salvar_vinculo_usuario_adm", {
+              schema_versao: "adm01-v2",
+              id_usuario: userId,
+              vinculo: { perfil: "leitor", ativo: true },
+            });
+            const readbackUrl = api + "/rest/v1/rpc/listar_usuarios_vinculos_adm";
+            const readbackRequest = {
+              url: () => readbackUrl,
+              request: () => ({ method: () => "POST" }),
+            };
+            assert.ok(
+              listeners.some((listener) => listener.predicate(readbackRequest)),
+              "salvar vínculo exige observador independente de readback",
+            );
+            response(
+              readbackUrl,
+              {
+                schema_versao: "adm01-v2",
+                itens: [
+                  {
+                    id_usuario: userId,
+                    email: fields.get("#adm01-email"),
+                    vinculo: {
+                      perfil: "leitor",
+                      ativo: true,
+                      escopo_todos_contratos: false,
+                    },
+                  },
+                ],
+              },
+              { p_id_organizacao: organizationId, p_pagina: 1 },
+            );
+          },
+        }),
+        waitFor: async () => undefined,
+      };
+    }
+    if (type === "button") {
+      return {
+        click: async () => {
+          actions.push(options.name);
+          if (options.name === "Criar organização") {
+            const name = fields.get("#org-criar-razao");
+            invoke(api + "/rest/v1/rpc/criar_organizacao", {
+              p_razao_social: name,
+              p_timezone: "America/Sao_Paulo",
+            });
+            organizationVisible = true;
+            response(api + "/rest/v1/rpc/criar_organizacao", organizationId);
+            response(api + "/rest/v1/rpc/listar_organizacoes_disponiveis", [
+              { id: organizationId, razao_social: name, perfil: "administrador_master" },
+            ]);
+          } else if (options.name === "Continuar") selected = "/";
+        },
+      };
+    }
+    throw Error("UNEXPECTED_ROLE_" + type);
+  };
+  const page = {
+    getByRole: role,
+    goto: async (url) => {
+      selected = new URL(url).pathname;
+    },
+    locator: (id) => ({
+      fill: async (v) => {
+        fields.set(id, v);
+      },
+      selectOption: async (v) => {
+        fields.set(id, v);
+      },
+    }),
+    waitForResponse: (predicate) =>
+      new Promise((resolve) => listeners.push({ predicate, resolve })),
+    waitForURL: async (check) =>
+      assert.equal(check(new URL("https://contaos-41-hml.vercel.app" + selected)), true),
+  };
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  const name = "ContaOS HML F3 " + PROV.workflowRunId;
+  assert.equal(
+    await sut.f3S1CreateOrganization({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      name,
+    }),
+    organizationId,
+  );
+  assert.equal(book.organizationF3(), organizationId);
+  assert.equal(book.summary().sent, 1);
+  assert.equal(
+    await sut.f3S1LinkReader({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      organizationId,
+      readerEmail: "reader@example.test",
+    }),
+    userId,
+  );
+  assert.equal(book.summary().sent, 2);
+  assert.equal(book.assertIsolation(), true);
+  assert.deepEqual(
+    actions.filter((a) => a === "Criar organização"),
+    ["Criar organização"],
+  );
+  assert.equal(listeners.length, 0);
+});
+
+test("F3 S1: readback ADM01 rejeita vínculo inexistente, permissões divergentes e duplicidade", () => {
+  const id = uuid(889002);
+  const email = "reader@example.test";
+  const row = {
+    id_usuario: id,
+    email,
+    vinculo: { perfil: "leitor", ativo: true, escopo_todos_contratos: false },
+  };
+  const valid = { schema_versao: "adm01-v2", itens: [row] };
+  assert.equal(sut.assertF3S1ReaderReadback(valid, id, email), true);
+  const bad = [
+    { schema_versao: "adm01-v2", itens: [] },
+    { ...valid, itens: [row, row] },
+    { ...valid, itens: [{ ...row, id_usuario: uuid(889003) }] },
+    { ...valid, itens: [{ ...row, email: "foreign@example.test" }] },
+    { ...valid, itens: [{ ...row, vinculo: { ...row.vinculo, perfil: "administrador_master" } }] },
+    { ...valid, itens: [{ ...row, vinculo: { ...row.vinculo, ativo: false } }] },
+    { ...valid, itens: [{ ...row, vinculo: { ...row.vinculo, escopo_todos_contratos: true } }] },
+    { schema_versao: "adm01-v1", itens: [row] },
+  ];
+  for (const snapshot of bad) {
+    assert.throws(() => sut.assertF3S1ReaderReadback(snapshot, id, email), {
+      code: "F3_UI_READER_READBACK",
+    });
+  }
+});
+
+test("F3 S1: contrato do piloto UI impede ativação e preserva as 138 linhas", async () => {
+  assert.equal(sut.F3_S1_UI.login, "/login");
+  assert.equal(sut.F3_S1_UI.organizations, "/selecionar-organizacao");
+  assert.equal(sut.F3_S1_UI.users, "/administracao/usuarios");
+  assert.equal(sut.F3_S1_UI.secondRole, "leitor");
+  assert.ok(Object.isFrozen(sut.F3_S1_UI));
+  const source = await readFile(new URL("./integracao-v1-fase3.mjs", import.meta.url), "utf8");
+  assert.match(source, /export async function driveF3S1Ui\(/);
+  assert.match(source, /async function pendingDriver\(\)/);
+  assert.match(source, /fail\("F3_DRIVER_PENDING"\)/);
+  assert.equal(source.split("process.env").length - 1, 1);
+  assert.equal(sut.F3_MATRIX.rows, 138);
+});
+
+test("F3 S1: credencial ausente, usuário igual e contexto de browser compartilhado param antes do UI", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  const context = {};
+  const a = { context: () => context };
+  const b = { context: () => context };
+  await assert.rejects(
+    sut.driveF3S1Ui({
+      book,
+      masterPage: a,
+      readerPage: b,
+      masterFence: {},
+      readerFence: {},
+      mutationFence: {},
+      masterCredentials: { email: "master@example.test", password: "x" },
+      readerCredentials: { email: "reader@example.test", password: "x" },
+    }),
+    { code: "F3_UI_SESSION_CONFIGURATION" },
+  );
+  await assert.rejects(
+    sut.driveF3S1Ui({
+      book,
+      masterPage: a,
+      readerPage: { context: () => ({}) },
+      masterFence: {},
+      readerFence: {},
+      mutationFence: {},
+      masterCredentials: { email: "master@example.test", password: "x" },
+      readerCredentials: { email: "master@example.test", password: "x" },
+    }),
+    { code: "F3_UI_SAME_USER" },
+  );
+  const original = JSON.stringify(book.summary());
+  await assert.rejects(
+    sut.f3S1Login(
+      {
+        goto: async () => {
+          throw Error("UI_MUST_NOT_RUN");
+        },
+      },
+      { email: "invalid", password: "x" },
+    ),
+    { code: "F3_UI_CREDENTIALS" },
+  );
+  assert.equal(JSON.stringify(book.summary()), original);
+});
+
+test("F3 S1: login UI autentica por POST real e recusa 401 sem expor credenciais", async () => {
+  const actions = [];
+  const makePage = (status, beforeLink = false) => ({
+    goto: async (url) => actions.push(["goto", new URL(url).pathname]),
+    locator: (name) => ({
+      fill: async (value) => actions.push(["fill", name, value.length]),
+      waitFor: async () => actions.push(["wait", name]),
+    }),
+    waitForResponse: async (predicate) => {
+      const target = {
+        url: () => "https://gklhhhyosgasnyoxlrui.supabase.co/auth/v1/token?grant_type=password",
+        request: () => ({ method: () => "POST" }),
+      };
+      const logout = {
+        url: () => "https://gklhhhyosgasnyoxlrui.supabase.co/auth/v1/logout",
+        request: () => ({ method: () => "POST" }),
+      };
+      if (predicate(logout)) return { status: () => 204 };
+      assert.equal(predicate(target), true);
+      return { status: () => status };
+    },
+    getByRole: (role, options) => ({
+      click: async () => actions.push(["click", role, options.name]),
+    }),
+    getByText: (message) => ({
+      waitFor: async () => {
+        assert.ok(message.startsWith("Seu usuário não possui acesso ativo"));
+        assert.equal(beforeLink, true);
+      },
+    }),
+    waitForURL: async (predicate) => {
+      assert.equal(
+        predicate(new URL("https://contaos-41-hml.vercel.app/selecionar-organizacao")),
+        true,
+      );
+    },
+  });
+  const credentials = { email: "leitor@example.test", password: "example-only-test-not-a-secret" };
+  assert.equal(await sut.f3S1Login(makePage(200), credentials), "AUTHENTICATED");
+  assert.equal(
+    await sut.f3S1Login(makePage(200, true), credentials, { readerBeforeLink: true }),
+    "NO_ACTIVE_MEMBERSHIP",
+  );
+  await assert.rejects(sut.f3S1Login(makePage(401), credentials), { code: "F3_UI_LOGIN_FAILED" });
+  assert.ok(actions.some((a) => a[0] === "click" && a[2] === "Entrar"));
+  assert.equal(JSON.stringify(actions).includes(credentials.email), false);
+  assert.equal(JSON.stringify(actions).includes(credentials.password), false);
+});
+
 const ledgerWith = ({ runs = [], entries = [] }) =>
   JSON.stringify({ ...JSON.parse(LEDGER_RAW), runs, entries }, null, 2) + "\n";
 const ledgerOf = (runs, entries = []) =>
