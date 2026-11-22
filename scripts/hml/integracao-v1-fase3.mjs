@@ -3221,6 +3221,160 @@ export async function f3S2UpdateContractor({
   }
 }
 
+/**
+ * V105 não usa RETURNING: só uma GET posterior, com org e número sintético exato,
+ * descobre o UUID do contrato. Não inventar id no harness.
+ */
+export function assertF3S2ContractReadback({
+  rows,
+  query,
+  organizationId,
+  contractorId,
+  number,
+  object,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractorId) ||
+    !/^F3-[1-9][0-9]{3,19}$/.test(number) ||
+    object !== "Contrato sintético F3 " + number.slice(3) ||
+    !Array.isArray(rows) ||
+    !(query instanceof URL) ||
+    query.origin !== API_ORIGIN ||
+    query.pathname !== "/rest/v1/contratos" ||
+    query.searchParams.getAll("id_organizacao").length !== 1 ||
+    query.searchParams.get("id_organizacao") !== "eq." + organizationId
+  ) {
+    fail("F3_S2_V105_READBACK");
+  }
+  const matching = rows.filter(
+    (row) =>
+      isUuid(row?.id) &&
+      row.id_organizacao === organizationId &&
+      row.numero === number &&
+      row.objeto === object,
+  );
+  if (matching.length !== 1) fail("F3_S2_V105_READBACK");
+  if (rows.some((row) => row.numero === number && row.id !== matching[0].id)) {
+    fail("F3_S2_V105_READBACK");
+  }
+  return matching[0].id;
+}
+
+export async function f3S2CreateContract({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractorId,
+  contractorName,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(contractorId) ||
+    organizationId !== book.organizationF3() ||
+    contractorName !== "ContaOS HML F3 " + book.provenance().workflowRunId + " Contratante" ||
+    !book.created().some(
+      (entry) =>
+        entry.id === contractorId &&
+        entry.kind === "registro" &&
+        entry.organizationId === organizationId &&
+        book.summary().requests.some(
+          (q) => q.requestId === entry.requestId && q.producerOrder === 5 && q.outcome === "confirmed",
+        ),
+    )
+  ) {
+    fail("F3_S2_V105_PRECONDITION");
+  }
+  const number = "F3-" + book.provenance().workflowRunId;
+  const object = "Contrato sintético F3 " + book.provenance().workflowRunId;
+  await page.goto(HML_ORIGIN + "/contratos/novo", { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Novo contrato" }).waitFor({
+    state: "visible",
+    timeout: F3_S1_UI.timeout,
+  });
+  await fence.drain();
+  fence.assertSafe();
+  await page.locator("#v105-numero").fill(number);
+  await page.locator("#v105-objeto").fill(object);
+  await page.locator("#v105-inicio").fill("2026-11-01");
+  await page.locator("#v105-contratante").fill(contractorName);
+  await page
+    .getByRole("option")
+    .filter({ hasText: contractorName })
+    .click({ timeout: F3_S1_UI.timeout });
+  const payload = {
+    id_organizacao: organizationId,
+    id_contratante: contractorId,
+    numero: number,
+    objeto: object,
+    inicio: "2026-11-01",
+  };
+  const requestId = mutationFence.arm({ producerOrder: 7, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/contratos",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.getByRole("button", { name: "Salvar", exact: true }).click();
+    const submitted = await posted;
+    if (submitted.status() !== 201) fail("F3_S2_V105_HTTP");
+    await page
+      .getByRole("heading", { name: "Contrato cadastrado com sucesso." })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_S2_V105_UNCERTAIN");
+    }
+    const list = page.waitForResponse(
+      (r) => {
+        const u = new URL(r.url());
+        return (
+          r.request().method() === "GET" &&
+          u.origin === API_ORIGIN &&
+          u.pathname === "/rest/v1/contratos" &&
+          u.searchParams.get("id_organizacao") === "eq." + organizationId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.goto(HML_ORIGIN + "/contratos", { waitUntil: "networkidle" });
+    const listed = await list;
+    if (listed.status() !== 200) fail("F3_S2_V105_READBACK");
+    const contractId = assertF3S2ContractReadback({
+      rows: await listed.json(),
+      query: new URL(listed.url()),
+      organizationId,
+      contractorId,
+      number,
+      object,
+    });
+    await page
+      .getByRole("link", { name: "Abrir contrato " + number })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: contractId, organizationId });
+    book.assertIsolation();
+    return contractId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Contrato sem resposta definitiva não é reenviado por falta de chave idempotente.
+    }
+    throw error;
+  }
+}
+
 async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }
