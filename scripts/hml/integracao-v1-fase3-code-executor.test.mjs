@@ -35,7 +35,7 @@ test("F3 CODE executor: 138 caseIds, no missing runs ever becomes certified", as
   assert.equal(report.state, "UNREVIEWED_NOT_CERTIFIED");
   assert.equal(report.entries.length, 138);
   assert.equal(report.counts.failed, 138);
-  assert.equal(report.counts.collected, 0);
+  assert.equal(report.counts.submittedUnverified, 0);
   assert.equal(report.entries[0].reason, "F3_DRIVER_PENDING");
   assert.match(report.reportSha256, /^[a-f0-9]{64}$/);
 });
@@ -57,7 +57,7 @@ test("F3 CODE executor: incomplete evidence and negative omission fail closed", 
   assert.equal(report.counts.blocked, 138);
   assert.ok(report.entries.every((e) => e.reason === "F3_CODE_TEST_EVIDENCE"));
 });
-test("F3 CODE executor: full evidence is still unreviewed, never self-certified", async () => {
+test("F3 CODE executor: even structurally accepted claims stay unverified, never certified", async () => {
   const report = await collectF3CodeEvidence({
     catalogue, catalogueRaw, provenance,
     executeCase: async (c) => ({
@@ -66,12 +66,12 @@ test("F3 CODE executor: full evidence is still unreviewed, never self-certified"
     }),
     verifyCase: async () => true,
   });
-  assert.equal(report.counts.collected, 138);
+  assert.equal(report.counts.submittedUnverified, 138);
   assert.equal(report.state, "UNREVIEWED_NOT_CERTIFIED");
   assert.equal(report.entries.length, 138);
-  assert.ok(report.entries.every((e) => e.status === "EVIDENCE_COLLECTED"));
+  assert.ok(report.entries.every((e) => e.status === "SUBMITTED_UNVERIFIED"));
 });
-test("F3 CODE executor: verification rejection forbids collected status", async () => {
+test("F3 CODE executor: verification rejection forbids even unverified-submission status", async () => {
   const report = await collectF3CodeEvidence({
     catalogue, catalogueRaw, provenance,
     executeCase: async (c) => ({
@@ -81,7 +81,7 @@ test("F3 CODE executor: verification rejection forbids collected status", async 
     verifyCase: async () => false,
   });
   assert.equal(report.counts.failed, 138);
-  assert.equal(report.counts.collected, 0);
+  assert.equal(report.counts.submittedUnverified, 0);
 });
 test("F3 CODE executor: invalid provenance and duplicate catalogue IDs reject execution", async () => {
   const args = {
