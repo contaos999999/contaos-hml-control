@@ -1119,8 +1119,7 @@ test("F3 S2 V106: UI bloqueia atualização sem versão lida e confirma mesmo ID
     },
     getByText(value) {
       return {
-        waitFor: async () =>
-          assert.equal(value, "Alteração confirmada e registrada na auditoria."),
+        waitFor: async () => assert.equal(value, "Alteração confirmada e registrada na auditoria."),
       };
     },
     getByRole(role, options) {
@@ -1159,11 +1158,16 @@ test("F3 S2 V106: UI bloqueia atualização sem versão lida e confirma mesmo ID
         return {
           click: async () => {
             opens++;
-            emit(readUrl, "POST", {
-              p_id_organizacao: F3,
-              p_entidade: "contratos",
-              p_id: contractId,
-            }, opens === 1 ? before : after);
+            emit(
+              readUrl,
+              "POST",
+              {
+                p_id_organizacao: F3,
+                p_entidade: "contratos",
+                p_id: contractId,
+              },
+              opens === 1 ? before : after,
+            );
           },
         };
       }
@@ -1329,7 +1333,6 @@ const ensureV107Prerequisites = (book) => {
     book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
   }
 };
-
 
 test("F3 S2 RED: edição V103 e V106 preserva identidade sem aceitar duplicidade indevida", () => {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
@@ -2345,23 +2348,16 @@ test("F3 B2b1: ledger fixado vazio, append-only, só PASS ligado ao replay, e re
     );
 });
 
-
 test("F3 S2: hash do transcript recusa remocao de evento de replay", () => {
   const report = completeReport();
   assert.match(report.intents.eventsSha256, /^[a-f0-9]{64}$/);
   assert.ok(report.intents.events.length > 2);
   const forged = structuredClone(report);
   forged.intents.events.splice(1, 1);
-  assert.throws(
-    () => sut.validateF3Report(forged, catalogue, OPT),
-    { code: "F3_REPORT" },
-  );
+  assert.throws(() => sut.validateF3Report(forged, catalogue, OPT), { code: "F3_REPORT" });
   const mismatched = structuredClone(report);
   mismatched.intents.eventsSha256 = "f".repeat(64);
-  assert.throws(
-    () => sut.validateF3Report(mismatched, catalogue, OPT),
-    { code: "F3_REPORT" },
-  );
+  assert.throws(() => sut.validateF3Report(mismatched, catalogue, OPT), { code: "F3_REPORT" });
 });
 
 /**
@@ -2520,8 +2516,14 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
         assert.throws(
           () => sut.validateF3Report(tamper, catalogue, { ledger }),
           (e) => ["F3_REPORT", "F3_ISOLATION"].includes(e.code),
-          "F3 replay tamper k=" + k + " run=" + r + " type=" + t +
-            " delta=" + JSON.stringify({ before: report.intents, after: tamper.intents }).slice(0, 1200),
+          "F3 replay tamper k=" +
+            k +
+            " run=" +
+            r +
+            " type=" +
+            t +
+            " delta=" +
+            JSON.stringify({ before: report.intents, after: tamper.intents }).slice(0, 1200),
         );
         tampers += 1;
       }
@@ -3306,12 +3308,10 @@ test("F3 S2 V107: três ações prévias distintas e principal com isolamento e 
   f.book.confirm(requestId, { entityId: uuid(81019), organizationId: F3 });
   assert.equal(f.book.assertIsolation(), true);
   const recorded = f.book.summary().requests.filter((q) => q.producerOrder === 10);
-  assert.deepEqual(recorded.map((q) => q.action ?? "principal"), [
-    "fonte",
-    "versao",
-    "aprovacao",
-    "principal",
-  ]);
+  assert.deepEqual(
+    recorded.map((q) => q.action ?? "principal"),
+    ["fonte", "versao", "aprovacao", "principal"],
+  );
   assert.equal(recorded.filter((q) => q.outcome === "confirmed").length, 4);
 });
 
@@ -4708,17 +4708,26 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
       for (const [action, steps] of Object.entries(f.prerequisito)) {
         const number = stageLabels[order][action];
         assert.ok(Number.isSafeInteger(number), "ação não declarada: " + order + ":" + action);
-        const extraKey = order + " " + sut.F3_PRODUCERS.find((p) => p.order === Number(order)).origin +
-          ", pré-requisito " + number;
+        const extraKey =
+          order +
+          " " +
+          sut.F3_PRODUCERS.find((p) => p.order === Number(order)).origin +
+          ", pré-requisito " +
+          number;
         const source = rows.find((r) => r.key === extraKey);
         assert.ok(source, "pré-requisito sem fonte: " + extraKey);
         for (const st of steps) {
           assert.ok(source.target.includes(st.name), "alvo não declarado: " + st.name);
-          for (const field of [...st.free, ...Object.keys(st.inventory), ...Object.keys(st.derived)]) {
+          for (const field of [
+            ...st.free,
+            ...Object.keys(st.inventory),
+            ...Object.keys(st.derived),
+          ]) {
             const explicit = source.fields.includes("`" + field + "`");
             const keyInResend =
               field === "p_chave_idempotencia" && /chave|gerado_ui|vinculado/.test(source.resend);
-            const organizationImplicit = field === "p_id_organizacao" && source.target.includes("rpc");
+            const organizationImplicit =
+              field === "p_id_organizacao" && source.target.includes("rpc");
             assert.ok(
               explicit || keyInResend || organizationImplicit,
               field + " ausente em " + extraKey,
