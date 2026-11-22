@@ -808,8 +808,10 @@ function validateEvent(e) {
   if (!enumOf(e.op, EVENT_OPS) || !isUuid(e.requestId)) fail(code);
   if (
     action &&
-    (e.op !== "seal" || e.kind !== "prerequisito" ||
-      typeof e.action !== "string" || !F3_ACTION_RE.test(e.action))
+    (e.op !== "seal" ||
+      e.kind !== "prerequisito" ||
+      typeof e.action !== "string" ||
+      !F3_ACTION_RE.test(e.action))
   )
     fail(code);
   const entity = e.op === "confirm" || e.op === "found";
@@ -876,9 +878,7 @@ function authorizedF3IdentityReuse(state, event, intent) {
   if (event.organizationId !== state.organizationF3) return false;
   // Aprovar a versão normativa não cria outra versão: é uma transição do mesmo UUID.
   const approval =
-    intent.producerOrder === 10 &&
-    intent.kind === "prerequisito" &&
-    intent.action === "aprovacao";
+    intent.producerOrder === 10 && intent.kind === "prerequisito" && intent.action === "aprovacao";
   const source = F3_UPDATE_IDENTITY_SOURCE[intent.producerOrder];
   if (!approval && (!source || intent.kind !== "principal")) return false;
   return state.created.some((entry) => {
@@ -888,8 +888,7 @@ function authorizedF3IdentityReuse(state, event, intent) {
       entry.organizationId === event.organizationId &&
       entry.kind === "registro" &&
       (approval
-        ? maker?.producerOrder === 10 &&
-          maker.kind === "prerequisito" &&
+        ? maker?.producerOrder === 10 && maker.kind === "prerequisito" &&
           maker.action === "versao"
         : maker?.producerOrder === source && maker.kind === "principal")
     );
@@ -1252,8 +1251,14 @@ export function createF3IntentBook(options = {}) {
       assertJsonTree(input, "F3_INTENT_STATE");
       const keys = ["op", "requestId", "producerOrder", "kind", "duplicateOf", "action"];
       if (Object.keys(input).some((k) => !keys.includes(k))) fail("F3_INTENT_STATE");
-      const { op, requestId, producerOrder = null, kind = null, duplicateOf = null, action } =
-        input;
+      const {
+        op,
+        requestId,
+        producerOrder = null,
+        kind = null,
+        duplicateOf = null,
+        action,
+      } = input;
       if (op !== "seal" && op !== "resend") fail("F3_INTENT_STATE");
       if (control.frozen) fail("F3_FENCE_FROZEN");
       const e =
@@ -1490,9 +1495,7 @@ function parseUrl(raw) {
 }
 const ALL_STEPS = Object.values(F3_MUTATION_FLOWS).flatMap((f) => [
   ...f.principal,
-  ...(Array.isArray(f.prerequisito)
-    ? f.prerequisito
-    : Object.values(f.prerequisito ?? {}).flat()),
+  ...(Array.isArray(f.prerequisito) ? f.prerequisito : Object.values(f.prerequisito ?? {}).flat()),
 ]);
 const flowNames = (target) =>
   new Set(ALL_STEPS.filter((s) => s.target === target).map((s) => s.name));
