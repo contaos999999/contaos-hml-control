@@ -1348,12 +1348,13 @@ export function createF3IntentBook(options = {}) {
 // inventory liga o campo à ordem do produtor que criou a entidade (2 é a organização F3);
 // derived liga o campo de versão observada ao campo de inventário da entidade lida. O que não é
 // declarado é literal (gerado_harness) e nunca contém UUID fora do inventário isolado.
-const step = (target, name, { query = "", free = [], inventory = {}, derived = {}, source }) =>
+const step = (target, name, { query = "", free = [], pathFields = [], inventory = {}, derived = {}, source }) =>
   Object.freeze({
     target,
     name,
     query,
     free: Object.freeze([...free]),
+    pathFields: Object.freeze([...pathFields]),
     inventory: Object.freeze(
       Object.fromEntries(
         Object.entries(inventory).map(([field, origin]) => [
@@ -1719,8 +1720,9 @@ function assertArmedBody(body, s, isolated) {
   const walk = (v, top) => {
     if (typeof v === "string") {
       if (v.startsWith(SLOT)) {
-        if (!SLOT_RE.test(v) || !v.startsWith(SLOT + "uuid:")) fail("F3_FENCE_ARM");
-        if (top === null || !s.free.includes(top)) fail("F3_FENCE_ARM");
+        if (!SLOT_RE.test(v) || top === null || !s.free.includes(top)) fail("F3_FENCE_ARM");
+        const expected = s.pathFields.includes(top) ? "path" : "uuid";
+        if (!v.startsWith(SLOT + expected + ":")) fail("F3_FENCE_ARM");
       } else
         for (const m of v.matchAll(UUID_ANY))
           if (!isolated.has(m[0].toLowerCase())) fail("F3_FOREIGN_ORG");
@@ -1750,8 +1752,16 @@ function matchUrl(u, s, armed, slots, got) {
  */
 function bindOf(s, stepIndex, body, placeholder = false) {
   const slots = s.free.map((k) => {
-    const v = placeholder ? crypto.randomUUID() : body[k];
-    if (!isUuid(v)) fail("F3_VALUE_ORIGIN");
+    const pathField = s.pathFields.includes(k);
+    const v = placeholder
+      ? pathField ? "isolated/uploads/" + crypto.randomUUID() + "/proof.pdf" : crypto.randomUUID()
+      : body[k];
+    if (
+      pathField
+        ? typeof v !== "string" || !/^[A-Za-z0-9_.\/-]{1,512}$/.test(v) ||
+          v.includes("..") || !v.includes("/uploads/")
+        : !isUuid(v)
+    ) fail("F3_VALUE_ORIGIN");
     return sha256hex(v);
   });
   const refs = [
@@ -1847,6 +1857,12 @@ export function createF3MutationFence(options = {}) {
     let body = null;
     if (s.target === "storage") {
       if (request.method !== "PUT") return freeze();
+      const scope = book.organizationF3() + "/uploads/";
+      const path = u.pathname.slice(("/storage/v1/object/upload/sign/" + s.name + "/").length);
+      if (!path.startsWith(scope) || !/^.+\/[0-9a-f-]{36}\/[^/]+$/.test("/" + path.slice(scope.length))) {
+        return freeze("F3_FOREIGN_ORG");
+      }
+      body = { path };
     } else {
       if (request.method !== "POST") return freeze();
       body = parseJsonBody(request.postData);
@@ -1880,7 +1896,7 @@ export function createF3MutationFence(options = {}) {
     tickets.set(ticket, {
       url: request.url,
       method: request.method,
-      body: body === null ? null : canonicalJson(body),
+      body: s.target === "storage" ? null : canonicalJson(body),
     });
     return true;
   }
