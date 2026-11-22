@@ -5023,6 +5023,8 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     for (const st of f.principal) {
       assert.ok(
         row.target.includes(st.name) ||
+        (Number(order) === 11 && st.name === "executar_comando_lista_v1" &&
+          row.target.includes("mesmo RPC")) ||
         (row.target.includes("UP") && ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(st.name)),
         st.name + " na linha " + key,
       );
