@@ -241,8 +241,11 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
   const invoke = (url, body) => {
     const requestId = "interception_" + ++sequence;
     const message = {
-      url, method: "POST", postData: JSON.stringify(body),
-      sessionId: "test_native_session", interceptionId: requestId,
+      url,
+      method: "POST",
+      postData: JSON.stringify(body),
+      sessionId: "test_native_session",
+      interceptionId: requestId,
     };
     assert.equal(fence.policy({ ...message, stage: "REQUEST" }), true);
     assert.equal(fence.policy({ ...message, stage: "RESPONSE" }), true);
@@ -258,7 +261,9 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
         },
         count: async () => (fragment.includes("ContaOS HML F3") && organizationVisible ? 1 : 0),
         waitFor: async () => undefined,
-        click: async () => { selected = "organizacao"; },
+        click: async () => {
+          selected = "organizacao";
+        },
       };
     }
     if (type === "dialog") {
@@ -276,7 +281,8 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
               chave_idempotencia: uuid(789001),
             });
             response(api + "/functions/v1/admin-invite-user", {
-              codigo: "USUARIO_EXISTENTE", usuario: { id_usuario: userId },
+              codigo: "USUARIO_EXISTENTE",
+              usuario: { id_usuario: userId },
             });
             invoke(api + "/rest/v1/rpc/salvar_vinculo_usuario_adm", {
               p_id_organizacao: organizationId,
@@ -291,7 +297,8 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
               p_chave_idempotencia: uuid(789002),
             });
             response(api + "/rest/v1/rpc/salvar_vinculo_usuario_adm", {
-              schema_versao: "adm01-v2", id_usuario: userId,
+              schema_versao: "adm01-v2",
+              id_usuario: userId,
               vinculo: { perfil: "leitor", ativo: true },
             });
           },
@@ -306,7 +313,8 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
           if (options.name === "Criar organização") {
             const name = fields.get("#org-criar-razao");
             invoke(api + "/rest/v1/rpc/criar_organizacao", {
-              p_razao_social: name, p_timezone: "America/Sao_Paulo",
+              p_razao_social: name,
+              p_timezone: "America/Sao_Paulo",
             });
             organizationVisible = true;
             response(api + "/rest/v1/rpc/criar_organizacao", organizationId);
@@ -321,30 +329,53 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
   };
   const page = {
     getByRole: role,
-    goto: async (url) => { selected = new URL(url).pathname; },
+    goto: async (url) => {
+      selected = new URL(url).pathname;
+    },
     locator: (id) => ({
-      fill: async (v) => { fields.set(id, v); },
-      selectOption: async (v) => { fields.set(id, v); },
+      fill: async (v) => {
+        fields.set(id, v);
+      },
+      selectOption: async (v) => {
+        fields.set(id, v);
+      },
     }),
-    waitForResponse: (predicate) => new Promise((resolve) => listeners.push({ predicate, resolve })),
-    waitForURL: async (check) => assert.equal(
-      check(new URL("https://contaos-41-hml.vercel.app" + selected)), true,
-    ),
+    waitForResponse: (predicate) =>
+      new Promise((resolve) => listeners.push({ predicate, resolve })),
+    waitForURL: async (check) =>
+      assert.equal(check(new URL("https://contaos-41-hml.vercel.app" + selected)), true),
   };
   const native = { drain: async () => undefined, assertSafe: () => undefined };
   const name = "ContaOS HML F3 " + PROV.workflowRunId;
-  assert.equal(await sut.f3S1CreateOrganization({
-    page, fence: native, mutationFence: fence, book, name,
-  }), organizationId);
+  assert.equal(
+    await sut.f3S1CreateOrganization({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      name,
+    }),
+    organizationId,
+  );
   assert.equal(book.organizationF3(), organizationId);
   assert.equal(book.summary().sent, 1);
-  assert.equal(await sut.f3S1LinkReader({
-    page, fence: native, mutationFence: fence, book,
-    organizationId, readerEmail: "reader@example.test",
-  }), userId);
+  assert.equal(
+    await sut.f3S1LinkReader({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      organizationId,
+      readerEmail: "reader@example.test",
+    }),
+    userId,
+  );
   assert.equal(book.summary().sent, 2);
   assert.equal(book.assertIsolation(), true);
-  assert.deepEqual(actions.filter((a) => a === "Criar organização"), ["Criar organização"]);
+  assert.deepEqual(
+    actions.filter((a) => a === "Criar organização"),
+    ["Criar organização"],
+  );
   assert.equal(listeners.length, 0);
 });
 
@@ -369,16 +400,25 @@ test("F3 S1: credencial ausente, usuário igual e contexto de browser compartilh
   const b = { context: () => context };
   await assert.rejects(
     sut.driveF3S1Ui({
-      book, masterPage: a, readerPage: b, masterFence: {}, readerFence: {},
-      mutationFence: {}, masterCredentials: { email: "master@example.test", password: "x" },
+      book,
+      masterPage: a,
+      readerPage: b,
+      masterFence: {},
+      readerFence: {},
+      mutationFence: {},
+      masterCredentials: { email: "master@example.test", password: "x" },
       readerCredentials: { email: "reader@example.test", password: "x" },
     }),
     { code: "F3_UI_SESSION_CONFIGURATION" },
   );
   await assert.rejects(
     sut.driveF3S1Ui({
-      book, masterPage: a, readerPage: { context: () => ({}) },
-      masterFence: {}, readerFence: {}, mutationFence: {},
+      book,
+      masterPage: a,
+      readerPage: { context: () => ({}) },
+      masterFence: {},
+      readerFence: {},
+      mutationFence: {},
       masterCredentials: { email: "master@example.test", password: "x" },
       readerCredentials: { email: "master@example.test", password: "x" },
     }),
@@ -387,7 +427,11 @@ test("F3 S1: credencial ausente, usuário igual e contexto de browser compartilh
   const original = JSON.stringify(book.summary());
   await assert.rejects(
     sut.f3S1Login(
-      { goto: async () => { throw Error("UI_MUST_NOT_RUN"); } },
+      {
+        goto: async () => {
+          throw Error("UI_MUST_NOT_RUN");
+        },
+      },
       { email: "invalid", password: "x" },
     ),
     { code: "F3_UI_CREDENTIALS" },
@@ -426,7 +470,10 @@ test("F3 S1: login UI autentica por POST real e recusa 401 sem expor credenciais
       },
     }),
     waitForURL: async (predicate) => {
-      assert.equal(predicate(new URL("https://contaos-41-hml.vercel.app/selecionar-organizacao")), true);
+      assert.equal(
+        predicate(new URL("https://contaos-41-hml.vercel.app/selecionar-organizacao")),
+        true,
+      );
     },
   });
   const credentials = { email: "leitor@example.test", password: "example-only-test-not-a-secret" };
