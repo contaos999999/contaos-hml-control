@@ -3944,3 +3944,13 @@ test("F3 driver completion: forged provenance cannot detach report from live boo
   assert.equal(result.code, "F3_DRIVER_REPORT_MISMATCH");
   assert.equal(result.report.state, "BLOCKED");
 });
+
+
+test("F3 CLI: only a validated complete session can persist artifacts and return success", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("./integracao-v1-fase3.mjs", import.meta.url), "utf8");
+  assert.match(
+    source,
+    /if \(session\.code === "F3_COMPLETE"\) \{[\s\S]*?await writeF3Artifacts\([\s\S]*?return true;\s*\}\s*fail\(session\.code\);/,
+  );
+});
