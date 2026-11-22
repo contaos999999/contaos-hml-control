@@ -23,7 +23,7 @@ test('HML-AUTH-002: synthetic identity B signs in independently',async({page})=>
 test('HML-AUTH-003: invalid password is rejected by live Auth',async({page})=>{
  await page.goto('/login');
  await page.getByLabel('E-mail').fill(process.env.CONTAOS_HML_USER_A_EMAIL!);
- await page.getByLabel('Senha',{exact:true}).fill(process.env.CONTAOS_HML_INVALID_PASSWORD!);
+ await page.getByLabel('Senha',{exact:true}).fill('invalid-synthetic-counterproof-password-2026');
  const statuses:number[]=[];
  page.on('response',r=>{if(r.url().includes('/auth/v1/token')&&r.request().method()==='POST')statuses.push(r.status());});
  await page.getByRole('button',{name:/entrar/i}).click();
