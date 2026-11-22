@@ -843,6 +843,48 @@ test("F3 S2 V103: UI observa versão antes de editar e relê mesmo UUID após RP
   assert.equal(listeners.length, 0);
 });
 
+test("F3 S2 V105: POST sem RETURNING exige UUID da lista real e organização correta", () => {
+  const organizationId = F3;
+  const contractorId = uuid(889005);
+  const number = "F3-" + PROV.workflowRunId;
+  const object = "Contrato sintético F3 " + PROV.workflowRunId;
+  const contractId = uuid(889007);
+  const row = {
+    id: contractId,
+    id_organizacao: organizationId,
+    numero: number,
+    objeto: object,
+  };
+  const query = new URL(
+    "https://gklhhhyosgasnyoxlrui.supabase.co/rest/v1/contratos?id_organizacao=eq." +
+      organizationId,
+  );
+  const read = (changed = {}) => sut.assertF3S2ContractReadback({
+    rows: [row],
+    query,
+    organizationId,
+    contractorId,
+    number,
+    object,
+    ...changed,
+  });
+  assert.equal(read(), contractId);
+  const negatives = [
+    { rows: [] },
+    { rows: [row, row] },
+    { rows: [{ ...row, id: "invalid" }] },
+    { rows: [{ ...row, id_organizacao: uuid(86) }] },
+    { rows: [{ ...row, numero: "F3-9999" }] },
+    { rows: [{ ...row, objeto: "Divergente" }] },
+    { rows: [row, { ...row, id: uuid(77) }] },
+    { query: new URL(query.origin + query.pathname + "?id_organizacao=eq." + uuid(96)) },
+    { query: new URL(query.origin + "/rest/v1/contratantes?id_organizacao=eq." + F3) },
+  ];
+  for (const bad of negatives) {
+    assert.throws(() => read(bad), { code: "F3_S2_V105_READBACK" });
+  }
+});
+
 const ledgerWith = ({ runs = [], entries = [] }) =>
   JSON.stringify({ ...JSON.parse(LEDGER_RAW), runs, entries }, null, 2) + "\n";
 const ledgerOf = (runs, entries = []) =>
