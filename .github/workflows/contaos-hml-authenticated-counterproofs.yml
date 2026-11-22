@@ -1,16 +1,33 @@
 name: ContaOS HML Authenticated Counterproofs
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/contaos-hml-authenticated-counterproofs.yml'
+      - 'scripts/hml-counterproofs/**'
+      - 'tests/hml/counterproofs/**'
   workflow_dispatch:
 permissions:
   contents: read
-concurrency:
-  group: trilha-a-authenticated-hml
-  cancel-in-progress: false
 jobs:
+  adversarial-no-secrets:
+    name: HML Auth/RLS adversarial unit (no credentials)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: node --test scripts/hml-counterproofs/guard.test.mjs scripts/hml-counterproofs/fixture-attestation.test.mjs
   authenticated-hml:
     name: Authenticated HML counterproofs (NO-GO on missing prerequisites)
     # HML secrets MUST never be exposed to dispatches from non-main branches.
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: trilha-a-authenticated-hml
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     environment: hml
