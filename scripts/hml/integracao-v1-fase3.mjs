@@ -823,6 +823,30 @@ export const F3_ENTITY_KINDS = Object.freeze([
 ]);
 const ISOLATED_KINDS = Object.freeze(["organizacao", "registro"]);
 
+// V103 e V106 editam o registro criado por V102 e V105: o mesmo UUID é um vínculo
+// legítimo, não uma segunda criação. A exceção é restrita ao produtor e à identidade
+// principal original; reuso em qualquer outro contexto continua sendo duplicidade.
+export const F3_UPDATE_IDENTITY_SOURCE = Object.freeze({ 6: 5, 8: 7 });
+
+function authorizedF3IdentityReuse(state, event, intent) {
+  const producer = F3_UPDATE_IDENTITY_SOURCE[intent.producerOrder];
+  if (
+    !producer ||
+    intent.kind !== "principal" ||
+    event.organizationId !== state.organizationF3
+  ) {
+    return false;
+  }
+  return state.created.some(
+    (entry) =>
+      entry.id === event.entityId &&
+      entry.organizationId === event.organizationId &&
+      entry.kind === "registro" &&
+      state.intents.get(entry.requestId)?.producerOrder === producer &&
+      state.intents.get(entry.requestId)?.kind === "principal",
+  );
+}
+
 /**
  * Registra a entidade devolvida pelo produto. O que o produto devolve é fato observado e sempre
  * entra no inventário com o tipo correspondente; só a violação de protocolo do driver (organização
@@ -831,7 +855,8 @@ const ISOLATED_KINDS = Object.freeze(["organizacao", "registro"]);
 function recordEntity(st, e, i) {
   if (i.producerOrder === 2 && e.organizationId !== e.entityId) fail("F3_INTENT_ENTITY");
   let kind;
-  if (st.entities.has(e.entityId)) kind = "entidade_repetida";
+  if (st.entities.has(e.entityId))
+    kind = authorizedF3IdentityReuse(st, e, i) ? "registro" : "entidade_repetida";
   else if (e.entityId === F3_E87_ORG || e.organizationId === F3_E87_ORG) kind = "fora_da_f3";
   else if (i.producerOrder === 2)
     kind =
