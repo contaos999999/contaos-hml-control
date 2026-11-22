@@ -2837,7 +2837,14 @@ export function analyzeSemanticCorpusForReview({
     issues.push("SEMANTIC_TRIAGE_PAIR_DUPLICATION");
   // Not a simulation of LIVE evidence. No row may acquire a verdict by triage.
   const high=pairs.filter(x=>x.priority==="HIGH_REVIEW").length;
-  return {schema:"contaos.semantic-material-triage.v1",
+  const digest=rows=>createHash("sha256").update(rows.map(x=>JSON.stringify(x)).join("\n")).digest("hex");
+  const source_digests={
+    rules_sha256:digest(rules),sentences_sha256:digest(sentences),
+    interactions_sha256:digest(pairs),
+    rule_pair_inventory_sha256:worklist?.pair_inventory_sha256??null,
+    sentence_inventory_sha256:sentenceInventory?.inventory_sha256??null,
+  };
+  return {schema:"contaos.semantic-material-triage.v1",source_digests,
     counts:{rules:rules.length,axes:rules.length*7,sentences:sentences.length,
       interactions:pairs.length,high_priority_pairs:high},
     breakdown,rules,sentences,interactions:pairs,issues,
