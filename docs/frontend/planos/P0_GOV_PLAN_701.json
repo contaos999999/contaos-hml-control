@@ -1,0 +1,15 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 701,
+  "files": [
+    ".github/workflows/contaos-hml-authenticated-counterproofs.yml"
+  ],
+  "plan_documento": "docs/frontend/planos/PLAN_P0_HML_AUTHENTICATED_COUNTERPROOFS_2026-11-21.md",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/701",
+  "plan_base_sha": "7283a898b2c15770e2188bb7b2f1534692bdbd7f",
+  "plan_aprovacao": "Autorização expressa do usuário para mudar o environment para hml e testar com pares sintéticos já existentes, mantendo fail-closed e NO-GO PROD.",
+  "justificativa": "RED real run 44977878485 comprovou secrets ausentes em hml-counterproofs; auditoria GitHub comprovou dois pares sintéticos em hml sob nomes CONTAOS_HML_SYNTHETIC_EMAIL/PASSWORD e CONTAOS_HML_SYNTHETIC_2_EMAIL/PASSWORD. Adaptar somente workflow para usar hml e mapear secrets existentes. Variáveis restantes exigem evidência real e não serão simuladas.",
+  "ativacao_autorizada": false,
+  "full_diff": true
+}
