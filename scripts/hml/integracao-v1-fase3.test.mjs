@@ -5641,3 +5641,107 @@ test("F3 C0465: auditoria vincula o evento ao resultado V117 sem forjar acesso H
     });
   }
 });
+
+
+test("F3 SYS04 preference: local selection is bound to the current user and organization", () => {
+  const userId = uuid(900301);
+  const organizationId = F3;
+  assert.equal(
+    sut.assertF3S1PreferenceReadback({
+      value: { idUsuario: userId, idOrganizacao: organizationId },
+      userId,
+      organizationId,
+    }),
+    organizationId,
+  );
+  for (const value of [
+    null,
+    { idUsuario: uuid(900302), idOrganizacao: organizationId },
+    { idUsuario: userId, idOrganizacao: uuid(900303) },
+    { idUsuario: userId, idOrganizacao: "foreign" },
+  ]) {
+    assert.throws(
+      () => sut.assertF3S1PreferenceReadback({ value, userId, organizationId }),
+      { code: "F3_SYS04_PREFERENCE_READBACK" },
+    );
+  }
+});
+
+test("F3 V107 applicability: rejects stale and crossed version readback", () => {
+  const organizationId = F3;
+  const contractId = uuid(900701);
+  const versionId = uuid(900702);
+  const before = {
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    id_versao: versionId,
+    atualizado_em: null,
+  };
+  const after = { ...before, aplicavel: true, atualizado_em: "2026-11-22T20:00:00Z" };
+  const input = { before, after, organizationId, contractId, versionId };
+  assert.equal(sut.assertF3S3ApplicabilityReadback(input), versionId);
+  for (const changed of [
+    { organizationId: uuid(900703) },
+    { contractId: uuid(900704) },
+    { versionId: uuid(900705) },
+    { after: { ...after, id_contrato: uuid(900706) } },
+    { after: { ...after, aplicavel: false } },
+    { after: { ...after, atualizado_em: null } },
+    { after: { ...after, atualizado_em: before.atualizado_em } },
+  ]) {
+    assert.throws(() => sut.assertF3S3ApplicabilityReadback({ ...input, ...changed }), {
+      code: "F3_V107_APPLICABILITY_READBACK",
+    });
+  }
+});
+
+test("F3 V118 opinion: rejects stale approval, crossed competence and wrong opinion", () => {
+  const opinionId = uuid(901801);
+  const competenceId = uuid(901802);
+  const before = {
+    id: opinionId,
+    id_competencia: competenceId,
+    status: "rascunho",
+    versao: 1,
+  };
+  const after = {
+    ...before,
+    status: "aprovado",
+    versao: 2,
+    aprovado_em: "2026-11-22T20:00:00Z",
+  };
+  const input = { before, after, opinionId, competenceId };
+  assert.equal(sut.assertF3S5OpinionReadback(input), opinionId);
+  for (const changed of [
+    { opinionId: uuid(901803) },
+    { competenceId: uuid(901804) },
+    { after: { ...after, id: uuid(901805) } },
+    { after: { ...after, status: "rascunho" } },
+    { after: { ...after, aprovado_em: null } },
+    { after: { ...after, versao: 0 } },
+  ]) {
+    assert.throws(() => sut.assertF3S5OpinionReadback({ ...input, ...changed }), {
+      code: "F3_V118_OPINION_READBACK",
+    });
+  }
+});
+
+test("F3 V119 presentation: exact one matching readback without foreign competence", () => {
+  const presentationId = uuid(901901);
+  const competenceId = uuid(901902);
+  const row = { id: presentationId, id_competencia: competenceId };
+  const input = { presentationId, competenceId, rows: [row] };
+  assert.equal(sut.assertF3S5PresentationReadback(input), presentationId);
+  for (const changed of [
+    { presentationId: uuid(901903) },
+    { competenceId: uuid(901904) },
+    { rows: [] },
+    { rows: [row, row] },
+    { rows: [{ ...row, id_competencia: uuid(901905) }] },
+    { rows: null },
+  ]) {
+    assert.throws(() => sut.assertF3S5PresentationReadback({ ...input, ...changed }), {
+      code: "F3_V119_PRESENTATION_READBACK",
+    });
+  }
+});
