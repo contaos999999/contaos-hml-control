@@ -44,6 +44,12 @@ const sources=[],inventory=[],ambiguities=[],interaction_candidates=[];
 for(const d of [...snap.context_documents,{path:snap.prompt_catalog.source_path,blob_sha:snap.prompt_catalog.source_blob_sha}]){
  const bytes=await fetchBlob(d.path,d.blob_sha);
  const raw=bytes.toString('utf8');
+ if(d.path===snap.prompt_catalog.source_path){
+   const catalog=JSON.parse(raw);
+   if(catalog.regular?.source_materialized_in_repository!==true || catalog.atomic?.source_materialized_in_repository!==true){
+     ambiguities.push({id:'PROMPT_ORIGINALS_NOT_MATERIALIZED',source_ref:d.path,disposition:'BLOCKING_SOURCE_GAP',text:'Original prompt documents not materialized in canonical repository; numeric catalog cannot establish normative completeness'});
+   }
+ }
  const result=extract(d.path,raw);
  sources.push({path:d.path,git_blob_sha:d.blob_sha,sha256:hash(bytes),bytes:bytes.length,extracted_items:result.items.length});
  inventory.push(...result.items);ambiguities.push(...result.ambiguities);interaction_candidates.push(...result.links);
