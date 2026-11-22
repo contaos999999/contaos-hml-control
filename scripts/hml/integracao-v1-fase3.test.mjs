@@ -6057,3 +6057,53 @@ test("F3 CODE: coletor acionado por caseId e ausência de driver nunca vira PASS
   assert.equal(report.counts.submittedUnverified, 0);
   assert.ok(report.entries.every((e) => e.reason === "F3_DRIVER_PENDING"));
 });
+
+test("F3 V109: criação por RPC e leitura V109 devem apontar para lista e versão corretas", () => {
+  const organizationId = uuid(924101);
+  const contractId = uuid(924102);
+  const listId = uuid(924103);
+  const versionId = uuid(924104);
+  const name = "ContaOS HML F3 12345 Lista";
+  const receipt = {
+    schema_versao: "crud-lista-v1",
+    acao: "criar_lista",
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    request_id: uuid(924105),
+    lista: {
+      id: listId, id_organizacao: organizationId,
+      id_contrato: contractId, nome: name,
+    },
+    id_versao: versionId,
+  };
+  const snapshot = {
+    schema_versao: "crud-lista-v1",
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    lista: receipt.lista,
+    versao: {
+      id: versionId, id_lista: listId, id_organizacao: organizationId,
+      id_contrato: contractId,
+    },
+    total_versoes: 1,
+  };
+  const input = { receipt, snapshot, organizationId, contractId, name };
+  const result = sut.assertF3S3ListCreationReadback(input);
+  assert.equal(result.state, "UI_OBSERVED_NOT_CERTIFIED");
+  assert.equal(result.listId, listId);
+  assert.equal(result.versionId, versionId);
+  for (const bad of [
+    { contractId: uuid(924106) },
+    { receipt: { ...receipt, acao: "publicar_versao" } },
+    { receipt: { ...receipt, request_id: null } },
+    { receipt: { ...receipt, lista: { ...receipt.lista, nome: "alheia" } } },
+    { snapshot: { ...snapshot, lista: { ...snapshot.lista, id: uuid(924107) } } },
+    { snapshot: { ...snapshot, versao: { ...snapshot.versao, id_lista: uuid(924108) } } },
+    { snapshot: { ...snapshot, versao: null } },
+    { snapshot: { ...snapshot, total_versoes: 0 } },
+  ]) {
+    assert.throws(() => sut.assertF3S3ListCreationReadback({ ...input, ...bad }), {
+      code: "F3_V109_CREATE_READBACK",
+    });
+  }
+});
