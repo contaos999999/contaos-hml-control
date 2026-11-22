@@ -1,0 +1,26 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 737,
+  "approved": true,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD_V117_REVIEW_CONSUMER_CONTRACT.md"
+  ],
+  "purpose": "Implementar validação formal do resultado da RPC V117 correlacionando comando, contexto, organização, IDs de execução/resultado e resposta, com negativas contra replay e IDs inconsistentes; sem converter prova de contrato em 5 caseIds PASS.",
+  "authorization": "Ordem do titular para concluir drivers e provas funcionais F3, preservando CI e evidências. Este escopo autoriza apenas V117 contrato e testes, não backend, LIVE ou certificação.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Preservar F3_CASES.json, matriz CODE e ledgers CODE/HML",
+    "Sem criação de recibos/atestações sintéticos para PASS dos 138 casos",
+    "Não executar mutations HML LIVE antes GATE PROD",
+    "Não remover F3_DRIVER_PENDING enquanto drivers restantes não estiverem comprovados",
+    "Somente três arquivos fechados no files",
+    "Revisão independente da implementação e testes/CI no HEAD antes de merge"
+  ],
+  "normative_plan": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba"
+  }
+}
