@@ -2,7 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { preflight, fixtureProofValid, verifyAttestationDigest } from './guard.mjs';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 const sha = 'a'.repeat(40);
+const backendSha=JSON.parse(readFileSync('docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json','utf8')).source_commit;
 const context = { sha, runId: '123', runAttempt: '1', repository: 'contaos999999/contaos-hml-control' };
 const env = {
   CONTAOS_HML_FRONTEND_URL: 'https://contaos-41-hml.vercel.app',
@@ -12,7 +14,7 @@ const env = {
   CONTAOS_HML_USER_B_EMAIL: 'actor-b@example.invalid',
   CONTAOS_HML_USER_B_PASSWORD: 'synthetic-fixture-two',
   CONTAOS_HML_EXPECTED_FRONTEND_SHA: sha,
-  CONTAOS_HML_EXPECTED_BACKEND_SHA: 'b'.repeat(40),
+  CONTAOS_HML_EXPECTED_BACKEND_SHA: backendSha,
 };
 const actor = {login:true,emailMatch:true,confirmed:true,synthetic:true};
 const tenant = {distinctUsers:true,distinctOrgs:true,aOwn:true,bOwn:true,aCannotReadB:true,bCannotReadA:true,noExtraTenantLinks:true};
@@ -30,6 +32,7 @@ for(const [name,change,expected] of [
  ['identical actors',e=>e.CONTAOS_HML_USER_B_EMAIL=e.CONTAOS_HML_USER_A_EMAIL,'IDENTICAL_IDENTITIES'],
  ['invalid email',e=>e.CONTAOS_HML_USER_A_EMAIL='not-an-email','INVALID_IDENTITY_A'],
  ['missing backend SHA',e=>e.CONTAOS_HML_EXPECTED_BACKEND_SHA='','MISSING_CONTAOS_HML_EXPECTED_BACKEND_SHA'],
+ ['wrong backend source SHA',e=>e.CONTAOS_HML_EXPECTED_BACKEND_SHA='b'.repeat(40),'BACKEND_SOURCE_SHA_MISMATCH'],
 ]) test('RED structural: '+name,()=>{
  const e={...env};change(e);const r=preflight(e,context,proof);
  assert.equal(r.pass,false);assert.ok(r.errors.includes(expected));
