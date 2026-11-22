@@ -4765,11 +4765,11 @@ export async function f3S5RegisterPresentation({
     await page.goto(HML_ORIGIN + "/competencias/" + competenceId, {
       waitUntil: "networkidle",
     });
-    const response = await listed;
-    if (response.status() !== 200) fail("F3_V119_PRESENTATION_READBACK");
+    const listedResponse = await listed;
+    if (listedResponse.status() !== 200) fail("F3_V119_PRESENTATION_READBACK");
     assertF3S5PresentationReadback({
       presentationId,
-      rows: await response.json(),
+      rows: await listedResponse.json(),
       competenceId,
     });
     book.confirm(requestId, { entityId: presentationId, organizationId });
