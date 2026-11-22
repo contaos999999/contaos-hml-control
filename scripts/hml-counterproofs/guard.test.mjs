@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { preflight, fixtureProofValid } from './guard.mjs';
+import { preflight, fixtureProofValid, verifyAttestationDigest } from './guard.mjs';
+import { createHash } from 'node:crypto';
 const sha = 'a'.repeat(40);
 const context = { sha, runId: '123', runAttempt: '1', repository: 'contaos999999/contaos-hml-control' };
 const env = {
@@ -53,4 +54,13 @@ for(const [name,mutation] of [
 });
 test('RED: missing immutable GitHub provenance blocks',()=>{
  assert.ok(preflight(env,{},proof).errors.includes('MISSING_RUN_PROVENANCE'));
+});
+
+test('RED/GREEN: live attestation checksum must match exact bytes',()=>{
+ const raw=JSON.stringify(proof)+'\\n';
+ const hash=createHash('sha256').update(raw).digest('hex');
+ assert.equal(verifyAttestationDigest(raw,hash+'  fixture-attestation.json\\n'),true);
+ assert.equal(verifyAttestationDigest(raw+'x',hash+'  fixture-attestation.json\\n'),false);
+ assert.equal(verifyAttestationDigest(raw,hash+'  other-file.json'),false);
+ assert.equal(verifyAttestationDigest(raw,'0'.repeat(64)+'  fixture-attestation.json'),false);
 });
