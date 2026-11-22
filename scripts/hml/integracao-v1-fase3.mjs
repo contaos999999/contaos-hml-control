@@ -5587,6 +5587,91 @@ export async function f3S3AddContractDocumentVersion({
   });
 }
 
+/** V115: documento de competência e vínculo ao requisito pela UI nativa. */
+export async function f3S4CreateCompetenceDocument({
+  page, fence, mutationFence, book, organizationId, contractId,
+  competenceId, requirementId, type, file,
+}) {
+  if (
+    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId || !isUuid(contractId) ||
+    !isUuid(competenceId) || !isUuid(requirementId) ||
+    typeof type !== "string" || !/^[a-z_]{2,40}$/.test(type) ||
+    !book.created().some((entity) =>
+      entity.id === competenceId && entity.organizationId === organizationId &&
+      book.summary().requests.some((r) =>
+        r.requestId === entity.requestId &&
+        r.producerOrder === 14 && r.outcome === "confirmed",
+      ),
+    )
+  ) {
+    fail("F3_V115_PRECONDITION");
+  }
+  const title = "ContaOS HML F3 " + book.provenance().workflowRunId + " Evidencia";
+  await page.goto(HML_ORIGIN + "/competencias/" + competenceId + "/documentos", {
+    waitUntil: "networkidle",
+  });
+  await page.locator("#v115-arquivo").setInputFiles(file);
+  await page.locator("#v115-req").selectOption(requirementId);
+  await page.locator("#v115-tipo").selectOption(type);
+  await page.locator("#v115-titulo").fill(title);
+  await page.locator("#v115-cat").fill("hml");
+  const verifyReadback = async ({ businessResult, fileId }) => {
+    const observed = page.waitForResponse(
+      (response) => response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/obter_documentos_competencia_v115",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const response = await observed;
+    if (response.status() !== 200) fail("F3_V115_READBACK");
+    const args = response.request().postDataJSON();
+    const snapshot = await response.json();
+    if (
+      args?.p_id_competencia !== competenceId ||
+      snapshot?.competencia?.id !== competenceId ||
+      snapshot.competencia.id_organizacao !== organizationId ||
+      snapshot.competencia.id_contrato !== contractId ||
+      !Array.isArray(snapshot.documentos)
+    ) {
+      fail("F3_V115_READBACK");
+    }
+    const matched = snapshot.documentos.filter((d) =>
+      d?.id === businessResult.id_documento &&
+      d.titulo === title &&
+      d.requisito?.id === requirementId &&
+      d.versao?.id_arquivo === fileId &&
+      d.arquivo?.id === fileId,
+    );
+    if (matched.length !== 1) fail("F3_V115_READBACK");
+    assertF3V115CompetenceDocumentReadback({
+      document: {
+        id: businessResult.id_versao,
+        id_competencia: competenceId,
+        id_requisito: requirementId,
+        id_arquivo: fileId,
+        status_seguranca: matched[0].arquivo.status_seguranca,
+      },
+      competenceId, requirementId, fileId,
+    });
+    return true;
+  };
+  return f3RunSignedDocumentUpload({
+    page, fence, mutationFence, book, organizationId, contractId,
+    order: 15, file,
+    business: {
+      p_id_competencia: competenceId,
+      p_tipo: type,
+      p_titulo: title,
+      p_categoria: "hml",
+      p_id_requisito: requirementId,
+    },
+    submit: async () =>
+      page.getByRole("button", { name: "Enviar", exact: true }).click(),
+    verifyReadback,
+  });
+}
+
 /** V109: resultado do comando conferido contra uma segunda consulta do produto. */
 export function assertF3S3ListCreationReadback({
   receipt,
