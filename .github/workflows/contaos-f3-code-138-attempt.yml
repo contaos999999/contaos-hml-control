@@ -1,0 +1,46 @@
+name: ContaOS F3 CODE - 138 case preflight (not certification)
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight-unit:
+    name: F3 CODE - 138 source-map checks (NOT functional proof)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Run 138 static source checks and fail-closed harness tests
+        run: |
+          node --check scripts/hml/integracao-v1-fase3-code-138-runner.mjs
+          node --check scripts/hml/integracao-v1-fase3-code-138-runner.test.mjs
+          node --test scripts/hml/integracao-v1-fase3-code-138-runner.test.mjs
+
+  full-case-preflight:
+    if: github.event_name == 'workflow_dispatch'
+    name: F3 CODE - inspect 138 caseIds and fail if product evidence missing
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    needs: preflight-unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Collect 138 case-level blockers (exit 1 until full CODE proof)
+        run: node scripts/hml/integracao-v1-fase3-code-138-runner.mjs
+      - name: Upload individual case manifest, including on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f3-code-138-unverified-preflight
+          path: artifacts/f3-code-138-preflight/F3_CODE_138_PREFLIGHT.json
+          if-no-files-found: error
+          retention-days: 30
