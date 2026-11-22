@@ -1,0 +1,26 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 729,
+  "approved": true,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B2C_S3_CONTRATOS_14_16_18_19.md"
+  ],
+  "purpose": "Adicionar contratos de mutação fail-closed e testes negativos baseados no código real para produtores V113, V116, V118 e V119 da Fase 3, sem promover inventário a prova funcional.",
+  "authorization": "Pedido direto do titular de completar os drivers de produtores e consumidores, executar 138 casos e certificar F3 apenas com evidências reais; S3 é incremento do BUILD, não certificado.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Proteger F1/F2, catálogo e ledger F3 CODE preservados",
+    "Fonte real do produto e proveniência por produtor",
+    "Não transformar teste estático em execução de caso",
+    "Nenhum HML LIVE antes GATE PROD",
+    "Revisão técnica e CI completo antes do merge"
+  ],
+  "normative_plan": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba"
+  },
+  "previous_f3_merge": "3989f39c39c038820fb1ff4d1161804aa443cf0c"
+}
