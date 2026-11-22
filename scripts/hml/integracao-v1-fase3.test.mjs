@@ -688,6 +688,44 @@ test("F3 S2 V102: readback rejeita organização, identidade e cardinalidade div
   }
 });
 
+test("F3 S2 V103: readback valida ID original, versão incrementada, perfil e fantasia", () => {
+  const org = F3;
+  const contractorId = uuid(889005);
+  const fantasy = "ContaOS HML F3 43509322900 Atualizado";
+  const before = {
+    id: contractorId,
+    id_organizacao: org,
+    versao_registro: 3,
+    nome_fantasia: null,
+  };
+  const after = { ...before, versao_registro: 4, nome_fantasia: fantasy };
+  const result = { schema_versao: "v103-v1", contratante: after };
+  const verify = (change = {}) => sut.assertF3S2ContractorUpdate({
+    before,
+    result,
+    after,
+    organizationId: org,
+    contractorId,
+    fantasy,
+    ...change,
+  });
+  assert.equal(verify(), contractorId);
+  const invalid = [
+    { before: { ...before, versao_registro: 0 } },
+    { before: { ...before, id_organizacao: uuid(66) } },
+    { result: { ...result, schema_versao: "v103-v0" } },
+    { result: { ...result, contratante: { ...after, id: uuid(65) } } },
+    { result: { ...result, contratante: { ...after, versao_registro: 5 } } },
+    { after: { ...after, id: uuid(64) } },
+    { after: { ...after, id_organizacao: uuid(63) } },
+    { after: { ...after, versao_registro: 5 } },
+    { after: { ...after, nome_fantasia: "Outro" } },
+  ];
+  for (const change of invalid) {
+    assert.throws(() => verify(change), { code: "F3_S2_V103_READBACK" });
+  }
+});
+
 const ledgerWith = ({ runs = [], entries = [] }) =>
   JSON.stringify({ ...JSON.parse(LEDGER_RAW), runs, entries }, null, 2) + "\n";
 const ledgerOf = (runs, entries = []) =>
