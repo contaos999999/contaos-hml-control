@@ -2988,3 +2988,118 @@ export function validatePrioritySemanticDisputes(triage){
     source_bound_hypotheses:selected.size,live_verified:0,
     independent_contradictions:0,verdict:"INCONCLUSIVE",release:"NO_GO"};
 }
+
+
+/**
+ * Dossiê de materialidade: 137 regras × 7 eixos, 381 frases e 9.316 pares.
+ * Examina o conteúdo exato do blob protegido, sem transformar indícios
+ * lexicais em prova LIVE ou julgamento humano de compatibilidade.
+ */
+export function assembleSemanticContradictionDossier(triage) {
+  const issues=[...(triage?.issues||[])];
+  const rules=triage?.rules||[];
+  const known=new Map(rules.map(x=>[x.rule_id,x]));
+  const themes=[
+    ["AUTHORIZATION",/autoriza|titular|aprova|revis[aã]o|review/iu],
+    ["QUEUE",/merge_group|fila|grupo|admiss[aã]o|merge/iu],
+    ["PROVENANCE",/HEAD|hash|blob|base protegida|manifesto|diff|SHA/iu],
+    ["AUDITOR",/auditor|parecer|independ[eê]ncia|segrega/iu],
+    ["CERTIFICATION",/certific|CERTIFIED|ACTIVE|BLOCKED_EXTERNAL|status/iu],
+    ["TEST",/teste|contraprova|RED|GREEN|checks?|CI|runner/iu],
+    ["REVOCATION",/revoga|invalida|cancel|retira|recupera|retry|reexecu/iu],
+    ["ACTIVATION",/PROD|HML|ativa[çc][aã]o|credencial|App|ruleset/iu],
+    ["SCOPE",/escopo|allowlist|14 caminhos|frontend|backend|N\/A/iu],
+    ["WATCHDOG",/watchdog|heartbeat|antiestagna|monitor|schedule/iu]
+  ];
+  const concepts=text=>themes.filter(([,pattern])=>pattern.test(text||"")).map(([name])=>name);
+  const capture=(text,re)=>[...new Set(((text||"").match(re)||[]).map(t=>t.toLowerCase()))];
+  const dossiers=rules.map(r=>{
+    const text=r.exact_text||"",anchor=r.anchor;
+    const qualifiers=capture(text,/\b(?:exceto|salvo|somente|apenas|se|quando|caso|antes|ap[oó]s)\b/giu);
+    const negative=capture(text,/\b(?:n[aã]o|nunca|vedad[oa]|proibid[oa]|sem|somente|NO.GO)\b/giu);
+    const positive=capture(text,/\b(?:deve|exige|obrigat[oó]ri[oa]|necess[aá]ri[oa]|ser[aá]|permitid[oa]|autoriza)\b/giu);
+    const axes={
+      E1:{source:anchor,observed_actors:r.actors,authority_decision:null},
+      E2:{source_clause:text,conditions:r.conditions,qualifiers,state_transition:null},
+      E3:{positive_indicators:positive,negative_indicators:negative,
+        legitimate_effect:null,forbidden_effect:null},
+      E4:{rule_references:r.direct_rule_references,concepts:concepts(text),
+        conflict_or_precedence_decision:null},
+      E5:{head:null,run_id:null,job_id:null,log_sha256:null,
+        positive_witness:null,negative_witness:null},
+      E6:{temporal_qualifiers:qualifiers,
+        revocation_mentioned:/revoga|invalida|cancel|retira|recupera|reexecut/iu.test(text),
+        native_revocation_verified:false},
+      E7:{source_stages:r.stages,topics:concepts(text),
+        boundary_verified:false}
+    };
+    if(!anchor||!text||Object.keys(axes).length!==7)
+      issues.push("SEMANTIC_RULE_SOURCE_INVALID: "+r.rule_id);
+    return {rule_id:r.rule_id,source_anchor:anchor,exact_text:text,axes,
+      interpretation:"SOURCE_READ_BUT_NOT_INDEPENDENTLY_ADJUDICATED",
+      tested_in_live_environment:false,decision:"INCONCLUSIVE"};
+  });
+  const sentences=(triage?.sentences||[]).map(s=>{
+    const text=s.fragment||"";
+    const modality=capture(text,/\b(?:deve|exige|obriga|impede|pro[ií]be|nunca|n[aã]o|somente|autoriza|precisa|requer|necess[aá]ri[oa])\b/giu);
+    const conditions=capture(text,/\b(?:quando|se|caso|antes|ap[oó]s|desde que|exceto|salvo|somente)\b/giu);
+    const actors=capture(text,/\b(?:titular|auditor|revisor|implementador|GitHub|App|controlador|watchdog)\b/giu);
+    const issuesSentence=[];
+    if(s.risk==="COMPOSITE_CLAUSE_REVIEW")issuesSentence.push("COMPOSITE_CLAUSE_MAY_NEED_SPLITTING");
+    if(actors.length===0)issuesSentence.push("AUTHORITY_MAY_BE_IMPLICIT");
+    if(conditions.length===0)issuesSentence.push("ANTECEDENT_MAY_BE_CROSS_SENTENCE");
+    if(modality.length===0)issuesSentence.push("CONTEXTUALITY_NEEDS_CONFIRMATION");
+    return {sentence_id:s.id,source_id:s.source_id,path:s.path,line:s.line,
+      text_sha256:s.text_sha256,exact_text:text,modality,conditions,actors,
+      topics:concepts(text),issues:issuesSentence,
+      classification:s.classification,human_classification:null,
+      contrary_case_question:"Qual antecedente ou exceção altera a consequência do trecho: "+text.slice(0,240),
+      positive_witness:null,negative_witness:null,verdict:"INCONCLUSIVE"};
+  });
+  const interactions=(triage?.interactions||[]).map(p=>{
+    const a=known.get(p.left_rule_id),b=known.get(p.right_rule_id);
+    const aTopics=concepts(a?.exact_text),bTopics=concepts(b?.exact_text);
+    const common=aTopics.filter(x=>bTopics.includes(x));
+    const polarity={
+      a:/\b(?:n[aã]o|nunca|sem|vedad[oa]|proibid[oa])\b/iu.test(a?.exact_text||""),
+      b:/\b(?:n[aã]o|nunca|sem|vedad[oa]|proibid[oa])\b/iu.test(b?.exact_text||"")
+    };
+    const relationship=!a||!b?"INVALID_PAIR":
+      p.provisional_relationship==="SAME_SOURCE"?"SHARED_NORMATIVE_SOURCE":
+      common.includes("AUTHORIZATION")&&common.includes("REVOCATION")?
+        "AUTHORIZATION_REVOCATION_BOUNDARY":
+      common.includes("QUEUE")&&common.includes("PROVENANCE")?"QUEUE_SOURCE_FRESHNESS":
+      common.includes("AUDITOR")&&common.includes("CERTIFICATION")?
+        "CERTIFICATION_INDEPENDENCE":
+      p.shared_actors.length&&p.shared_stages.length?"SHARED_ACTOR_STAGE":
+      common.length?"COMMON_NORMATIVE_THEME":"NO_OBVIOUS_LEXICAL_LINK";
+    if(!a||!b||!p.left_source_id||!p.right_source_id||
+       p.pair_id!==a.rule_id+"|"+b.rule_id)
+      issues.push("SEMANTIC_PAIR_SOURCE_INVALID: "+p.pair_id);
+    return {pair_id:p.pair_id,source_a:a?.anchor??null,source_b:b?.anchor??null,
+      rule_a:a?.rule_id??null,rule_b:b?.rule_id??null,
+      rule_a_text:a?.exact_text??null,rule_b_text:b?.exact_text??null,
+      common_actors:p.shared_actors,common_stages:p.shared_stages,
+      common_concepts:common,polarity,relationship,priority:p.priority,
+      counterfactual_question:"Em qual estado ambas as cláusulas se aplicam, qual prevalece e qual contraprova discrimina a hipótese?",
+      judgement:"UNADJUDICATED",positive_witness:null,negative_witness:null,
+      independent_review_id:null};
+  });
+  const counts={rules:dossiers.length,axes:dossiers.length*7,
+    sentences:sentences.length,pairs:interactions.length,
+    unique_pairs:new Set(interactions.map(x=>x.pair_id)).size,
+    relationship_counts:Object.fromEntries([...new Set(interactions.map(x=>x.relationship))]
+      .map(kind=>[kind,interactions.filter(x=>x.relationship===kind).length]))};
+  if(counts.rules!==137||counts.axes!==959||counts.sentences!==381||
+     counts.pairs!==9316||counts.unique_pairs!==9316)
+    issues.push("SEMANTIC_DOSSIER_INCOMPLETE");
+  if(interactions.some(x=>x.judgement!=="UNADJUDICATED")||
+     dossiers.some(x=>x.axes.E5.positive_witness!==null))
+    issues.push("SEMANTIC_FALSE_CERTIFICATION");
+  return {schema:"contaos.semantic-contradiction-dossier.v1",
+    counts,issues,rules:dossiers,sentences,interactions,
+    source_read_verified:issues.length===0,
+    rules_certified:0,sentences_certified:0,interactions_certified:0,
+    semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
+    release:"NO_GO",activation:"NO_GO"};
+}
