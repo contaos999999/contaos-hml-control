@@ -299,6 +299,27 @@ A fase **SEMANTIC_COMPLETENESS** é posterior e independente da pré-auditoria. 
 **Impedimentos delimitados:** decidir 137 interpretações e E1–E7 (incluindo fonte inversa de 18 trechos), 381 sentenças e 9.316 pares com justificativa específica, testemunha positiva e negativa efetivamente executadas no HEAD, proveniência de run/job/log, revisão contraditória independente do corpus e revisão elegível. A pré-auditoria interna não pode antecipar essa revisão, e nenhum teste operacional do BUILD certifica semântica. `SEMANTIC_PREAUDIT=INCONCLUSIVE`; `SEMANTIC_COMPLETENESS=INCONCLUSIVE`; `MERGE=NO_GO`; `ACTIVATION=NO_GO`. Os bloqueios separados de App, fila, N17(c), RLS, HML e PROD permanecem segregados por estágio. Nada libera a certificação final da Fase 3.
 
 
+## 5.11. Complementação material dos três inventários e contraprovas de integridade
+
+**Fonte e identidade criptográfica.** A análise sobre os dois blobs protegidos gerou, por execução direta V8 de SHA-256 independente verificada contra vetores padrão, quatro resumos canônicos, distintos dos hashes dos futuros arquivos JSONL:
+
+| Corpus canônico | Linhas ou registros | SHA-256 |
+| --- | ---: | --- |
+| Trechos de fonte (`source_id`, hash do texto, ordem) | 118 | `42f1deaae7f093ef6683b5745346913e322056bbb0445c205033d1fcc6910b5a` |
+| Segmentos de sentença (`ATOM-id`, hash do texto, ordem) | 381 | `3ad36fe3d672818259189a2644d131408e0e0965a1da8b06f5775246911def56` |
+| IDs do inventário normativo fechado | 137 | `63716e4eaff2af0c93261c3b5a6bb7c09641381db6a97d419cd2e0b073ccd6b2` |
+| IDs ordenados dos pares não direcionados | 9.316 | `10ee2cf80cf03a1cc401359708ef32f30b27e5e1eb288e0a3060a08828099c25` |
+
+Os quatro resumos foram fixados como contraprovas de deriva no teste `P0 CRYPTO SNAPSHOT` do mesmo arquivo de testes; uma mudança no corpus com totais preservados deve reprovar. Isso não constitui hash autenticado de execução GitHub Actions. Somente o run real poderá produzir o manifesto JSONL e sua trilha assinável.
+
+**21.312 testes estruturais, sem confusão com semântica.** O verificador `executeSemanticCorpusIntegrityMutants` percorreu efetivamente 959 campos E1–E7, 381 sentenças e 9.316 pares, somando 10.656 verificações positivas e 10.656 contraprovas por adulteração controlada. A execução V8 sobre os textos protegidos retornou `issues=[]`, `positive=10656`, `negative=10656`. Foi usada implementação V8 independente de hash para as verificações da amostra completa; o teste no runner Node utiliza `crypto` nativo e ainda precisa de atestado por GitHub Actions. Esses casos demonstram vínculo, integridade estrutural, reconstrução e comportamento fail-closed, **não a correção de 959 interpretações, 381 qualificadores ou 9.316 decisões semânticas**.
+
+**Dezoito lacunas reversas individualmente examinadas.** `materialReviewOfReverseGaps` mantém todos os 18 trechos declarados descobertos no inventário original e registra interpretação do autor, fonte textual e razão individual: dez com proposta de relação a regra existente, oito classificados como histórico, contexto ou estrutura. O exame V8 executou 18/18 sem falhas, inclusive contraprova de exclusão de linha. Por prudência, todos ainda exigem contraditório independente; nenhum foi reclassificado automaticamente como lacuna eliminada.
+
+**Dez conflitos prioritários com decisão de autoria preliminar.** `analyzePrioritySemanticProposals` vincula dez pares às duas fontes protegidas e a uma interpretação concreta da autoridade, pré-condição, resultado, precedência e risco, executando vinte testes lógicos de discriminante. A execução V8 confirmou dez hipóteses positivas e dez negativas, `issues=[]`, porém `adjudicated_independently=0` e `authenticated_live_pairs=0`. Não confundir aprovação do modelo de regra com enforcement comprovado no GitHub; N17(c), bloqueio nativo de revogação e fila permanecem objetos de ativação separada.
+
+**Execução CI pendente.** O workflow `contaos-auditoria-controller.yml` recebeu comando que executa, no job adversarial, os oito testes materiais específicos e exporta os três JSONL e manifesto SHA-256 como artefato por run, sem habilitar publicador. A configuração, o commit e os relatórios V8 não comprovam que ocorreu um GitHub Actions no HEAD vigente. Preservar `SEMANTIC_COMPLETENESS=INCONCLUSIVE`, `SEMANTIC_PREAUDIT=INCONCLUSIVE` e nenhum merge ou ativação até prova autenticada e parecer elegível.
+
 ## 6. Implantação, rollback e continuidade
 
 1. Esta PR implementa código de diagnóstico, testes offline e adaptação de compatibilidade à fila **sem ativação**, com CI e revisão técnica independente de código.
