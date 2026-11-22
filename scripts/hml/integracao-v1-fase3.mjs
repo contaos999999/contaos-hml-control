@@ -881,11 +881,16 @@ function authorizedF3IdentityReuse(state, event, intent) {
     intent.producerOrder === 10 && intent.kind === "prerequisito" && intent.action === "aprovacao";
   const opinionApproval = intent.producerOrder === 18 && intent.kind === "principal";
   const proposalPublication = intent.producerOrder === 9 && intent.kind === "principal";
+  const listTransition =
+    intent.producerOrder === 11 &&
+    intent.kind === "prerequisito" &&
+    ["item", "publicacao"].includes(intent.action);
   const source = F3_UPDATE_IDENTITY_SOURCE[intent.producerOrder];
   if (
     !approval &&
     !opinionApproval &&
     !proposalPublication &&
+    !listTransition &&
     (!source || intent.kind !== "principal")
   )
     return false;
@@ -905,7 +910,9 @@ function authorizedF3IdentityReuse(state, event, intent) {
             ? maker?.producerOrder === 9 &&
               maker.kind === "prerequisito" &&
               maker.action === "versao"
-            : maker?.producerOrder === source && maker.kind === "principal")
+            : listTransition
+              ? maker?.producerOrder === 11 && maker.kind === "principal"
+              : maker?.producerOrder === source && maker.kind === "principal")
     );
   });
 }
@@ -1489,6 +1496,34 @@ export const F3_MUTATION_FLOWS = Object.freeze({
           free: ["p_chave_idempotencia"],
           inventory: { p_id_versao_proposta: { producerOrder: 9, action: "versao" } },
           source: "src/components/contratos/OrcamentoContrato.tsx:1268-1305",
+        }),
+      ],
+    },
+  ),
+  // V109: lista base, item e publicação por um único adaptador RPC do produto.
+  11: flow(
+    [
+      step("rpc", "executar_comando_lista_v1", {
+        free: ["p_request_id"],
+        inventory: { p_id_contrato: 7 },
+        source: "src/lib/contratos/listaOperacionalDados.ts:276-317",
+      }),
+    ],
+    {
+      item: [
+        step("rpc", "executar_comando_lista_v1", {
+          free: ["p_request_id"],
+          inventory: { p_id_lista: 11, p_id_contrato: 7 },
+          derived: { p_versao_esperada: "p_id_lista" },
+          source: "src/components/contratos/GerenciarListas.tsx:517-530",
+        }),
+      ],
+      publicacao: [
+        step("rpc", "executar_comando_lista_v1", {
+          free: ["p_request_id"],
+          inventory: { p_id_lista: 11, p_id_contrato: 7 },
+          derived: { p_versao_esperada: "p_id_lista" },
+          source: "src/components/contratos/GerenciarListas.tsx:506-514",
         }),
       ],
     },
