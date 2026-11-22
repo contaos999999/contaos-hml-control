@@ -3132,11 +3132,46 @@ export function assembleSemanticContradictionDossier(triage) {
     if(!a||!b||!p.left_source_id||!p.right_source_id||
        p.pair_id!==a.rule_id+"|"+b.rule_id)
       issues.push("SEMANTIC_PAIR_SOURCE_INVALID: "+p.pair_id);
+    // Specific, reviewable comparison for EVERY pair. This is a causal
+    // hypothesis and a requested proof, not an automatic compatibility verdict.
+    const antecedent_a=(a?.conditions||[]).slice(0,6);
+    const antecedent_b=(b?.conditions||[]).slice(0,6);
+    const stageOverlap=(p.shared_stages||[]).slice(0,6);
+    const actorOverlap=(p.shared_actors||[]).slice(0,6);
+    const discriminator=relationship==="SHARED_NORMATIVE_SOURCE"
+      ?"Distinguish both atomic clauses within one protected source span."
+      :relationship==="AUTHORIZATION_REVOCATION_BOUNDARY"
+        ?"Revoke the authority after approval, preserving the review, then verify native eligibility."
+      :relationship==="QUEUE_SOURCE_FRESHNESS"
+        ?"Change HEAD/base/group without changing prior status, then verify a new group decision."
+      :relationship==="CERTIFICATION_INDEPENDENCE"
+        ?"Withhold independent approval while leaving BUILD green; ensure certification remains blocked."
+      :relationship==="SHARED_ACTOR_STAGE"
+        ?"Hold the shared actor and stage fixed while alternating the predicates of the two rules."
+      :relationship==="COMMON_NORMATIVE_THEME"
+        ?"Exercise both named concepts with one antecedent false, then both true."
+        :"Prove resource/actor/state disjointness by authenticated execution, not by lexical distance.";
+    const applicability_hypothesis=p.left_rule_id+
+      " ["+antecedent_a.join(",")+"] WITH "+p.right_rule_id+
+      " ["+antecedent_b.join(",")+"] in stages ["+stageOverlap.join(",")+
+      "] and actors ["+actorOverlap.join(",")+"]";
+    const discriminating_probes={
+      positive:"Test a real workflow where "+p.left_rule_id+" and "+p.right_rule_id+
+        " both apply. "+discriminator,
+      negative:"Test a real workflow where only "+p.left_rule_id+
+        " applies, keeping the remaining actor, phase and HEAD unchanged.",
+      review_priority:relationship==="SHARED_NORMATIVE_SOURCE"||
+        relationship==="AUTHORIZATION_REVOCATION_BOUNDARY"||
+        relationship==="QUEUE_SOURCE_FRESHNESS"?"HIGH":"OPEN",
+      missing:["LIVE_POSITIVE","LIVE_NEGATIVE","INDEPENDENT_PAIR_ADJUDICATION"]
+    };
     return {pair_id:p.pair_id,source_a:a?.anchor??null,source_b:b?.anchor??null,
       rule_a:a?.rule_id??null,rule_b:b?.rule_id??null,
       rule_a_text:a?.exact_text??null,rule_b_text:b?.exact_text??null,
       common_actors:p.shared_actors,common_stages:p.shared_stages,
       common_concepts:common,polarity,relationship,priority:p.priority,
+      antecedents:{left:antecedent_a,right:antecedent_b},
+      applicability_hypothesis,discriminating_probes,
       counterfactual_question:"Em qual estado ambas as cláusulas se aplicam, qual prevalece e qual contraprova discrimina a hipótese?",
       judgement:"UNADJUDICATED",positive_witness:null,negative_witness:null,
       independent_review_id:null};
@@ -3197,6 +3232,12 @@ export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}
        x.rule_a_text!==ruleById.get(x.rule_a)?.exact_text||
        x.rule_b_text!==ruleById.get(x.rule_b)?.exact_text||
        x.pair_id!==x.rule_a+"|"+x.rule_b||
+       !x.applicability_hypothesis?.includes(x.rule_a)||
+       !x.applicability_hypothesis?.includes(x.rule_b)||
+       !x.discriminating_probes?.positive?.includes(x.rule_a)||
+       !x.discriminating_probes?.positive?.includes(x.rule_b)||
+       !x.discriminating_probes?.negative?.includes(x.rule_a)||
+       x.discriminating_probes.missing?.length!==3||
        x.judgement!=="UNADJUDICATED"||x.positive_witness!==null||
        x.negative_witness!==null))
     throw Error("SEMANTIC_DOSSIER_CONTENT_INVALID");
