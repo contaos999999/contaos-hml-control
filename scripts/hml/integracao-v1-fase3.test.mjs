@@ -10,6 +10,209 @@ const published = JSON.parse(await readFile(new URL(sut.F3_CASES_PATH, root), "u
 
 
 
+test("F3 B1: catálogo publicado é exatamente a derivação da matriz aceita", () => {
+  assert.equal(createHash("sha256").update(csv).digest("hex"), sut.F3_MATRIX.sha256);
+  assert.equal(sut.validateF3Cases(published, csv), true);
+  const derived = sut.buildF3Cases(csv);
+  assert.equal(derived.count, 138);
+  assert.equal(new Set(derived.cases.map((c) => c.caseId)).size, 138);
+  assert.equal(derived.cases.filter((c) => c.classification === "OBRIGATORIA").length, 120);
+  const conditional = derived.cases.filter((c) => c.classification === "CONDICIONAL");
+  assert.equal(conditional.length, 18);
+  assert.ok(conditional.every((c) => c.destination === "V123"));
+  assert.equal(
+    sut.F3_PRODUCERS.reduce((n, p) => n + p.connections, 0),
+    138,
+  );
+  assert.ok(derived.cases.every((c) => c.expected.master === "ALLOW"));
+  assert.ok(derived.cases.every((c) => ["ALLOW", "DENY"].includes(c.expected.leitor)));
+});
+
+test("F3 B1: matriz adulterada, catálogo incompleto, duplicado ou com campo extra falham", () => {
+  assert.throws(() => sut.buildF3Cases(csv + "\n"), { code: "F3_MATRIX_HASH" });
+  const tamper = (fn) => {
+    const copy = JSON.parse(JSON.stringify(published));
+    fn(copy);
+    return copy;
+  };
+  for (const bad of [
+    tamper((c) => c.cases.pop()),
+    tamper((c) => c.cases.push(c.cases[0])),
+    tamper((c) => (c.cases[0].status = "PASS")),
+    tamper((c) => (c.cases[0].expected.master = "DENY")),
+    tamper((c) => (c.cases[0].expected.leitor = null)),
+    tamper((c) => (c.count = 137)),
+    tamper((c) => (c.scope = "TRILHA_A")),
+    tamper((c) => (c.extra = true)),
+    tamper((c) => ([c.cases[0], c.cases[1]] = [c.cases[1], c.cases[0]])),
+  ])
+    assert.throws(() => sut.validateF3Cases(bad, csv), { code: "F3_CASES" });
+  assert.throws(() => sut.validateF3Cases(new Proxy(published, {}), csv), { code: "F3_CASES" });
+});
+
+test("F3 B1: CSV estrito rejeita aspas soltas e aceita campos com vírgula entre aspas", () => {
+  assert.deepEqual(sut.parseCsv('a,"b,c"\n'), [["a", "b,c"]]);
+  assert.deepEqual(sut.parseCsv('"x""y"'), [['x"y']]);
+  assert.throws(() => sut.parseCsv('a"b'), { code: "F3_MATRIX_CSV" });
+  assert.throws(() => sut.parseCsv('"ab'), { code: "F3_MATRIX_CSV" });
+  assert.throws(() => sut.parseCsv('"a"b'), { code: "F3_MATRIX_CSV" });
+});
+
+test("F3 B1: orçamento de intenções conta tentativas e recusa excesso", () => {
+  assert.equal(sut.F3_BUDGET.total, 60);
+  assert.equal(sut.F3_BUDGET.perRun, 40);
+  assert.ok(sut.assertF3Budget({ priorSent: 0, newIntents: 40 }));
+  assert.ok(sut.assertF3Budget({ priorSent: 20, newIntents: 40 }));
+  for (const bad of [
+    { priorSent: 0, newIntents: 41 },
+    { priorSent: 21, newIntents: 40 },
+    { priorSent: -1, newIntents: 1 },
+    { priorSent: 0, newIntents: 1.5 },
+    { priorConfirmed: 0, newIntents: 1 },
+  ])
+    assert.throws(() => sut.assertF3Budget(bad), { code: "F3_BUDGET" });
+});
+
+test("F3 B1: executor F3 recusa escopo da Trilha A e qualquer valor desconhecido", () => {
+  assert.ok(sut.assertF3Scope("INTEGRACAO_V1_FASE3_REL"));
+  for (const scope of ["TRILHA_A", null, undefined, "", "integracao-v1-fase3-rel-20261113-r1"])
+    assert.throws(() => sut.assertF3Scope(scope), { code: "FIXTURES_SCOPE_NOT_F3" });
+});
+
+test("F3 B1: executor F3 fora de workflow_run ou com CLI diferente falha antes da prova", async () => {
+  await assert.rejects(sut.runCli(["--run-f3"], { GITHUB_EVENT_NAME: "workflow_dispatch" }), {
+    code: "F3_MAIN_ONLY",
+  });
+  await assert.rejects(sut.runCli(["--run-f3"], {}), { code: "F3_MAIN_ONLY" });
+  await assert.rejects(sut.runCli(["--prepare-fixtures"], {}), { code: "F3_CLI_USAGE" });
+  await assert.rejects(sut.runCli([], {}), { code: "F3_CLI_USAGE" });
+});
+
+test("F3 B1: enums fechados de recibo, cleanup e perfil do 2º usuário", () => {
+  assert.deepEqual([...sut.F3_CASE_STATUS], ["PASS", "FAIL", "BLOCKED", "N_A_JUSTIFICADO"]);
+  assert.deepEqual(
+    [...sut.F3_CLEANUP_STATUS],
+    ["ISOLATED_NO_DELETE", "NO_MUTATION", "CLEANUP_FAILED"],
+  );
+  assert.equal(sut.F3_SECOND_USER_PROFILE, "leitor");
+  assert.equal(sut.F3_BACKEND_SHA, "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6");
+  assert.ok(Object.isFrozen(sut.F3_PRODUCERS) && sut.F3_PRODUCERS.every(Object.isFrozen));
+});
+
+test("F3 B1: executor não importa preparador da Trilha A nem lê secrets fora do passo", async () => {
+  const source = await readFile(new URL("./integracao-v1-fase3.mjs", import.meta.url), "utf8");
+  // O contrato do YAML cita o passo do preparador; importar o preparador continua proibido.
+  assert.equal(/(from|import\()\s*["'][^"']*prepare-visual-fixtures/.test(source), false);
+  // B2b1: o contrato do YAML cita os nomes dos secrets; ler o valor no ambiente continua proibido
+  // até o BUILD-2b-2, que entrega o login dentro do passo do executor.
+  assert.equal(/env\s*(\.|\[\s*["'`])\s*CONTAOS_HML_SYNTHETIC/.test(source), false);
+  // O único acesso ao ambiente é o parâmetro padrão de runCli.
+  assert.equal(source.split("process.env").length - 1, 1);
+});
+
+test("F3 B1: catálogo publicado tem o SHA-256 fixado no executor", async () => {
+  const raw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
+  assert.equal(createHash("sha256").update(raw).digest("hex"), sut.F3_CASES_SHA256);
+});
+
+test("F3 B2a: esperado do leitor segue a fotografia RBAC v6 tela a tela, sem presumir visível", () => {
+  const adm = sut
+    .buildF3Cases(csv)
+    .cases.filter((c) => c.origin === "ADM01")
+    .map((c) => [c.sourceConnectionId, c.destination, c.expected.leitor]);
+  assert.equal(adm.length, 26);
+  const denied = adm.filter(([, , e]) => e === "DENY").map(([, d]) => d);
+  assert.deepEqual(denied.sort(), ["V102", "V103", "V105", "V113", "V122", "V123", "V123"]);
+  // C0033 e C0034 (V123) seguem a matriz: auditoria/consultar negado ao leitor.
+  for (const id of ["C0033", "C0034"]) assert.equal(adm.find(([c]) => c === id)[2], "DENY");
+  assert.equal(sut.expectedAccess("SYS04", "leitor"), "ALLOW");
+  assert.equal(sut.expectedAccess("ADM01", "leitor"), "DENY");
+  assert.equal(sut.expectedAccess("V116", "leitor"), "ALLOW");
+  assert.equal(sut.expectedAccess("V122", "master"), "ALLOW");
+  assert.throws(() => sut.expectedAccess("V999", "leitor"), { code: "F3_SCREEN_ACCESS" });
+  assert.throws(() => sut.expectedAccess("V101", "administrador"), { code: "F3_PROFILE" });
+  assert.equal(sut.F3_RBAC_LEITOR.version, 6);
+  assert.equal(sut.F3_RBAC_LEITOR.allowed.length + sut.F3_RBAC_LEITOR.denied, 48);
+});
+
+test("F3 B2a: toda tela de destino tem acesso com fonte real no código do produto", async () => {
+  const destinations = new Set(sut.buildF3Cases(csv).cases.map((c) => c.destination));
+  for (const d of destinations) assert.ok(sut.F3_SCREEN_ACCESS[d], d);
+  const lines = async (file) => (await readFile(new URL(file, root), "utf8")).split("\n");
+  for (const [screen, a] of Object.entries(sut.F3_SCREEN_ACCESS)) {
+    assert.ok(["publica", "menu", "guarda", "rota-mae"].includes(a.kind), screen);
+    const m = /^([^:]+):([0-9]+)-([0-9]+)$/.exec(a.source);
+    assert.ok(m, screen + " formato da fonte");
+    const text = (await lines(m[1]))
+      .slice(Number(m[2]) - 1, Number(m[3]))
+      .join("\n")
+      .replace(/\s+/g, "");
+    assert.ok(text, screen + " fonte");
+    if (a.resource === null) {
+      assert.ok(text.includes('"/selecionar-organizacao"'), screen);
+      continue;
+    }
+    const resource = '"' + a.resource + '"';
+    if (a.kind === "guarda")
+      assert.ok(text.includes(resource + ',"' + a.action + '"'), screen + " guarda");
+    else if (text.includes("recurso:"))
+      assert.ok(
+        text.includes("recurso:" + resource) && text.includes('acao:"' + a.action + '"'),
+        screen + " menu comum",
+      );
+    else {
+      assert.ok(text.includes("adicionar("), screen + " menu contextual");
+      const args = text.slice(text.indexOf("adicionar("));
+      if (a.action === "consultar")
+        assert.ok(new RegExp(resource + "\\)").test(args), screen + " ação padrão consultar");
+      else assert.ok(args.includes(resource + ',"' + a.action + '"'), screen + " ação explícita");
+    }
+    if (a.screenGuard) {
+      const [file, line, fn] = a.screenGuard.split(":");
+      assert.ok(
+        (await lines(file))[Number(line) - 1].includes(fn + "("),
+        screen + " guarda da tela",
+      );
+    } else assert.equal(a.screenGuard, null);
+  }
+  // Fonte imprecisa ou ação divergente falham.
+  assert.notEqual(sut.F3_SCREEN_ACCESS.V122.action, "processar");
+});
+
+// ---------------------------------------------------------------------------------------------
+// BUILD-2b-1: infraestrutura offline. Relatórios de teste montados pelo próprio livro; os
+// validadores reexecutam os eventos na mesma máquina de estados, sobre âncoras emitidas pelo
+// módulo (catálogo de buildF3Cases e ledger de validateF3Ledger).
+// ---------------------------------------------------------------------------------------------
+const F3 = "11111111-2222-4333-8444-555555555555";
+const SHA = "a".repeat(40);
+const PROV = Object.freeze({
+  frontendSha: SHA,
+  backendSha: sut.F3_BACKEND_SHA,
+  harnessSha: "b".repeat(40),
+  deploymentId: "dpl_ABCDEFGH1234",
+  workflowRunId: "43509322900",
+});
+const uuid = (n) => "00000000-0000-4000-8000-" + String(n).padStart(12, "0");
+const catalogue = sut.buildF3Cases(csv);
+const MUT = sut.F3_MUTATING_ORDERS;
+const REJ = (o) => o >= 4 && o <= 13;
+const POLICY = Object.freeze({
+  ...sut.F3_DUPLICATE_POLICY,
+  ...Object.fromEntries(
+    MUT.map((o) => [
+      String(o),
+      Object.freeze({
+        result: REJ(o) ? "REJECTED" : "DUPLICATE_NOT_DEFINED",
+        source: "src/x/Tela.tsx:1-2",
+      }),
+    ]),
+  ),
+});
+const entity = (o) => (o === 2 ? F3 : uuid(100 + o));
+const LEDGER_RAW = await readFile(new URL(sut.F3_LEDGER_PATH, root), "utf8");
+const EMPTY = sut.validateF3Ledger(LEDGER_RAW, catalogue);
+
 test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não pelo backend do runner", async () => {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   const fence = sut.createF3MutationFence({ book });
@@ -238,208 +441,6 @@ test("F3 S1: login UI autentica por POST real e recusa 401 sem expor credenciais
   assert.equal(JSON.stringify(actions).includes(credentials.password), false);
 });
 
-test("F3 B1: catálogo publicado é exatamente a derivação da matriz aceita", () => {
-  assert.equal(createHash("sha256").update(csv).digest("hex"), sut.F3_MATRIX.sha256);
-  assert.equal(sut.validateF3Cases(published, csv), true);
-  const derived = sut.buildF3Cases(csv);
-  assert.equal(derived.count, 138);
-  assert.equal(new Set(derived.cases.map((c) => c.caseId)).size, 138);
-  assert.equal(derived.cases.filter((c) => c.classification === "OBRIGATORIA").length, 120);
-  const conditional = derived.cases.filter((c) => c.classification === "CONDICIONAL");
-  assert.equal(conditional.length, 18);
-  assert.ok(conditional.every((c) => c.destination === "V123"));
-  assert.equal(
-    sut.F3_PRODUCERS.reduce((n, p) => n + p.connections, 0),
-    138,
-  );
-  assert.ok(derived.cases.every((c) => c.expected.master === "ALLOW"));
-  assert.ok(derived.cases.every((c) => ["ALLOW", "DENY"].includes(c.expected.leitor)));
-});
-
-test("F3 B1: matriz adulterada, catálogo incompleto, duplicado ou com campo extra falham", () => {
-  assert.throws(() => sut.buildF3Cases(csv + "\n"), { code: "F3_MATRIX_HASH" });
-  const tamper = (fn) => {
-    const copy = JSON.parse(JSON.stringify(published));
-    fn(copy);
-    return copy;
-  };
-  for (const bad of [
-    tamper((c) => c.cases.pop()),
-    tamper((c) => c.cases.push(c.cases[0])),
-    tamper((c) => (c.cases[0].status = "PASS")),
-    tamper((c) => (c.cases[0].expected.master = "DENY")),
-    tamper((c) => (c.cases[0].expected.leitor = null)),
-    tamper((c) => (c.count = 137)),
-    tamper((c) => (c.scope = "TRILHA_A")),
-    tamper((c) => (c.extra = true)),
-    tamper((c) => ([c.cases[0], c.cases[1]] = [c.cases[1], c.cases[0]])),
-  ])
-    assert.throws(() => sut.validateF3Cases(bad, csv), { code: "F3_CASES" });
-  assert.throws(() => sut.validateF3Cases(new Proxy(published, {}), csv), { code: "F3_CASES" });
-});
-
-test("F3 B1: CSV estrito rejeita aspas soltas e aceita campos com vírgula entre aspas", () => {
-  assert.deepEqual(sut.parseCsv('a,"b,c"\n'), [["a", "b,c"]]);
-  assert.deepEqual(sut.parseCsv('"x""y"'), [['x"y']]);
-  assert.throws(() => sut.parseCsv('a"b'), { code: "F3_MATRIX_CSV" });
-  assert.throws(() => sut.parseCsv('"ab'), { code: "F3_MATRIX_CSV" });
-  assert.throws(() => sut.parseCsv('"a"b'), { code: "F3_MATRIX_CSV" });
-});
-
-test("F3 B1: orçamento de intenções conta tentativas e recusa excesso", () => {
-  assert.equal(sut.F3_BUDGET.total, 60);
-  assert.equal(sut.F3_BUDGET.perRun, 40);
-  assert.ok(sut.assertF3Budget({ priorSent: 0, newIntents: 40 }));
-  assert.ok(sut.assertF3Budget({ priorSent: 20, newIntents: 40 }));
-  for (const bad of [
-    { priorSent: 0, newIntents: 41 },
-    { priorSent: 21, newIntents: 40 },
-    { priorSent: -1, newIntents: 1 },
-    { priorSent: 0, newIntents: 1.5 },
-    { priorConfirmed: 0, newIntents: 1 },
-  ])
-    assert.throws(() => sut.assertF3Budget(bad), { code: "F3_BUDGET" });
-});
-
-test("F3 B1: executor F3 recusa escopo da Trilha A e qualquer valor desconhecido", () => {
-  assert.ok(sut.assertF3Scope("INTEGRACAO_V1_FASE3_REL"));
-  for (const scope of ["TRILHA_A", null, undefined, "", "integracao-v1-fase3-rel-20261113-r1"])
-    assert.throws(() => sut.assertF3Scope(scope), { code: "FIXTURES_SCOPE_NOT_F3" });
-});
-
-test("F3 B1: executor F3 fora de workflow_run ou com CLI diferente falha antes da prova", async () => {
-  await assert.rejects(sut.runCli(["--run-f3"], { GITHUB_EVENT_NAME: "workflow_dispatch" }), {
-    code: "F3_MAIN_ONLY",
-  });
-  await assert.rejects(sut.runCli(["--run-f3"], {}), { code: "F3_MAIN_ONLY" });
-  await assert.rejects(sut.runCli(["--prepare-fixtures"], {}), { code: "F3_CLI_USAGE" });
-  await assert.rejects(sut.runCli([], {}), { code: "F3_CLI_USAGE" });
-});
-
-test("F3 B1: enums fechados de recibo, cleanup e perfil do 2º usuário", () => {
-  assert.deepEqual([...sut.F3_CASE_STATUS], ["PASS", "FAIL", "BLOCKED", "N_A_JUSTIFICADO"]);
-  assert.deepEqual(
-    [...sut.F3_CLEANUP_STATUS],
-    ["ISOLATED_NO_DELETE", "NO_MUTATION", "CLEANUP_FAILED"],
-  );
-  assert.equal(sut.F3_SECOND_USER_PROFILE, "leitor");
-  assert.equal(sut.F3_BACKEND_SHA, "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6");
-  assert.ok(Object.isFrozen(sut.F3_PRODUCERS) && sut.F3_PRODUCERS.every(Object.isFrozen));
-});
-
-test("F3 B1: executor não importa preparador da Trilha A nem lê secrets fora do passo", async () => {
-  const source = await readFile(new URL("./integracao-v1-fase3.mjs", import.meta.url), "utf8");
-  // O contrato do YAML cita o passo do preparador; importar o preparador continua proibido.
-  assert.equal(/(from|import\()\s*["'][^"']*prepare-visual-fixtures/.test(source), false);
-  // B2b1: o contrato do YAML cita os nomes dos secrets; ler o valor no ambiente continua proibido
-  // até o BUILD-2b-2, que entrega o login dentro do passo do executor.
-  assert.equal(/env\s*(\.|\[\s*["'`])\s*CONTAOS_HML_SYNTHETIC/.test(source), false);
-  // O único acesso ao ambiente é o parâmetro padrão de runCli.
-  assert.equal(source.split("process.env").length - 1, 1);
-});
-
-test("F3 B1: catálogo publicado tem o SHA-256 fixado no executor", async () => {
-  const raw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
-  assert.equal(createHash("sha256").update(raw).digest("hex"), sut.F3_CASES_SHA256);
-});
-
-test("F3 B2a: esperado do leitor segue a fotografia RBAC v6 tela a tela, sem presumir visível", () => {
-  const adm = sut
-    .buildF3Cases(csv)
-    .cases.filter((c) => c.origin === "ADM01")
-    .map((c) => [c.sourceConnectionId, c.destination, c.expected.leitor]);
-  assert.equal(adm.length, 26);
-  const denied = adm.filter(([, , e]) => e === "DENY").map(([, d]) => d);
-  assert.deepEqual(denied.sort(), ["V102", "V103", "V105", "V113", "V122", "V123", "V123"]);
-  // C0033 e C0034 (V123) seguem a matriz: auditoria/consultar negado ao leitor.
-  for (const id of ["C0033", "C0034"]) assert.equal(adm.find(([c]) => c === id)[2], "DENY");
-  assert.equal(sut.expectedAccess("SYS04", "leitor"), "ALLOW");
-  assert.equal(sut.expectedAccess("ADM01", "leitor"), "DENY");
-  assert.equal(sut.expectedAccess("V116", "leitor"), "ALLOW");
-  assert.equal(sut.expectedAccess("V122", "master"), "ALLOW");
-  assert.throws(() => sut.expectedAccess("V999", "leitor"), { code: "F3_SCREEN_ACCESS" });
-  assert.throws(() => sut.expectedAccess("V101", "administrador"), { code: "F3_PROFILE" });
-  assert.equal(sut.F3_RBAC_LEITOR.version, 6);
-  assert.equal(sut.F3_RBAC_LEITOR.allowed.length + sut.F3_RBAC_LEITOR.denied, 48);
-});
-
-test("F3 B2a: toda tela de destino tem acesso com fonte real no código do produto", async () => {
-  const destinations = new Set(sut.buildF3Cases(csv).cases.map((c) => c.destination));
-  for (const d of destinations) assert.ok(sut.F3_SCREEN_ACCESS[d], d);
-  const lines = async (file) => (await readFile(new URL(file, root), "utf8")).split("\n");
-  for (const [screen, a] of Object.entries(sut.F3_SCREEN_ACCESS)) {
-    assert.ok(["publica", "menu", "guarda", "rota-mae"].includes(a.kind), screen);
-    const m = /^([^:]+):([0-9]+)-([0-9]+)$/.exec(a.source);
-    assert.ok(m, screen + " formato da fonte");
-    const text = (await lines(m[1]))
-      .slice(Number(m[2]) - 1, Number(m[3]))
-      .join("\n")
-      .replace(/\s+/g, "");
-    assert.ok(text, screen + " fonte");
-    if (a.resource === null) {
-      assert.ok(text.includes('"/selecionar-organizacao"'), screen);
-      continue;
-    }
-    const resource = '"' + a.resource + '"';
-    if (a.kind === "guarda")
-      assert.ok(text.includes(resource + ',"' + a.action + '"'), screen + " guarda");
-    else if (text.includes("recurso:"))
-      assert.ok(
-        text.includes("recurso:" + resource) && text.includes('acao:"' + a.action + '"'),
-        screen + " menu comum",
-      );
-    else {
-      assert.ok(text.includes("adicionar("), screen + " menu contextual");
-      const args = text.slice(text.indexOf("adicionar("));
-      if (a.action === "consultar")
-        assert.ok(new RegExp(resource + "\\)").test(args), screen + " ação padrão consultar");
-      else assert.ok(args.includes(resource + ',"' + a.action + '"'), screen + " ação explícita");
-    }
-    if (a.screenGuard) {
-      const [file, line, fn] = a.screenGuard.split(":");
-      assert.ok(
-        (await lines(file))[Number(line) - 1].includes(fn + "("),
-        screen + " guarda da tela",
-      );
-    } else assert.equal(a.screenGuard, null);
-  }
-  // Fonte imprecisa ou ação divergente falham.
-  assert.notEqual(sut.F3_SCREEN_ACCESS.V122.action, "processar");
-});
-
-// ---------------------------------------------------------------------------------------------
-// BUILD-2b-1: infraestrutura offline. Relatórios de teste montados pelo próprio livro; os
-// validadores reexecutam os eventos na mesma máquina de estados, sobre âncoras emitidas pelo
-// módulo (catálogo de buildF3Cases e ledger de validateF3Ledger).
-// ---------------------------------------------------------------------------------------------
-const F3 = "11111111-2222-4333-8444-555555555555";
-const SHA = "a".repeat(40);
-const PROV = Object.freeze({
-  frontendSha: SHA,
-  backendSha: sut.F3_BACKEND_SHA,
-  harnessSha: "b".repeat(40),
-  deploymentId: "dpl_ABCDEFGH1234",
-  workflowRunId: "43509322900",
-});
-const uuid = (n) => "00000000-0000-4000-8000-" + String(n).padStart(12, "0");
-const catalogue = sut.buildF3Cases(csv);
-const MUT = sut.F3_MUTATING_ORDERS;
-const REJ = (o) => o >= 4 && o <= 13;
-const POLICY = Object.freeze({
-  ...sut.F3_DUPLICATE_POLICY,
-  ...Object.fromEntries(
-    MUT.map((o) => [
-      String(o),
-      Object.freeze({
-        result: REJ(o) ? "REJECTED" : "DUPLICATE_NOT_DEFINED",
-        source: "src/x/Tela.tsx:1-2",
-      }),
-    ]),
-  ),
-});
-const entity = (o) => (o === 2 ? F3 : uuid(100 + o));
-const LEDGER_RAW = await readFile(new URL(sut.F3_LEDGER_PATH, root), "utf8");
-const EMPTY = sut.validateF3Ledger(LEDGER_RAW, catalogue);
 const ledgerWith = ({ runs = [], entries = [] }) =>
   JSON.stringify({ ...JSON.parse(LEDGER_RAW), runs, entries }, null, 2) + "\n";
 const ledgerOf = (runs, entries = []) =>
