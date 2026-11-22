@@ -5499,6 +5499,94 @@ export async function f3S3CreateContractDocument({
   });
 }
 
+/** V111: nova versão via UI, sem substituição da anterior. */
+export async function f3S3AddContractDocumentVersion({
+  page, fence, mutationFence, book, organizationId, contractId,
+  documentId, title, before, file,
+}) {
+  if (
+    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId || !isUuid(contractId) ||
+    !isUuid(documentId) || typeof title !== "string" || !title ||
+    before?.id !== documentId ||
+    !Number.isSafeInteger(before.numero_versao) || before.numero_versao < 1 ||
+    !isUuid(before.id_arquivo) ||
+    !book.created().some((entry) =>
+      entry.id === documentId && entry.organizationId === organizationId &&
+      book.summary().requests.some((request) =>
+        request.requestId === entry.requestId &&
+        request.producerOrder === 12 && request.outcome === "confirmed",
+      ),
+    )
+  ) {
+    fail("F3_V111_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/documentos", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Nova versão de " + title, exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Nova versão — " + title });
+  await dialog.locator("#v110-versao-arquivos").setInputFiles(file);
+  const motive = "Atualização documental isolada e versionada F3";
+  await dialog.getByLabel("Motivo da nova versão").fill(motive);
+  const verifyReadback = async ({ businessResult, fileId }) => {
+    const getResponse = (table) =>
+      page.waitForResponse(
+        (response) =>
+          response.request().method() === "GET" &&
+          new URL(response.url()).origin === API_ORIGIN &&
+          new URL(response.url()).pathname === "/rest/v1/" + table,
+        { timeout: F3_S1_UI.timeout },
+      );
+    const documentRead = getResponse("documentos_contrato");
+    const versionRead = getResponse("versoes_documento");
+    const fileRead = getResponse("arquivos");
+    await page.reload({ waitUntil: "networkidle" });
+    const [docResponse, versionResponse, fileResponse] = await Promise.all([
+      documentRead, versionRead, fileRead,
+    ]);
+    if ([docResponse, versionResponse, fileResponse].some((r) => r.status() !== 200)) {
+      fail("F3_V111_READBACK");
+    }
+    const [docs, versions, files] = await Promise.all(
+      [docResponse, versionResponse, fileResponse].map((r) => r.json()),
+    );
+    if (![docs, versions, files].every(Array.isArray)) fail("F3_V111_READBACK");
+    const doc = docs.filter((row) =>
+      row?.id === documentId && row.id_contrato === contractId && row.titulo === title,
+    );
+    const version = versions.filter((row) =>
+      row?.id === businessResult.id_versao &&
+      row.id_documento_contrato === documentId &&
+      row.id_arquivo === fileId,
+    );
+    const meta = files.filter((row) => row?.id === fileId);
+    if (doc.length !== 1 || version.length !== 1 || meta.length !== 1 ||
+        businessResult.id_documento !== documentId) {
+      fail("F3_V111_READBACK");
+    }
+    assertF3V111DocumentVersionReadback({
+      before,
+      after: {
+        id: documentId,
+        numero_versao: version[0].numero_versao,
+        id_arquivo: version[0].id_arquivo,
+        status_seguranca: meta[0].status_seguranca,
+      },
+      documentId, fileId,
+    });
+    return true;
+  };
+  return f3RunSignedDocumentUpload({
+    page, fence, mutationFence, book, organizationId, contractId,
+    order: 13, file,
+    business: { p_id_documento: documentId, p_motivo: motive },
+    submit: async () =>
+      dialog.getByRole("button", { name: "Enviar nova versão", exact: true }).click(),
+    verifyReadback,
+  });
+}
+
 /** V109: resultado do comando conferido contra uma segunda consulta do produto. */
 export function assertF3S3ListCreationReadback({
   receipt,
