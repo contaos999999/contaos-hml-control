@@ -845,18 +845,27 @@ const ISOLATED_KINDS = Object.freeze(["organizacao", "registro"]);
 export const F3_UPDATE_IDENTITY_SOURCE = Object.freeze({ 6: 5, 8: 7 });
 
 function authorizedF3IdentityReuse(state, event, intent) {
-  const producer = F3_UPDATE_IDENTITY_SOURCE[intent.producerOrder];
-  if (!producer || intent.kind !== "principal" || event.organizationId !== state.organizationF3) {
-    return false;
-  }
-  return state.created.some(
-    (entry) =>
+  if (event.organizationId !== state.organizationF3) return false;
+  // Aprovar a versão normativa não cria outra versão: é uma transição do mesmo UUID.
+  const approval =
+    intent.producerOrder === 10 &&
+    intent.kind === "prerequisito" &&
+    intent.action === "aprovacao";
+  const source = F3_UPDATE_IDENTITY_SOURCE[intent.producerOrder];
+  if (!approval && (!source || intent.kind !== "principal")) return false;
+  return state.created.some((entry) => {
+    const maker = state.intents.get(entry.requestId);
+    return (
       entry.id === event.entityId &&
       entry.organizationId === event.organizationId &&
       entry.kind === "registro" &&
-      state.intents.get(entry.requestId)?.producerOrder === producer &&
-      state.intents.get(entry.requestId)?.kind === "principal",
-  );
+      (approval
+        ? maker?.producerOrder === 10 &&
+          maker.kind === "prerequisito" &&
+          maker.action === "versao"
+        : maker?.producerOrder === source && maker.kind === "principal")
+    );
+  });
 }
 
 /**
