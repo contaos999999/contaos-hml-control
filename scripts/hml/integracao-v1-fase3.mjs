@@ -5233,6 +5233,7 @@ export async function f3RunSignedDocumentUpload({
   file,
   business,
   submit,
+  verifyReadback,
 }) {
   const expectedBusiness = {
     12: "criar_documento_contrato_completo",
@@ -5257,6 +5258,7 @@ export async function f3RunSignedDocumentUpload({
     file.buffer.byteLength < 16 ||
     file.buffer.byteLength > 1024 * 1024 ||
     typeof submit !== "function" ||
+    typeof verifyReadback !== "function" ||
     !business ||
     typeof business !== "object" ||
     Array.isArray(business) ||
@@ -5378,6 +5380,9 @@ export async function f3RunSignedDocumentUpload({
     const settled = mutationFence.settle();
     if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
       fail("F3_UPLOAD_FENCE_UNCERTAIN");
+    }
+    if (await verifyReadback({ businessResult, fileId }) !== true) {
+      fail("F3_UPLOAD_READBACK");
     }
     await fence.drain();
     fence.assertSafe();
