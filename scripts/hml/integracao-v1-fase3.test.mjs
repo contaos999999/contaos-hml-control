@@ -5505,9 +5505,8 @@ test("F3 C0458 V117->V116: consumidor confirma identidade do resultado novo", ()
     },
   ];
   for (const changed of invalid) {
-    assert.throws(
-      () => sut.assertF3V117V116ConsumerReadback({ ...input, ...changed }),
-      { code: "F3_V117_V116_CONSUMER_MISMATCH" },
-    );
+    assert.throws(() => sut.assertF3V117V116ConsumerReadback({ ...input, ...changed }), {
+      code: "F3_V117_V116_CONSUMER_MISMATCH",
+    });
   }
 });
