@@ -1,0 +1,27 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 714,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B2B_S2_PRODUTORES_5_10.md"
+  ],
+  "plan_documento": "docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md",
+  "plan_secao": "Seções 2–7, 9, 12 e fluxos F3_FLUXOS_PRODUTORES.md §3: ordem 5–10 V102/V103/V105/V106/V108/V107, dependências, regras sem reenvio, uploads, esperas W1, RLS, livro e contraprovas.",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/714",
+  "plan_aprovacao": "Autorização do titular para concluir integralmente a Fase 3 em 22/11/2026, com continuidade a partir do merge S1 #712 e escopo único issue #708. A autorização é limitada ao BUILD offline S2, não libera mutação HML, REQUEST F3, PROD nem outro domínio.",
+  "justificativa": "Após o merge da #712, os drivers S1 (produtores 1–4) existem, mas o executor F3 permanece fail-closed e não há implementações dos produtores 5–20. Esta fatia apenas implementa UI browser S2 (5–10), com TDD e uso da cerca/livro aprovados; produtores 11–20 exigem autorização e BUILD posteriores.",
+  "ativacao_autorizada": false,
+  "full_diff": true,
+  "prohibitions": [
+    "Sem mudanças em src/**, types.ts, rotas, dependências, workflows, SQL, Auth admin, RLS, Storage, Edge Functions, migrations ou PROD",
+    "Sem envio real de mutação, criação de usuários, organização, contratos ou fixtures fora do protected environment hml",
+    "Sem alteração de segredo nem uso de credenciais reais em logs, reports, traces, screenshots ou testes",
+    "Sem hardcode de JWT, service_role, e-mail, identidade ou UUID de pessoa; nomes sintéticos exclusivos no livro",
+    "Sem habilitar F3 --run-f3 até produtores 11–20 e contraprovas estarem íntegros e revisão apropriada",
+    "Sem bypass de Zero-Drift, Teste C, LOCK, P0-NR ou aprovação da conta revisora distinta da autora",
+    "Sem PASS de 138 casos ou certificado F3 sem HML autenticada de todos os casos aplicáveis"
+  ],
+  "integração": "Apenas após GOV integrada na main para adicionar código à #714, e depois revisão técnica por conta distinta, CI no HEAD e merge protegido, com readback. Toda aprovação assistida por IA deve ser assim identificada."
+}
