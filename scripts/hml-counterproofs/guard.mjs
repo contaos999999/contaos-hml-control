@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 export const REQUIRED = ['CONTAOS_HML_FRONTEND_URL','CONTAOS_HML_USER_A_EMAIL','CONTAOS_HML_USER_A_PASSWORD','CONTAOS_HML_USER_B_EMAIL','CONTAOS_HML_USER_B_PASSWORD','CONTAOS_HML_EXPECTED_FRONTEND_SHA','CONTAOS_HML_EXPECTED_BACKEND_SHA'];
 export function preflight(env, context = {}) {
