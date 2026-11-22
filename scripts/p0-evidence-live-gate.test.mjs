@@ -119,7 +119,8 @@ const fixture = () => {
     },
   };
   const remoteFiles = new Map(files);
-  const run = () => verifyEvidenceLive(manifest, {
+  const run = (gate = "GATE_PROD") => verifyEvidenceLive(manifest, {
+    gate,
     apiGet: async (p) => {
       if (p.startsWith("/contents/")) {
         const match = /^\/contents\/(.+)\?ref=[a-f0-9]{40}$/.exec(p);
@@ -341,4 +342,27 @@ test("P0 LIVE — alteração em script após teste HML impede reutilizar prova"
   const x=fixture();x.responses["/compare/"+H+"..."+H].files=
     [{filename:"scripts/frontend-zero-drift.mjs"}];
   await assertFail(x,/SHA\/contrato estáveis/);
+});
+
+
+test("P0 separation — CODE_CERTIFICATION accepts verified CI without authenticated HML LIVE", async () => {
+  const x = fixture();
+  delete x.finalReceipt.hml_e2e;
+  const result = await x.run("CODE_CERTIFICATION");
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.checked, 1);
+});
+test("P0 separation — GATE_PROD still blocks missing authenticated LIVE evidence", async () => {
+  const x = fixture();
+  delete x.finalReceipt.hml_e2e;
+  await assertFail({run:()=>x.run("GATE_PROD")}, /sem casos e escopo HML autenticado/);
+});
+test("P0 separation — unknown gate fails closed", async () => {
+  const result = await fixture().run("UNAUTHORIZED");
+  assert.match(result.errors.join(" "), /gate desconhecido/);
+});
+test("P0 separation — CODE_CERTIFICATION still rejects failing CI", async () => {
+  const x = fixture();
+  x.responses["/actions/runs/789"].conclusion = "failure";
+  await assertFail({run:()=>x.run("CODE_CERTIFICATION")}, /não está SUCCESS/);
 });
