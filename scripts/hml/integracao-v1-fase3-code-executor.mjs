@@ -1,6 +1,8 @@
 /**
  * F3 CODE: executor de coleta por caseId, sem poder de certificar.
- * Só aceita a matriz canônica e exige dois testes executados por caso aplicável.
+ * Só aceita o catálogo canônico e exige dois recibos por caso aplicável.
+ * Recibos apresentados pelo chamador não são provas autenticadas: permanecem
+ * SUBMITTED_UNVERIFIED mesmo que um callback confirme sua coerência estrutural.
  * Não usa nem altera o ledger LIVE. Uma revisão independente deve validar as provas
  * antes de qualquer certificado. Ausência de runner => BLOCKED, jamais PASS.
  */
@@ -67,8 +69,8 @@ function validEvidence(test, kind, caseId) {
     SHA64.test(test.outputSha256);
 }
 /**
- * O runner deve executar testes de contrato REAIS (produtor + consumidor),
- * nunca criar recibos a partir do inventário. O executor não confia no status
+ * O runner de produção deverá executar testes de contrato REAIS (produtor + consumidor),
+ * nunca criar recibos a partir do inventário. A coleta não é certificação. O executor não confia no status
  * fornecido pelo runner: exige as provas individuais e classifica a ausência.
  *
  * @param {object} params
@@ -107,7 +109,7 @@ export async function collectF3CodeEvidence({ catalogue, catalogueRaw, provenanc
           reason = "F3_CODE_CONTRACT_VERIFICATION";
         } else {
           tests = result.tests.map((t) => structuredClone(t));
-          status = "EVIDENCE_COLLECTED";
+          status = "SUBMITTED_UNVERIFIED";
           reason = null;
         }
       }
@@ -118,7 +120,7 @@ export async function collectF3CodeEvidence({ catalogue, catalogueRaw, provenanc
     entries.push({ caseId: c.caseId, classification: c.classification, status, reason, tests });
   }
   const counts = {
-    collected: entries.filter((e) => e.status === "EVIDENCE_COLLECTED").length,
+    submittedUnverified: entries.filter((e) => e.status === "SUBMITTED_UNVERIFIED").length,
     blocked: entries.filter((e) => e.status === "BLOCKED").length,
     failed: entries.filter((e) => e.status === "FAIL").length,
   };
