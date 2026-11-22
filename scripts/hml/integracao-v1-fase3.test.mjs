@@ -1056,6 +1056,139 @@ test("F3 S2 V106: versão, requestId, evento e contrato são observados sem dupl
   }
 });
 
+test("F3 S2 V106: UI bloqueia atualização sem versão lida e confirma mesmo ID após RPC", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  const contractId = uuid(889007);
+  seal(book, 7, 7);
+  book.confirm(uuid(7), { entityId: contractId, organizationId: F3 });
+  const fence = sut.createF3MutationFence({ book });
+  const requestId = uuid(889008);
+  const before = {
+    schema_versao: "crud-cadastro-v1",
+    entidade: "contratos",
+    registro: { id: contractId, id_organizacao: F3, versao_registro: 1, objeto: "Anterior" },
+    pode_editar: true,
+  };
+  const object = "Contrato sintético F3 " + PROV.workflowRunId + " atualizado";
+  const after = {
+    ...before,
+    registro: { ...before.registro, versao_registro: 2, objeto: object },
+  };
+  const result = { ...after, request_id: requestId, evento_id: uuid(889019) };
+  const queue = [];
+  const values = {};
+  let opens = 0;
+  let posts = 0;
+  const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const readUrl = api + "/rest/v1/rpc/obter_cadastro_operacional_v1";
+  const emit = (url, method, payload, data) => {
+    const response = {
+      url: () => url,
+      status: () => 200,
+      request: () => ({
+        url: () => url,
+        method: () => method,
+        postData: () => JSON.stringify(payload),
+      }),
+      json: async () => data,
+    };
+    for (let i = queue.length - 1; i >= 0; i--) {
+      if (queue[i].predicate(response)) {
+        queue.splice(i, 1)[0].resolve(response);
+      }
+    }
+  };
+  const page = {
+    async goto(url) {
+      assert.ok(url.endsWith("/contratos/" + contractId));
+    },
+    waitForResponse(predicate) {
+      return new Promise((resolve) => queue.push({ predicate, resolve }));
+    },
+    locator(selector) {
+      return {
+        fill: async (value) => {
+          values[selector] = value;
+        },
+        inputValue: async () => values[selector],
+      };
+    },
+    getByText(value) {
+      return {
+        waitFor: async () =>
+          assert.equal(value, "Alteração confirmada e registrada na auditoria."),
+      };
+    },
+    getByRole(role, options) {
+      if (role === "group") {
+        assert.equal(options.name, "Confirmar alteração");
+        return {
+          waitFor: async () => undefined,
+          getByRole: () => ({
+            click: async () => {
+              const body = {
+                p_id_organizacao: F3,
+                p_id_contrato: contractId,
+                p_versao_esperada: 1,
+                p_motivo: "Validação integrada F3",
+                p_request_id: requestId,
+                p_alteracoes: { objeto: values["#cadastro-contratos-" + contractId + "-objeto"] },
+              };
+              const url = api + "/rest/v1/rpc/atualizar_contrato_v1";
+              const req = {
+                url,
+                method: "POST",
+                postData: JSON.stringify(body),
+                sessionId: "test_native_session",
+                interceptionId: "v106_mutation",
+              };
+              assert.equal(fence.policy({ ...req, stage: "REQUEST" }), true);
+              assert.equal(fence.policy({ ...req, stage: "RESPONSE" }), true);
+              posts++;
+              emit(url, "POST", body, result);
+            },
+          }),
+        };
+      }
+      if (role !== "button") throw Error("BAD_ROLE: " + role);
+      if (options.name === "Editar e gerenciar contrato") {
+        return {
+          click: async () => {
+            opens++;
+            emit(readUrl, "POST", {
+              p_id_organizacao: F3,
+              p_entidade: "contratos",
+              p_id: contractId,
+            }, opens === 1 ? before : after);
+          },
+        };
+      }
+      if (["Revisar edição", "Fechar gestão"].includes(options.name)) {
+        return { click: async () => undefined };
+      }
+      throw Error("BAD_BUTTON: " + options.name);
+    },
+  };
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  assert.equal(
+    await sut.f3S2UpdateContract({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      organizationId: F3,
+      contractId,
+    }),
+    contractId,
+  );
+  assert.equal(opens, 2);
+  assert.equal(posts, 1);
+  assert.equal(book.created().at(-1).kind, "registro");
+  assert.equal(book.created().at(-1).id, contractId);
+  assert.equal(queue.length, 0);
+});
+
 const ledgerWith = ({ runs = [], entries = [] }) =>
   JSON.stringify({ ...JSON.parse(LEDGER_RAW), runs, entries }, null, 2) + "\n";
 const ledgerOf = (runs, entries = []) =>
