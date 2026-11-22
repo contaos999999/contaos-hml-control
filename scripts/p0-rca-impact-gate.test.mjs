@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2327,4 +2327,39 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
   const cannotCertifyFinal=await assessSemanticCompletenessGate(preauditInput);
   assert.equal(cannotCertifyFinal.semantic_completeness,"INCONCLUSIVE");
   assert.ok(cannotCertifyFinal.issues.includes("SEMANTIC_INDEPENDENCE_UNPROVEN"));
+});
+
+
+test("P0 MATERIAL TRIAGE: 137 rule texts, seven E axes, 381 sentence contents and all 9316 pairs reviewed for candidates, with no fake PASS",()=>{
+  const snapshots=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES).map(
+    ([path,blob])=>[path,{content:readFileSync(resolve(ROOT,path),"utf8"),blob}]));
+  const inventory=inventoryProtectedSemanticLines(snapshots);
+  const worklist=buildSevenAxisSemanticBacklog(inventory);
+  const sentences=inventorySemanticSentenceCandidates(inventory);
+  const reverse=auditSemanticReverseCoverage(inventory,worklist);
+  const result=analyzeSemanticCorpusForReview({
+    inventory,worklist,sentenceInventory:sentences,reverseCoverage:reverse});
+  assert.deepEqual(result.issues,[]);
+  assert.deepEqual(
+    [result.counts.rules,result.counts.axes,result.counts.sentences,result.counts.interactions],
+    [137,959,381,9316]);
+  assert.equal(new Set(result.interactions.map(x=>x.pair_id)).size,9316);
+  assert.equal(Object.values(result.breakdown).reduce((a,b)=>a+b,0),9316);
+  assert.ok(result.rules.every(x=>x.anchor&&x.exact_text&&
+    x.axis_count===7&&Object.keys(x.axes).length===7&&
+    x.axes.E5_live.positive_witness===null&&x.verdict==="INCONCLUSIVE"));
+  assert.ok(result.sentences.every(x=>x.fragment.length>0&&x.source_anchored&&
+    x.adjudication==="PENDING_HUMAN_INTERPRETATION"));
+  assert.ok(result.interactions.every(x=>x.left_rule_id&&x.right_rule_id&&
+    x.provisional_relationship&&x.adjudication==="PENDING_SUBSTANTIVE_REVIEW"&&
+    x.decision===null));
+  assert.equal(result.semantic_preaudit,"INCONCLUSIVE");
+  assert.equal(result.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(result.merge,"NO_GO");
+  assert.equal(result.activation,"NO_GO");
+  // Matriz grande efetivamente gerada e consumida, com quantitativo por classe
+  // na saída auditável do job. Nunca imprime dados pessoais, tokens ou URLs privados.
+  process.stdout.write("P0-MATERIAL-TRIAGE "+JSON.stringify({
+    counts:result.counts,breakdown:result.breakdown,
+    heads_are_evidence:false,semantic_completeness:result.semantic_completeness})+"\n");
 });

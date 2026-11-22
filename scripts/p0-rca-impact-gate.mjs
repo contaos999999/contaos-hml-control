@@ -2719,3 +2719,133 @@ if (process.argv[1] && fileURLToPath(import.meta.url) ===
     });
   } else main();
 }
+
+
+/**
+ * Revisão MATERIAL PRELIMINAR, não certificação: lê efetivamente os 137 textos
+ * vinculados, os 381 segmentos e TODOS os 9.316 pares. Não confunde a detecção
+ * automática de dependências com uma decisão de aplicabilidade, muito menos
+ * com contraprovas LIVE. Cada registro conserva âncora e texto discriminantes.
+ * A decisão de compatibilidade de um par requer auditor humano e evidências
+ * positivas/negativas distintas por HEAD. Nenhum campo abaixo é um PASS.
+ */
+export function analyzeSemanticCorpusForReview({
+  inventory,worklist,sentenceInventory,reverseCoverage
+}={}){
+  const issues=[];
+  if(!inventory?.inventory_verified||!worklist?.worklist_verified||
+     !sentenceInventory?.partition_verified||
+     !reverseCoverage||reverseCoverage.source_count!==inventory.lines.length)
+    issues.push("SEMANTIC_TRIAGE_SOURCE_UNVERIFIED");
+  const lookup=new Map((inventory?.lines||[]).map(row=>[row.id,row]));
+  const axes=["E1_authority","E2_antecedent","E3_outcomes","E4_interactions",
+    "E5_live","E6_revocation","E7_boundary"];
+  const roles=/\b(?:titular|auditor(?:ia)?|revisor(?:a)?|implementador|orquestrador|executor|app|github|watchdog|publicador|administrador|usu[aá]rio|ci|ruleset|controlador|agente|plataforma|protocolo)\b/gi;
+  const phases=/\b(?:BUILD|PLAN|CI|PR|HEAD|merge_group|merge|fila|revis[aã]o|ativa[çc][aã]o|PROD|HML|RLS|certifica[çc][aã]o|recupera[çc][aã]o|rollback|readback)\b/gi;
+  const predicates=/\b(?:se|quando|caso|antes|ap[oó]s|depois|sem|com|at[eé]|enquanto|exige|somente|nunca|obrigat[oó]ri[oa]|revogad[oa])\b/gi;
+  const rules=(worklist?.normative_rules||[]).map(rule=>{
+    const src=lookup.get(rule.source_links?.[0]);
+    let exact=src?.text||"";
+    const atom=rule.source_atom;
+    if(atom)exact=exact.slice(atom.start,atom.end);
+    const actors=[...new Set((exact.match(roles)||[]).map(x=>x.toLowerCase()))];
+    const stages=[...new Set((exact.match(phases)||[]).map(x=>x.toLowerCase()))];
+    const conditions=[...new Set((exact.match(predicates)||[]).map(x=>x.toLowerCase()))];
+    const directRefs=[...new Set((exact.match(/\b(?:N(?:0[1-9]|1[0-7])(?:\([a-f]\))?|NR-00[569]|P0-ABS-00[12])\b/gi)||[]))];
+    const anchor=src?{source_id:src.id,path:src.path,line:src.line,
+      blob:src.blob,text_sha256:src.text_sha256,
+      atom_id:atom?.id??null,atom_sha256:atom?.text_sha256??null}:null;
+    const snippet=exact.trim();
+    if(!anchor||!snippet)issues.push("SEMANTIC_TRIAGE_UNLINKED_RULE: "+rule.rule_id);
+    const axisEvidence={
+      E1_authority:{observed_actors:actors,source_anchor:anchor,
+        unresolved:actors.length===0?"AUTHOR_NOT_EXPLICIT":"ACTOR_AUTHORITY_NOT_INDEPENDENTLY_VERIFIED"},
+      E2_antecedent:{conditional_markers:conditions,source_anchor:anchor,
+        unresolved:"EVENT_AND_STATE_PREDICATES_REQUIRE_REVIEW"},
+      E3_outcomes:{positive_text:snippet,negative_restrictions:
+        [...new Set((snippet.match(/\b(?:n[aã]o|nunca|vedad[oa]|proibid[oa]|bloquea(?:r|do)|sem|somente)\b/gi)||[]))],
+        unresolved:"POSITIVE_AND_NEGATIVE_BEHAVIOURS_NOT_EXECUTED"},
+      E4_interactions:{direct_rule_references:directRefs,phases:stages,
+        unresolved:"DEPENDENCY_AND_PRECEDENCE_NOT_AUTHENTICATED"},
+      E5_live:{head:null,run_id:null,job_id:null,positive_witness:null,
+        negative_witness:null,unresolved:"NO_LIVE_PROOF_FOR_THIS_RULE"},
+      E6_revocation:{triggers:conditions.filter(x=>/revog|ap[oó]s|depois|recuper|quando|antes/.test(x)),
+        unresolved:"REVOCATION_AND_REPLAY_UNDECIDED"},
+      E7_boundary:{mentioned_stages:stages,
+        unresolved:"BUILD_REVIEW_MERGE_ACTIVATION_BOUNDARY_NOT_CERTIFIED"},
+    };
+    return {rule_id:rule.rule_id,anchor,exact_text:snippet,actors,stages,conditions,
+      direct_rule_references:directRefs,
+      axes:axisEvidence,axis_count:axes.length,
+      source_interpretation:"PRELIMINARY_SOURCE_READ",
+      individually_adjudicated:false,independent_contradiction:null,
+      verdict:"INCONCLUSIVE"};
+  });
+  const ruleById=new Map(rules.map(x=>[x.rule_id,x]));
+  const sentences=(sentenceInventory?.candidates||[]).map(item=>{
+    const src=lookup.get(item.source_id);
+    const fragment=src?.text.slice(item.start,item.end)??"";
+    const modalWords=(fragment.match(/\b(?:deve|exige|obriga|impede|pro[ií]be|vedad|nunca|n[aã]o|somente|autoriza|precisa|requer|necess[aá]ri[oa]|permit[ea])\b/gi)||[]);
+    const nested=fragment.split(/[;:]/).length-1;
+    const classification=modalWords.length||nested>1?
+      "NORMATIVE_CANDIDATE":"CONTEXTUAL_CANDIDATE";
+    const risk=modalWords.length>1||nested>2?"COMPOSITE_CLAUSE_REVIEW":
+      "SINGLE_OR_CONTEXTUAL_REVIEW";
+    if(!src||!fragment||!item.text_sha256)
+      issues.push("SEMANTIC_TRIAGE_INVALID_SENTENCE: "+item.id);
+    return {id:item.id,source_id:item.source_id,path:item.path,line:item.line,
+      text_sha256:item.text_sha256,fragment,classification,risk,
+      modal_count:modalWords.length,subclause_separators:nested,
+      source_anchored:true,adjudication:"PENDING_HUMAN_INTERPRETATION",
+      counterexample:null,positive_witness:null,negative_witness:null};
+  });
+  const pairs=[];const breakdown={};
+  const same=(a,b)=>a.filter(x=>b.includes(x));
+  for(let i=0;i<rules.length;i++)for(let j=i+1;j<rules.length;j++){
+    const a=rules[i],b=rules[j];
+    const sharedActors=same(a.actors,b.actors);
+    const sharedStages=same(a.stages,b.stages);
+    const sameSource=a.anchor?.source_id===b.anchor?.source_id;
+    const sameFamily=a.rule_id.split("-").slice(0,2).join("-")===
+      b.rule_id.split("-").slice(0,2).join("-");
+    const kind=sameSource?"SAME_SOURCE":sharedActors.length&&sharedStages.length?
+      "SHARED_ACTOR_AND_STAGE":sameFamily?"SAME_SECTION":
+      sharedStages.length?"SHARED_STAGE":sharedActors.length?
+      "SHARED_ACTOR":"CROSS_NORMATIVE_DOMAIN";
+    breakdown[kind]=(breakdown[kind]||0)+1;
+    const needsPriority=kind==="SAME_SOURCE"||
+      (sharedStages.some(x=>["merge","merge_group","fila","ativa\u00e7\u00e3o","certifica\u00e7\u00e3o"].includes(x)) &&
+       (sharedActors.length>0||sameFamily));
+    pairs.push({pair_id:a.rule_id+"|"+b.rule_id,
+      left_rule_id:a.rule_id,right_rule_id:b.rule_id,
+      left_source_id:a.anchor?.source_id??null,
+      right_source_id:b.anchor?.source_id??null,
+      left_atom:a.anchor?.atom_id??null,right_atom:b.anchor?.atom_id??null,
+      shared_actors:sharedActors,shared_stages:sharedStages,
+      provisional_relationship:kind,
+      priority:needsPriority?"HIGH_REVIEW":"REVIEW_REQUIRED",
+      hypothesis:"Compare "+a.rule_id+" ("+a.anchor?.path+":"+a.anchor?.line+
+        ") with "+b.rule_id+" ("+b.anchor?.path+":"+b.anchor?.line+
+        "); shared stages="+sharedStages.join(",")+"; shared actors="+sharedActors.join(","),
+      adjudication:"PENDING_SUBSTANTIVE_REVIEW",
+      decision:null,conflict_conditions:null,separation_basis:null,
+      positive_witness:null,negative_witness:null,independent_contradiction:null});
+  }
+  if(rules.length!==137||sentences.length!==381||pairs.length!==9316)
+    issues.push("SEMANTIC_TRIAGE_COUNT_DRIFT");
+  if(new Set(pairs.map(x=>x.pair_id)).size!==pairs.length)
+    issues.push("SEMANTIC_TRIAGE_PAIR_DUPLICATION");
+  // Not a simulation of LIVE evidence. No row may acquire a verdict by triage.
+  const high=pairs.filter(x=>x.priority==="HIGH_REVIEW").length;
+  return {schema:"contaos.semantic-material-triage.v1",
+    counts:{rules:rules.length,axes:rules.length*7,sentences:sentences.length,
+      interactions:pairs.length,high_priority_pairs:high},
+    breakdown,rules,sentences,interactions:pairs,issues,
+    source_anchored:issues.length===0,
+    executed_operations:["source-reading","sentence-predicate-scan","all-pairs-metadata-comparison"],
+    substantive_justification:"Preliminary hypothesis extraction, not clause adjudication or witnessed certification",
+    reviewed_rules:0,reviewed_sentences:0,adjudicated_interactions:0,
+    authenticated_positive_witnesses:0,authenticated_negative_witnesses:0,
+    semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
+    merge:"NO_GO",activation:"NO_GO"};
+}
