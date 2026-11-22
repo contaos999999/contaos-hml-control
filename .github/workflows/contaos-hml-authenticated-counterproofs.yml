@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-24.04
     # Pin Playwright-supported runner; RED evidence: 44977265839
     timeout-minutes: 25
-    environment: hml-counterproofs
+    environment: hml
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,10 +27,10 @@ jobs:
           CONTAOS_HML_EXPECTED_FRONTEND_SHA: ${{ github.sha }}
           CONTAOS_HML_EXPECTED_BACKEND_SHA: ${{ vars.CONTAOS_HML_EXPECTED_BACKEND_SHA }}
           CONTAOS_HML_ISOLATED_FIXTURES: ${{ vars.CONTAOS_HML_ISOLATED_FIXTURES }}
-          CONTAOS_HML_USER_A_EMAIL: ${{ secrets.CONTAOS_HML_USER_A_EMAIL }}
-          CONTAOS_HML_USER_A_PASSWORD: ${{ secrets.CONTAOS_HML_USER_A_PASSWORD }}
-          CONTAOS_HML_USER_B_EMAIL: ${{ secrets.CONTAOS_HML_USER_B_EMAIL }}
-          CONTAOS_HML_USER_B_PASSWORD: ${{ secrets.CONTAOS_HML_USER_B_PASSWORD }}
+          CONTAOS_HML_USER_A_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_EMAIL }}
+          CONTAOS_HML_USER_A_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_PASSWORD }}
+          CONTAOS_HML_USER_B_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_2_EMAIL }}
+          CONTAOS_HML_USER_B_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_2_PASSWORD }}
         run: node scripts/hml-counterproofs/guard.mjs
       - name: Real HML browser counterproofs
         id: hml
@@ -40,10 +40,10 @@ jobs:
           CONTAOS_HML_EXPECTED_FRONTEND_SHA: ${{ github.sha }}
           CONTAOS_HML_EXPECTED_BACKEND_SHA: ${{ vars.CONTAOS_HML_EXPECTED_BACKEND_SHA }}
           CONTAOS_HML_ISOLATED_FIXTURES: ${{ vars.CONTAOS_HML_ISOLATED_FIXTURES }}
-          CONTAOS_HML_USER_A_EMAIL: ${{ secrets.CONTAOS_HML_USER_A_EMAIL }}
-          CONTAOS_HML_USER_A_PASSWORD: ${{ secrets.CONTAOS_HML_USER_A_PASSWORD }}
-          CONTAOS_HML_USER_B_EMAIL: ${{ secrets.CONTAOS_HML_USER_B_EMAIL }}
-          CONTAOS_HML_USER_B_PASSWORD: ${{ secrets.CONTAOS_HML_USER_B_PASSWORD }}
+          CONTAOS_HML_USER_A_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_EMAIL }}
+          CONTAOS_HML_USER_A_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_PASSWORD }}
+          CONTAOS_HML_USER_B_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_2_EMAIL }}
+          CONTAOS_HML_USER_B_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_2_PASSWORD }}
         shell: bash
         run: |
           set +e
