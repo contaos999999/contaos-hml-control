@@ -3,7 +3,7 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "8159c56fd90db656c8178a1c3e9e8120ecfdace9",
+    "frontend_sha": "b160a55d721078b4de34b4a7073633a2f564f2b1",
     "backend_sha": "69cd66d5ef24d16eea6f7d15c6289f8d7c5e991e"
   },
   "escopo": [
