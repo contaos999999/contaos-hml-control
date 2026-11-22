@@ -2007,6 +2007,19 @@ export function createF3MutationFence(options = {}) {
         if (args?.p_id_organizacao !== org || args.p_entidade !== "contratos") return false;
         id = args.p_id;
         order = 8;
+      } else if (
+        request.method() === "POST" &&
+        url.pathname === "/rest/v1/rpc/obter_lista_operacional_v1" &&
+        !url.search
+      ) {
+        const args = parseJsonBody(request.postData());
+        if (
+          args?.p_id_organizacao !== org ||
+          !isUuid(args.p_id_contrato) ||
+          !isUuid(args.p_id_lista)
+        ) return false;
+        id = args.p_id_lista;
+        order = 11;
       } else return false;
       if (!isUuid(id)) return false;
       const data = await response.json();
@@ -2015,9 +2028,15 @@ export function createF3MutationFence(options = {}) {
           ? data?.schema_versao === "crud-cadastro-v1" &&
             data.entidade === "contratos" &&
             data.registro
-          : Array.isArray(data) && data.length === 1
-            ? data[0]
-            : data;
+          : order === 11
+            ? data?.schema_versao === "crud-lista-v1" &&
+              data.id_organizacao === org &&
+              data.lista?.id === id &&
+              data.lista?.id_contrato === data.id_contrato &&
+              data.lista
+            : Array.isArray(data) && data.length === 1
+              ? data[0]
+              : data;
       if (
         control.frozen ||
         row?.id !== id ||
