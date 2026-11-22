@@ -3881,17 +3881,24 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
   );
 });
 
-
 test("F3 driver completion: partial S1 never certifies phase 3", async () => {
-  const result = await sut.runF3Session({catalogue, ledger: EMPTY, provenance: PROV,
-    drive: async () => ({state:"S1_UI_OBSERVED_NOT_CERTIFIED"})});
-  assert.equal(result.code,"F3_DRIVER_PENDING");
-  assert.equal(result.report.state,"BLOCKED");
+  const result = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async () => ({ state: "S1_UI_OBSERVED_NOT_CERTIFIED" }),
+  });
+  assert.equal(result.code, "F3_DRIVER_PENDING");
+  assert.equal(result.report.state, "BLOCKED");
 });
 
 test("F3 driver completion: forged complete result fails closed without validated receipts", async () => {
-  const result = await sut.runF3Session({catalogue, ledger: EMPTY, provenance: PROV,
-    drive: async () => ({state:"F3_COMPLETE",report:{state:"PASS"}})});
-  assert.notEqual(result.code,"F3_COMPLETE");
-  assert.equal(result.report.state,"BLOCKED");
+  const result = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async () => ({ state: "F3_COMPLETE", report: { state: "PASS" } }),
+  });
+  assert.notEqual(result.code, "F3_COMPLETE");
+  assert.equal(result.report.state, "BLOCKED");
 });
