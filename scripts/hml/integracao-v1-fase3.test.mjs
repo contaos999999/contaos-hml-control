@@ -5297,7 +5297,6 @@ test("F3 V117: resposta da revisão correlaciona contexto, documento e comando s
   });
 });
 
-
 test("F3 S4 V116: readback do consumidor deve observar execução nova e competência correta", () => {
   const competenceId = uuid(880014);
   const rpcId = uuid(880016);
@@ -5329,10 +5328,9 @@ test("F3 S4 V116: readback do consumidor deve observar execução nova e compet�
     { after: { ...after, execucao_atual: null } },
     { after: { ...after, stale: true } },
   ]) {
-    assert.throws(
-      () => sut.assertF3S4AnalysisReadback({ ...input, ...changed }),
-      { code: "F3_S4_V116_READBACK" },
-    );
+    assert.throws(() => sut.assertF3S4AnalysisReadback({ ...input, ...changed }), {
+      code: "F3_S4_V116_READBACK",
+    });
   }
 });
 
