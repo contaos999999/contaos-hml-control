@@ -3902,3 +3902,45 @@ test("F3 driver completion: forged complete result fails closed without validate
   assert.notEqual(result.code, "F3_COMPLETE");
   assert.equal(result.report.state, "BLOCKED");
 });
+
+
+test("F3 driver completion: complete flag with valid BLOCKED receipts is not certification", async () => {
+  const result = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async (book) => ({
+      state: "F3_COMPLETE",
+      report: sut.blockedF3Report({
+        code: "F3_DRIVER_PENDING",
+        catalogue,
+        provenance: PROV,
+        ledger: EMPTY,
+        book,
+      }),
+    }),
+  });
+  assert.equal(result.code, "F3_GATE_INCOMPLETE");
+  assert.equal(result.report.state, "BLOCKED");
+});
+
+test("F3 driver completion: forged provenance cannot detach report from live book", async () => {
+  const result = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async (book) => {
+      const report = sut.blockedF3Report({
+        code: "F3_DRIVER_PENDING",
+        catalogue,
+        provenance: PROV,
+        ledger: EMPTY,
+        book,
+      });
+      report.provenance = { ...report.provenance, frontendSha: "f".repeat(40) };
+      return { state: "F3_COMPLETE", report };
+    },
+  });
+  assert.equal(result.code, "F3_DRIVER_REPORT_MISMATCH");
+  assert.equal(result.report.state, "BLOCKED");
+});
