@@ -3898,17 +3898,23 @@ export async function f3S4CreateCompetence({
     !isUuid(organizationId) ||
     !isUuid(contractId) ||
     organizationId !== book.organizationF3() ||
-    !book.created().some((e) =>
-      e.id === contractId &&
-      e.organizationId === organizationId &&
-      e.kind === "registro" &&
-      book.summary().requests.some((q) =>
-        q.requestId === e.requestId &&
-        q.producerOrder === 7 &&
-        q.kind === "principal" &&
-        q.outcome === "confirmed",
-      ),
-    )
+    !book
+      .created()
+      .some(
+        (e) =>
+          e.id === contractId &&
+          e.organizationId === organizationId &&
+          e.kind === "registro" &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === e.requestId &&
+                q.producerOrder === 7 &&
+                q.kind === "principal" &&
+                q.outcome === "confirmed",
+            ),
+      )
   )
     fail("F3_S4_V113_PRECONDITION");
 
@@ -3956,10 +3962,12 @@ export async function f3S4CreateCompetence({
     const listed = page.waitForResponse(
       (r) => {
         const url = new URL(r.url());
-        return r.request().method() === "GET" &&
+        return (
+          r.request().method() === "GET" &&
           url.origin === API_ORIGIN &&
           url.pathname === "/rest/v1/competencias" &&
-          url.searchParams.get("id_contrato") === "eq." + contractId;
+          url.searchParams.get("id_contrato") === "eq." + contractId
+        );
       },
       { timeout: F3_S1_UI.timeout },
     );
