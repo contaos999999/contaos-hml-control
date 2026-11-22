@@ -1488,6 +1488,20 @@ const ensureV107Prerequisites = (book) => {
     book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
   }
 };
+// V108 publica a versão criada no próprio produtor 9; o teste preserva a mesma identidade.
+const ensureV108Prerequisites = (book) => {
+  if (book.summary().requests.some((q) => q.producerOrder === 9 && q.action === "proposta")) return;
+  for (const stage of [
+    { action: "proposta", id: uuid(89010), requestId: uuid(89110) },
+    { action: "versao", id: entity(9), requestId: uuid(89111) },
+    { action: "rubrica", id: uuid(89012), requestId: uuid(89112) },
+  ]) {
+    seal(book, 0, 9, {
+      requestId: stage.requestId, kind: "prerequisito", action: stage.action,
+    });
+    book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
+  }
+};
 // O principal V118 referencia exatamente o parecer produzido pelo prerequisito.
 // Os cenarios legados devem registrar essas identidades no livro, nao contorna-las.
 const seedF3NoUploadPrereq = (book, order) => {
@@ -1498,6 +1512,10 @@ const seedF3NoUploadPrereq = (book, order) => {
   if (order === 19) {
     seal(book, 1919, 19, { kind: "prerequisito", action: "aprovacao" });
     book.confirm(uuid(1919), { entityId: uuid(11919), organizationId: F3 });
+  }
+  if (order === 20) {
+    seal(book, 2020, 20, { kind: "prerequisito", action: "documento" });
+    book.confirm(uuid(2020), { entityId: uuid(12020), organizationId: F3 });
   }
 };
 
@@ -1533,6 +1551,7 @@ function referenceBook(ledger = EMPTY, extra = () => {}, skip = []) {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger });
   createOrg(book);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 9) ensureV108Prerequisites(book);
     if (o === 10) ensureV107Prerequisites(book);
     seedF3NoUploadPrereq(book, o);
     seal(book, o, o);
