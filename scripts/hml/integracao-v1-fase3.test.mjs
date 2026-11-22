@@ -9,6 +9,140 @@ const csv = await readFile(new URL(sut.F3_MATRIX.path, root), "utf8");
 const published = JSON.parse(await readFile(new URL(sut.F3_CASES_PATH, root), "utf8"));
 
 
+
+test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não pelo backend do runner", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  const fence = sut.createF3MutationFence({ book });
+  const organizationId = uuid(889001);
+  const userId = uuid(889002);
+  const actions = [];
+  const fields = new Map();
+  const listeners = [];
+  let selected = null;
+  const response = (url, data) => {
+    const value = {
+      url: () => url,
+      request: () => ({ method: () => "POST" }),
+      status: () => 200,
+      json: async () => data,
+    };
+    for (let i = listeners.length - 1; i >= 0; i--) {
+      if (listeners[i].predicate(value)) {
+        const waiter = listeners.splice(i, 1)[0];
+        waiter.resolve(value);
+      }
+    }
+  };
+  let sequence = 0;
+  const invoke = (url, body) => {
+    const requestId = "interception_" + ++sequence;
+    const message = {
+      url, method: "POST", postData: JSON.stringify(body),
+      sessionId: "test_native_session", interceptionId: requestId,
+    };
+    assert.equal(fence.policy({ ...message, stage: "REQUEST" }), true);
+    assert.equal(fence.policy({ ...message, stage: "RESPONSE" }), true);
+  };
+  const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const role = (type, options = {}) => {
+    if (type === "radio") {
+      let fragment = "";
+      return {
+        filter({ hasText }) {
+          fragment += hasText;
+          return this;
+        },
+        count: async () => (fragment.includes("ContaOS HML F3") ? 1 : 0),
+        waitFor: async () => undefined,
+        click: async () => { selected = "organizacao"; },
+      };
+    }
+    if (type === "dialog") {
+      return {
+        count: async () => 1,
+        getByLabel: (name) => ({
+          isChecked: async () => name === "Vínculo ativo",
+        }),
+        getByRole: (_kind, target) => ({
+          click: async () => {
+            assert.equal(target.name, "Salvar vínculo");
+            invoke(api + "/functions/v1/admin-invite-user", {
+              id_organizacao: organizationId,
+              email: fields.get("#adm01-email"),
+              chave_idempotencia: uuid(789001),
+            });
+            response(api + "/functions/v1/admin-invite-user", {
+              codigo: "USUARIO_EXISTENTE", usuario: { id_usuario: userId },
+            });
+            invoke(api + "/rest/v1/rpc/salvar_vinculo_usuario_adm", {
+              p_id_organizacao: organizationId,
+              p_id_usuario: userId,
+              p_email: fields.get("#adm01-email"),
+              p_perfil: "leitor",
+              p_escopo_todos_contratos: false,
+              p_ativo: true,
+              p_ids_contratos_ativar: [],
+              p_ids_contratos_revogar: [],
+              p_versao_esperada: null,
+              p_chave_idempotencia: uuid(789002),
+            });
+            response(api + "/rest/v1/rpc/salvar_vinculo_usuario_adm", {
+              schema_versao: "adm01-v2", id_usuario: userId,
+              vinculo: { perfil: "leitor", ativo: true },
+            });
+          },
+        }),
+        waitFor: async () => undefined,
+      };
+    }
+    if (type === "button") {
+      return {
+        click: async () => {
+          actions.push(options.name);
+          if (options.name === "Criar organização") {
+            const name = fields.get("#org-criar-razao");
+            invoke(api + "/rest/v1/rpc/criar_organizacao", {
+              p_razao_social: name, p_timezone: "America/Sao_Paulo",
+            });
+            response(api + "/rest/v1/rpc/criar_organizacao", organizationId);
+            response(api + "/rest/v1/rpc/listar_organizacoes_disponiveis", [
+              { id: organizationId, razao_social: name, perfil: "administrador_master" },
+            ]);
+          } else if (options.name === "Continuar") selected = "/";
+        },
+      };
+    }
+    throw Error("UNEXPECTED_ROLE_" + type);
+  };
+  const page = {
+    getByRole: role,
+    goto: async (url) => { selected = new URL(url).pathname; },
+    locator: (id) => ({
+      fill: async (v) => { fields.set(id, v); },
+      selectOption: async (v) => { fields.set(id, v); },
+    }),
+    waitForResponse: (predicate) => new Promise((resolve) => listeners.push({ predicate, resolve })),
+    waitForURL: async (check) => assert.equal(
+      check(new URL("https://contaos-41-hml.vercel.app" + selected)), true,
+    ),
+  };
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  const name = "ContaOS HML F3 " + PROV.workflowRunId;
+  assert.equal(await sut.f3S1CreateOrganization({
+    page, fence: native, mutationFence: fence, book, name,
+  }), organizationId);
+  assert.equal(book.organizationF3(), organizationId);
+  assert.equal(book.summary().sent, 1);
+  assert.equal(await sut.f3S1LinkReader({
+    page, fence: native, mutationFence: fence, book,
+    organizationId, readerEmail: "reader@example.test",
+  }), userId);
+  assert.equal(book.summary().sent, 2);
+  assert.equal(book.assertIsolation(), true);
+  assert.deepEqual(actions.filter((a) => a === "Criar organização"), ["Criar organização"]);
+  assert.equal(listeners.length, 0);
+});
+
 test("F3 S1: contrato do piloto UI impede ativação e preserva as 138 linhas", async () => {
   assert.equal(sut.F3_S1_UI.login, "/login");
   assert.equal(sut.F3_S1_UI.organizations, "/selecionar-organizacao");
