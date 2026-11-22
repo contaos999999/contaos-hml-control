@@ -4039,19 +4039,23 @@ export async function f3S4RequestAnalysis({
     !isUuid(organizationId) ||
     !isUuid(competenceId) ||
     book.organizationF3() !== organizationId ||
-    !book.created().some(
-      (entry) =>
-        entry.id === competenceId &&
-        entry.organizationId === organizationId &&
-        entry.kind === "registro" &&
-        book.summary().requests.some(
-          (q) =>
-            q.requestId === entry.requestId &&
-            q.producerOrder === 14 &&
-            q.kind === "principal" &&
-            q.outcome === "confirmed",
-        ),
-    )
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === competenceId &&
+          entry.organizationId === organizationId &&
+          entry.kind === "registro" &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 14 &&
+                q.kind === "principal" &&
+                q.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_S4_V116_PRECONDITION");
   }
