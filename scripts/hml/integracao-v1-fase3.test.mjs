@@ -221,10 +221,10 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
   const listeners = [];
   let selected = null;
   let organizationVisible = false;
-  const response = (url, data) => {
+  const response = (url, data, body = {}) => {
     const value = {
       url: () => url,
-      request: () => ({ method: () => "POST" }),
+      request: () => ({ method: () => "POST", postDataJSON: () => body }),
       status: () => 200,
       json: async () => data,
     };
@@ -314,10 +314,14 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
                 {
                   id_usuario: userId,
                   email: fields.get("#adm01-email"),
-                  vinculo: { perfil: "leitor", ativo: true },
+                  vinculo: {
+                    perfil: "leitor",
+                    ativo: true,
+                    escopo_todos_contratos: false,
+                  },
                 },
               ],
-            });
+            }, { p_id_organizacao: organizationId, p_pagina: 1 });
           },
         }),
         waitFor: async () => undefined,
@@ -394,6 +398,33 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
     ["Criar organização"],
   );
   assert.equal(listeners.length, 0);
+});
+
+test("F3 S1: readback ADM01 rejeita vínculo inexistente, permissões divergentes e duplicidade", () => {
+  const id = uuid(889002);
+  const email = "reader@example.test";
+  const row = {
+    id_usuario: id,
+    email,
+    vinculo: { perfil: "leitor", ativo: true, escopo_todos_contratos: false },
+  };
+  const valid = { schema_versao: "adm01-v2", itens: [row] };
+  assert.equal(sut.assertF3S1ReaderReadback(valid, id, email), true);
+  const bad = [
+    { schema_versao: "adm01-v2", itens: [] },
+    { ...valid, itens: [row, row] },
+    { ...valid, itens: [{ ...row, id_usuario: uuid(889003) }] },
+    { ...valid, itens: [{ ...row, email: "foreign@example.test" }] },
+    { ...valid, itens: [{ ...row, vinculo: { ...row.vinculo, perfil: "administrador_master" } }] },
+    { ...valid, itens: [{ ...row, vinculo: { ...row.vinculo, ativo: false } }] },
+    { ...valid, itens: [{ ...row, vinculo: { ...row.vinculo, escopo_todos_contratos: true } }] },
+    { schema_versao: "adm01-v1", itens: [row] },
+  ];
+  for (const snapshot of bad) {
+    assert.throws(() => sut.assertF3S1ReaderReadback(snapshot, id, email), {
+      code: "F3_UI_READER_READBACK",
+    });
+  }
 });
 
 test("F3 S1: contrato do piloto UI impede ativação e preserva as 138 linhas", async () => {
