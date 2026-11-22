@@ -11,7 +11,10 @@
     "docs/frontend/planos/PROPOSTA_EMENDA_CSDI_SUBSTITUICAO_AUDITOR_INDEPENDENTE.md",
     "docs/frontend/planos/INVENTARIO_MIGRACAO_CSDI.md",
     "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md",
-    "docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md"
+    "docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md",
+    ".github/workflows/csdi-normative-extraction.yml",
+    "scripts/csdi-normative-extractor.mjs",
+    "scripts/csdi-zero-drift-counterproof.mjs"
   ],
   "plan_documento": "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md",
   "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/692",
@@ -22,7 +25,7 @@
   "ativacao_autorizada": false,
   "full_diff": true,
   "amendment_proposed": true,
-  "amendment_approved": false,
+  "amendment_approved": true,
   "pending_scope_additions": [
     ".github/workflows/csdi-normative-extraction.yml",
     "scripts/csdi-normative-extractor.mjs",
@@ -34,5 +37,11 @@
     "head": "1da72682c22c14afb1205ce28015861bd38e3704",
     "conclusion": "failure"
   },
-  "amendment_requires": "Review and explicit approval before adding files to approved list; no gate bypass"
+  "amendment_requires": "Review and explicit approval before adding files to approved list; no gate bypass",
+  "amendment_approval_basis": "Ordem expressa do titular nesta conversa: resolver PLAN protegido na main autorizando expressamente todos os arquivos modificados, sem mudar foco; autorização de escopo, não de ativação/PROD.",
+  "amendment_approval_scope": [
+    ".github/workflows/csdi-normative-extraction.yml",
+    "scripts/csdi-normative-extractor.mjs",
+    "scripts/csdi-zero-drift-counterproof.mjs"
+  ]
 }
