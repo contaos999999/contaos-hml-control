@@ -5214,6 +5214,198 @@ export function assertF3V109ListReadback({ before, after, organizationId, contra
   return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 11, listId });
 }
 
+/**
+ * Pipeline autenticado de upload simples, ligado à UI. Não aceita TUS.
+ * A mutação deve ser disparada exclusivamente pela tela (submit), sob a cerca.
+ * O POST da Edge, o PUT, a confirmação e o RPC de negócio são observados
+ * na rede, nunca gerados pelo harness. Nenhum segredo é devolvido ou gravado.
+ */
+export async function f3RunSignedDocumentUpload({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  order,
+  kind = "principal",
+  action,
+  file,
+  business,
+  submit,
+}) {
+  const expectedBusiness = {
+    12: "criar_documento_contrato_completo",
+    13: "adicionar_versao_documento_contrato",
+    15: "criar_documento_competencia_v115",
+    20: "criar_documento_contrato_completo",
+  };
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !Object.hasOwn(expectedBusiness, order) ||
+    (order === 20 ? kind !== "prerequisito" || action !== "documento" : kind !== "principal") ||
+    !file ||
+    !/^[a-zA-Z0-9_.-]{1,80}\.pdf$/.test(file.name ?? "") ||
+    file.mimeType !== "application/pdf" ||
+    !(file.buffer instanceof Uint8Array) ||
+    file.buffer.byteLength < 16 ||
+    file.buffer.byteLength > 1024 * 1024 ||
+    typeof submit !== "function" ||
+    !business ||
+    typeof business !== "object" ||
+    Array.isArray(business) ||
+    !book.created().some((entity) =>
+      entity.id === contractId && entity.organizationId === organizationId &&
+      book.summary().requests.some(
+        (r) => r.requestId === entity.requestId &&
+          r.producerOrder === 7 && r.outcome === "confirmed",
+      ),
+    )
+  ) {
+    fail("F3_UPLOAD_PRECONDITION");
+  }
+  const actualFlow = F3_MUTATION_FLOWS[order];
+  const steps = kind === "prerequisito" ? actualFlow.prerequisito[action] : actualFlow.principal;
+  if (
+    !steps || steps.length !== 4 ||
+    steps[3].name !== expectedBusiness[order] ||
+    Object.keys(business).some((k) => k.startsWith("p_") && !k.match(/^p_[a-z_]+$/))
+  ) {
+    fail("F3_UPLOAD_PRECONDITION");
+  }
+  const bytesSha256 = sha256(file.buffer);
+  const edge = {
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    nome_arquivo: file.name,
+    mime: file.mimeType,
+    tamanho: file.buffer.byteLength,
+  };
+  const pathSlot = f3Slot("path", "signed_document_path");
+  const confirmedFile = f3Slot("uuid", "confirmed_upload_file");
+  const docKey = f3Slot("uuid", "document_idempotence");
+  const confirmation = {
+    p_id_organizacao: organizationId,
+    p_id_contrato: contractId,
+    p_path: pathSlot,
+    p_nome_original: file.name,
+    p_mime: file.mimeType,
+    p_tamanho: file.buffer.byteLength,
+    p_sha256: bytesSha256,
+    p_origem: "upload_usuario",
+  };
+  const body = {
+    ...business,
+    p_id_arquivo: confirmedFile,
+    p_chave_idempotencia: docKey,
+  };
+  const requestId = mutationFence.arm({
+    producerOrder: order,
+    ...(kind === "prerequisito" ? { kind, action } : {}),
+    bodies: [edge, { path: pathSlot }, confirmation, body],
+  });
+  const responseFor = (url, method) =>
+    page.waitForResponse(
+      (response) =>
+        response.url() === API_ORIGIN + url &&
+        response.request().method() === method,
+      { timeout: F3_S1_UI.timeout },
+    );
+  try {
+    const edgePromise = responseFor("/functions/v1/storage-sign-upload", "POST");
+    const uploadPromise = page.waitForResponse(
+      (response) => response.request().method() === "PUT" &&
+        response.url().startsWith(
+          API_ORIGIN + "/storage/v1/object/upload/sign/contaos-documentos/",
+        ),
+      { timeout: F3_S1_UI.timeout },
+    );
+    const confirmationPromise = responseFor("/rest/v1/rpc/confirmar_upload_arquivo", "POST");
+    const businessPromise = responseFor("/rest/v1/rpc/" + expectedBusiness[order], "POST");
+    await fence.drain();
+    fence.assertSafe();
+    await submit();
+    const [auth, upload, confirmationResponse, businessResponse] = await Promise.all([
+      edgePromise, uploadPromise, confirmationPromise, businessPromise,
+    ]);
+    if (
+      auth.status() !== 200 ||
+      ![200, 201].includes(upload.status()) ||
+      confirmationResponse.status() !== 200 ||
+      businessResponse.status() !== 200
+    ) {
+      fail("F3_UPLOAD_HTTP");
+    }
+    const authorization = await auth.json();
+    if (
+      authorization?.ok !== true ||
+      authorization.bucket !== "contaos-documentos" ||
+      authorization.usar_upload_resumivel !== false ||
+      typeof authorization.path !== "string" ||
+      !authorization.path.startsWith(organizationId + "/uploads/") ||
+      !upload.url().includes("/contaos-documentos/" + authorization.path + "?")
+    ) {
+      fail("F3_UPLOAD_SIGNED_PATH");
+    }
+    const confirmArgs = confirmationResponse.request().postDataJSON();
+    if (
+      confirmArgs?.p_path !== authorization.path ||
+      confirmArgs.p_id_organizacao !== organizationId ||
+      confirmArgs.p_id_contrato !== contractId ||
+      confirmArgs.p_sha256 !== bytesSha256
+    ) {
+      fail("F3_UPLOAD_CONFIRM_ARGS");
+    }
+    const fileId = await confirmationResponse.json();
+    const businessArgs = businessResponse.request().postDataJSON();
+    const businessResult = await businessResponse.json();
+    if (
+      !isUuid(fileId) ||
+      businessArgs?.p_id_arquivo !== fileId ||
+      !isUuid(businessResult?.id_documento) ||
+      !isUuid(businessResult.id_versao) ||
+      businessResult.numero_versao < 1 ||
+      businessResult.id_arquivo !== fileId
+    ) {
+      fail("F3_UPLOAD_BUSINESS_RESPONSE");
+    }
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_UPLOAD_FENCE_UNCERTAIN");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    const entityId = order === 15
+      ? businessResult.id_versao
+      : order === 20
+        ? fileId
+        : businessResult.id_documento;
+    book.confirm(requestId, { entityId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId,
+      businessResult: Object.freeze({ ...businessResult }),
+      fileId,
+      documentId: businessResult.id_documento,
+      versionId: businessResult.id_versao,
+    });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Erro ou operação incerta não admite uma segunda chave.
+    }
+    throw error;
+  }
+}
+
 /** V109: resultado do comando conferido contra uma segunda consulta do produto. */
 export function assertF3S3ListCreationReadback({
   receipt,
