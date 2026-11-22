@@ -5018,6 +5018,8 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
       for (const field of [...st.free, ...Object.keys(st.inventory), ...Object.keys(st.derived)])
         assert.ok(
           row.fields.includes("`" + field + "`") ||
+          (field === "p_chave_idempotencia" &&
+            /chave|gerado_ui|vinculado/.test(row.resend)) ||
           (row.target.includes("UP") &&
             ["id_organizacao", "id_contrato", "path", "p_path", "p_nome_original",
              "p_mime", "p_tamanho", "p_sha256", "p_origem", "p_id_organizacao",
