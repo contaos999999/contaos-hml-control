@@ -349,3 +349,55 @@ Condição satisfeita: os dois arquivos existem e estão íntegros na `main`. **
 **O que o aceite NÃO faz:** não certifica nenhuma das Fases 3–7, não cria workflows, fixtures nem evidências, não autoriza PROD e não dispensa PLAN, BUILD, revisão independente, CI, HML com nonce única, certificado e checkpoint de cada fase. Orçamento de tempo, fixtures, limpeza, schema de relatório e jobs `IFV1_F3_*` continuam a ser definidos e aprovados no PLAN específico da Fase 3.
 
 **Próxima fase autorizada após merge protegido desta emenda:** Fase 3, cadastros e relacionamentos, começando pelo PLAN/GATE documental próprio.
+
+## 19. Execução simplificada e verificável das sete fases — decisão de 22/11/2026
+
+Esta seção **não modifica o escopo, os critérios de PASS, os certificados válidos nem o aceite já registrado nas seções 1–18**. A certificação geral anterior de **oito fases** está encerrada e não integra este trabalho. O titular determinou que a integração funcional da V1 seja concluída em fatias pequenas e comprováveis, evitando multiplicar mecanismos de auditoria.
+
+**Quadro operacional único:** [issue #708](https://github.com/contaos999999/contaos-hml-control/issues/708). A matriz CSV aprovada e os ledgers originais continuam sendo as fontes dos casos; o issue registra progresso, impedimentos, PRs, SHA e links para artefatos, sem criar outro motor, outro catálogo ou um protocolo concorrente.
+
+### 19.1. Sequência de entrega e fronteira dos gates
+
+| Fatia | Parte das sete fases | Resultado verificável |
+|---|---|---|
+| S0 | Prontidão transversal para F3–F6 | Frontend HML realmente implantado; backend/Edge relevantes identificados; autenticação real do MASTER e credenciais protegidas do usuário sintético leitor inicialmente não vinculado; autorização para criar organização pela UI; **não exigir RLS bilateral antes da criação em S1** |
+| S1 | F3, produtores 1–4 | MASTER faz login e cria pela UI a organização sintética; vincula o leitor; dois logins/logouts e isolamento bilateral após provisionamento, com negativas; BUILD-2b-2 sem duplicar harness |
+| S2 | F3, produtores 5–10 | Fluxos de contratantes, contratos, proposta e normativos, com readback no consumidor |
+| S3 | F3, produtores 11–16 | Listas, documentos, competências e análises, com contratos negativos e persistência |
+| S4 | F3, produtores 17–20 | Parecer, apresentação e histórico; todos os 138 casos decididos com provas, revisão e certificado F3 |
+| S5 | F4 | CRUD/sincronização com as entidades sintéticas já criadas, cache/recarga, concorrência e negativas |
+| S6 | F5 | RBAC, RLS e isolamento entre organizações no frontend, API e backend reais, incluindo negativas |
+| S7 | F6 | Jornadas completas entre as telas, persistência, filas, falha e recuperação aplicáveis |
+| S8 | F7 | Confronto de certificados, referências, evidências, SHA e deployment; regressão transversal por impacto; certificado global |
+
+S0–S8 são **fatias de entrega**, não nove novas fases. As fases permanecem rigorosamente as **sete** já aprovadas. F1 e F2 estão certificadas e preservadas. Não alterar retrospectivamente o histórico da certificação geral anterior.
+
+### 19.2. Política única por fatia
+
+1. **Uma causa raiz por vez.** Reproduzir a falha e identificar seu alcance antes de alterar produto; demonstrar RED/GREEN quando houver correção. Não reescrever auditorias certificadas sem evidência de impacto.
+2. **Código mínimo na infraestrutura existente.** Priorizar `scripts/hml/integracao-v1-fase3.mjs`, sua suíte e `.github/workflows/contaos-trilha-a-fixtures.yml` conforme PLAN F3 já aprovado. O marcador `F3_DRIVER_PENDING` é impedimento real, não autorização para reduzir critérios ou simular execuções. Não criar outro mecanismo paralelo de provas.
+3. **Segurança antes de dados.** Login e autorização devem ser reais; criar ou vincular contas e organizações exclusivamente por fluxo já autorizado e protegido, respeitando a proibição de mexer em Auth/RLS/DDL/PROD sem gate apropriado. Isolamento deve ser testado bilateralmente, nunca presumido por namespace.
+4. **Uma prova pode suportar vários requisitos, mas cada assertiva deve estar coberta.** Reutilizar observações, entidades e recibos existentes quando a proveniência é compatível; manter 138 posições por fase aplicável e todas as negativas/condicionais do plano original. O número de casos nunca é reduzido por reaproveitamento.
+5. **Gate de integração:** CI obrigatório do HEAD e revisão independente `Edivan5002` no frontend. Backend: GitHub Actions/Restore Isolado para provas técnicas, sem chamar sucesso do CI de revisão humana de código. HML autenticada exige execução separada de verdade; `skipped` não vira PASS.
+6. **Gate de continuidade:** somente após evidência de artefato, identidade de produto/backend/deploy, `FAIL=0`, `BLOCKED=0` e certificado da fase integrado na main. Reexecutar por impacto real, nunca por hábito. `NO-GO` em qualquer falta de prova.
+
+### 19.3. Diagnóstico factual de entrada, sem ativação
+
+- Frontend `main@8159c56fd90db656c8178a1c3e9e8120ecfdace9`; backend `main@69cd66d5ef24d16eea6f7d15c6289f8d7c5e991e` na consulta inicial. Reconfirmar em cada execução; estes SHAs não são certificados globais de publicação.
+- F1: inventário estático certificado. F2: navegação 52/52 certificada. F3: catálogo 138 (120 obrigatórios, 18 condicionais); `F3_LEDGER.json` tem `runs=[]` e `entries=[]`; executor termina em `F3_DRIVER_PENDING`.
+- SELECT HML sem alteração de dados: 308 contas Auth, 238 marcadas `app_metadata.synthetic=true`, todas as 238 confirmadas, mas **0 vínculo ativo de conta sintética**; 1 vínculo ativo geral em 1 organização, pertencente a conta não marcada sintética. Há 121 organizações cadastradas; não confundir existência com isolamento válido.
+- PR [frontend #704](https://github.com/contaos999999/contaos-hml-control/pull/704) fornece harness Auth/RLS ainda não integrado nem executado verde contra pares isolados. Este instrumento pode fornecer prova de prontidão quando de fato certificado, sem substituir a semântica de MASTER/leitor fixada pelo PLAN F3.
+- PR [backend #226](https://github.com/contaos999999/develop/pull/226) possui Restore Isolado PASS no [run 44987846263](https://github.com/contaos999999/develop/actions/runs/44987846263) sobre seu HEAD; isso não é autorização de deploy e não prova Auth/RLS dos usuários.
+- **Próxima ação executiva:** S0 verificar MASTER e conta sintética não vinculada + credenciais protegidas, SEM exigir duas organizações antes da execução; em paralelo, implementar S1/BUILD-2b-2 na branch. S1 cria a organização e o vínculo pela UI autorizada e então comprova RLS bilateral. Nunca atualizar ledger com PASS sem essas provas. Nunca executar mutação no HML ou atualizar ledger com PASS sem o par e os testes reais.
+
+O issue #708 permanece como **único painel de continuidade**, com links para HEAD, PR, CI, runs, resultados, blockers e próxima ação. Esta seção é apenas a extensão operacional do plano mestre aprovado; não adiciona um novo plano normativo autônomo.
+
+### 19.4. Emenda focal do teste de identidade HML (somente runner de protocolo F3)
+
+O CI real da PR #679, reancorado na `main@8159c56fd90db656c8178a1c3e9e8120ecfdace9`, passou em Zero-Drift/RCA, mas o job `Trilha A protocolo e Chromium sem credenciais` (run [44990644527](https://github.com/contaos999999/contaos-hml-control/actions/runs/44990644527)) falhou somente em `Current phase 2 HML public deployment is discovered live before any new nonce`, código `DEPLOYMENT_PIN_STALE`.
+
+**Causa comprovada:** o teste legado pede que a origem pública HML atual tenha a identidade fixa do certificado histórico F2 (`e6c8cb06...`, deployment `dpl_9t3...`), mas o frontend HML foi corretamente atualizado e Vercel registra `main@8159c56...`, deployment `dpl_FC3...`, READY. O mecanismo `resolveDeploymentIdentity(modules, historicalPin)` está correto ao **rejeitar** o pin obsoleto. A asserção do teste é que está desatualizada, não o certificado F2, que permanece imutável e válido para seu produto e deployment originais.
+
+**Correção autorizável após esta emenda protegida:** acrescentar **apenas** `scripts/hml/authenticated-visual-audit.test.mjs` ao `P0_GOV_PLAN_679.json`, para a PR #679 substituir a igualdade exigida pelo teste legado por uma dupla asserção: (1) descoberta pública do HML atual por `resolveDeploymentIdentity(modules)`, ainda sujeita às validações de metadados/build e limites de módulos e bytes; (2) identidade histórica F2 mantida no certificado e pin rejeitado explicitamente com `DEPLOYMENT_PIN_STALE` quando diferente do atual, ou aceito caso seja idêntico. Não alterar `NAVIGATION_DEPLOYMENT`, `resolveDeploymentIdentity`, certificados da Fase 2, produto, credenciais, workflows ou comportamento fail-closed. Nenhum `skip` ou PASS forçado.
+
+**Ordem de eficácia:** esta emenda deve integrar-se à main com CI e revisão independente antes da mudança de código na #679. O teste revisado continua sujeito a CI completo e revisão independente da mesma SHA. Uma validação de identidade HML **não** constitui prova de integração funcional F3.
