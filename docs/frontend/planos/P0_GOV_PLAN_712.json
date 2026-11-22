@@ -1,0 +1,27 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 712,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B2B_S1_SESSOES_UI.md"
+  ],
+  "plan_documento": "docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md",
+  "plan_secao": "Seções 2,3,4,5,6,7.1-7.6, 9 e emenda §12: identidade MASTER/leitor, organização F3 criada pela UI, vínculo ADM01 por Edge/RPC, sessao e logout. BUILD-2b-2a fundamentado no PR #679 integrado à main.",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/712",
+  "plan_aprovacao": "Titular em 22/11/2026 determinou executar as sete fases sem pausa, foco estrito F3; plano mestre seção 19 e issue #708. Esta autorização é só escopo de código offline S1, não autoriza REQUEST/HML/PROD, nem valida token.",
+  "justificativa": "O executor F3 atual termina com F3_DRIVER_PENDING por não haver drivers de UI. Esta autorização permite implementar o primeiro incremento 2b-2b para autenticação MASTER, organização UI, vínculo leitor ADM01, isolamento de contextos, logout e tests fail closed, reutilizando as barreiras do BUILD #679. Futuras fatias 5–20 requerem PLAN/GOV próprios e não serão antecipadas nesta PR.",
+  "ativacao_autorizada": false,
+  "full_diff": true,
+  "prohibitions": [
+    "Sem mudanças em src/**, types.ts, rotas, dependências, workflows, SQL, Auth admin, RLS, Storage, Edge Functions ou PROD",
+    "Sem envio real de mutação, criação de usuários ou fixture fora do protected environment hml",
+    "Sem alteração de segredo, envio de credenciais a stdout, traces, screenshots ou report de CI",
+    "Sem hardcode de token, e-mail, UUID de pessoa, e sem usar service_role",
+    "Sem habilitar F3 --run-f3 até todos produtores 5–20 terem drivers completos e prova de fluxos",
+    "Sem bypass de ZERO-DRIFT, LOCK, P0 RCA ou aprovação da conta revisora distinta da autora",
+    "Sem PASS do catálogo F3 ou atribuição de certificado antes de execução autenticada real das 138 linhas"
+  ],
+  "integração": "Na main somente depois de CI, Teste C e revisão registrada por revisor distinto. Implementador Edivan5002 ou contaos9999; revisão pela outra conta permitida, explicitando natureza assistida por IA quando aplicável."
+}
