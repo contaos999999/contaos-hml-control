@@ -3856,6 +3856,148 @@ export async function f3S2UpdateContract({
   }
 }
 
+/** V113: nunca confiar apenas no UUID retornado. A lista RLS precisa conter exatamente o
+ * registro solicitado, dentro do contrato F3 e da competência do mês corrente.
+ * Isto é um driver de código/UI, NÃO uma contraprova LIVE do GATE PROD. */
+export function assertF3S4CompetenceReadback({ rows, rpcId, contractId, reference, query }) {
+  if (
+    !isUuid(rpcId) ||
+    !isUuid(contractId) ||
+    typeof reference !== "string" ||
+    !/^\d{4}-(0[1-9]|1[0-2])-01$/.test(reference) ||
+    !(query instanceof URL) ||
+    query.origin !== API_ORIGIN ||
+    query.pathname !== "/rest/v1/competencias" ||
+    query.searchParams.get("id_contrato") !== "eq." + contractId ||
+    !Array.isArray(rows) ||
+    rows.length > 25
+  )
+    fail("F3_S4_V113_READBACK");
+  const matches = rows.filter((row) => row?.competencia_referencia === reference);
+  if (matches.length !== 1 || matches[0]?.id !== rpcId) fail("F3_S4_V113_READBACK");
+  if (rows.some((row) => !isUuid(row?.id) || typeof row?.competencia_referencia !== "string"))
+    fail("F3_S4_V113_READBACK");
+  return rpcId;
+}
+
+/** V113: UI oficial → RPC observada pela cerca → readback do consumidor de competências.
+ * Um erro após a emissão congela a tentativa: não há reenvio sem chave idempotente. */
+export async function f3S4CreateCompetence({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    organizationId !== book.organizationF3() ||
+    !book
+      .created()
+      .some(
+        (e) =>
+          e.id === contractId &&
+          e.organizationId === organizationId &&
+          e.kind === "registro" &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === e.requestId &&
+                q.producerOrder === 7 &&
+                q.kind === "principal" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_S4_V113_PRECONDITION");
+
+  // A competência mensal é gerada pelo driver no momento da execução, não pela resposta da API.
+  const month = new Date().toISOString().slice(0, 7);
+  const reference = month + "-01";
+  const route = "/contratos/" + contractId + "/competencias/nova";
+  await page.goto(HML_ORIGIN + route, { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Nova competência" }).waitFor({
+    state: "visible",
+    timeout: F3_S1_UI.timeout,
+  });
+  await page.locator("#v113-mes").waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+  await fence.drain();
+  fence.assertSafe();
+  await page.locator("#v113-mes").fill(month);
+  const payload = {
+    p_id_contrato: contractId,
+    p_competencia_referencia: reference,
+  };
+  const requestId = mutationFence.arm({ producerOrder: 14, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/criar_competencia",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.getByRole("button", { name: "Criar competência", exact: true }).click();
+    const submitted = await posted;
+    if (submitted.status() !== 200) fail("F3_S4_V113_HTTP");
+    const rpcId = await submitted.json();
+    if (!isUuid(rpcId)) fail("F3_S4_V113_RESPONSE");
+    await page.getByRole("status").filter({ hasText: "criada." }).waitFor({
+      state: "visible",
+      timeout: F3_S1_UI.timeout,
+    });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId)
+      fail("F3_S4_V113_UNCERTAIN");
+
+    // Verifica o consumidor real de competências, não a resposta da própria mutação.
+    const listed = page.waitForResponse(
+      (r) => {
+        const url = new URL(r.url());
+        return (
+          r.request().method() === "GET" &&
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/competencias" &&
+          url.searchParams.get("id_contrato") === "eq." + contractId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/competencias", {
+      waitUntil: "networkidle",
+    });
+    const response = await listed;
+    if (response.status() !== 200) fail("F3_S4_V113_READBACK");
+    const id = assertF3S4CompetenceReadback({
+      rows: await response.json(),
+      rpcId,
+      contractId,
+      reference,
+      query: new URL(response.url()),
+    });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: id, organizationId });
+    book.assertIsolation();
+    return id;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Uma confirmação incerta não autoriza novo envio de criar_competencia.
+    }
+    throw error;
+  }
+}
+
 async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }
