@@ -37,6 +37,7 @@ function itemsFor(m) {
   return items;
 }
 
+/** GATE PROD preflight: all V1–V5 certificates must be PASS before LIVE proofs. */
 export function validateProdReadiness(m) {
   const errors = [];
   const versions = ['V1', 'V2', 'V3', 'V4', 'V5'];
