@@ -171,6 +171,33 @@ export const F3_RBAC_LEITOR = Object.freeze({
   ),
   denied: 33,
 });
+// Espelho normativo do catálogo real de src/lib/administracao/rbacRpc.ts;
+// o autoteste de fonte rejeita drift do frontend. MASTER deve expor os 48 pares.
+export const F3_RBAC_MASTER_CATALOG = Object.freeze({
+  organizacoes: ["consultar", "administrar"],
+  usuarios: ["consultar", "administrar"],
+  auditoria: ["consultar"],
+  contratantes: ["consultar", "criar", "editar"],
+  contratos: ["consultar", "criar", "editar"],
+  orcamentos: ["consultar", "criar", "editar", "aprovar"],
+  normativos: ["consultar", "criar", "editar", "aprovar"],
+  listas: ["consultar", "criar", "editar"],
+  documentos_contrato: ["consultar", "criar", "editar"],
+  documentos_competencia: ["consultar", "criar", "editar"],
+  competencias: ["consultar", "criar"],
+  analises: ["consultar", "criar", "processar", "editar"],
+  pareceres: ["consultar", "criar", "aprovar"],
+  apresentacoes: ["consultar", "aprovar", "apresentar"],
+  historico: ["consultar", "criar", "editar", "processar"],
+  arquivos: ["consultar", "criar", "editar"],
+  dashboard: ["consultar"],
+});
+export const F3_RBAC_MASTER_ALLOWED = Object.freeze(
+  Object.entries(F3_RBAC_MASTER_CATALOG)
+    .flatMap(([recurso, acoes]) => acoes.map((acao) => recurso + "/" + acao))
+    .sort(),
+);
+
 export function expectedAccess(screen, profile) {
   if (typeof screen !== "string" || !Object.hasOwn(F3_SCREEN_ACCESS, screen))
     fail("F3_SCREEN_ACCESS");
@@ -2540,6 +2567,80 @@ function f3S1Credentials(credentials) {
     fail("F3_UI_CREDENTIALS");
 }
 
+const F3_S1_RBAC = API_ORIGIN + "/rest/v1/rpc/consultar_permissoes_efetivas";
+
+/** Snapshot apenas da resposta RPC observada no navegador, nunca por acesso direto ao backend. */
+export function parseF3S1EffectiveRbac(dto, expectMaster) {
+  const code = "F3_UI_RBAC_RESPONSE";
+  if (
+    !dto ||
+    typeof expectMaster !== "boolean" ||
+    Object.keys(dto).sort().join(",") !== "master,permissoes,schema_versao,versao" ||
+    dto.schema_versao !== "rbac-v1" ||
+    dto.versao !== F3_RBAC_LEITOR.version ||
+    dto.master !== expectMaster ||
+    !Array.isArray(dto.permissoes)
+  )
+    fail(code);
+  const allowed = [];
+  for (const p of dto.permissoes) {
+    if (
+      !p ||
+      Object.keys(p).sort().join(",") !== "acao,recurso" ||
+      typeof p.acao !== "string" ||
+      typeof p.recurso !== "string" ||
+      !/^[a-z_]+$/.test(p.acao) ||
+      !/^[a-z_]+$/.test(p.recurso)
+    )
+      fail(code);
+    allowed.push(p.recurso + "/" + p.acao);
+  }
+  if (new Set(allowed).size !== allowed.length) fail(code);
+  if (expectMaster) {
+    if (JSON.stringify([...allowed].sort()) !== JSON.stringify(F3_RBAC_MASTER_ALLOWED)) fail(code);
+  } else assertF3LeitorRbac({ version: dto.versao, allowed });
+  return Object.freeze({ version: dto.versao, allowed: Object.freeze(allowed.sort()) });
+}
+
+/** A recarga da UI deve emitir o POST RPC real com organização e contrato esperado. */
+export async function readF3S1EffectiveRbac(page, organizationId, expectMaster) {
+  if (!isUuid(organizationId) || typeof expectMaster !== "boolean" || !page)
+    fail("F3_UI_RBAC_READBACK");
+  const pending = page.waitForResponse(
+    (r) => r.url() === F3_S1_RBAC && r.request().method() === "POST",
+    { timeout: F3_S1_UI.timeout },
+  );
+  await page.reload({ waitUntil: "networkidle" });
+  const response = await pending;
+  if (response.status() !== 200) fail("F3_UI_RBAC_READBACK");
+  let args;
+  try {
+    args = response.request().postDataJSON();
+  } catch {
+    fail("F3_UI_RBAC_READBACK");
+  }
+  if (
+    !args ||
+    Object.keys(args).sort().join(",") !== "p_id_contrato,p_id_organizacao" ||
+    args.p_id_contrato !== null ||
+    args.p_id_organizacao !== organizationId
+  )
+    fail("F3_UI_RBAC_READBACK");
+  return parseF3S1EffectiveRbac(await response.json(), expectMaster);
+}
+
+/** A inclusão do leitor jamais deve alterar as permissões efetivas do MASTER. */
+export function assertF3S1MasterRbacUnchanged(before, after) {
+  if (
+    !before ||
+    !after ||
+    before.version !== after.version ||
+    JSON.stringify(before.allowed) !== JSON.stringify(after.allowed)
+  )
+    fail("F3_UI_MASTER_RBAC_DRIFT");
+  return true;
+}
+
 /** Login exclusivamente pela interface. Não retorna token, email nem dados de Auth. */
 export async function f3S1Login(page, credentials, { readerBeforeLink = false } = {}) {
   f3S1Credentials(credentials);
@@ -2840,6 +2941,9 @@ export async function driveF3S1Ui({
       book,
       name,
     });
+    const masterBefore = await readF3S1EffectiveRbac(masterPage, organizationId, true);
+    await masterFence.drain();
+    masterFence.assertSafe();
     const userId = await f3S1LinkReader({
       page: masterPage,
       fence: masterFence,
@@ -2848,6 +2952,10 @@ export async function driveF3S1Ui({
       organizationId,
       readerEmail: readerCredentials.email,
     });
+    const masterAfter = await readF3S1EffectiveRbac(masterPage, organizationId, true);
+    assertF3S1MasterRbacUnchanged(masterBefore, masterAfter);
+    await masterFence.drain();
+    masterFence.assertSafe();
     await f3S1Login(readerPage, readerCredentials);
     readerSignedIn = true;
     await readerPage.goto(HML_ORIGIN + F3_S1_UI.organizations, { waitUntil: "networkidle" });
@@ -2860,6 +2968,9 @@ export async function driveF3S1Ui({
     await card.click();
     await readerPage.getByRole("button", { name: "Continuar", exact: true }).click();
     await readerPage.waitForURL((u) => u.origin === HML_ORIGIN && u.pathname === "/");
+    await readerFence.drain();
+    readerFence.assertSafe();
+    const readerRbac = await readF3S1EffectiveRbac(readerPage, organizationId, false);
     await readerFence.drain();
     readerFence.assertSafe();
     await readerPage.goto(HML_ORIGIN + F3_S1_UI.users, { waitUntil: "networkidle" });
@@ -2881,6 +2992,8 @@ export async function driveF3S1Ui({
       userId,
       masterLogout: true,
       readerLogout: true,
+      rbacLeitorVersion: readerRbac.version,
+      masterPermissionsUnchanged: true,
     });
   } finally {
     if (readerSignedIn) await f3S1Logout(readerPage, readerFence).catch(() => undefined);
