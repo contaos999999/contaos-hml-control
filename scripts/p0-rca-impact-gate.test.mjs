@@ -2635,3 +2635,42 @@ test("P0 TEN REASONED INTERPRETATIONS: ten priority conflicts have source-bound 
   assert.ok(analyzePrioritySemanticProposals(bad).issues.length>0);
   assert.equal(analysis.release,"NO_GO");
 });
+
+
+test("P0 CRYPTO SNAPSHOT: independent SHA256 pins all 118 sources, 381 sentences, 137 rules and 9316 pair identities",()=>{
+  const sources=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES).map(
+    ([path,blob])=>[path,{content:readFileSync(path,"utf8"),blob}]));
+  const inv=inventoryProtectedSemanticLines(sources);
+  const work=buildSevenAxisSemanticBacklog(inv);
+  const sentences=inventorySemanticSentenceCandidates(inv);
+  assert.deepEqual(inv.issues,[]);
+  assert.deepEqual(sentences.issues,[]);
+  assert.equal(inv.lines.length,118);
+  assert.equal(sentences.candidates.length,381);
+  assert.equal(work.normative_rules.length,137);
+  const digest=content=>createHash("sha256").update(content).digest("hex");
+  const sourceDigest=digest(inv.lines.map(x=>x.id+"|"+x.text_sha256).join("\n"));
+  const sentenceDigest=sentences.inventory_sha256;
+  const idArray=work.normative_rules.map(x=>x.rule_id);
+  const rulesDigest=digest(idArray.join("\n"));
+  const pairIds=[];
+  for(let i=0;i<idArray.length;i++)
+    for(let j=i+1;j<idArray.length;j++)
+      pairIds.push(idArray[i]+"|"+idArray[j]);
+  assert.equal(pairIds.length,9316);
+  const pairDigest=digest(pairIds.join("\n"));
+  // Independently computed using a pure-JS SHA-256 implementation on the
+  // protected Git blobs, verified against standard vectors before pinning.
+  assert.equal(sourceDigest,
+    "42f1deaae7f093ef6683b5745346913e322056bbb0445c205033d1fcc6910b5a");
+  assert.equal(sentenceDigest,
+    "3ad36fe3d672818259189a2644d131408e0e0965a1da8b06f5775246911def56");
+  assert.equal(rulesDigest,
+    "63716e4eaff2af0c93261c3b5a6bb7c09641381db6a97d419cd2e0b073ccd6b2");
+  assert.equal(pairDigest,
+    "10ee2cf80cf03a1cc401359708ef32f30b27e5e1eb288e0a3060a08828099c25");
+  assert.notEqual(digest(pairIds.slice(1).join("\n")),pairDigest);
+  assert.notEqual(digest(idArray.slice(1).join("\n")),rulesDigest);
+  process.stdout.write("P0-CRYPTO-SNAPSHOT "+JSON.stringify({
+    sourceDigest,sentenceDigest,rulesDigest,pairDigest})+"\n");
+});
