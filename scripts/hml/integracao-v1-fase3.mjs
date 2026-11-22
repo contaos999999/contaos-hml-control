@@ -855,9 +855,11 @@ function applyEvent(st, run, e) {
     abandon: ["absent"],
   }[e.op];
   if (!from.includes(i.state)) fail(e.op === "resend" ? "F3_UNCERTAIN_RESEND" : "F3_INTENT_STATE");
-  // Log canônico: todo evento muda o estado. A releitura de uma abandonada vale uma vez por
-  // execução; repeti-la seria um evento sem efeito, removível sem deixar rastro.
-  if (e.op === "absent" && i.state === "abandoned" && i.rechecked) fail("F3_INTENT_STATE");
+  // Uma intenção abandonada admite UMA única releitura por execução, positiva OU negativa.
+  // Sem a barreira simétrica, abandoned -> absent -> found era aceito e a remoção do evento
+  // absent não alterava o estado final nem o resumo: tampering invisível no replay do livro.
+  if ((e.op === "absent" || e.op === "found") &&
+      i.state === "abandoned" && i.rechecked) fail("F3_INTENT_STATE");
   if (e.op === "found" || e.op === "absent") i.rechecked = true;
   if (e.op === "resend") {
     if (i.resent) fail("F3_UNCERTAIN_RESEND");
