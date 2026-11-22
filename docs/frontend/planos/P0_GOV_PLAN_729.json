@@ -5,9 +5,10 @@
   "files": [
     "scripts/hml/integracao-v1-fase3.mjs",
     "scripts/hml/integracao-v1-fase3.test.mjs",
-    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B2C_S3_CONTRATOS_14_16_18_19.md"
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B2C_S3_CONTRATOS_14_16_18_19.md",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md"
   ],
-  "purpose": "Adicionar contratos de mutação fail-closed e testes negativos baseados no código real para produtores V113, V116, V118 e V119 da Fase 3, sem promover inventário a prova funcional.",
+  "purpose": "Adicionar contratos de mutação fail-closed e testes negativos baseados no código real para produtores V113, V116, V118 e V119 da Fase 3, sem promover inventário a prova funcional. Inclui retificação documental da origem inventariada do parecer V118, com vínculo ao pré-requisito observado pela UI.",
   "authorization": "Pedido direto do titular de completar os drivers de produtores e consumidores, executar 138 casos e certificar F3 apenas com evidências reais; S3 é incremento do BUILD, não certificado.",
   "production": "NO-GO",
   "certification": "F3_NOT_CERTIFIED",
