@@ -61,10 +61,16 @@ const regularIds=promptCatalog.regular.ids,atomicIds=promptCatalog.atomic.ids;
 const canonicalPaths=new Set(sources.map(x=>x.path));
 const crosswalk=promptCatalog.crosswalk?.regular_to_atomic||[];
 const mappedIds=new Set(crosswalk.map(x=>x.regular_id));
+const unresolvedRegularIds=crosswalk.filter(x=>!x.review_evidence||/revisao|parcial|pendente/i.test(x.status||'')).map(x=>x.regular_id);
+const sourceEvidence={
+ regular:{original_path:promptCatalog.provenance?.regular_original,sha256:promptCatalog.provenance?.regular_sha256,archive_sha256:promptCatalog.provenance?.archive_sha256,verification_method:promptCatalog.provenance?.verification_method,bytes_verified_in_this_run:false},
+ atomic:{original_path:promptCatalog.provenance?.atomic_original,sha256:promptCatalog.provenance?.atomic_sha256,archive_sha256:promptCatalog.provenance?.archive_sha256,verification_method:promptCatalog.provenance?.verification_method,bytes_verified_in_this_run:false}
+};
+const reconciliationRows=crosswalk.map(x=>({regular_id:x.regular_id,status:x.status,related_atomic_ids:x.relevant_atomic_ids,source_verified:x.source_verified===true,review_evidence:x.review_evidence||null,literal_original_verified_in_this_run:false,adjudication:x.review_evidence?'REQUIRES_INDEPENDENT_VALIDATION':'PENDING_EVIDENCE'}));
 const reconciled={
  regular:{expected:100,indexed:regularIds.length,crosswalked:mappedIds.size,unmapped:regularIds.filter(id=>!mappedIds.has(id)),source_text_materialized:promptCatalog.regular.source_materialized_in_repository===true},
  atomic:{expected:97,indexed:atomicIds.length,canonical_requirement_sources:promptCatalog.provenance?.atomic_requirement_sources||[],brand_source:promptCatalog.provenance?.brand_source,source_text_materialized:promptCatalog.atomic.source_materialized_in_repository===true},
- unresolved_crosswalk:crosswalk.filter(x=>!x.review_evidence||/revisao|parcial|pendente/i.test(x.status||'')).map(x=>({regular_id:x.regular_id,status:x.status})),
+ source_evidence:sourceEvidence,reconciliation_rows:reconciliationRows,unresolved_regular_ids:unresolvedRegularIds,unresolved_crosswalk:crosswalk.filter(x=>!x.review_evidence||/revisao|parcial|pendente/i.test(x.status||'')).map(x=>({regular_id:x.regular_id,status:x.status})),
  canonical_refs_missing:[...(promptCatalog.provenance?.atomic_requirement_sources||[]),promptCatalog.provenance?.brand_source,promptCatalog.provenance?.regular_protocol].filter(p=>!canonicalPaths.has(p)),
  original_archive_sha256:promptCatalog.provenance?.archive_sha256,
  original_regular_sha256:promptCatalog.provenance?.regular_sha256,
