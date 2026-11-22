@@ -719,6 +719,8 @@ const EVENT_KEYS = Object.freeze([
   "entityId",
   "organizationId",
 ]);
+const ACTION_EVENT_KEYS = Object.freeze([...EVENT_KEYS, "action"]);
+const F3_ACTION_RE = /^[a-z][a-z0-9_]{0,40}$/;
 const EVENT_OPS = Object.freeze([
   "seal",
   "confirm",
@@ -741,6 +743,7 @@ const INTENT_KEYS = Object.freeze([
   "rechecked",
   "binds",
 ]);
+const ACTION_INTENT_KEYS = Object.freeze([...INTENT_KEYS, "action"]);
 const INTENTS_KEYS = Object.freeze([
   "priorSent",
   "sent",
@@ -750,6 +753,7 @@ const INTENTS_KEYS = Object.freeze([
   "abandoned",
   "requests",
   "events",
+  "eventsSha256",
 ]);
 // PLAN §12.5 e F3_FLUXOS_PRODUTORES §3: após incerteza, estas ações só admitem releitura.
 const READBACK_ONLY_ORDERS = new Set([2, 5, 6, 7, 14, 16, 18, 20]);
@@ -799,8 +803,17 @@ function validateEvent(e) {
     }
     return;
   }
-  strictPlain(e, EVENT_KEYS, code);
+  const action = Object.hasOwn(e, "action");
+  strictPlain(e, action ? ACTION_EVENT_KEYS : EVENT_KEYS, code);
   if (!enumOf(e.op, EVENT_OPS) || !isUuid(e.requestId)) fail(code);
+  if (
+    action &&
+    (e.op !== "seal" ||
+      e.kind !== "prerequisito" ||
+      typeof e.action !== "string" ||
+      !F3_ACTION_RE.test(e.action))
+  )
+    fail(code);
   const entity = e.op === "confirm" || e.op === "found";
   if (e.op === "seal") {
     if (!Number.isSafeInteger(e.producerOrder) || !enumOf(e.kind, F3_INTENT_KINDS)) fail(code);
@@ -830,6 +843,12 @@ function sealIntent(st, e) {
     if (e.producerOrder === 2 || st.organizationF3 === null) fail("F3_INTENT_PRODUCER");
     if (all.filter((i) => i.kind === "prerequisito").length >= F3_MAX_PREREQUISITES)
       fail("F3_INTENT_PREREQUISITES");
+    const declared = F3_MUTATION_FLOWS[e.producerOrder]?.prerequisito;
+    if (declared && !Array.isArray(declared)) {
+      if (!Object.hasOwn(declared, e.action)) fail("F3_PREREQUISITE_ACTION");
+      if (same.some((i) => i.kind === "prerequisito" && i.action === e.action && OPEN(i)))
+        fail("F3_INTENT_PREREQUISITES");
+    } else if (e.action !== undefined) fail("F3_PREREQUISITE_ACTION");
     return;
   }
   // Principal: uma aberta por produtor; a da organização só antes de a organização existir e
@@ -850,6 +869,31 @@ export const F3_ENTITY_KINDS = Object.freeze([
 ]);
 const ISOLATED_KINDS = Object.freeze(["organizacao", "registro"]);
 
+// V103 e V106 editam o registro criado por V102 e V105: o mesmo UUID é um vínculo
+// legítimo, não uma segunda criação. A exceção é restrita ao produtor e à identidade
+// principal original; reuso em qualquer outro contexto continua sendo duplicidade.
+export const F3_UPDATE_IDENTITY_SOURCE = Object.freeze({ 6: 5, 8: 7 });
+
+function authorizedF3IdentityReuse(state, event, intent) {
+  if (event.organizationId !== state.organizationF3) return false;
+  // Aprovar a versão normativa não cria outra versão: é uma transição do mesmo UUID.
+  const approval =
+    intent.producerOrder === 10 && intent.kind === "prerequisito" && intent.action === "aprovacao";
+  const source = F3_UPDATE_IDENTITY_SOURCE[intent.producerOrder];
+  if (!approval && (!source || intent.kind !== "principal")) return false;
+  return state.created.some((entry) => {
+    const maker = state.intents.get(entry.requestId);
+    return (
+      entry.id === event.entityId &&
+      entry.organizationId === event.organizationId &&
+      entry.kind === "registro" &&
+      (approval
+        ? maker?.producerOrder === 10 && maker.kind === "prerequisito" && maker.action === "versao"
+        : maker?.producerOrder === source && maker.kind === "principal")
+    );
+  });
+}
+
 /**
  * Registra a entidade devolvida pelo produto. O que o produto devolve é fato observado e sempre
  * entra no inventário com o tipo correspondente; só a violação de protocolo do driver (organização
@@ -858,7 +902,8 @@ const ISOLATED_KINDS = Object.freeze(["organizacao", "registro"]);
 function recordEntity(st, e, i) {
   if (i.producerOrder === 2 && e.organizationId !== e.entityId) fail("F3_INTENT_ENTITY");
   let kind;
-  if (st.entities.has(e.entityId)) kind = "entidade_repetida";
+  if (st.entities.has(e.entityId))
+    kind = authorizedF3IdentityReuse(st, e, i) ? "registro" : "entidade_repetida";
   else if (e.entityId === F3_E87_ORG || e.organizationId === F3_E87_ORG) kind = "fora_da_f3";
   else if (i.producerOrder === 2)
     kind =
@@ -893,6 +938,7 @@ function applyEvent(st, run, e) {
       state: "sealed",
       producerOrder: e.producerOrder,
       kind: e.kind,
+      ...(e.action !== undefined ? { action: e.action } : {}),
       duplicateOf: e.duplicateOf,
       entityId: null,
       resent: false,
@@ -955,7 +1001,11 @@ function stepsOf(i) {
   const f = Object.hasOwn(F3_MUTATION_FLOWS, i.producerOrder)
     ? F3_MUTATION_FLOWS[i.producerOrder]
     : null;
-  return f ? f[i.kind === "prerequisito" ? "prerequisito" : "principal"] : null;
+  if (!f) return null;
+  if (i.kind !== "prerequisito") return f.principal;
+  if (!f.prerequisito) return null;
+  if (Array.isArray(f.prerequisito)) return f.prerequisito;
+  return f.prerequisito[i.action] ?? null;
 }
 
 /**
@@ -1004,13 +1054,17 @@ function bindIntent(st, e, i) {
       const ok =
         origin === 2
           ? ref.entityId === st.organizationF3
-          : st.created.some(
-              (c) =>
+          : st.created.some((c) => {
+              const source = st.intents.get(c.requestId);
+              const order = typeof origin === "number" ? origin : origin?.producerOrder;
+              return (
                 c.id === ref.entityId &&
                 c.kind === "registro" &&
                 c.organizationId === st.organizationF3 &&
-                st.intents.get(c.requestId)?.producerOrder === origin,
-            );
+                source?.producerOrder === order &&
+                (typeof origin === "number" || source?.action === origin.action)
+              );
+            });
       if (!ok) fail("F3_FOREIGN_ORG");
       if ((ref.version !== null) !== Object.hasOwn(s.derived, ref.field)) fail("F3_VALUE_ORIGIN");
       if (
@@ -1035,6 +1089,7 @@ function summarize(st, run) {
       requestId,
       producerOrder: i.producerOrder,
       kind: i.kind,
+      ...(i.action !== undefined ? { action: i.action } : {}),
       duplicateOf: i.duplicateOf,
       outcome,
       prior: i.prior,
@@ -1054,6 +1109,9 @@ function summarize(st, run) {
     abandoned: count("abandoned"),
     requests,
     events: run.events.map((e) => ({ ...e })),
+    // Compromisso de integridade do transcript: remover eventos redundantes nao pode
+    // passar pela comparacao de estados do replay. O SHA do artefato e ligado pelo CI.
+    eventsSha256: sha256hex(JSON.stringify(run.events)),
   };
 }
 
@@ -1151,6 +1209,7 @@ export function createF3IntentBook(options = {}) {
       organizationId,
       kind = "principal",
       duplicateOf = null,
+      action,
     }) {
       if (actor !== "master") fail("F3_SECOND_USER_MUTATION");
       if (!Number.isSafeInteger(producerOrder)) fail("F3_INTENT_PRODUCER");
@@ -1159,7 +1218,14 @@ export function createF3IntentBook(options = {}) {
       if (!enumOf(kind, F3_INTENT_KINDS)) fail("F3_INTENT_KIND");
       if ((kind === "duplicidade") !== (duplicateOf !== null)) fail("F3_INTENT_KIND");
       if (organizationId !== st.organizationF3) fail("F3_FOREIGN_ORG");
-      apply(ev("seal", requestId, { producerOrder, kind, duplicateOf }));
+      apply(
+        ev("seal", requestId, {
+          producerOrder,
+          kind,
+          duplicateOf,
+          ...(action !== undefined ? { action } : {}),
+        }),
+      );
     },
     /** Confirma a criação; numa tentativa de duplicidade, sinaliza duplicateAccepted (FAIL). */
     confirm(requestId, { entityId, organizationId }) {
@@ -1182,14 +1248,26 @@ export function createF3IntentBook(options = {}) {
      */
     check(input) {
       assertJsonTree(input, "F3_INTENT_STATE");
-      const keys = ["op", "requestId", "producerOrder", "kind", "duplicateOf"];
+      const keys = ["op", "requestId", "producerOrder", "kind", "duplicateOf", "action"];
       if (Object.keys(input).some((k) => !keys.includes(k))) fail("F3_INTENT_STATE");
-      const { op, requestId, producerOrder = null, kind = null, duplicateOf = null } = input;
+      const {
+        op,
+        requestId,
+        producerOrder = null,
+        kind = null,
+        duplicateOf = null,
+        action,
+      } = input;
       if (op !== "seal" && op !== "resend") fail("F3_INTENT_STATE");
       if (control.frozen) fail("F3_FENCE_FROZEN");
       const e =
         op === "seal"
-          ? ev("seal", requestId, { producerOrder, kind, duplicateOf })
+          ? ev("seal", requestId, {
+              producerOrder,
+              kind,
+              duplicateOf,
+              ...(action !== undefined ? { action } : {}),
+            })
           : ev("resend", requestId);
       applyEvent(cloneState(st), { sent: run.sent, events: run.events }, e);
       return true;
@@ -1252,7 +1330,14 @@ const step = (target, name, { query = "", free = [], inventory = {}, derived = {
     name,
     query,
     free: Object.freeze([...free]),
-    inventory: Object.freeze({ ...inventory }),
+    inventory: Object.freeze(
+      Object.fromEntries(
+        Object.entries(inventory).map(([field, origin]) => [
+          field,
+          typeof origin === "number" ? origin : Object.freeze({ ...origin }),
+        ]),
+      ),
+    ),
     derived: Object.freeze({ ...derived }),
     source,
   });
@@ -1261,7 +1346,15 @@ const DOC = "src/lib/administracao/admUsuariosRpc.ts:";
 const flow = (principal, prerequisito = null) =>
   Object.freeze({
     principal: Object.freeze(principal),
-    prerequisito: prerequisito && Object.freeze(prerequisito),
+    prerequisito:
+      prerequisito &&
+      Object.freeze(
+        Array.isArray(prerequisito)
+          ? prerequisito
+          : Object.fromEntries(
+              Object.entries(prerequisito).map(([key, steps]) => [key, Object.freeze(steps)]),
+            ),
+      ),
   });
 export const F3_MUTATION_FLOWS = Object.freeze({
   2: flow([
@@ -1309,6 +1402,48 @@ export const F3_MUTATION_FLOWS = Object.freeze({
       source: "src/lib/cadastros/cadastroOperacionalDados.ts:210-225",
     }),
   ]),
+  10: flow(
+    [
+      step("rpc", "definir_aplicabilidade_fonte_v107", {
+        free: ["p_chave_idempotencia"],
+        inventory: {
+          p_id_organizacao: 2,
+          p_id_contrato: 7,
+          p_id_versao: { producerOrder: 10, action: "versao" },
+        },
+        source: "src/components/contratos/BaseNormativaContrato.tsx:1465-1472",
+      }),
+    ],
+    {
+      fonte: [
+        step("rpc", "salvar_fonte_normativa_v107", {
+          free: ["p_chave_idempotencia"],
+          inventory: { p_id_organizacao: 2, p_id_contrato: 7 },
+          source: "src/components/contratos/BaseNormativaContrato.tsx:921-942",
+        }),
+      ],
+      versao: [
+        step("rpc", "registrar_versao_fonte_v107", {
+          free: ["p_chave_idempotencia"],
+          inventory: {
+            p_id_organizacao: 2,
+            p_id_fonte: { producerOrder: 10, action: "fonte" },
+          },
+          source: "src/components/contratos/BaseNormativaContrato.tsx:1098-1110",
+        }),
+      ],
+      aprovacao: [
+        step("rpc", "aprovar_versao_fonte_v107", {
+          free: ["p_chave_idempotencia"],
+          inventory: {
+            p_id_organizacao: 2,
+            p_id_versao: { producerOrder: 10, action: "versao" },
+          },
+          source: "src/components/contratos/BaseNormativaContrato.tsx:1366-1375",
+        }),
+      ],
+    },
+  ),
 });
 export const F3_FENCE_WINDOW_MS = 60000;
 const STORAGE_ORIGIN = API_ORIGIN.replace(/\.supabase\.co$/, ".storage.supabase.co");
@@ -1359,7 +1494,7 @@ function parseUrl(raw) {
 }
 const ALL_STEPS = Object.values(F3_MUTATION_FLOWS).flatMap((f) => [
   ...f.principal,
-  ...(f.prerequisito ?? []),
+  ...(Array.isArray(f.prerequisito) ? f.prerequisito : Object.values(f.prerequisito ?? {}).flat()),
 ]);
 const flowNames = (target) =>
   new Set(ALL_STEPS.filter((s) => s.target === target).map((s) => s.name));
@@ -1592,6 +1727,7 @@ export function createF3MutationFence(options = {}) {
                 producerOrder: active.producerOrder,
                 kind: active.kind,
                 duplicateOf: active.duplicateOf,
+                ...(active.action !== undefined ? { action: active.action } : {}),
               }),
         );
       events.push(internal.bindEvent(active.requestId, bindOf(s, active.done, body)));
@@ -1669,11 +1805,11 @@ export function createF3MutationFence(options = {}) {
     arm(input = {}) {
       if (control.frozen) fail("F3_FENCE_FROZEN");
       if (active) fail("F3_FENCE_PENDING");
-      const ARM_KEYS = ["producerOrder", "kind", "duplicateOf", "resendOf", "bodies"];
+      const ARM_KEYS = ["producerOrder", "kind", "duplicateOf", "resendOf", "bodies", "action"];
       assertJsonTree(input, "F3_FENCE_ARM");
       if (Object.keys(input).some((k) => !ARM_KEYS.includes(k))) fail("F3_FENCE_ARM");
       const { producerOrder, bodies, resendOf = null } = input;
-      let { kind = "principal", duplicateOf = null } = input;
+      let { kind = "principal", duplicateOf = null, action } = input;
       // Isolamento antes de qualquer mutação nova: violação anterior impede seguir mutando.
       book.assertIsolation();
       if (!Number.isSafeInteger(producerOrder) || !Object.hasOwn(F3_MUTATION_FLOWS, producerOrder))
@@ -1681,18 +1817,36 @@ export function createF3MutationFence(options = {}) {
       let requestId;
       if (resendOf !== null) {
         // Reenvio depois de readback (PLAN 7.2): mesma intenção, mesmo tipo, envio pelo livro.
-        if (input.kind !== undefined || input.duplicateOf !== undefined) fail("F3_FENCE_ARM");
+        if (
+          input.kind !== undefined ||
+          input.duplicateOf !== undefined ||
+          input.action !== undefined
+        )
+          fail("F3_FENCE_ARM");
         book.check({ op: "resend", requestId: resendOf });
         const prior = book.summary().requests.find((q) => q.requestId === resendOf);
         if (prior.producerOrder !== producerOrder) fail("F3_INTENT_PRODUCER");
-        ({ kind, duplicateOf } = prior);
+        ({ kind, duplicateOf, action } = prior);
         requestId = resendOf;
       } else {
         requestId = crypto.randomUUID();
         // A regra do livro decide ao armar, sobre uma cópia do estado; o selo real reconfere.
-        book.check({ op: "seal", requestId, producerOrder, kind, duplicateOf });
+        book.check({
+          op: "seal",
+          requestId,
+          producerOrder,
+          kind,
+          duplicateOf,
+          ...(action !== undefined ? { action } : {}),
+        });
       }
-      const steps = F3_MUTATION_FLOWS[producerOrder][kind === "prerequisito" ? kind : "principal"];
+      const chosen = F3_MUTATION_FLOWS[producerOrder];
+      const steps =
+        kind === "prerequisito"
+          ? Array.isArray(chosen.prerequisito)
+            ? chosen.prerequisito
+            : chosen.prerequisito?.[action]
+          : chosen.principal;
       if (!steps) fail("F3_FLOW_UNDEFINED");
       if (!Array.isArray(bodies) || bodies.length !== steps.length) fail("F3_FENCE_ARM");
       const isolated = new Set([
@@ -1724,7 +1878,12 @@ export function createF3MutationFence(options = {}) {
         if (resendOf === null) {
           const internal = BOOKS.get(book)();
           internal.simulate(
-            internal.ev("seal", requestId, { producerOrder, kind, duplicateOf }),
+            internal.ev("seal", requestId, {
+              producerOrder,
+              kind,
+              duplicateOf,
+              ...(action !== undefined ? { action } : {}),
+            }),
             ...binds.filter(Boolean).map((b) => internal.bindEvent(requestId, b)),
           );
         }
@@ -1743,6 +1902,7 @@ export function createF3MutationFence(options = {}) {
         requestId,
         producerOrder,
         kind,
+        action,
         duplicateOf,
         resend: resendOf !== null,
         flow: steps,
@@ -1789,7 +1949,8 @@ export function f3ReadOnlyPolicy(request) {
 function validateIntents(n, code, state) {
   strictPlain(n, INTENTS_KEYS, code);
   plainArray(n.requests, code, F3_BUDGET.total);
-  for (const q of n.requests) strictPlain(q, INTENT_KEYS, code);
+  for (const q of n.requests)
+    strictPlain(q, Object.hasOwn(q, "action") ? ACTION_INTENT_KEYS : INTENT_KEYS, code);
   let replay;
   try {
     replay = replayRun(state, n.events);
@@ -2998,6 +3159,654 @@ export async function driveF3S1Ui({
   } finally {
     if (readerSignedIn) await f3S1Logout(readerPage, readerFence).catch(() => undefined);
     if (masterSignedIn) await f3S1Logout(masterPage, masterFence).catch(() => undefined);
+  }
+}
+
+/**
+ * S2, produtor 5 (V102). Executa a ação exclusivamente pela UI e pela cerca CDP já instalada.
+ * Confirma o INSERT apenas depois da releitura da lista filtrada à organização F3.
+ * Não cria tokens, não consulta uma entidade com service_role, nem repete POST incerto.
+ */
+export function assertF3S2ContractorReadback({ created, rows, organizationId, name, query }) {
+  if (
+    !isUuid(organizationId) ||
+    typeof name !== "string" ||
+    !name.startsWith("ContaOS HML F3 ") ||
+    !created ||
+    !isUuid(created.id) ||
+    created.razao_social !== name ||
+    created.situacao !== "ativo" ||
+    !(query instanceof URL) ||
+    query.origin !== API_ORIGIN ||
+    query.pathname !== "/rest/v1/contratantes" ||
+    query.searchParams.getAll("id_organizacao").length !== 1 ||
+    query.searchParams.get("id_organizacao") !== "eq." + organizationId ||
+    !Array.isArray(rows)
+  ) {
+    fail("F3_S2_V102_READBACK");
+  }
+  const matches = rows.filter(
+    (row) => row?.id === created.id && row.razao_social === name && row.situacao === "ativo",
+  );
+  if (
+    matches.length !== 1 ||
+    rows.some((row) => row?.id === created.id && !matches.includes(row))
+  ) {
+    fail("F3_S2_V102_READBACK");
+  }
+  return created.id;
+}
+
+export async function f3S2CreateContractor({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  name,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(organizationId) ||
+    book.organizationF3() !== organizationId ||
+    name !== "ContaOS HML F3 " + book.provenance().workflowRunId + " Contratante"
+  ) {
+    fail("F3_S2_V102_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratantes/novo", { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Novo contratante" }).waitFor({
+    state: "visible",
+    timeout: F3_S1_UI.timeout,
+  });
+  await fence.drain();
+  fence.assertSafe();
+  await page.locator("#v102-razao").fill(name);
+  await page.locator("#v102-tipo").selectOption("juridica");
+  await page.locator("#v102-documento").fill("");
+  const payload = {
+    id_organizacao: organizationId,
+    tipo_pessoa: "juridica",
+    documento: null,
+    razao_social: name,
+    nome_fantasia: null,
+    contato: {},
+    situacao: "ativo",
+  };
+  const requestId = mutationFence.arm({ producerOrder: 5, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (response) => {
+        const target = new URL(response.url());
+        return (
+          response.request().method() === "POST" &&
+          target.origin === API_ORIGIN &&
+          target.pathname === "/rest/v1/contratantes" &&
+          target.search === "?select=id%2Crazao_social%2Csituacao"
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.getByRole("button", { name: "Salvar", exact: true }).click();
+    const reply = await posted;
+    if (reply.status() !== 201) fail("F3_S2_V102_HTTP");
+    const created = await reply.json();
+    if (!isUuid(created?.id) || created.razao_social !== name || created.situacao !== "ativo") {
+      fail("F3_S2_V102_RESPONSE");
+    }
+    await page
+      .getByRole("heading", { name: "Contratante cadastrado com sucesso." })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_S2_V102_UNCERTAIN");
+    }
+    const listing = page.waitForResponse(
+      (response) => {
+        const target = new URL(response.url());
+        return (
+          response.request().method() === "GET" &&
+          target.origin === API_ORIGIN &&
+          target.pathname === "/rest/v1/contratantes" &&
+          target.searchParams.get("id_organizacao") === "eq." + organizationId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.goto(HML_ORIGIN + "/contratantes", { waitUntil: "networkidle" });
+    const listed = await listing;
+    if (listed.status() !== 200) fail("F3_S2_V102_READBACK");
+    const id = assertF3S2ContractorReadback({
+      created,
+      rows: await listed.json(),
+      organizationId,
+      name,
+      query: new URL(listed.url()),
+    });
+    const row = page.getByRole("row").filter({ hasText: name });
+    await row.waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    if ((await row.count()) !== 1) fail("F3_S2_V102_UI_READBACK");
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: id, organizationId });
+    book.assertIsolation();
+    return id;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Nenhum envio comprovado: não inventar mutação nem descartar a causa original.
+    }
+    throw error;
+  }
+}
+
+/** V103 atualiza a identidade inventariada em V102; nunca cria uma segunda entidade. */
+export function assertF3S2ContractorUpdate({
+  before,
+  result,
+  after,
+  organizationId,
+  contractorId,
+  fantasy,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractorId) ||
+    typeof fantasy !== "string" ||
+    !fantasy.startsWith("ContaOS HML F3 ") ||
+    before?.id !== contractorId ||
+    before?.id_organizacao !== organizationId ||
+    !Number.isSafeInteger(before.versao_registro) ||
+    before.versao_registro < 1 ||
+    result?.schema_versao !== "v103-v1" ||
+    result.contratante?.id !== contractorId ||
+    result.contratante?.id_organizacao !== organizationId ||
+    after?.id !== contractorId ||
+    after.id_organizacao !== organizationId ||
+    after.nome_fantasia !== fantasy ||
+    !Number.isSafeInteger(after.versao_registro) ||
+    after.versao_registro !== before.versao_registro + 1 ||
+    result.contratante.versao_registro !== after.versao_registro ||
+    result.contratante.nome_fantasia !== fantasy
+  ) {
+    fail("F3_S2_V103_READBACK");
+  }
+  return contractorId;
+}
+
+export async function f3S2UpdateContractor({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractorId,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(contractorId) ||
+    book.organizationF3() !== organizationId ||
+    !book
+      .created()
+      .some(
+        (e) =>
+          e.id === contractorId &&
+          e.kind === "registro" &&
+          e.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === e.requestId && q.producerOrder === 5 && q.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_S2_V103_PRECONDITION");
+  }
+  const route = HML_ORIGIN + "/contratantes/" + contractorId + "/editar";
+  const matchingRead = (r) => {
+    const u = new URL(r.url());
+    return (
+      r.request().method() === "GET" &&
+      u.origin === API_ORIGIN &&
+      u.pathname === "/rest/v1/contratantes" &&
+      u.searchParams.get("id_organizacao") === "eq." + organizationId &&
+      u.searchParams.get("id") === "eq." + contractorId
+    );
+  };
+  const initial = page.waitForResponse(matchingRead, { timeout: F3_S1_UI.timeout });
+  await page.goto(route, { waitUntil: "networkidle" });
+  const first = await initial;
+  if (first.status() !== 200 || !(await mutationFence.observeVersion(first))) {
+    fail("F3_S2_V103_VERSION");
+  }
+  const before = await first.json();
+  if (
+    before?.id !== contractorId ||
+    before.id_organizacao !== organizationId ||
+    !Number.isSafeInteger(before.versao_registro) ||
+    before.versao_registro < 1
+  ) {
+    fail("F3_S2_V103_VERSION");
+  }
+  await fence.drain();
+  fence.assertSafe();
+  const fantasy = "ContaOS HML F3 " + book.provenance().workflowRunId + " Atualizado";
+  await page.locator("#v103-fantasia").fill(fantasy);
+  const contact = {};
+  for (const key of ["email", "telefone"]) {
+    const value = before.contato?.[key];
+    if (typeof value === "string" && value.trim()) contact[key] = value.trim();
+  }
+  const payload = {
+    p_id_organizacao: organizationId,
+    p_id_contratante: contractorId,
+    p_versao_esperada: before.versao_registro,
+    p_tipo_pessoa: before.tipo_pessoa,
+    p_documento: before.documento ?? "",
+    p_razao_social: before.razao_social,
+    p_nome_fantasia: fantasy,
+    p_contato: contact,
+    p_situacao: before.situacao,
+  };
+  const requestId = mutationFence.arm({ producerOrder: 6, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/atualizar_contratante",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.getByRole("button", { name: "Salvar", exact: true }).click();
+    const reply = await posted;
+    if (reply.status() !== 200) fail("F3_S2_V103_HTTP");
+    const result = await reply.json();
+    if (
+      result?.schema_versao !== "v103-v1" ||
+      result.contratante?.id !== contractorId ||
+      result.contratante.id_organizacao !== organizationId
+    ) {
+      fail("F3_S2_V103_RESPONSE");
+    }
+    await page
+      .getByRole("heading", { name: "Contratante atualizado com sucesso." })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_S2_V103_UNCERTAIN");
+    }
+    const reloaded = page.waitForResponse(matchingRead, { timeout: F3_S1_UI.timeout });
+    await page.goto(route, { waitUntil: "networkidle" });
+    const readback = await reloaded;
+    if (readback.status() !== 200) fail("F3_S2_V103_READBACK");
+    const updated = await readback.json();
+    assertF3S2ContractorUpdate({
+      before,
+      result,
+      after: updated,
+      organizationId,
+      contractorId,
+      fantasy,
+    });
+    await page
+      .getByRole("heading", { name: "Editar contratante" })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    if ((await page.locator("#v103-fantasia").inputValue()) !== fantasy) {
+      fail("F3_S2_V103_UI_READBACK");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: contractorId, organizationId });
+    book.assertIsolation();
+    return contractorId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Sem envio comprovado, não inventar evento nem perder a causa original.
+    }
+    throw error;
+  }
+}
+
+/**
+ * V105 não usa RETURNING: só uma GET posterior, com org e número sintético exato,
+ * descobre o UUID do contrato. Não inventar id no harness.
+ */
+export function assertF3S2ContractReadback({
+  rows,
+  query,
+  organizationId,
+  contractorId,
+  number,
+  object,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractorId) ||
+    !/^F3-[1-9][0-9]{3,19}$/.test(number) ||
+    object !== "Contrato sintético F3 " + number.slice(3) ||
+    !Array.isArray(rows) ||
+    !(query instanceof URL) ||
+    query.origin !== API_ORIGIN ||
+    query.pathname !== "/rest/v1/contratos" ||
+    query.searchParams.getAll("id_organizacao").length !== 1 ||
+    query.searchParams.get("id_organizacao") !== "eq." + organizationId
+  ) {
+    fail("F3_S2_V105_READBACK");
+  }
+  const matching = rows.filter(
+    (row) =>
+      isUuid(row?.id) &&
+      row.id_organizacao === organizationId &&
+      row.numero === number &&
+      row.objeto === object,
+  );
+  if (matching.length !== 1) fail("F3_S2_V105_READBACK");
+  if (rows.some((row) => row.numero === number && row.id !== matching[0].id)) {
+    fail("F3_S2_V105_READBACK");
+  }
+  return matching[0].id;
+}
+
+export async function f3S2CreateContract({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractorId,
+  contractorName,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(contractorId) ||
+    organizationId !== book.organizationF3() ||
+    contractorName !== "ContaOS HML F3 " + book.provenance().workflowRunId + " Contratante" ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === contractorId &&
+          entry.kind === "registro" &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 5 &&
+                q.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_S2_V105_PRECONDITION");
+  }
+  const number = "F3-" + book.provenance().workflowRunId;
+  const object = "Contrato sintético F3 " + book.provenance().workflowRunId;
+  await page.goto(HML_ORIGIN + "/contratos/novo", { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Novo contrato" }).waitFor({
+    state: "visible",
+    timeout: F3_S1_UI.timeout,
+  });
+  await fence.drain();
+  fence.assertSafe();
+  await page.locator("#v105-numero").fill(number);
+  await page.locator("#v105-objeto").fill(object);
+  await page.locator("#v105-inicio").fill("2026-11-01");
+  await page.locator("#v105-contratante").fill(contractorName);
+  await page
+    .getByRole("option")
+    .filter({ hasText: contractorName })
+    .click({ timeout: F3_S1_UI.timeout });
+  const payload = {
+    id_organizacao: organizationId,
+    id_contratante: contractorId,
+    numero: number,
+    objeto: object,
+    inicio: "2026-11-01",
+  };
+  const requestId = mutationFence.arm({ producerOrder: 7, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (r) => r.request().method() === "POST" && r.url() === API_ORIGIN + "/rest/v1/contratos",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.getByRole("button", { name: "Salvar", exact: true }).click();
+    const submitted = await posted;
+    if (submitted.status() !== 201) fail("F3_S2_V105_HTTP");
+    await page
+      .getByRole("heading", { name: "Contrato cadastrado com sucesso." })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_S2_V105_UNCERTAIN");
+    }
+    const list = page.waitForResponse(
+      (r) => {
+        const u = new URL(r.url());
+        return (
+          r.request().method() === "GET" &&
+          u.origin === API_ORIGIN &&
+          u.pathname === "/rest/v1/contratos" &&
+          u.searchParams.get("id_organizacao") === "eq." + organizationId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.goto(HML_ORIGIN + "/contratos", { waitUntil: "networkidle" });
+    const listed = await list;
+    if (listed.status() !== 200) fail("F3_S2_V105_READBACK");
+    const contractId = assertF3S2ContractReadback({
+      rows: await listed.json(),
+      query: new URL(listed.url()),
+      organizationId,
+      contractorId,
+      number,
+      object,
+    });
+    await page
+      .getByRole("link", { name: "Abrir contrato " + number })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: contractId, organizationId });
+    book.assertIsolation();
+    return contractId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Contrato sem resposta definitiva não é reenviado por falta de chave idempotente.
+    }
+    throw error;
+  }
+}
+
+/** V106: alteração do mesmo contrato V105, com versão derivada da leitura UI. */
+export function assertF3S2ContractUpdate({
+  before,
+  result,
+  after,
+  organizationId,
+  contractId,
+  object,
+  requestId,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(requestId) ||
+    !before ||
+    before.schema_versao !== "crud-cadastro-v1" ||
+    before.entidade !== "contratos" ||
+    before.registro?.id !== contractId ||
+    before.registro?.id_organizacao !== organizationId ||
+    !Number.isSafeInteger(before.registro.versao_registro) ||
+    before.registro.versao_registro < 1 ||
+    !result ||
+    result.schema_versao !== "crud-cadastro-v1" ||
+    result.entidade !== "contratos" ||
+    result.request_id !== requestId ||
+    !isUuid(result.evento_id) ||
+    result.registro?.id !== contractId ||
+    result.registro?.id_organizacao !== organizationId ||
+    !after ||
+    after.schema_versao !== "crud-cadastro-v1" ||
+    after.entidade !== "contratos" ||
+    after.registro?.id !== contractId ||
+    after.registro?.id_organizacao !== organizationId ||
+    after.registro?.objeto !== object ||
+    !Number.isSafeInteger(after.registro.versao_registro) ||
+    after.registro.versao_registro !== before.registro.versao_registro + 1 ||
+    result.registro?.versao_registro !== after.registro.versao_registro ||
+    result.registro.objeto !== object
+  ) {
+    fail("F3_S2_V106_READBACK");
+  }
+  return contractId;
+}
+
+export async function f3S2UpdateContract({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(contractId) ||
+    organizationId !== book.organizationF3() ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === contractId &&
+          entry.organizationId === organizationId &&
+          entry.kind === "registro" &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 7 &&
+                q.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_S2_V106_PRECONDITION");
+  }
+  const route = HML_ORIGIN + "/contratos/" + contractId;
+  const rpcRead = (r) =>
+    r.request().method() === "POST" &&
+    r.url() === API_ORIGIN + "/rest/v1/rpc/obter_cadastro_operacional_v1";
+  const native = page.waitForResponse(rpcRead, { timeout: F3_S1_UI.timeout });
+  await page.goto(route, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Editar e gerenciar contrato" }).click();
+  const first = await native;
+  if (first.status() !== 200 || !(await mutationFence.observeVersion(first))) {
+    fail("F3_S2_V106_VERSION");
+  }
+  const before = await first.json();
+  if (
+    before?.schema_versao !== "crud-cadastro-v1" ||
+    before.entidade !== "contratos" ||
+    before.registro?.id !== contractId ||
+    before.registro.id_organizacao !== organizationId ||
+    !before.pode_editar
+  ) {
+    fail("F3_S2_V106_VERSION");
+  }
+  await fence.drain();
+  fence.assertSafe();
+  const object = "Contrato sintético F3 " + book.provenance().workflowRunId + " atualizado";
+  const selector = "#cadastro-contratos-" + contractId;
+  await page.locator(selector + "-objeto").fill(object);
+  await page.locator(selector + "-motivo").fill("Validação integrada F3");
+  await page.getByRole("button", { name: "Revisar edição", exact: true }).click();
+  const confirm = page.getByRole("group", { name: "Confirmar alteração" });
+  await confirm.waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+  const payload = {
+    p_id_organizacao: organizationId,
+    p_id_contrato: contractId,
+    p_versao_esperada: before.registro.versao_registro,
+    p_motivo: "Validação integrada F3",
+    p_request_id: f3Slot("uuid", "v106request"),
+    p_alteracoes: { objeto: object },
+  };
+  const requestId = mutationFence.arm({ producerOrder: 8, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/atualizar_contrato_v1",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await confirm.getByRole("button", { name: "Confirmar edição", exact: true }).click();
+    const submitted = await posted;
+    if (submitted.status() !== 200) fail("F3_S2_V106_HTTP");
+    const result = await submitted.json();
+    await page
+      .getByText("Alteração confirmada e registrada na auditoria.", { exact: true })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_S2_V106_UNCERTAIN");
+    }
+    const idempotency = settled.slots.v106request;
+    if (!isUuid(idempotency)) fail("F3_S2_V106_IDEMPOTENCY");
+    await page.getByRole("button", { name: "Fechar gestão" }).click();
+    const reopened = page.waitForResponse(rpcRead, { timeout: F3_S1_UI.timeout });
+    await page.getByRole("button", { name: "Editar e gerenciar contrato" }).click();
+    const read = await reopened;
+    if (read.status() !== 200) fail("F3_S2_V106_READBACK");
+    const after = await read.json();
+    assertF3S2ContractUpdate({
+      before,
+      result,
+      after,
+      organizationId,
+      contractId,
+      object,
+      requestId: idempotency,
+    });
+    if ((await page.locator(selector + "-objeto").inputValue()) !== object) {
+      fail("F3_S2_V106_UI_READBACK");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: contractId, organizationId });
+    book.assertIsolation();
+    return contractId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Reenvio só com mesma chave após readback, nunca novo UUID automático.
+    }
+    throw error;
   }
 }
 

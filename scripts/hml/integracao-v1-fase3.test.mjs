@@ -541,6 +541,689 @@ test("F3 S1: login UI autentica por POST real e recusa 401 sem expor credenciais
   assert.equal(JSON.stringify(actions).includes(credentials.password), false);
 });
 
+test("F3 S2 V102: UI faz POST cercado uma vez e só confirma após releitura", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  const fence = sut.createF3MutationFence({ book });
+  const org = book.organizationF3();
+  const name = "ContaOS HML F3 " + PROV.workflowRunId + " Contratante";
+  const entity = uuid(889005);
+  const listeners = [];
+  const fields = {};
+  const actions = [];
+  let rowVisible = false;
+  const endpoint = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const emit = (url, method, status, data) => {
+    const response = {
+      url: () => url,
+      request: () => ({ method: () => method }),
+      status: () => status,
+      json: async () => data,
+    };
+    for (let i = listeners.length - 1; i >= 0; i--) {
+      if (listeners[i].predicate(response)) {
+        listeners.splice(i, 1)[0].resolve(response);
+      }
+    }
+  };
+  const page = {
+    async goto(url) {
+      actions.push(["goto", new URL(url).pathname]);
+      if (new URL(url).pathname === "/contratantes") {
+        rowVisible = true;
+        emit(
+          endpoint + "/rest/v1/contratantes?select=id%2Crazao_social&id_organizacao=eq." + org,
+          "GET",
+          200,
+          [{ id: entity, razao_social: name, situacao: "ativo" }],
+        );
+      }
+    },
+    getByRole(role, options) {
+      if (role === "heading") {
+        return {
+          waitFor: async () => {
+            assert.ok(
+              ["Novo contratante", "Contratante cadastrado com sucesso."].includes(options.name),
+            );
+          },
+        };
+      }
+      if (role === "row") {
+        return {
+          filter: ({ hasText }) => ({
+            waitFor: async () => assert.equal(rowVisible && hasText === name, true),
+            count: async () => (rowVisible && hasText === name ? 1 : 0),
+          }),
+        };
+      }
+      if (role === "button" && options.name === "Salvar") {
+        return {
+          click: async () => {
+            const payload = {
+              id_organizacao: org,
+              tipo_pessoa: "juridica",
+              documento: null,
+              razao_social: fields["#v102-razao"],
+              nome_fantasia: null,
+              contato: {},
+              situacao: "ativo",
+            };
+            const req = {
+              url: endpoint + "/rest/v1/contratantes?select=id%2Crazao_social%2Csituacao",
+              method: "POST",
+              postData: JSON.stringify(payload),
+              sessionId: "test_native_session",
+              interceptionId: "contratante_1",
+            };
+            actions.push(["POST", payload.razao_social]);
+            assert.equal(fence.policy({ ...req, stage: "REQUEST" }), true);
+            assert.equal(fence.policy({ ...req, stage: "RESPONSE" }), true);
+            emit(req.url, "POST", 201, { id: entity, razao_social: name, situacao: "ativo" });
+          },
+        };
+      }
+      throw Error("UNEXPECTED_ROLE: " + role);
+    },
+    locator(selector) {
+      return {
+        fill: async (value) => {
+          fields[selector] = value;
+        },
+        selectOption: async (value) => {
+          fields[selector] = value;
+        },
+      };
+    },
+    waitForResponse(predicate) {
+      return new Promise((resolve) => listeners.push({ predicate, resolve }));
+    },
+  };
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  assert.equal(
+    await sut.f3S2CreateContractor({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      organizationId: org,
+      name,
+    }),
+    entity,
+  );
+  assert.equal(book.summary().sent, 2); // SYS04 criado na preparação + V102 do piloto.
+  assert.equal(book.created().at(-1).kind, "registro");
+  assert.equal(book.created().at(-1).id, entity);
+  assert.equal(actions.filter((x) => x[0] === "POST").length, 1);
+  assert.equal(listeners.length, 0);
+});
+
+test("F3 S2 V102: readback rejeita organização, identidade e cardinalidade divergentes", () => {
+  const org = F3;
+  const name = "ContaOS HML F3 43509322900 Contratante";
+  const id = uuid(889005);
+  const created = { id, razao_social: name, situacao: "ativo" };
+  const row = { id, razao_social: name, situacao: "ativo" };
+  const query = new URL(
+    "https://gklhhhyosgasnyoxlrui.supabase.co/rest/v1/contratantes?id_organizacao=eq." + org,
+  );
+  const read = (data) =>
+    sut.assertF3S2ContractorReadback({
+      created,
+      rows: [row],
+      organizationId: org,
+      name,
+      query,
+      ...data,
+    });
+  assert.equal(read({}), id);
+  const bad = [
+    { created: { ...created, id: uuid(99) } },
+    { rows: [] },
+    { rows: [row, row] },
+    { rows: [{ ...row, situacao: "inativo" }] },
+    { rows: [{ ...row, id: uuid(2) }] },
+    { organizationId: uuid(3) },
+    { query: new URL(query.origin + query.pathname + "?id_organizacao=eq." + uuid(3)) },
+    { query: new URL(query.origin + "/rest/v1/contratos?id_organizacao=eq." + org) },
+  ];
+  for (const value of bad) {
+    assert.throws(() => read(value), { code: "F3_S2_V102_READBACK" });
+  }
+});
+
+test("F3 S2 V103: readback valida ID original, versão incrementada, perfil e fantasia", () => {
+  const org = F3;
+  const contractorId = uuid(889005);
+  const fantasy = "ContaOS HML F3 43509322900 Atualizado";
+  const before = {
+    id: contractorId,
+    id_organizacao: org,
+    versao_registro: 3,
+    nome_fantasia: null,
+  };
+  const after = { ...before, versao_registro: 4, nome_fantasia: fantasy };
+  const result = { schema_versao: "v103-v1", contratante: after };
+  const verify = (change = {}) =>
+    sut.assertF3S2ContractorUpdate({
+      before,
+      result,
+      after,
+      organizationId: org,
+      contractorId,
+      fantasy,
+      ...change,
+    });
+  assert.equal(verify(), contractorId);
+  const invalid = [
+    { before: { ...before, versao_registro: 0 } },
+    { before: { ...before, id_organizacao: uuid(66) } },
+    { result: { ...result, schema_versao: "v103-v0" } },
+    { result: { ...result, contratante: { ...after, id: uuid(65) } } },
+    { result: { ...result, contratante: { ...after, versao_registro: 5 } } },
+    { after: { ...after, id: uuid(64) } },
+    { after: { ...after, id_organizacao: uuid(63) } },
+    { after: { ...after, versao_registro: 5 } },
+    { after: { ...after, nome_fantasia: "Outro" } },
+  ];
+  for (const change of invalid) {
+    assert.throws(() => verify(change), { code: "F3_S2_V103_READBACK" });
+  }
+});
+
+test("F3 S2 V103: UI observa versão antes de editar e relê mesmo UUID após RPC", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  const contractorId = uuid(889005);
+  seal(book, 5, 5);
+  book.confirm(uuid(5), { entityId: contractorId, organizationId: F3 });
+  const fence = sut.createF3MutationFence({ book });
+  const initial = {
+    id: contractorId,
+    id_organizacao: F3,
+    versao_registro: 1,
+    tipo_pessoa: "juridica",
+    documento: null,
+    razao_social: "ContaOS HML F3 " + PROV.workflowRunId + " Contratante",
+    nome_fantasia: null,
+    contato: {},
+    situacao: "ativo",
+  };
+  const fantasy = "ContaOS HML F3 " + PROV.workflowRunId + " Atualizado";
+  const updated = { ...initial, versao_registro: 2, nome_fantasia: fantasy };
+  const listeners = [];
+  const fields = {};
+  const events = [];
+  let reads = 0;
+  const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const readUrl =
+    api + "/rest/v1/contratantes?select=id&id_organizacao=eq." + F3 + "&id=eq." + contractorId;
+  const emit = (url, method, data, status = 200) => {
+    const response = {
+      url: () => url,
+      status: () => status,
+      request: () => ({ method: () => method, url: () => url }),
+      json: async () => data,
+    };
+    for (let i = listeners.length - 1; i >= 0; i--) {
+      if (listeners[i].predicate(response)) {
+        listeners.splice(i, 1)[0].resolve(response);
+      }
+    }
+  };
+  const page = {
+    async goto(url) {
+      assert.ok(url.includes("/contratantes/" + contractorId + "/editar"));
+      events.push("GET");
+      emit(readUrl, "GET", ++reads === 1 ? initial : updated);
+    },
+    locator(selector) {
+      return {
+        fill: async (value) => {
+          fields[selector] = value;
+        },
+        inputValue: async () => fields[selector],
+      };
+    },
+    waitForResponse(predicate) {
+      return new Promise((resolve) => listeners.push({ predicate, resolve }));
+    },
+    getByRole(role, options) {
+      if (role === "heading") {
+        return {
+          waitFor: async () => {
+            assert.ok(
+              ["Editar contratante", "Contratante atualizado com sucesso."].includes(options.name),
+            );
+          },
+        };
+      }
+      if (role !== "button" || options.name !== "Salvar") {
+        throw Error("BAD_ROLE");
+      }
+      return {
+        click: async () => {
+          const payload = {
+            p_id_organizacao: F3,
+            p_id_contratante: contractorId,
+            p_versao_esperada: 1,
+            p_tipo_pessoa: "juridica",
+            p_documento: "",
+            p_razao_social: initial.razao_social,
+            p_nome_fantasia: fields["#v103-fantasia"],
+            p_contato: {},
+            p_situacao: "ativo",
+          };
+          const request = {
+            url: api + "/rest/v1/rpc/atualizar_contratante",
+            method: "POST",
+            postData: JSON.stringify(payload),
+            sessionId: "test_native_session",
+            interceptionId: "v103_write",
+          };
+          assert.equal(fence.policy({ ...request, stage: "REQUEST" }), true);
+          assert.equal(fence.policy({ ...request, stage: "RESPONSE" }), true);
+          events.push("POST");
+          emit(request.url, "POST", { schema_versao: "v103-v1", contratante: updated });
+        },
+      };
+    },
+  };
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  assert.equal(
+    await sut.f3S2UpdateContractor({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      organizationId: F3,
+      contractorId,
+    }),
+    contractorId,
+  );
+  assert.deepEqual(events, ["GET", "POST", "GET"]);
+  assert.equal(book.summary().sent, 3);
+  assert.equal(book.created().at(-1).id, contractorId);
+  assert.equal(book.created().at(-1).kind, "registro");
+  assert.equal(listeners.length, 0);
+});
+
+test("F3 S2 V105: POST sem RETURNING exige UUID da lista real e organização correta", () => {
+  const organizationId = F3;
+  const contractorId = uuid(889005);
+  const number = "F3-" + PROV.workflowRunId;
+  const object = "Contrato sintético F3 " + PROV.workflowRunId;
+  const contractId = uuid(889007);
+  const row = {
+    id: contractId,
+    id_organizacao: organizationId,
+    numero: number,
+    objeto: object,
+  };
+  const query = new URL(
+    "https://gklhhhyosgasnyoxlrui.supabase.co/rest/v1/contratos?id_organizacao=eq." +
+      organizationId,
+  );
+  const read = (changed = {}) =>
+    sut.assertF3S2ContractReadback({
+      rows: [row],
+      query,
+      organizationId,
+      contractorId,
+      number,
+      object,
+      ...changed,
+    });
+  assert.equal(read(), contractId);
+  const negatives = [
+    { rows: [] },
+    { rows: [row, row] },
+    { rows: [{ ...row, id: "invalid" }] },
+    { rows: [{ ...row, id_organizacao: uuid(86) }] },
+    { rows: [{ ...row, numero: "F3-9999" }] },
+    { rows: [{ ...row, objeto: "Divergente" }] },
+    { rows: [row, { ...row, id: uuid(77) }] },
+    { query: new URL(query.origin + query.pathname + "?id_organizacao=eq." + uuid(96)) },
+    { query: new URL(query.origin + "/rest/v1/contratantes?id_organizacao=eq." + F3) },
+  ];
+  for (const bad of negatives) {
+    assert.throws(() => read(bad), { code: "F3_S2_V105_READBACK" });
+  }
+});
+
+test("F3 S2 V105: UI cria contrato via fence, e a identidade nasce somente na lista", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  const contractorId = uuid(889005);
+  seal(book, 5, 5);
+  book.confirm(uuid(5), { entityId: contractorId, organizationId: F3 });
+  const fence = sut.createF3MutationFence({ book });
+  const contractId = uuid(889007);
+  const name = "ContaOS HML F3 " + PROV.workflowRunId + " Contratante";
+  const number = "F3-" + PROV.workflowRunId;
+  const object = "Contrato sintético F3 " + PROV.workflowRunId;
+  const fields = {};
+  const listeners = [];
+  let selected = false;
+  let postedCount = 0;
+  const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const emit = (url, method, status, data) => {
+    const response = {
+      url: () => url,
+      status: () => status,
+      request: () => ({ method: () => method, url: () => url }),
+      json: async () => data,
+    };
+    for (let i = listeners.length - 1; i >= 0; i--) {
+      if (listeners[i].predicate(response)) {
+        listeners.splice(i, 1)[0].resolve(response);
+      }
+    }
+  };
+  const page = {
+    async goto(url) {
+      if (new URL(url).pathname === "/contratos") {
+        emit(api + "/rest/v1/contratos?select=id%2Cnumero&id_organizacao=eq." + F3, "GET", 200, [
+          { id: contractId, id_organizacao: F3, numero: number, objeto: object },
+        ]);
+      }
+    },
+    locator(key) {
+      return {
+        fill: async (value) => {
+          fields[key] = value;
+        },
+      };
+    },
+    waitForResponse(predicate) {
+      return new Promise((resolve) => listeners.push({ predicate, resolve }));
+    },
+    getByRole(role, options) {
+      if (role === "heading") {
+        return {
+          waitFor: async () =>
+            assert.ok(["Novo contrato", "Contrato cadastrado com sucesso."].includes(options.name)),
+        };
+      }
+      if (role === "option") {
+        return {
+          filter: ({ hasText }) => ({
+            click: async () => {
+              assert.equal(hasText, name);
+              selected = true;
+            },
+          }),
+        };
+      }
+      if (role === "link") {
+        return {
+          waitFor: async () => assert.equal(options.name, "Abrir contrato " + number),
+        };
+      }
+      if (role === "button" && options.name === "Salvar") {
+        return {
+          click: async () => {
+            assert.equal(selected, true);
+            const body = {
+              id_organizacao: F3,
+              id_contratante: contractorId,
+              numero: fields["#v105-numero"],
+              objeto: fields["#v105-objeto"],
+              inicio: fields["#v105-inicio"],
+            };
+            const req = {
+              url: api + "/rest/v1/contratos",
+              method: "POST",
+              postData: JSON.stringify(body),
+              sessionId: "test_native_session",
+              interceptionId: "v105_post",
+            };
+            assert.equal(fence.policy({ ...req, stage: "REQUEST" }), true);
+            assert.equal(fence.policy({ ...req, stage: "RESPONSE" }), true);
+            postedCount++;
+            emit(req.url, "POST", 201, null);
+          },
+        };
+      }
+      throw Error("BAD_ROLE: " + role);
+    },
+  };
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  assert.equal(
+    await sut.f3S2CreateContract({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      organizationId: F3,
+      contractorId,
+      contractorName: name,
+    }),
+    contractId,
+  );
+  assert.equal(postedCount, 1);
+  assert.equal(book.created().at(-1).id, contractId);
+  assert.equal(book.created().at(-1).kind, "registro");
+  assert.equal(listeners.length, 0);
+});
+
+test("F3 S2 V106: versão, requestId, evento e contrato são observados sem duplicação", () => {
+  const organizationId = F3;
+  const contractId = uuid(889007);
+  const requestId = uuid(889008);
+  const object = "Contrato sintético F3 " + PROV.workflowRunId + " atualizado";
+  const before = {
+    schema_versao: "crud-cadastro-v1",
+    entidade: "contratos",
+    registro: {
+      id: contractId,
+      id_organizacao: organizationId,
+      versao_registro: 3,
+      objeto: "Antes",
+    },
+  };
+  const after = {
+    schema_versao: "crud-cadastro-v1",
+    entidade: "contratos",
+    registro: { ...before.registro, versao_registro: 4, objeto: object },
+  };
+  const result = { ...after, request_id: requestId, evento_id: uuid(889099) };
+  const verify = (changed = {}) =>
+    sut.assertF3S2ContractUpdate({
+      before,
+      result,
+      after,
+      organizationId,
+      contractId,
+      object,
+      requestId,
+      ...changed,
+    });
+  assert.equal(verify(), contractId);
+  const bad = [
+    { result: { ...result, request_id: uuid(32) } },
+    { result: { ...result, evento_id: "not-uuid" } },
+    { result: { ...result, schema_versao: "crud-v0" } },
+    { result: { ...result, registro: { ...after.registro, id: uuid(33) } } },
+    { before: { ...before, registro: { ...before.registro, versao_registro: 0 } } },
+    { before: { ...before, registro: { ...before.registro, id_organizacao: uuid(34) } } },
+    { after: { ...after, registro: { ...after.registro, versao_registro: 5 } } },
+    { after: { ...after, registro: { ...after.registro, objeto: "Vazado" } } },
+    { after: { ...after, registro: { ...after.registro, id_organizacao: uuid(35) } } },
+    { contractId: uuid(36) },
+  ];
+  for (const value of bad) {
+    assert.throws(() => verify(value), { code: "F3_S2_V106_READBACK" });
+  }
+});
+
+test("F3 S2 V106: UI bloqueia atualização sem versão lida e confirma mesmo ID após RPC", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  const contractId = uuid(889007);
+  seal(book, 5, 5);
+  book.confirm(uuid(5), { entityId: uuid(889005), organizationId: F3 });
+  seal(book, 7, 7);
+  book.confirm(uuid(7), { entityId: contractId, organizationId: F3 });
+  const fence = sut.createF3MutationFence({ book });
+  const requestId = uuid(889008);
+  const before = {
+    schema_versao: "crud-cadastro-v1",
+    entidade: "contratos",
+    registro: { id: contractId, id_organizacao: F3, versao_registro: 1, objeto: "Anterior" },
+    pode_editar: true,
+  };
+  const object = "Contrato sintético F3 " + PROV.workflowRunId + " atualizado";
+  const after = {
+    ...before,
+    registro: { ...before.registro, versao_registro: 2, objeto: object },
+  };
+  const result = { ...after, request_id: requestId, evento_id: uuid(889019) };
+  const queue = [];
+  const values = {};
+  let opens = 0;
+  let posts = 0;
+  const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const readUrl = api + "/rest/v1/rpc/obter_cadastro_operacional_v1";
+  const emit = (url, method, payload, data) => {
+    const response = {
+      url: () => url,
+      status: () => 200,
+      request: () => ({
+        url: () => url,
+        method: () => method,
+        postData: () => JSON.stringify(payload),
+      }),
+      json: async () => data,
+    };
+    for (let i = queue.length - 1; i >= 0; i--) {
+      if (queue[i].predicate(response)) {
+        queue.splice(i, 1)[0].resolve(response);
+      }
+    }
+  };
+  const page = {
+    async goto(url) {
+      assert.ok(url.endsWith("/contratos/" + contractId));
+    },
+    waitForResponse(predicate) {
+      return new Promise((resolve) => queue.push({ predicate, resolve }));
+    },
+    locator(selector) {
+      return {
+        fill: async (value) => {
+          values[selector] = value;
+        },
+        inputValue: async () => values[selector],
+      };
+    },
+    getByText(value) {
+      return {
+        waitFor: async () => assert.equal(value, "Alteração confirmada e registrada na auditoria."),
+      };
+    },
+    getByRole(role, options) {
+      if (role === "group") {
+        assert.equal(options.name, "Confirmar alteração");
+        return {
+          waitFor: async () => undefined,
+          getByRole: () => ({
+            click: async () => {
+              const body = {
+                p_id_organizacao: F3,
+                p_id_contrato: contractId,
+                p_versao_esperada: 1,
+                p_motivo: "Validação integrada F3",
+                p_request_id: requestId,
+                p_alteracoes: { objeto: values["#cadastro-contratos-" + contractId + "-objeto"] },
+              };
+              const url = api + "/rest/v1/rpc/atualizar_contrato_v1";
+              const req = {
+                url,
+                method: "POST",
+                postData: JSON.stringify(body),
+                sessionId: "test_native_session",
+                interceptionId: "v106_mutation",
+              };
+              assert.equal(fence.policy({ ...req, stage: "REQUEST" }), true);
+              assert.equal(fence.policy({ ...req, stage: "RESPONSE" }), true);
+              posts++;
+              emit(url, "POST", body, result);
+            },
+          }),
+        };
+      }
+      if (role !== "button") throw Error("BAD_ROLE: " + role);
+      if (options.name === "Editar e gerenciar contrato") {
+        return {
+          click: async () => {
+            opens++;
+            emit(
+              readUrl,
+              "POST",
+              {
+                p_id_organizacao: F3,
+                p_entidade: "contratos",
+                p_id: contractId,
+              },
+              opens === 1 ? before : after,
+            );
+          },
+        };
+      }
+      if (["Revisar edição", "Fechar gestão"].includes(options.name)) {
+        return { click: async () => undefined };
+      }
+      throw Error("BAD_BUTTON: " + options.name);
+    },
+  };
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  assert.equal(
+    await sut.f3S2UpdateContract({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      organizationId: F3,
+      contractId,
+    }),
+    contractId,
+  );
+  assert.equal(opens, 2);
+  assert.equal(posts, 1);
+  assert.equal(book.created().at(-1).kind, "registro");
+  assert.equal(book.created().at(-1).id, contractId);
+  assert.equal(queue.length, 0);
+});
+
+test("F3 S2 RED: pré-requisito de V107 deve preservar ação distinta no livro", () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  const requestId = uuid(899001);
+  book.seal({
+    requestId,
+    producerOrder: 10,
+    kind: "prerequisito",
+    action: "fonte",
+    actor: "master",
+    organizationId: F3,
+  });
+  const recorded = book.summary().requests.find((entry) => entry.requestId === requestId);
+  assert.equal(recorded.action, "fonte");
+  assert.throws(
+    () =>
+      book.seal({
+        requestId: uuid(899002),
+        producerOrder: 10,
+        kind: "prerequisito",
+        action: "fonte",
+        actor: "master",
+        organizationId: F3,
+      }),
+    { code: "F3_INTENT_PREREQUISITES" },
+  );
+});
+
 const ledgerWith = ({ runs = [], entries = [] }) =>
   JSON.stringify({ ...JSON.parse(LEDGER_RAW), runs, entries }, null, 2) + "\n";
 const ledgerOf = (runs, entries = []) =>
@@ -566,18 +1249,34 @@ const BINDS = new Map();
 const missing = () => {
   throw Object.assign(new Error("F3_FOREIGN_ORG"), { code: "F3_FOREIGN_ORG" });
 };
-function bindsFor(book, producerOrder, kind) {
+function bindsFor(book, producerOrder, kind, action) {
   const f = sut.F3_MUTATION_FLOWS[producerOrder];
-  const steps = f && (kind === "prerequisito" ? f.prerequisito : f.principal);
+  const steps =
+    f &&
+    (kind === "prerequisito"
+      ? Array.isArray(f.prerequisito)
+        ? f.prerequisito
+        : f.prerequisito?.[action]
+      : f.principal);
   if (!steps) return [{ step: 0, bodySha256: freshSha(), slots: [freshSha()], refs: [] }];
-  const orderOf = new Map(book.summary().requests.map((q) => [q.requestId, q.producerOrder]));
-  const pick = (origin) =>
-    origin === 2
-      ? book.organizationF3()
-      : book
-          .created()
-          .filter((c) => c.kind === "registro" && orderOf.get(c.requestId) === origin)
-          .at(-1)?.id;
+  const orderOf = new Map(
+    book.summary().requests.map((q) => [q.requestId, { order: q.producerOrder, action: q.action }]),
+  );
+  const pick = (origin) => {
+    if (origin === 2) return book.organizationF3();
+    const order = typeof origin === "number" ? origin : origin.producerOrder;
+    return book
+      .created()
+      .filter((c) => {
+        const maker = orderOf.get(c.requestId);
+        return (
+          c.kind === "registro" &&
+          maker?.order === order &&
+          (typeof origin === "number" || maker.action === origin.action)
+        );
+      })
+      .at(-1)?.id;
+  };
   return steps.map((st, step) => ({
     step,
     bodySha256: freshSha(),
@@ -602,7 +1301,7 @@ const seal = (book, n, producerOrder, extra = {}) => {
   // ID já usado: a recusa é a do livro (replay), antes de qualquer vínculo.
   if (book.summary().requests.some((q) => q.requestId === requestId))
     return book.seal({ ...args, ...extra });
-  const binds = bindsFor(book, producerOrder, extra.kind ?? "principal");
+  const binds = bindsFor(book, producerOrder, extra.kind ?? "principal", extra.action);
   book.seal({
     requestId,
     producerOrder,
@@ -623,12 +1322,51 @@ const createOrg = (book) => {
   seal(book, 2, 2);
   book.confirm(uuid(2), { entityId: F3, organizationId: F3 });
 };
+const ensureV107Prerequisites = (book) => {
+  if (book.summary().requests.some((q) => q.producerOrder === 10 && q.action === "fonte")) return;
+  for (const stage of [
+    { action: "fonte", id: uuid(81010), requestId: uuid(81110) },
+    { action: "versao", id: uuid(81011), requestId: uuid(81111) },
+    { action: "aprovacao", id: uuid(81011), requestId: uuid(81112) },
+  ]) {
+    seal(book, 0, 10, { requestId: stage.requestId, kind: "prerequisito", action: stage.action });
+    book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
+  }
+};
+
+test("F3 S2 RED: edição V103 e V106 preserva identidade sem aceitar duplicidade indevida", () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  seal(book, 5, 5);
+  const contratante = uuid(105);
+  book.confirm(uuid(5), { entityId: contratante, organizationId: F3 });
+  seal(book, 6, 6);
+  book.confirm(uuid(6), { entityId: contratante, organizationId: F3 });
+  assert.equal(book.created().at(-1).kind, "registro", "V103 é edição da identidade V102");
+
+  seal(book, 7, 7);
+  const contrato = uuid(107);
+  book.confirm(uuid(7), { entityId: contrato, organizationId: F3 });
+  seal(book, 8, 8);
+  book.confirm(uuid(8), { entityId: contrato, organizationId: F3 });
+  assert.equal(book.created().at(-1).kind, "registro", "V106 é edição da identidade V105");
+  assert.equal(book.assertIsolation(), true);
+
+  const control = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(control);
+  seal(control, 5, 5);
+  control.confirm(uuid(5), { entityId: contratante, organizationId: F3 });
+  seal(control, 7, 7);
+  control.confirm(uuid(7), { entityId: contratante, organizationId: F3 });
+  assert.equal(control.created().at(-1).kind, "entidade_repetida");
+});
 
 /** Execução de referência: organização F3, uma principal por produtor e duplicidade em 4–13. */
 function referenceBook(ledger = EMPTY, extra = () => {}, skip = []) {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger });
   createOrg(book);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 10) ensureV107Prerequisites(book);
     seal(book, o, o);
     if (skip.includes(o)) continue;
     book.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
@@ -865,7 +1603,7 @@ test("F3 B2b1: relatório completo montado pelo livro valida e cumpre todos os c
   assert.deepEqual(report.summary, { PASS: 138, FAIL: 0, BLOCKED: 0, N_A_JUSTIFICADO: 0 });
   assert.deepEqual(
     [report.intents.sent, report.intents.confirmed, report.intents.rejected],
-    [28, 18, 10],
+    [31, 21, 10],
   );
   assert.equal(report.ledgerSha256, sut.F3_LEDGER_SHA256);
   // O gate de produção usa a política de produção (null nos mutantes): nunca PASS no 2b-1.
@@ -1154,6 +1892,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   const noDup = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(noDup);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 10) ensureV107Prerequisites(noDup);
     seal(noDup, o, o);
     noDup.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
   }
@@ -1192,6 +1931,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   const acceptedBook = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(acceptedBook);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 10) ensureV107Prerequisites(acceptedBook);
     seal(acceptedBook, o, o);
     acceptedBook.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
     if (REJ(o)) {
@@ -1266,8 +2006,8 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
   assert.throws(() => book.confirm(uuid(99999), { entityId: uuid(1), organizationId: F3 }), {
     code: "F3_INTENT_UNKNOWN",
   });
-  seal(book, 10, 10);
-  book.confirm(uuid(10), { entityId: uuid(70), organizationId: F3 });
+  seal(book, 11, 11);
+  book.confirm(uuid(11), { entityId: uuid(70), organizationId: F3 });
   assert.equal(book.created().filter((c) => c.id === uuid(70))[1].kind, "entidade_repetida");
   const toStringActor = { toString: () => "master" };
   for (const actor of ["leitor", "segundo", null, "MASTER", toStringActor])
@@ -1289,10 +2029,11 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
 });
 
 test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo ledger", () => {
-  // 40 envios: organização, 17 principais, 11 duplicidades e 11 pré-requisitos.
+  // 40 envios: organização, 17 principais, 11 duplicidades e 11 pré-requisitos (3 V107).
   const first = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(first);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 10) ensureV107Prerequisites(first);
     seal(first, o, o);
     first.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
   }
@@ -1300,7 +2041,7 @@ test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo
     dup(first, 200 + o, o, uuid(o));
     first.rejected(uuid(200 + o));
   }
-  for (let i = 0; i < 11; i++) seal(first, 310 + i, 18, { kind: "prerequisito" });
+  for (let i = 0; i < 8; i++) seal(first, 310 + i, 18, { kind: "prerequisito" });
   assert.equal(first.summary().sent, 40);
   assert.throws(() => dup(first, 299, 20, uuid(20)), { code: "F3_BUDGET" });
   // Teto de 60: principais rejeitadas e refeitas contam como envio a cada tentativa.
@@ -1459,7 +2200,7 @@ test("F3 B2b1: relatório bloqueado, com e sem ledger lido, gravado com SHA256SU
     provenance: PROV,
     ledger: l1,
   });
-  assert.deepEqual([later.intents.priorSent, later.intents.uncertain], [29, 1]);
+  assert.deepEqual([later.intents.priorSent, later.intents.uncertain], [32, 1]);
   assert.equal(later.isolation.organizationF3, F3);
   assert.equal(sut.validateF3Report(later, catalogue, { ledger: l1 }), true);
   assert.throws(() => sut.validateF3Report(later, catalogue, NP), { code: "F3_REPORT" });
@@ -1605,6 +2346,18 @@ test("F3 B2b1: ledger fixado vazio, append-only, só PASS ligado ao replay, e re
       () => sut.validateF3Report(withPreserved(fn), catalogue, { policy: POLICY, ledger }),
       (e) => ["F3_REPORT", "F3_ISOLATION"].includes(e.code),
     );
+});
+
+test("F3 S2: hash do transcript recusa remocao de evento de replay", () => {
+  const report = completeReport();
+  assert.match(report.intents.eventsSha256, /^[a-f0-9]{64}$/);
+  assert.ok(report.intents.events.length > 2);
+  const forged = structuredClone(report);
+  forged.intents.events.splice(1, 1);
+  assert.throws(() => sut.validateF3Report(forged, catalogue, OPT), { code: "F3_REPORT" });
+  const mismatched = structuredClone(report);
+  mismatched.intents.eventsSha256 = "f".repeat(64);
+  assert.throws(() => sut.validateF3Report(mismatched, catalogue, OPT), { code: "F3_REPORT" });
 });
 
 /**
@@ -1763,6 +2516,14 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
         assert.throws(
           () => sut.validateF3Report(tamper, catalogue, { ledger }),
           (e) => ["F3_REPORT", "F3_ISOLATION"].includes(e.code),
+          "F3 replay tamper k=" +
+            k +
+            " run=" +
+            r +
+            " type=" +
+            t +
+            " delta=" +
+            JSON.stringify({ before: report.intents, after: tamper.intents }).slice(0, 1200),
         );
         tampers += 1;
       }
@@ -2148,12 +2909,12 @@ test("F3 B2b1 RED: relatório parcial com o livro preserva envios, eventos e inv
     provenance: PROV,
     book,
   });
-  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [29, true]);
+  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [32, true]);
   assert.equal(partial.isolation.created.at(-1).kind, "fora_da_f3");
   assert.equal(sut.validateF3Report(partial, catalogue, NP), true);
-  // O ledger montado com os eventos desse artefato conta os 29 envios reais.
+  // O ledger montado com os eventos desse artefato conta os 32 envios de fixture.
   const l1 = ledgerOf([{ ...run(PROV.workflowRunId, book) }]);
-  assert.equal(sut.f3LedgerState(l1).priorSent, 29);
+  assert.equal(sut.f3LedgerState(l1).priorSent, 32);
   // Livro estranho ou ledger diferente do livro são recusados.
   assert.throws(
     () =>
@@ -2449,6 +3210,110 @@ const shuffle = (o) =>
       .reverse()
       .map(([k, v]) => [k, v && typeof v === "object" && !Array.isArray(v) ? shuffle(v) : v]),
   );
+
+test("F3 S2 V107: três ações prévias distintas e principal com isolamento e cadeia de origem", (t) => {
+  const f = fenceWith(t, withContract);
+  const stages = [
+    {
+      action: "fonte",
+      order: 10,
+      name: "salvar_fonte_normativa_v107",
+      id: uuid(81010),
+      body: {
+        p_id_organizacao: F3,
+        p_id_contrato: uuid(107),
+        p_id_fonte: null,
+        p_tipo: "lei",
+        p_titulo: "Norma de teste F3",
+        p_referencia: null,
+        p_descricao: null,
+        p_situacao: "rascunho",
+        p_versao_esperada: null,
+        p_chave_idempotencia: sut.f3Slot("uuid", "fontekey"),
+      },
+    },
+    {
+      action: "versao",
+      order: 10,
+      name: "registrar_versao_fonte_v107",
+      id: uuid(81011),
+      body: {
+        p_id_organizacao: F3,
+        p_id_fonte: uuid(81010),
+        p_inicio_vigencia: "2026-11-01",
+        p_fim_vigencia: null,
+        p_id_arquivo: null,
+        p_conteudo_texto: "Norma sintética F3",
+        p_metadados: {},
+        p_chave_idempotencia: sut.f3Slot("uuid", "versaokey"),
+      },
+    },
+    {
+      action: "aprovacao",
+      order: 10,
+      name: "aprovar_versao_fonte_v107",
+      id: uuid(81011),
+      body: {
+        p_id_organizacao: F3,
+        p_id_versao: uuid(81011),
+        p_hash_esperado: "a".repeat(64),
+        p_fundamento: "Verificação sintética F3",
+        p_chave_idempotencia: sut.f3Slot("uuid", "approvalkey"),
+      },
+    },
+  ];
+  let callN = 0;
+  for (const stage of stages) {
+    const requestId = f.fence.arm({
+      producerOrder: stage.order,
+      kind: "prerequisito",
+      action: stage.action,
+      bodies: [stage.body],
+    });
+    const body = {
+      ...stage.body,
+      p_chave_idempotencia: uuid(82000 + ++callN),
+    };
+    const mutation = req({
+      url: RPC(stage.name),
+      method: "POST",
+      postData: JSON.stringify(body),
+    });
+    assert.equal(f.fence.policy(mutation), true);
+    assert.equal(f.fence.policy(respond(mutation)), true);
+    const settled = f.fence.settle();
+    assert.equal(settled.requestId, requestId);
+    assert.equal(settled.sealed, true);
+    assert.equal(settled.complete, true);
+    f.book.confirm(requestId, { entityId: stage.id, organizationId: F3 });
+    assert.equal(f.book.summary().requests.at(-1).action, stage.action);
+  }
+  const main = {
+    p_id_organizacao: F3,
+    p_id_contrato: uuid(107),
+    p_id_versao: uuid(81011),
+    p_aplicavel: true,
+    p_fundamento: "Aplicabilidade sintética F3",
+    p_atualizado_em_esperado: null,
+    p_chave_idempotencia: sut.f3Slot("uuid", "applicabilitykey"),
+  };
+  const requestId = f.fence.arm({ producerOrder: 10, bodies: [main] });
+  const sent = req({
+    url: RPC("definir_aplicabilidade_fonte_v107"),
+    postData: JSON.stringify({ ...main, p_chave_idempotencia: uuid(82009) }),
+  });
+  assert.equal(f.fence.policy(sent), true);
+  assert.equal(f.fence.policy(respond(sent)), true);
+  assert.equal(f.fence.settle().complete, true);
+  f.book.confirm(requestId, { entityId: uuid(81019), organizationId: F3 });
+  assert.equal(f.book.assertIsolation(), true);
+  const recorded = f.book.summary().requests.filter((q) => q.producerOrder === 10);
+  assert.deepEqual(
+    recorded.map((q) => q.action ?? "principal"),
+    ["fonte", "versao", "aprovacao", "principal"],
+  );
+  assert.equal(recorded.filter((q) => q.outcome === "confirmed").length, 4);
+});
 
 test("F3 B2b2a RED: cerca só aceita opções de produção e um livro do módulo", (t) => {
   const f = fenceWith(t);
@@ -3136,7 +4001,13 @@ test("F3 B2b2a: fluxos só de produtores mutantes, com fonte que existe no códi
   for (const [order, flow] of Object.entries(sut.F3_MUTATION_FLOWS)) {
     assert.ok(sut.F3_MUTATING_ORDERS.includes(Number(order)), order);
     assert.deepEqual(Object.keys(flow), ["principal", "prerequisito"]);
-    for (const s of [...flow.principal, ...(flow.prerequisito ?? [])]) {
+    const steps = [
+      ...flow.principal,
+      ...(Array.isArray(flow.prerequisito)
+        ? flow.prerequisito
+        : Object.values(flow.prerequisito ?? {}).flat()),
+    ];
+    for (const s of steps) {
       const m = /^(src\/[^:]+):(\d+)-(\d+)$/.exec(s.source);
       assert.ok(m, s.source);
       const lines = (await readFile(new URL("../../" + m[1], import.meta.url), "utf8")).split("\n");
@@ -3482,6 +4353,7 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
     book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
     seal(book, 7, 7);
     book.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
+    ensureV107Prerequisites(book);
     return book;
   };
   let positions = 0;
@@ -3573,8 +4445,9 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
       }),
     { code: "F3_FOREIGN_ORG" },
   );
-  // ADM01 (2), V102 (1), V103 (3), V105 (2) e V106 (3) posições tipadas.
-  assert.equal(positions, 11);
+  // ADM01 (2), V102 (1), V103 (3), V105 (2), V106 (3) e V107 (3).
+  // O teste acima exige negativas de origem/versao em todas as 14 posicoes reais.
+  assert.equal(positions, 14);
 });
 
 test("F3 R3 RED (2): na cerca, ADM01 e V102 exigem a organização F3, vaga com valor conhecido congela e a chave não é o requestId", async (t) => {
@@ -3827,7 +4700,43 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
   // Fluxo declarado ↔ linha "N ORIGEM, principal": alvo e posições tipadas constam da linha.
   const declared = [];
   for (const [order, f] of Object.entries(sut.F3_MUTATION_FLOWS)) {
-    assert.equal(f.prerequisito, null, "pré-requisito exige linha própria: " + order);
+    const stageLabels = {
+      10: { fonte: 1, versao: 2, aprovacao: 3 },
+    };
+    if (f.prerequisito !== null) {
+      assert.ok(stageLabels[order], "pré-requisito sem mapa fechado: " + order);
+      for (const [action, steps] of Object.entries(f.prerequisito)) {
+        const number = stageLabels[order][action];
+        assert.ok(Number.isSafeInteger(number), "ação não declarada: " + order + ":" + action);
+        const extraKey =
+          order +
+          " " +
+          sut.F3_PRODUCERS.find((p) => p.order === Number(order)).origin +
+          ", pré-requisito " +
+          number;
+        const source = rows.find((r) => r.key === extraKey);
+        assert.ok(source, "pré-requisito sem fonte: " + extraKey);
+        for (const st of steps) {
+          assert.ok(source.target.includes(st.name), "alvo não declarado: " + st.name);
+          for (const field of [
+            ...st.free,
+            ...Object.keys(st.inventory),
+            ...Object.keys(st.derived),
+          ]) {
+            const explicit = source.fields.includes("`" + field + "`");
+            const keyInResend =
+              field === "p_chave_idempotencia" && /chave|gerado_ui|vinculado/.test(source.resend);
+            const organizationImplicit =
+              field === "p_id_organizacao" && source.target.includes("rpc");
+            assert.ok(
+              explicit || keyInResend || organizationImplicit,
+              field + " ausente em " + extraKey,
+            );
+          }
+        }
+        declared.push(extraKey);
+      }
+    }
     const p = sut.F3_PRODUCERS.find((x) => x.order === Number(order));
     const key = order + " " + p.origin + ", principal";
     const row = rows.find((r) => r.key === key);
@@ -3856,10 +4765,6 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     "9 V108, pré-requisito 2",
     "9 V108, pré-requisito 3",
     "9 V108, principal",
-    "10 V107, pré-requisito 1",
-    "10 V107, pré-requisito 2",
-    "10 V107, pré-requisito 3",
-    "10 V107, principal",
     "11 V109, principal",
     "11 V109, pré-requisito 1",
     "11 V109, pré-requisito 2",
