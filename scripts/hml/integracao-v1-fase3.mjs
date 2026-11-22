@@ -1694,6 +1694,7 @@ export function createF3MutationFence(options = {}) {
                 producerOrder: active.producerOrder,
                 kind: active.kind,
                 duplicateOf: active.duplicateOf,
+                ...(active.action !== undefined ? { action: active.action } : {}),
               }),
         );
       events.push(internal.bindEvent(active.requestId, bindOf(s, active.done, body)));
