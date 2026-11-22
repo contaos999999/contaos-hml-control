@@ -4426,8 +4426,9 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
       }),
     { code: "F3_FOREIGN_ORG" },
   );
-  // ADM01 (2), V102 (1), V103 (3), V105 (2) e V106 (3) posições tipadas.
-  assert.equal(positions, 11);
+  // ADM01 (2), V102 (1), V103 (3), V105 (2), V106 (3) e V107 (3).
+  // O teste acima exige negativas de origem/versao em todas as 14 posicoes reais.
+  assert.equal(positions, 14);
 });
 
 test("F3 R3 RED (2): na cerca, ADM01 e V102 exigem a organização F3, vaga com valor conhecido congela e a chave não é o requestId", async (t) => {
