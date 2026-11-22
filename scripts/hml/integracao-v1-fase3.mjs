@@ -171,6 +171,33 @@ export const F3_RBAC_LEITOR = Object.freeze({
   ),
   denied: 33,
 });
+// Espelho normativo do catálogo real de src/lib/administracao/rbacRpc.ts;
+// o autoteste de fonte rejeita drift do frontend. MASTER deve expor os 48 pares.
+export const F3_RBAC_MASTER_CATALOG = Object.freeze({
+  organizacoes: ["consultar", "administrar"],
+  usuarios: ["consultar", "administrar"],
+  auditoria: ["consultar"],
+  contratantes: ["consultar", "criar", "editar"],
+  contratos: ["consultar", "criar", "editar"],
+  orcamentos: ["consultar", "criar", "editar", "aprovar"],
+  normativos: ["consultar", "criar", "editar", "aprovar"],
+  listas: ["consultar", "criar", "editar"],
+  documentos_contrato: ["consultar", "criar", "editar"],
+  documentos_competencia: ["consultar", "criar", "editar"],
+  competencias: ["consultar", "criar"],
+  analises: ["consultar", "criar", "processar", "editar"],
+  pareceres: ["consultar", "criar", "aprovar"],
+  apresentacoes: ["consultar", "aprovar", "apresentar"],
+  historico: ["consultar", "criar", "editar", "processar"],
+  arquivos: ["consultar", "criar", "editar"],
+  dashboard: ["consultar"],
+});
+export const F3_RBAC_MASTER_ALLOWED = Object.freeze(
+  Object.entries(F3_RBAC_MASTER_CATALOG)
+    .flatMap(([recurso, acoes]) => acoes.map((acao) => recurso + "/" + acao))
+    .sort(),
+);
+
 export function expectedAccess(screen, profile) {
   if (typeof screen !== "string" || !Object.hasOwn(F3_SCREEN_ACCESS, screen))
     fail("F3_SCREEN_ACCESS");
@@ -2570,7 +2597,7 @@ export function parseF3S1EffectiveRbac(dto, expectMaster) {
   }
   if (new Set(allowed).size !== allowed.length) fail(code);
   if (expectMaster) {
-    if (allowed.length !== F3_RBAC_LEITOR.allowed.length + F3_RBAC_LEITOR.denied) fail(code);
+    if (JSON.stringify([...allowed].sort()) !== JSON.stringify(F3_RBAC_MASTER_ALLOWED)) fail(code);
   } else assertF3LeitorRbac({ version: dto.versao, allowed });
   return Object.freeze({ version: dto.versao, allowed: Object.freeze(allowed.sort()) });
 }
