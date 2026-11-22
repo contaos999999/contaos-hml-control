@@ -511,9 +511,9 @@ test("P0 RCA runner executa caso exato no Node sem vazar tokens", () => {
         signalPresent: raw.signal !== null,
         spawnError: Boolean(raw.error),
         selected: lines.some((x) => x.trimEnd() === "# Subtest: " + runnerFixture.caso),
-        green: lines.some((x) => /^ok [1-9]\\d* - /.test(x) && x.trimEnd().endsWith(" - " + runnerFixture.caso)),
-        passSummary: /(?:^|\\n)# pass [1-9]\\d*\\r?(?:\\n|$)/.test(raw.stdout || ""),
-        failZero: /(?:^|\\n)# fail 0\\r?(?:\\n|$)/.test(raw.stdout || ""),
+        green: lines.some((x) => x.startsWith("ok ") && x.trimEnd().endsWith(" - " + runnerFixture.caso)),
+        passSummary: lines.some((x) => x.startsWith("# pass ") && x.trimEnd() !== "# pass 0"),
+        failZero: lines.some((x) => x.trimEnd() === "# fail 0"),
       }));
     }
     assert.equal(selected, true);
