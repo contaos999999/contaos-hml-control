@@ -10,6 +10,7 @@ jobs:
     # Pin Playwright-supported runner; RED evidence: 44977265839
     timeout-minutes: 25
     environment: hml
+    # Authorized existing synthetic identity pairs; protected PLAN P0_GOV_PLAN_701
     steps:
       - uses: actions/checkout@v4
         with:
