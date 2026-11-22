@@ -623,6 +623,33 @@ const createOrg = (book) => {
   book.confirm(uuid(2), { entityId: F3, organizationId: F3 });
 };
 
+test("F3 S2 RED: edição V103 e V106 preserva identidade sem aceitar duplicidade indevida", () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  seal(book, 5, 5);
+  const contratante = uuid(105);
+  book.confirm(uuid(5), { entityId: contratante, organizationId: F3 });
+  seal(book, 6, 6);
+  book.confirm(uuid(6), { entityId: contratante, organizationId: F3 });
+  assert.equal(book.created().at(-1).kind, "registro", "V103 é edição da identidade V102");
+
+  seal(book, 7, 7);
+  const contrato = uuid(107);
+  book.confirm(uuid(7), { entityId: contrato, organizationId: F3 });
+  seal(book, 8, 8);
+  book.confirm(uuid(8), { entityId: contrato, organizationId: F3 });
+  assert.equal(book.created().at(-1).kind, "registro", "V106 é edição da identidade V105");
+  assert.equal(book.assertIsolation(), true);
+
+  const control = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(control);
+  seal(control, 5, 5);
+  control.confirm(uuid(5), { entityId: contratante, organizationId: F3 });
+  seal(control, 7, 7);
+  control.confirm(uuid(7), { entityId: contratante, organizationId: F3 });
+  assert.equal(control.created().at(-1).kind, "entidade_repetida");
+});
+
 /** Execução de referência: organização F3, uma principal por produtor e duplicidade em 4–13. */
 function referenceBook(ledger = EMPTY, extra = () => {}, skip = []) {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger });
