@@ -1196,6 +1196,148 @@ test("F3 S2 V106: UI bloqueia atualização sem versão lida e confirma mesmo ID
   assert.equal(queue.length, 0);
 });
 
+test("F3 S4 V113: lista de competências é o consumidor RLS obrigatório do UUID", () => {
+  const contractId = uuid(889007);
+  const competenceId = uuid(889014);
+  const reference = new Date().toISOString().slice(0, 7) + "-01";
+  const query = new URL(
+    "https://gklhhhyosgasnyoxlrui.supabase.co/rest/v1/competencias?id_contrato=eq." + contractId,
+  );
+  const row = { id: competenceId, competencia_referencia: reference };
+  const verify = (extra = {}) =>
+    sut.assertF3S4CompetenceReadback({
+      rows: [row],
+      rpcId: competenceId,
+      contractId,
+      reference,
+      query,
+      ...extra,
+    });
+  assert.equal(verify(), competenceId);
+  for (const altered of [
+    { rows: [] },
+    { rows: [row, row] },
+    { rows: [{ ...row, id: uuid(889013) }] },
+    { rows: [{ ...row, competencia_referencia: "2020-01-01" }] },
+    { rpcId: uuid(889013) },
+    { contractId: uuid(889013) },
+    { query: new URL(query.origin + query.pathname + "?id_contrato=eq." + uuid(889013)) },
+    { query: new URL(query.origin + "/rest/v1/contratos?id_contrato=eq." + contractId) },
+    { rows: [{ id: "not-a-uuid", competencia_referencia: reference }] },
+  ]) {
+    assert.throws(() => verify(altered), { code: "F3_S4_V113_READBACK" });
+  }
+});
+
+test("F3 S4 V113: UI real cria competência com corpo cercado e confirma só após consumidor", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  seal(book, 5, 5);
+  book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+  const contractId = uuid(889007);
+  seal(book, 7, 7);
+  book.confirm(uuid(7), { entityId: contractId, organizationId: F3 });
+  const guarded = sut.createF3MutationFence({ book });
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  const competenceId = uuid(889014);
+  const reference = new Date().toISOString().slice(0, 7) + "-01";
+  const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const fields = {};
+  const listeners = [];
+  let posts = 0, reads = 0;
+  const emit = (url, method, status, data) => {
+    const r = {
+      url: () => url,
+      request: () => ({ method: () => method }),
+      status: () => status,
+      json: async () => data,
+    };
+    for (let i = listeners.length - 1; i >= 0; i--) {
+      if (listeners[i].predicate(r)) listeners.splice(i, 1)[0].resolve(r);
+    }
+  };
+  const page = {
+    async goto(url) {
+      if (new URL(url).pathname === "/contratos/" + contractId + "/competencias") {
+        reads++;
+        emit(
+          api + "/rest/v1/competencias?id_contrato=eq." + contractId,
+          "GET",
+          200,
+          [{ id: competenceId, competencia_referencia: reference }],
+        );
+      }
+    },
+    locator(selector) {
+      assert.equal(selector, "#v113-mes");
+      return {
+        waitFor: async () => undefined,
+        fill: async (value) => { fields[selector] = value; },
+      };
+    },
+    waitForResponse(predicate) {
+      return new Promise((resolve) => listeners.push({ predicate, resolve }));
+    },
+    getByRole(role, opts) {
+      if (role === "heading") {
+        assert.equal(opts.name, "Nova competência");
+        return { waitFor: async () => undefined };
+      }
+      if (role === "status") {
+        return {
+          filter: ({ hasText }) => ({
+            waitFor: async () => assert.equal(hasText, "criada."),
+          }),
+        };
+      }
+      if (role === "button" && opts.name === "Criar competência") {
+        return {
+          click: async () => {
+            assert.equal(fields["#v113-mes"] + "-01", reference);
+            const url = api + "/rest/v1/rpc/criar_competencia";
+            const req = {
+              url,
+              method: "POST",
+              postData: JSON.stringify({
+                p_id_contrato: contractId,
+                p_competencia_referencia: reference,
+              }),
+              sessionId: "f3_native_test",
+              interceptionId: "v113_create",
+            };
+            assert.equal(guarded.policy({ ...req, stage: "REQUEST" }), true);
+            assert.equal(guarded.policy({ ...req, stage: "RESPONSE" }), true);
+            posts++;
+            emit(url, "POST", 200, competenceId);
+          },
+        };
+      }
+      throw Error("Unexpected role " + role);
+    },
+  };
+  assert.equal(
+    await sut.f3S4CreateCompetence({
+      page, fence: native, mutationFence: guarded, book,
+      organizationId: F3, contractId,
+    }),
+    competenceId,
+  );
+  assert.equal(posts, 1);
+  assert.equal(reads, 1);
+  assert.equal(listeners.length, 0);
+  const entry = book.created().at(-1);
+  assert.deepEqual({ id: entry.id, kind: entry.kind, organizationId: entry.organizationId }, {
+    id: competenceId, kind: "registro", organizationId: F3,
+  });
+  await assert.rejects(
+    sut.f3S4CreateCompetence({
+      page, fence: native, mutationFence: guarded, book,
+      organizationId: uuid(889013), contractId,
+    }),
+    { code: "F3_S4_V113_PRECONDITION" },
+  );
+});
+
 test("F3 S2 RED: pré-requisito de V107 deve preservar ação distinta no livro", () => {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(book);
