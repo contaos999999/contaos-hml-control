@@ -669,8 +669,8 @@ test("F3 S2 V102: readback rejeita organização, identidade e cardinalidade div
   const read = (data) =>
     sut.assertF3S2ContractorReadback({
       created,
-    rows: [row],
-    organizationId: org,
+      rows: [row],
+      organizationId: org,
       name,
       query,
       ...data,
@@ -708,7 +708,7 @@ test("F3 S2 V103: readback valida ID original, versão incrementada, perfil e fa
       before,
       result,
       after,
-    organizationId: org,
+      organizationId: org,
       contractorId,
       fantasy,
       ...change,
@@ -756,8 +756,7 @@ test("F3 S2 V103: UI observa versão antes de editar e relê mesmo UUID após RP
   let reads = 0;
   const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
   const readUrl =
-    api + "/rest/v1/contratantes?select=id&id_organizacao=eq." + F3 +
-    "&id=eq." + contractorId;
+    api + "/rest/v1/contratantes?select=id&id_organizacao=eq." + F3 + "&id=eq." + contractorId;
   const emit = (url, method, data, status = 200) => {
     const response = {
       url: () => url,
@@ -866,7 +865,7 @@ test("F3 S2 V105: POST sem RETURNING exige UUID da lista real e organização co
   );
   const read = (changed = {}) =>
     sut.assertF3S2ContractReadback({
-    rows: [row],
+      rows: [row],
       query,
       organizationId,
       contractorId,
