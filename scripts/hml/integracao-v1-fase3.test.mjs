@@ -4069,7 +4069,10 @@ test("F3 S1 RBAC: actual AppShell consumer calls effective permissions RPC adapt
     new URL("../../src/components/layout/ContaOSAppShell.tsx", import.meta.url),
     "utf8",
   );
-  const rpc = await readFile(new URL("../../src/lib/administracao/rbacRpc.ts", import.meta.url), "utf8");
+  const rpc = await readFile(
+    new URL("../../src/lib/administracao/rbacRpc.ts", import.meta.url),
+    "utf8",
+  );
   assert.match(shell, /consultarPermissoesEfetivas\(organizacao, contextoAtual\.contrato\)/);
   assert.match(rpc, /chamar\("consultar_permissoes_efetivas", \{/);
 });
