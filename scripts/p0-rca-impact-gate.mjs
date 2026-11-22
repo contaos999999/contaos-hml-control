@@ -3068,9 +3068,23 @@ export function assembleSemanticContradictionDossier(triage) {
     if(actors.length===0)issuesSentence.push("AUTHORITY_MAY_BE_IMPLICIT");
     if(conditions.length===0)issuesSentence.push("ANTECEDENT_MAY_BE_CROSS_SENTENCE");
     if(modality.length===0)issuesSentence.push("CONTEXTUALITY_NEEDS_CONFIRMATION");
+    // Semicolons expose additional candidates while retaining every byte.
+    // These are subordinate hypotheses, not extra certified rules.
+    const delimiters=[...text.matchAll(/;\\s*/g)];
+    const candidateEnds=delimiters.map(m=>m.index+m[0].length);
+    let start=0;
+    const subordinate_clauses=[...candidateEnds,text.length].map(end=>{
+      const original=text.slice(start,end);
+      const entry={start,end,text:original,
+        text_sha256:createHash("sha256").update(original).digest("hex"),
+        reviewed:false,negative_witness:null};
+      start=end;return entry;
+    });
+    if(subordinate_clauses.map(x=>x.text).join("")!==text)
+      issues.push("SEMANTIC_SUBCLAUSE_LOSS: "+s.id);
     return {sentence_id:s.id,source_id:s.source_id,path:s.path,line:s.line,
       text_sha256:s.text_sha256,exact_text:text,modality,conditions,actors,
-      topics:concepts(text),issues:issuesSentence,
+      topics:concepts(text),issues:issuesSentence,subordinate_clauses,
       classification:s.classification,human_classification:null,
       contrary_case_question:"Qual antecedente ou exceção altera a consequência do trecho: "+text.slice(0,240),
       positive_witness:null,negative_witness:null,verdict:"INCONCLUSIVE"};
