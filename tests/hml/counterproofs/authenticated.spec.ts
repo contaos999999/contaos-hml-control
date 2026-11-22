@@ -1,7 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 import { preflight } from '../../../scripts/hml-counterproofs/guard.mjs';
+import { readFileSync } from 'node:fs';
 const context={sha:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,repository:process.env.GITHUB_REPOSITORY};
-test.beforeAll(()=>{const result=preflight(process.env,context);if(!result.pass)throw Error('BLOCKED: '+result.errors.join(','));});
+test.beforeAll(()=>{
+ let fixture: unknown=null;
+ try {fixture=JSON.parse(readFileSync('artifacts/hml-counterproofs/fixture-attestation.json','utf8'));}catch{/* fail closed */}
+ const result=preflight(process.env,context,fixture);
+ if(!result.pass)throw Error('BLOCKED: '+result.errors.join(','));
+});
 async function login(page:Page,email:string,password:string){
  await page.goto('/login');
  await page.getByLabel('E-mail').fill(email);
