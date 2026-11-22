@@ -1,0 +1,30 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 704,
+  "files": [
+    ".github/workflows/contaos-hml-authenticated-counterproofs.yml",
+    "scripts/hml-counterproofs/guard.mjs",
+    "scripts/hml-counterproofs/guard.test.mjs",
+    "scripts/hml-counterproofs/receipt.mjs",
+    "scripts/hml-counterproofs/fixture-attestation.mjs",
+    "scripts/hml-counterproofs/fixture-attestation.test.mjs",
+    "tests/hml/counterproofs/authenticated.spec.ts",
+    "playwright.hml-counterproofs.config.ts",
+    "docs/frontend/planos/P0_HML_AUTH_RLS_BUILD_INTENT_2026-11-22.md"
+  ],
+  "plan_documento": "docs/frontend/planos/PLAN_P0_HML_AUTH_RLS_SHA_2026-11-22.md",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/704",
+  "plan_base_sha": "807053affe2e495d3405672fcd55584f6ec050a7",
+  "plan_aprovacao": "Solicitação expressa do titular para resolver integralmente SHA backend, duas identidades sintéticas, isolamento RLS, deployment e RED/GREEN HML; sem ativação PROD e respeitando autorização da etapa backend.",
+  "justificativa": "Causa real e RED: GitHub Actions 44980196211 falha NON_SYNTHETIC_USER_A/B, BACKEND_SHA_UNVERIFIED e ISOLATION_NOT_ATTESTED. Guard usa prefixo incompatível com identidade HML preexistente e declara isolamento por flag. BUILD corrigirá os verificadores com Auth LIVE e RLS sob ambiente hml; faltas de contas ou vínculos causarão NO-GO, nunca bypass ou dado inventado.",
+  "full_diff": true,
+  "ativacao_autorizada": false,
+  "prohibitions": [
+    "No PROD or release",
+    "No secrets printed",
+    "No Auth, DB, RLS or Storage mutation by this frontend BUILD",
+    "No bypass of isolation or backend deployed-code proof",
+    "No merge without native checks and independent review"
+  ]
+}
