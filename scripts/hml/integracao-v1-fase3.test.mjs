@@ -5205,12 +5205,13 @@ test("F3 S1 RBAC: actual AppShell consumer calls effective permissions RPC adapt
 
 
 test("F3 V117: resposta da revisão correlaciona contexto, documento e comando sem certificar caso", () => {
-  const competenceId = uuid(891014), requirementId = uuid(891017);
+  const competenceId = uuid(891014), requirementId = uuid(891017), contractId = uuid(891016);
   const documentVersionId = uuid(891015), previousExecution = uuid(891116);
   const requestId = uuid(891117), resultId = uuid(891218);
   const context = {
     schema_versao: "revisao-v117",
     id_organizacao: F3,
+    id_contrato: contractId,
     id_competencia: competenceId,
     id_requisito: requirementId,
     id_execucao_esperada: previousExecution,
@@ -5238,7 +5239,7 @@ test("F3 V117: resposta da revisão correlaciona contexto, documento e comando s
     id_execucao: uuid(891217),
     id_resultado: resultId,
   };
-  const input = { context, command, result, organizationId: F3,
+  const input = { context, command, result, organizationId: F3, contractId,
     competenceId, requirementId, documentVersionId };
   assert.deepEqual(sut.assertF3V117ReviewReceipt(input), {
     state: "CONTRACT_CORRELATED_NOT_CERTIFIED",
@@ -5246,6 +5247,8 @@ test("F3 V117: resposta da revisão correlaciona contexto, documento e comando s
   });
   const bad = [
     { organizationId: uuid(891901) },
+    { contractId: uuid(891911) },
+    { context: { ...context, id_contrato: uuid(891912) } },
     { competenceId: uuid(891902) },
     { requirementId: uuid(891903) },
     { documentVersionId: uuid(891904) },
@@ -5253,6 +5256,8 @@ test("F3 V117: resposta da revisão correlaciona contexto, documento e comando s
     { context: { ...context, hash_esperado: "b".repeat(64) } },
     { context: { ...context, id_execucao_esperada: uuid(891905) } },
     { command: { ...command, p_request_id: uuid(891906) } },
+    { command: { ...command, p_request_id: previousExecution } },
+    { command: { ...command, p_request_id: documentVersionId } },
     { command: { ...command, p_hash_esperado: "b".repeat(64) } },
     { command: { ...command, p_resultado: "nao_aplicavel" } },
     { command: { ...command, p_evidencias: [{ id_versao_documento: uuid(891907) }] } },
