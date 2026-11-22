@@ -1541,6 +1541,14 @@ export const F3_MUTATION_FLOWS = Object.freeze({
       source: "src/lib/competencias/competenciaAnaliseDados.ts:188-197",
     }),
   ]),
+  // V117: revisão humana efetiva, amarrada à competência F3 e com idempotência do produto.
+  17: flow([
+    step("rpc", "registrar_revisao_requisito_v117", {
+      free: ["p_request_id"],
+      inventory: { p_id_competencia: 14 },
+      source: "src/lib/competencias/revisaoRequisitoDados.ts:112-177",
+    }),
+  ]),
   18: flow(
     [
       step("rpc", "aprovar_parecer_interno", {
