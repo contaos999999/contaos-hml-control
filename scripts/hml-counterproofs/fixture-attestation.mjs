@@ -31,11 +31,14 @@ async function verifyActor(client, { email, password }) {
   // Do not use user_metadata. Only immutable server-controlled app_metadata can prove a synthetic fixture.
   const { data, error } = await client.auth.signInWithPassword({ email, password });
   if (error || !data?.user || !data.session?.access_token) return { proof, client, user: null };
+  // Independently read back the issued session from the LIVE Auth server before trusting the identity.
+  const { data: checked, error: checkError } = await client.auth.getUser();
+  if (checkError || !checked?.user || checked.user.id !== data.user.id) return { proof, client, user: null };
   proof.login = true;
-  proof.emailMatch = (data.user.email ?? '').toLowerCase() === email.toLowerCase();
-  proof.confirmed = Boolean(data.user.email_confirmed_at);
-  proof.synthetic = data.user.app_metadata?.synthetic === true;
-  return { proof, client, user: data.user };
+  proof.emailMatch = (checked.user.email ?? '').toLowerCase() === email.toLowerCase();
+  proof.confirmed = Boolean(checked.user.email_confirmed_at);
+  proof.synthetic = checked.user.app_metadata?.synthetic === true;
+  return { proof, client, user: checked.user };
 }
 async function visibleActiveOrgs(client, userId) {
   const { data, error } = await client.from('vinculos_usuarios').select('id_organizacao,ativo,id_usuario').eq('id_usuario', userId).eq('ativo', true);
