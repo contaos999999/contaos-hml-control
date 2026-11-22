@@ -2420,6 +2420,20 @@ test("P0 SEMANTIC DOSSIER: all 137 E1–E7, 381 clauses, 9316 pairs are source r
     r.exact_text&&r.source_anchor&&Object.keys(r.axes).length===7&&
     r.axes.E5.head===null&&r.axes.E5.positive_witness===null&&
     r.axes.E5.negative_witness===null&&r.decision==="INCONCLUSIVE"));
+  const allSubclauses=result.sentences.flatMap(x=>x.subordinate_clauses);
+  assert.equal(allSubclauses.length,457,
+    "381 unidades de frase geram 76 subcláusulas adicionais, não 76 regras certificadas");
+  assert.equal(result.sentences.filter(x=>x.subordinate_clauses.length>1).length,46);
+  for(const row of result.sentences){
+    assert.equal(row.subordinate_clauses.map(x=>x.text).join(""),row.exact_text);
+    for(const part of row.subordinate_clauses){
+      assert.equal(
+        createHash("sha256").update(part.text).digest("hex"),
+        part.text_sha256);
+      assert.equal(part.reviewed,false);
+      assert.equal(part.negative_witness,null);
+    }
+  }
   assert.ok(result.sentences.every(x=>x.exact_text&&x.source_id&&
     x.text_sha256&&x.positive_witness===null&&x.human_classification===null));
   assert.ok(result.interactions.every(x=>x.source_a&&x.source_b&&
