@@ -4415,7 +4415,9 @@ export async function f3S1SelectPreference({ page, fence, book, userId, organiza
   await radio.click();
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await page.waitForURL((url) => url.origin === HML_ORIGIN && url.pathname === "/");
-  const stored = await page.evaluate(() => sessionStorage.getItem("contaos.preferenciaOrganizacao"));
+  const stored = await page.evaluate(() =>
+    sessionStorage.getItem("contaos.preferenciaOrganizacao"),
+  );
   let value;
   try {
     value = JSON.parse(stored);
@@ -4465,18 +4467,22 @@ export async function f3S3SetApplicability({
     !isUuid(versionId) ||
     !Number.isSafeInteger(versionNumber) ||
     versionNumber < 1 ||
-    !book.created().some(
-      (entry) =>
-        entry.id === versionId &&
-        entry.organizationId === organizationId &&
-        book.summary().requests.some(
-          (q) =>
-            q.requestId === entry.requestId &&
-            q.producerOrder === 10 &&
-            q.action === "versao" &&
-            q.outcome === "confirmed",
-        ),
-    )
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === versionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 10 &&
+                q.action === "versao" &&
+                q.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_V107_APPLICABILITY_PRECONDITION");
   }
@@ -4486,10 +4492,12 @@ export async function f3S3SetApplicability({
   await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/base-normativa", {
     waitUntil: "networkidle",
   });
-  await page.getByRole("button", {
-    name: "Definir aplicabilidade da versão " + versionNumber,
-    exact: true,
-  }).click();
+  await page
+    .getByRole("button", {
+      name: "Definir aplicabilidade da versão " + versionNumber,
+      exact: true,
+    })
+    .click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Aplicável", { exact: true }).check();
   await dialog.getByLabel("Fundamento").fill("Teste funcional isolado F3 CODE");
@@ -4594,18 +4602,22 @@ export async function f3S5ApproveOpinion({
     !isUuid(opinionId) ||
     before?.id !== opinionId ||
     before.id_competencia !== competenceId ||
-    !book.created().some(
-      (entry) =>
-        entry.id === opinionId &&
-        entry.organizationId === organizationId &&
-        book.summary().requests.some(
-          (q) =>
-            q.requestId === entry.requestId &&
-            q.producerOrder === 18 &&
-            q.action === "parecer" &&
-            q.outcome === "confirmed",
-        ),
-    )
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === opinionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 18 &&
+                q.action === "parecer" &&
+                q.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_V118_OPINION_PRECONDITION");
   }
@@ -4676,9 +4688,8 @@ export function assertF3S5PresentationReadback({ presentationId, rows, competenc
     !isUuid(presentationId) ||
     !isUuid(competenceId) ||
     !Array.isArray(rows) ||
-    rows.filter(
-      (row) => row?.id === presentationId && row.id_competencia === competenceId,
-    ).length !== 1
+    rows.filter((row) => row?.id === presentationId && row.id_competencia === competenceId)
+      .length !== 1
   ) {
     fail("F3_V119_PRESENTATION_READBACK");
   }
@@ -4701,20 +4712,26 @@ export async function f3S5RegisterPresentation({
     organizationId !== book.organizationF3() ||
     !isUuid(competenceId) ||
     !isUuid(contractId) ||
-    !book.created().some(
-      (entry) =>
-        entry.id === contractId &&
-        entry.organizationId === organizationId &&
-        book.summary().requests.some(
-          (q) => q.requestId === entry.requestId && q.producerOrder === 7 && q.outcome === "confirmed",
-        ),
-    ) ||
-    !book.summary().requests.some(
-      (q) =>
-        q.producerOrder === 19 &&
-        q.action === "aprovacao" &&
-        q.outcome === "confirmed",
-    )
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === contractId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 7 &&
+                q.outcome === "confirmed",
+            ),
+      ) ||
+    !book
+      .summary()
+      .requests.some(
+        (q) => q.producerOrder === 19 && q.action === "aprovacao" && q.outcome === "confirmed",
+      )
   ) {
     fail("F3_V119_PRESENTATION_PRECONDITION");
   }
@@ -4848,7 +4865,11 @@ export function assertF3V110DocumentReadback({ after, contractId, fileId }) {
   ) {
     fail("F3_V110_DOCUMENT_READBACK");
   }
-  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 12, documentId: after.id });
+  return Object.freeze({
+    state: "CONTRACT_NOT_CERTIFIED",
+    producerOrder: 12,
+    documentId: after.id,
+  });
 }
 
 /** V111 — incremento não pode substituir ou destruir a versão anterior. */
@@ -4888,7 +4909,11 @@ export function assertF3V115CompetenceDocumentReadback({
   ) {
     fail("F3_V115_COMPETENCE_DOCUMENT_READBACK");
   }
-  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 15, documentId: document.id });
+  return Object.freeze({
+    state: "CONTRACT_NOT_CERTIFIED",
+    producerOrder: 15,
+    documentId: document.id,
+  });
 }
 
 /** V117 — concatena os contratos CODE já integrados, nunca declara PASS de caso. */
@@ -4926,13 +4951,7 @@ export function assertF3V117DriverCodeContract({
 }
 
 /** V122 — só há relatório utilizável quando a ingestão foi vinculada ao arquivo seguro. */
-export function assertF3V122HistoricalReadback({
-  before,
-  after,
-  reportId,
-  fileId,
-  executionId,
-}) {
+export function assertF3V122HistoricalReadback({ before, after, reportId, fileId, executionId }) {
   if (
     !isUuid(reportId) ||
     !isUuid(fileId) ||
