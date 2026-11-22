@@ -5434,3 +5434,72 @@ test("F3 S4 V116: UI nativa solicita uma análise sob a cerca e aguarda consumid
     { code: "F3_S4_V116_PRECONDITION" },
   );
 });
+
+
+test("F3 C0458 V117->V116: consumidor confirma identidade do resultado novo", () => {
+  const competenceId = uuid(899414);
+  const requirementId = uuid(899417);
+  const executionId = uuid(899416);
+  const resultId = uuid(899418);
+  const receipt = {
+    state: "CONTRACT_CORRELATED_NOT_CERTIFIED",
+    executionId,
+    resultId,
+  };
+  const before = {
+    competencia: { id: competenceId },
+    execucao_atual: { id: uuid(899415) },
+  };
+  const after = {
+    competencia: { id: competenceId },
+    estado_analise: "complete",
+    stale: false,
+    execucao_atual: { id: executionId },
+    resultados: [
+      {
+        id_requisito: requirementId,
+        id_resultado: resultId,
+        resultado: "conforme",
+      },
+    ],
+  };
+  const input = { receipt, before, after, competenceId, requirementId };
+  assert.deepEqual(sut.assertF3V117V116ConsumerReadback(input), {
+    state: "CONSUMER_CODE_CONTRACT_NOT_CERTIFIED",
+    caseId: "IFV1-F3-C0458",
+    competenceId,
+    requirementId,
+    executionId,
+    resultId,
+  });
+  const invalid = [
+    { competenceId: uuid(899419) },
+    { requirementId: uuid(899420) },
+    { receipt: { ...receipt, resultId: uuid(899421) } },
+    { receipt: { ...receipt, executionId: uuid(899422) } },
+    { receipt: { ...receipt, state: "PASS" } },
+    { before: { ...before, competencia: { id: uuid(899423) } } },
+    { before: { ...before, execucao_atual: { id: executionId } } },
+    { after: { ...after, competencia: { id: uuid(899424) } } },
+    { after: { ...after, estado_analise: "processing" } },
+    { after: { ...after, stale: true } },
+    { after: { ...after, execucao_atual: null } },
+    { after: { ...after, resultados: [] } },
+    { after: { ...after, resultados: [...after.resultados, ...after.resultados] } },
+    { after: { ...after, resultados: [
+      { ...after.resultados[0], id_requisito: uuid(899425) },
+    ] } },
+    { after: { ...after, resultados: [
+      { ...after.resultados[0], resultado: "nao_conforme" },
+    ] } },
+    { after: { ...after, resultados: [
+      { ...after.resultados[0], id_resultado: uuid(899426) },
+    ] } },
+  ];
+  for (const changed of invalid) {
+    assert.throws(
+      () => sut.assertF3V117V116ConsumerReadback({ ...input, ...changed }),
+      { code: "F3_V117_V116_CONSUMER_MISMATCH" },
+    );
+  }
+});
