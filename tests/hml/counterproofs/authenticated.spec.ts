@@ -1,10 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-import { preflight } from '../../../scripts/hml-counterproofs/guard.mjs';
-import { readFileSync } from 'node:fs';
+import { preflight, loadAttestation } from '../../../scripts/hml-counterproofs/guard.mjs';
 const context={sha:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,repository:process.env.GITHUB_REPOSITORY};
 test.beforeAll(()=>{
- let fixture: unknown=null;
- try {fixture=JSON.parse(readFileSync('artifacts/hml-counterproofs/fixture-attestation.json','utf8'));}catch{/* fail closed */}
+ const fixture=loadAttestation();
  const result=preflight(process.env,context,fixture);
  if(!result.pass)throw Error('BLOCKED: '+result.errors.join(','));
 });
