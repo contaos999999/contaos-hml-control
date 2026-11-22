@@ -1591,8 +1591,7 @@ export const F3_MUTATION_FLOWS = Object.freeze({
         source: "src/lib/contratos/ingestaoHistoricoDados.ts:72-82",
       }),
       step("rpc", "enfileirar_ingestao_historica_hml", {
-        free: ["p_id_versao_documento"],
-        inventory: { p_id_relatorio: 20 },
+        free: ["p_id_relatorio", "p_id_versao_documento"],
         source: "src/lib/contratos/ingestaoHistoricoDados.ts:84-90",
       }),
     ],
