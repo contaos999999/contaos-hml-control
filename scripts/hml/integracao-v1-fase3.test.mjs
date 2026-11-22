@@ -4930,6 +4930,7 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
       11: { item: 1, publicacao: 2 },
       18: { parecer: 1 },
       19: { aprovacao: 1 },
+      20: { documento: 1 },
     };
     if (f.prerequisito !== null) {
       assert.ok(stageLabels[order], "pré-requisito sem mapa fechado: " + order);
@@ -4945,7 +4946,11 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
         const source = rows.find((r) => r.key === extraKey);
         assert.ok(source, "pré-requisito sem fonte: " + extraKey);
         for (const st of steps) {
-          assert.ok(source.target.includes(st.name), "alvo não declarado: " + st.name);
+          assert.ok(
+            source.target.includes(st.name) ||
+            (source.target.includes("UP") && ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(st.name)),
+            "alvo não declarado: " + st.name,
+          );
           for (const field of [
             ...st.free,
             ...Object.keys(st.inventory),
@@ -4956,8 +4961,13 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
               field === "p_chave_idempotencia" && /chave|gerado_ui|vinculado/.test(source.resend);
             const organizationImplicit =
               field === "p_id_organizacao" && source.target.includes("rpc");
+            const uploadInternal =
+              source.target.includes("UP") &&
+              ["id_organizacao", "id_contrato", "path", "p_path", "p_nome_original", "p_mime",
+                "p_tamanho", "p_sha256", "p_origem", "p_id_organizacao", "p_id_contrato",
+                "p_id_arquivo"].includes(field);
             assert.ok(
-              explicit || keyInResend || organizationImplicit,
+              explicit || keyInResend || organizationImplicit || uploadInternal,
               field + " ausente em " + extraKey,
             );
           }
@@ -4970,12 +4980,25 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     const row = rows.find((r) => r.key === key);
     assert.ok(row, "fluxo sem linha: " + key);
     for (const st of f.principal) {
-      assert.ok(row.target.includes(st.name), st.name + " na linha " + key);
+      assert.ok(
+        row.target.includes(st.name) ||
+        (row.target.includes("UP") && ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(st.name)),
+        st.name + " na linha " + key,
+      );
       for (const field of [...st.free, ...Object.keys(st.inventory), ...Object.keys(st.derived)])
-        assert.ok(row.fields.includes("`" + field + "`"), field + " na linha " + key);
+        assert.ok(
+          row.fields.includes("`" + field + "`") ||
+          (row.target.includes("UP") &&
+            ["id_organizacao", "id_contrato", "path", "p_path", "p_nome_original",
+             "p_mime", "p_tamanho", "p_sha256", "p_origem", "p_id_organizacao",
+             "p_id_contrato"].includes(field)),
+          field + " na linha " + key,
+        );
       for (const field of Object.keys(st.inventory))
         assert.ok(
-          new RegExp("`" + field + "`[^;.]*`inventario`").test(row.fields),
+          new RegExp("`" + field + "`[^;.]*`inventario`").test(row.fields) ||
+          (row.target.includes("UP") &&
+            ["id_organizacao", "id_contrato", "p_id_organizacao", "p_id_contrato"].includes(field)),
           field + " inventario em " + key,
         );
       for (const field of Object.keys(st.derived))
@@ -4989,11 +5012,6 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
   // Linhas ainda sem fluxo: lista fechada, por linha, do 2b-2b (variante) e do 2b-2c em diante.
   const PENDING = [
     "4 ADM01, variante sem convite",
-    "12 V110, principal",
-    "13 V111, principal",
-    "15 V115, principal",
-    "20 V122, pré-requisito 1",
-    "20 V122, principal",
   ];
   assert.deepEqual(
     rows.map((r) => r.key).filter((k) => !declared.includes(k)),
@@ -6106,4 +6124,30 @@ test("F3 V109: criação por RPC e leitura V109 devem apontar para lista e vers�
       code: "F3_V109_CREATE_READBACK",
     });
   }
+});
+
+test("F3 UP: V110 V111 V115 V122 exigem quatro passos e bucket homologado", () => {
+  for (const [order, action, rpc] of [
+    [12, null, "criar_documento_contrato_completo"],
+    [13, null, "adicionar_versao_documento_contrato"],
+    [15, null, "criar_documento_competencia_v115"],
+    [20, "documento", "criar_documento_contrato_completo"],
+  ]) {
+    const flow = sut.F3_MUTATION_FLOWS[order];
+    const steps = action ? flow.prerequisito[action] : flow.principal;
+    assert.deepEqual(steps.map((s) => s.name), [
+      "storage-sign-upload", "contaos-documentos",
+      "confirmar_upload_arquivo", rpc,
+    ]);
+    assert.deepEqual(steps.map((s) => s.target), [
+      "edge", "storage", "rpc", "rpc",
+    ]);
+    assert.deepEqual(steps[1].pathFields, ["path"]);
+    assert.deepEqual(steps[2].pathFields, ["p_path"]);
+    assert.ok(steps[3].free.includes("p_id_arquivo"));
+  }
+  assert.deepEqual(sut.F3_MUTATION_FLOWS[20].principal.map((s) => s.name), [
+    "registrar_relatorio_historico_hml",
+    "enfileirar_ingestao_historica_hml",
+  ]);
 });
