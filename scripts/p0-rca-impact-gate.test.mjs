@@ -2332,7 +2332,7 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
 
 test("P0 MATERIAL TRIAGE: 137 rule texts, seven E axes, 381 sentence contents and all 9316 pairs reviewed for candidates, with no fake PASS",()=>{
   const snapshots=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES).map(
-    ([path,blob])=>[path,{content:readFileSync(resolve(ROOT,path),"utf8"),blob}]));
+    ([path,blob])=>[path,{content:readFileSync(resolve(process.cwd(),path),"utf8"),blob}]));
   const inventory=inventoryProtectedSemanticLines(snapshots);
   const worklist=buildSevenAxisSemanticBacklog(inventory);
   const sentences=inventorySemanticSentenceCandidates(inventory);
