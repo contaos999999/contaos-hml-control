@@ -1189,6 +1189,34 @@ test("F3 S2 V106: UI bloqueia atualização sem versão lida e confirma mesmo ID
   assert.equal(queue.length, 0);
 });
 
+test("F3 S2 RED: pré-requisito de V107 deve preservar ação distinta no livro", () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  const requestId = uuid(899001);
+  book.seal({
+    requestId,
+    producerOrder: 10,
+    kind: "prerequisito",
+    action: "fonte",
+    actor: "master",
+    organizationId: F3,
+  });
+  const recorded = book.summary().requests.find((entry) => entry.requestId === requestId);
+  assert.equal(recorded.action, "fonte");
+  assert.throws(
+    () =>
+      book.seal({
+        requestId: uuid(899002),
+        producerOrder: 10,
+        kind: "prerequisito",
+        action: "fonte",
+        actor: "master",
+        organizationId: F3,
+      }),
+    { code: "F3_INTENT_PREREQUISITES" },
+  );
+});
+
 const ledgerWith = ({ runs = [], entries = [] }) =>
   JSON.stringify({ ...JSON.parse(LEDGER_RAW), runs, entries }, null, 2) + "\n";
 const ledgerOf = (runs, entries = []) =>
