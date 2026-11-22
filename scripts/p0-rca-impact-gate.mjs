@@ -1,7 +1,8 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { join as joinPath } from "node:path";
 import { resolveEventContext } from "./ci/merge-group-context.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
@@ -2671,7 +2672,29 @@ async function main() {
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) ===
   fileURLToPath(new URL("file://" + process.argv[1]))) {
-  if (process.argv.includes("--audit-semantic-inventory")) {
+  if (process.argv.includes("--export-semantic-dossier")) {
+    try{
+      const dest=process.argv.find(x=>x.startsWith("--dossier-dir="))?.slice(14);
+      if(!dest)throw Error("missing --dossier-dir=<out-of-tree-path>");
+      const base=process.env.INPUT_PREAUDIT_BASE||git("rev-parse","origin/main");
+      if(!validSha(base))throw Error("invalid protected base");
+      const sources=Object.fromEntries(Object.keys(PROTECTED_SEMANTIC_SOURCES)
+        .map(path=>[path,{content:execFileSync("git",["show",base+":"+path],{encoding:"utf8"}),
+          blob:git("rev-parse",base+":"+path)}]));
+      const inventory=inventoryProtectedSemanticLines(sources);
+      const worklist=buildSevenAxisSemanticBacklog(inventory);
+      const sentences=inventorySemanticSentenceCandidates(inventory);
+      const reverse=auditSemanticReverseCoverage(inventory,worklist);
+      const triage=analyzeSemanticCorpusForReview({
+        inventory,worklist,sentenceInventory:sentences,reverseCoverage:reverse});
+      const dossier=assembleSemanticContradictionDossier(triage);
+      const manifest=writeSemanticDossierJsonl(dossier,dest,{
+        head:git("rev-parse","HEAD"),base});
+      console.log(JSON.stringify(manifest));
+      // Export succeeded as worklist, NOT semantic certification.
+    }catch(e){console.error("SEMANTIC_DOSSIER_EXPORT_FAIL: "+e.message);
+      process.exitCode=1;}
+  } else if (process.argv.includes("--audit-semantic-inventory")) {
     try{
       const base=process.env.INPUT_PREAUDIT_BASE||git("rev-parse","origin/main");
       if(!validSha(base))throw Error("invalid protected base SHA");
@@ -3135,4 +3158,40 @@ export function assembleSemanticContradictionDossier(triage) {
     rules_certified:0,sentences_certified:0,interactions_certified:0,
     semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
     release:"NO_GO",activation:"NO_GO"};
+}
+
+/**
+ * Writes a reproducible, source-bound audit worklist OUTSIDE the repository.
+ * It is impossible to produce a PASS witness from this exporter: all
+ * LIVE/independence fields remain null. Files are SHA-256 bound in manifest.
+ */
+export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}){
+  if(!outputDirectory||typeof outputDirectory!=="string"||
+     !dossier||dossier.issues?.length||
+     dossier.counts?.rules!==137||dossier.counts?.axes!==959||
+     dossier.counts?.sentences!==381||dossier.counts?.pairs!==9316||
+     dossier.counts?.unique_pairs!==9316||
+     dossier.release!=="NO_GO"||dossier.semantic_completeness!=="INCONCLUSIVE")
+    throw Error("SEMANTIC_DOSSIER_UNVERIFIED");
+  if(head!==undefined&&!validSha(head))throw Error("SEMANTIC_DOSSIER_HEAD_INVALID");
+  if(base!==undefined&&!validSha(base))throw Error("SEMANTIC_DOSSIER_BASE_INVALID");
+  mkdirSync(outputDirectory,{recursive:true});
+  const files={};
+  for(const [name,rows] of [
+    ["137-e1-e7-regras.jsonl",dossier.rules],
+    ["381-sentencas.jsonl",dossier.sentences],
+    ["9316-interacoes.jsonl",dossier.interactions]
+  ]){
+    const bytes=rows.map(row=>JSON.stringify(row)).join("\n")+"\n";
+    writeFileSync(joinPath(outputDirectory,name),bytes,{encoding:"utf8",flag:"w"});
+    files[name]={rows:rows.length,bytes:Buffer.byteLength(bytes,"utf8"),
+      sha256:createHash("sha256").update(bytes).digest("hex")};
+  }
+  const manifest={schema:"contaos.semantic-audit-export.v1",
+    head:head??null,protected_base:base??null,files,counts:dossier.counts,
+    semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
+    reviewed_by_independent_auditor:false,release:"NO_GO"};
+  writeFileSync(joinPath(outputDirectory,"manifest.json"),
+    JSON.stringify(manifest,null,2)+"\n",{encoding:"utf8",flag:"w"});
+  return manifest;
 }
