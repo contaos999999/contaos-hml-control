@@ -692,6 +692,9 @@ const EVENT_KEYS = Object.freeze([
   "entityId",
   "organizationId",
 ]);
+const ACTION_EVENT_KEYS = Object.freeze([...EVENT_KEYS, "action"]);
+const ACTION_INTENT_KEYS = Object.freeze([...INTENT_KEYS, "action"]);
+const F3_ACTION_RE = /^[a-z][a-z0-9_]{0,40}$/;
 const EVENT_OPS = Object.freeze([
   "seal",
   "confirm",
@@ -772,8 +775,15 @@ function validateEvent(e) {
     }
     return;
   }
-  strictPlain(e, EVENT_KEYS, code);
+  const action = Object.hasOwn(e, "action");
+  strictPlain(e, action ? ACTION_EVENT_KEYS : EVENT_KEYS, code);
   if (!enumOf(e.op, EVENT_OPS) || !isUuid(e.requestId)) fail(code);
+  if (
+    action &&
+    (e.op !== "seal" || e.kind !== "prerequisito" ||
+      typeof e.action !== "string" || !F3_ACTION_RE.test(e.action))
+  )
+    fail(code);
   const entity = e.op === "confirm" || e.op === "found";
   if (e.op === "seal") {
     if (!Number.isSafeInteger(e.producerOrder) || !enumOf(e.kind, F3_INTENT_KINDS)) fail(code);
@@ -803,6 +813,12 @@ function sealIntent(st, e) {
     if (e.producerOrder === 2 || st.organizationF3 === null) fail("F3_INTENT_PRODUCER");
     if (all.filter((i) => i.kind === "prerequisito").length >= F3_MAX_PREREQUISITES)
       fail("F3_INTENT_PREREQUISITES");
+    const declared = F3_MUTATION_FLOWS[e.producerOrder]?.prerequisito;
+    if (declared && !Array.isArray(declared)) {
+      if (!Object.hasOwn(declared, e.action)) fail("F3_PREREQUISITE_ACTION");
+      if (same.some((i) => i.kind === "prerequisito" && i.action === e.action && OPEN(i)))
+        fail("F3_INTENT_PREREQUISITES");
+    } else if (e.action !== undefined) fail("F3_PREREQUISITE_ACTION");
     return;
   }
   // Principal: uma aberta por produtor; a da organização só antes de a organização existir e
@@ -887,6 +903,7 @@ function applyEvent(st, run, e) {
       state: "sealed",
       producerOrder: e.producerOrder,
       kind: e.kind,
+      ...(e.action !== undefined ? { action: e.action } : {}),
       duplicateOf: e.duplicateOf,
       entityId: null,
       resent: false,
@@ -949,7 +966,11 @@ function stepsOf(i) {
   const f = Object.hasOwn(F3_MUTATION_FLOWS, i.producerOrder)
     ? F3_MUTATION_FLOWS[i.producerOrder]
     : null;
-  return f ? f[i.kind === "prerequisito" ? "prerequisito" : "principal"] : null;
+  if (!f) return null;
+  if (i.kind !== "prerequisito") return f.principal;
+  if (!f.prerequisito) return null;
+  if (Array.isArray(f.prerequisito)) return f.prerequisito;
+  return f.prerequisito[i.action] ?? null;
 }
 
 /**
@@ -998,13 +1019,17 @@ function bindIntent(st, e, i) {
       const ok =
         origin === 2
           ? ref.entityId === st.organizationF3
-          : st.created.some(
-              (c) =>
+          : st.created.some((c) => {
+              const source = st.intents.get(c.requestId);
+              const order = typeof origin === "number" ? origin : origin?.producerOrder;
+              return (
                 c.id === ref.entityId &&
                 c.kind === "registro" &&
                 c.organizationId === st.organizationF3 &&
-                st.intents.get(c.requestId)?.producerOrder === origin,
-            );
+                source?.producerOrder === order &&
+                (typeof origin === "number" || source?.action === origin.action)
+              );
+            });
       if (!ok) fail("F3_FOREIGN_ORG");
       if ((ref.version !== null) !== Object.hasOwn(s.derived, ref.field)) fail("F3_VALUE_ORIGIN");
       if (
@@ -1029,6 +1054,7 @@ function summarize(st, run) {
       requestId,
       producerOrder: i.producerOrder,
       kind: i.kind,
+      ...(i.action !== undefined ? { action: i.action } : {}),
       duplicateOf: i.duplicateOf,
       outcome,
       prior: i.prior,
@@ -1145,6 +1171,7 @@ export function createF3IntentBook(options = {}) {
       organizationId,
       kind = "principal",
       duplicateOf = null,
+      action,
     }) {
       if (actor !== "master") fail("F3_SECOND_USER_MUTATION");
       if (!Number.isSafeInteger(producerOrder)) fail("F3_INTENT_PRODUCER");
@@ -1153,7 +1180,14 @@ export function createF3IntentBook(options = {}) {
       if (!enumOf(kind, F3_INTENT_KINDS)) fail("F3_INTENT_KIND");
       if ((kind === "duplicidade") !== (duplicateOf !== null)) fail("F3_INTENT_KIND");
       if (organizationId !== st.organizationF3) fail("F3_FOREIGN_ORG");
-      apply(ev("seal", requestId, { producerOrder, kind, duplicateOf }));
+      apply(
+        ev("seal", requestId, {
+          producerOrder,
+          kind,
+          duplicateOf,
+          ...(action !== undefined ? { action } : {}),
+        }),
+      );
     },
     /** Confirma a criação; numa tentativa de duplicidade, sinaliza duplicateAccepted (FAIL). */
     confirm(requestId, { entityId, organizationId }) {
@@ -1176,14 +1210,20 @@ export function createF3IntentBook(options = {}) {
      */
     check(input) {
       assertJsonTree(input, "F3_INTENT_STATE");
-      const keys = ["op", "requestId", "producerOrder", "kind", "duplicateOf"];
+      const keys = ["op", "requestId", "producerOrder", "kind", "duplicateOf", "action"];
       if (Object.keys(input).some((k) => !keys.includes(k))) fail("F3_INTENT_STATE");
-      const { op, requestId, producerOrder = null, kind = null, duplicateOf = null } = input;
+      const { op, requestId, producerOrder = null, kind = null, duplicateOf = null, action } =
+        input;
       if (op !== "seal" && op !== "resend") fail("F3_INTENT_STATE");
       if (control.frozen) fail("F3_FENCE_FROZEN");
       const e =
         op === "seal"
-          ? ev("seal", requestId, { producerOrder, kind, duplicateOf })
+          ? ev("seal", requestId, {
+              producerOrder,
+              kind,
+              duplicateOf,
+              ...(action !== undefined ? { action } : {}),
+            })
           : ev("resend", requestId);
       applyEvent(cloneState(st), { sent: run.sent, events: run.events }, e);
       return true;
@@ -1255,7 +1295,15 @@ const DOC = "src/lib/administracao/admUsuariosRpc.ts:";
 const flow = (principal, prerequisito = null) =>
   Object.freeze({
     principal: Object.freeze(principal),
-    prerequisito: prerequisito && Object.freeze(prerequisito),
+    prerequisito:
+      prerequisito &&
+      Object.freeze(
+        Array.isArray(prerequisito)
+          ? prerequisito
+          : Object.fromEntries(
+              Object.entries(prerequisito).map(([key, steps]) => [key, Object.freeze(steps)]),
+            ),
+      ),
   });
 export const F3_MUTATION_FLOWS = Object.freeze({
   2: flow([
@@ -1353,7 +1401,9 @@ function parseUrl(raw) {
 }
 const ALL_STEPS = Object.values(F3_MUTATION_FLOWS).flatMap((f) => [
   ...f.principal,
-  ...(f.prerequisito ?? []),
+  ...(Array.isArray(f.prerequisito)
+    ? f.prerequisito
+    : Object.values(f.prerequisito ?? {}).flat()),
 ]);
 const flowNames = (target) =>
   new Set(ALL_STEPS.filter((s) => s.target === target).map((s) => s.name));
@@ -1663,11 +1713,11 @@ export function createF3MutationFence(options = {}) {
     arm(input = {}) {
       if (control.frozen) fail("F3_FENCE_FROZEN");
       if (active) fail("F3_FENCE_PENDING");
-      const ARM_KEYS = ["producerOrder", "kind", "duplicateOf", "resendOf", "bodies"];
+      const ARM_KEYS = ["producerOrder", "kind", "duplicateOf", "resendOf", "bodies", "action"];
       assertJsonTree(input, "F3_FENCE_ARM");
       if (Object.keys(input).some((k) => !ARM_KEYS.includes(k))) fail("F3_FENCE_ARM");
       const { producerOrder, bodies, resendOf = null } = input;
-      let { kind = "principal", duplicateOf = null } = input;
+      let { kind = "principal", duplicateOf = null, action } = input;
       // Isolamento antes de qualquer mutação nova: violação anterior impede seguir mutando.
       book.assertIsolation();
       if (!Number.isSafeInteger(producerOrder) || !Object.hasOwn(F3_MUTATION_FLOWS, producerOrder))
@@ -1675,18 +1725,36 @@ export function createF3MutationFence(options = {}) {
       let requestId;
       if (resendOf !== null) {
         // Reenvio depois de readback (PLAN 7.2): mesma intenção, mesmo tipo, envio pelo livro.
-        if (input.kind !== undefined || input.duplicateOf !== undefined) fail("F3_FENCE_ARM");
+        if (
+          input.kind !== undefined ||
+          input.duplicateOf !== undefined ||
+          input.action !== undefined
+        )
+          fail("F3_FENCE_ARM");
         book.check({ op: "resend", requestId: resendOf });
         const prior = book.summary().requests.find((q) => q.requestId === resendOf);
         if (prior.producerOrder !== producerOrder) fail("F3_INTENT_PRODUCER");
-        ({ kind, duplicateOf } = prior);
+        ({ kind, duplicateOf, action } = prior);
         requestId = resendOf;
       } else {
         requestId = crypto.randomUUID();
         // A regra do livro decide ao armar, sobre uma cópia do estado; o selo real reconfere.
-        book.check({ op: "seal", requestId, producerOrder, kind, duplicateOf });
+        book.check({
+          op: "seal",
+          requestId,
+          producerOrder,
+          kind,
+          duplicateOf,
+          ...(action !== undefined ? { action } : {}),
+        });
       }
-      const steps = F3_MUTATION_FLOWS[producerOrder][kind === "prerequisito" ? kind : "principal"];
+      const chosen = F3_MUTATION_FLOWS[producerOrder];
+      const steps =
+        kind === "prerequisito"
+          ? Array.isArray(chosen.prerequisito)
+            ? chosen.prerequisito
+            : chosen.prerequisito?.[action]
+          : chosen.principal;
       if (!steps) fail("F3_FLOW_UNDEFINED");
       if (!Array.isArray(bodies) || bodies.length !== steps.length) fail("F3_FENCE_ARM");
       const isolated = new Set([
@@ -1718,7 +1786,12 @@ export function createF3MutationFence(options = {}) {
         if (resendOf === null) {
           const internal = BOOKS.get(book)();
           internal.simulate(
-            internal.ev("seal", requestId, { producerOrder, kind, duplicateOf }),
+            internal.ev("seal", requestId, {
+              producerOrder,
+              kind,
+              duplicateOf,
+              ...(action !== undefined ? { action } : {}),
+            }),
             ...binds.filter(Boolean).map((b) => internal.bindEvent(requestId, b)),
           );
         }
@@ -1737,6 +1810,7 @@ export function createF3MutationFence(options = {}) {
         requestId,
         producerOrder,
         kind,
+        action,
         duplicateOf,
         resend: resendOf !== null,
         flow: steps,
@@ -1783,7 +1857,8 @@ export function f3ReadOnlyPolicy(request) {
 function validateIntents(n, code, state) {
   strictPlain(n, INTENTS_KEYS, code);
   plainArray(n.requests, code, F3_BUDGET.total);
-  for (const q of n.requests) strictPlain(q, INTENT_KEYS, code);
+  for (const q of n.requests)
+    strictPlain(q, Object.hasOwn(q, "action") ? ACTION_INTENT_KEYS : INTENT_KEYS, code);
   let replay;
   try {
     replay = replayRun(state, n.events);
