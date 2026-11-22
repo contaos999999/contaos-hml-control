@@ -5672,6 +5672,210 @@ export async function f3S4CreateCompetenceDocument({
   });
 }
 
+/** V122: primeiro só se comprova upload histórico, nunca aprovação automática. */
+export async function f3S5UploadHistoricalReport({
+  page, fence, mutationFence, book, organizationId, contractId, file, competence,
+}) {
+  if (
+    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId || !isUuid(contractId) ||
+    typeof competence !== "string" ||
+    !/^20\d{2}-(0[1-9]|1[0-2])$/.test(competence)
+  ) {
+    fail("F3_V122_UPLOAD_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/historico/importar", {
+    waitUntil: "networkidle",
+  });
+  await page.locator("#historico-arquivos").setInputFiles(file);
+  const article = page.getByRole("article").filter({ hasText: file.name });
+  if ((await article.count()) !== 1) fail("F3_V122_UPLOAD_CARD");
+  await article.locator('input[type="month"]').fill(competence);
+  await article.getByLabel("Tipo de relatório").selectOption("relatorio_contratante");
+  const verifyReadback = async ({ businessResult, fileId }) => {
+    const get = (table) => page.waitForResponse(
+      (response) => {
+        if (response.request().method() !== "GET") return false;
+        const url = new URL(response.url());
+        return url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/" + table &&
+          url.searchParams.get("id_organizacao") === "eq." + organizationId &&
+          url.searchParams.get("id_contrato") === "eq." + contractId;
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    const fileResponse = get("arquivos");
+    const versionResponse = get("versoes_documento");
+    await article.getByRole("button", { name: "Verificar processamento", exact: true }).click();
+    const [f, v] = await Promise.all([fileResponse, versionResponse]);
+    if (f.status() !== 200 || v.status() !== 200) fail("F3_V122_UPLOAD_READBACK");
+    const [fileRow, versionRow] = await Promise.all([f.json(), v.json()]);
+    if (
+      fileRow?.id !== fileId || fileRow.id_organizacao !== organizationId ||
+      fileRow.id_contrato !== contractId ||
+      versionRow?.id !== businessResult.id_versao ||
+      versionRow.id_arquivo !== fileId ||
+      versionRow.id_organizacao !== organizationId ||
+      versionRow.id_contrato !== contractId
+    ) {
+      fail("F3_V122_UPLOAD_READBACK");
+    }
+    return true;
+  };
+  const result = await f3RunSignedDocumentUpload({
+    page, fence, mutationFence, book, organizationId, contractId,
+    order: 20, kind: "prerequisito", action: "documento", file,
+    business: {
+      p_id_contrato: contractId,
+      p_tipo: "outro",
+      p_titulo: "Histórico — " + file.name,
+      p_categoria: "historico",
+      p_vigencia_inicio: null,
+      p_vigencia_fim: null,
+      p_observacoes: "Competência informada: " + competence,
+    },
+    submit: async () =>
+      article.getByRole("button", { name: "Enviar documento", exact: true }).click(),
+    verifyReadback,
+  });
+  return Object.freeze({ ...result, competence });
+}
+
+/** V122: correlaciona dois RPCs executados pela UI com o relatório lido no consumidor. */
+export function assertF3S5HistoricalEnqueueReadback({
+  row, organizationId, contractId, reportId, fileId, executionId,
+  registeredId, enqueuedId, versionId,
+}) {
+  if (
+    !isUuid(organizationId) || !isUuid(contractId) ||
+    !isUuid(reportId) || !isUuid(fileId) ||
+    !isUuid(executionId) || !isUuid(versionId) ||
+    registeredId !== reportId || enqueuedId !== executionId ||
+    row?.id !== reportId || row.id_organizacao !== organizationId ||
+    row.id_contrato !== contractId || row.id_arquivo !== fileId
+  ) {
+    fail("F3_V122_ENQUEUE_READBACK");
+  }
+  return true;
+}
+
+export async function f3S5EnqueueHistoricalReport({
+  page, fence, mutationFence, book, organizationId, contractId, prior,
+}) {
+  if (
+    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId || !isUuid(contractId) ||
+    !isUuid(prior?.fileId) || !isUuid(prior.versionId) ||
+    typeof prior.competence !== "string" ||
+    !/^20\d{2}-(0[1-9]|1[0-2])$/.test(prior.competence) ||
+    !book.created().some((entry) =>
+      entry.id === prior.fileId && entry.organizationId === organizationId &&
+      book.summary().requests.some(
+        (request) => request.requestId === entry.requestId &&
+          request.producerOrder === 20 && request.action === "documento" &&
+          request.outcome === "confirmed",
+      ),
+    )
+  ) fail("F3_V122_ENQUEUE_PRECONDITION");
+  const article = page.getByRole("article").filter({
+    hasText: prior.fileName ?? "",
+  });
+  if ((await article.count()) !== 1) fail("F3_V122_ENQUEUE_CARD");
+  // O backend é autoritativo: somente botão habilitado depois dos GETs de
+  // segurança e processamento completos pode iniciar a fila.
+  await article.getByRole("button", { name: "Verificar processamento", exact: true }).click();
+  const enqueue = article.getByRole("button", { name: "Enfileirar ingestão", exact: true });
+  if ((await enqueue.count()) !== 1 || !(await enqueue.isEnabled())) {
+    fail("F3_V122_WAIT_PENDING");
+  }
+  const requestId = mutationFence.arm({
+    producerOrder: 20,
+    bodies: [
+      {
+        p_id_arquivo: prior.fileId,
+        p_competencia: prior.competence + "-01",
+        p_tipo: "relatorio_contratante",
+      },
+      {
+        p_id_relatorio: f3Slot("uuid", "historic_report"),
+        p_id_versao_documento: f3Slot("uuid", "historic_version"),
+      },
+    ],
+  });
+  try {
+    const register = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/registrar_relatorio_historico_hml",
+      { timeout: F3_S1_UI.timeout },
+    );
+    const queue = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/enfileirar_ingestao_historica_hml",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await fence.drain();
+    fence.assertSafe();
+    await enqueue.click();
+    const [r, e] = await Promise.all([register, queue]);
+    if (r.status() !== 200 || e.status() !== 200) fail("F3_V122_QUEUE_HTTP");
+    const reportId = await r.json();
+    const executionId = await e.json();
+    const sent = e.request().postDataJSON();
+    if (
+      !isUuid(reportId) || !isUuid(executionId) ||
+      sent?.p_id_relatorio !== reportId ||
+      sent.p_id_versao_documento !== prior.versionId
+    ) fail("F3_V122_QUEUE_CORRELATION");
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V122_QUEUE_UNCERTAIN");
+    }
+    const reportRead = page.waitForResponse(
+      (response) => {
+        if (response.request().method() !== "GET") return false;
+        const url = new URL(response.url());
+        return url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/relatorios_historicos_contratante" &&
+          url.searchParams.get("id_contrato") === "eq." + contractId &&
+          url.searchParams.get("id_organizacao") === "eq." + organizationId;
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/historico", {
+      waitUntil: "networkidle",
+    });
+    const response = await reportRead;
+    if (response.status() !== 200) fail("F3_V122_QUEUE_READBACK");
+    const rows = await response.json();
+    const matching = Array.isArray(rows) ? rows.filter((row) =>
+      row?.id === reportId && row.id_arquivo === prior.fileId,
+    ) : [];
+    if (matching.length !== 1) fail("F3_V122_QUEUE_READBACK");
+    assertF3S5HistoricalEnqueueReadback({
+      row: matching[0], organizationId, contractId, reportId,
+      fileId: prior.fileId, executionId,
+      registeredId: reportId, enqueuedId: executionId, versionId: prior.versionId,
+    });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: reportId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId, reportId, executionId,
+    });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Uma fila incerta exige readback, jamais nova chave silenciosa.
+    }
+    throw error;
+  }
+}
+
 /** V109: resultado do comando conferido contra uma segunda consulta do produto. */
 export function assertF3S3ListCreationReadback({
   receipt,
