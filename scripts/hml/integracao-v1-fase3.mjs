@@ -905,12 +905,7 @@ function applyEvent(st, run, e) {
   // Abandono trazido de execução ANTERIOR exige uma só releitura por novo run.
   // A intenção abandonada dentro do run atual ainda admite materialização tardia, sem
   // suprimir o evento absent que precedeu o abandon e é necessário ao replay.
-  if (
-    (e.op === "absent" || e.op === "found") &&
-    i.state === "abandoned" &&
-    i.prior &&
-    i.rechecked
-  )
+  if ((e.op === "absent" || e.op === "found") && i.state === "abandoned" && i.prior && i.rechecked)
     fail("F3_INTENT_STATE");
   if (e.op === "found" || e.op === "absent") i.rechecked = true;
   if (e.op === "resend") {
