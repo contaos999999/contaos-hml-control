@@ -753,6 +753,7 @@ const INTENTS_KEYS = Object.freeze([
   "abandoned",
   "requests",
   "events",
+  "eventsSha256",
 ]);
 // PLAN §12.5 e F3_FLUXOS_PRODUTORES §3: após incerteza, estas ações só admitem releitura.
 const READBACK_ONLY_ORDERS = new Set([2, 5, 6, 7, 14, 16, 18, 20]);
@@ -1110,6 +1111,9 @@ function summarize(st, run) {
     abandoned: count("abandoned"),
     requests,
     events: run.events.map((e) => ({ ...e })),
+    // Compromisso de integridade do transcript: remover eventos redundantes nao pode
+    // passar pela comparacao de estados do replay. O SHA do artefato e ligado pelo CI.
+    eventsSha256: sha256hex(JSON.stringify(run.events)),
   };
 }
 
