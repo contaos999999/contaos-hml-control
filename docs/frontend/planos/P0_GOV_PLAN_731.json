@@ -1,0 +1,30 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 731,
+  "approved": true,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B2D_S4_V113_UI_CONSUMIDOR.md"
+  ],
+  "purpose": "Implementar driver UI real V113 que usa cerca e livro de intencoes e confirma UUID da competencia apenas apos readback do consumidor real no contrato F3",
+  "authorization": "Titular determinou concluir drivers completos, 138 casos e certificar F3 somente com provas reais; S4 e uma fatia parcial, nao certificado",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Somente frontend/simulacao DOM e transporte; sem mutar Supabase HML",
+    "Nao escrever nos ledgers CODE ou HML sem provas",
+    "Todos os testes negativos existentes permanecem",
+    "Nenhuma credencial/segredo no diff",
+    "Nao promover prova de contrato a caso PASS",
+    "F4 e PROD permanecem bloqueados"
+  ],
+  "normative_plan": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba"
+  },
+  "prerequisite": {
+    "pr": 729,
+    "merge_sha": "1c15e7e9344b75896a8a03944e156b5745be178c"
+  }
+}
