@@ -2,7 +2,7 @@ import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { join as joinPath } from "node:path";
+import { join as joinPath, resolve as resolvePath, sep as pathSep } from "node:path";
 import { resolveEventContext } from "./ci/merge-group-context.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
@@ -3173,9 +3173,33 @@ export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}
      dossier.counts?.unique_pairs!==9316||
      dossier.release!=="NO_GO"||dossier.semantic_completeness!=="INCONCLUSIVE")
     throw Error("SEMANTIC_DOSSIER_UNVERIFIED");
+  // Counts alone do not establish content validity. Refuse forged, duplicated
+  // or pre-approved rows even if caller supplies an empty issues array.
+  const ruleIds=new Set(dossier.rules.map(x=>x.rule_id));
+  const sentenceIds=new Set(dossier.sentences.map(x=>x.sentence_id));
+  const pairIds=new Set(dossier.interactions.map(x=>x.pair_id));
+  if(ruleIds.size!==137||sentenceIds.size!==381||pairIds.size!==9316||
+     dossier.rules.some(x=>!x.source_anchor?.blob||!x.exact_text||
+       Object.keys(x.axes||{}).length!==7||x.axes.E5?.positive_witness!==null||
+       x.axes.E5?.negative_witness!==null||x.decision!=="INCONCLUSIVE")||
+     dossier.sentences.some(x=>!x.source_id||!x.text_sha256||
+       x.subordinate_clauses?.map(p=>p.text).join("")!==x.exact_text||
+       x.subordinate_clauses.some(p=>
+         p.text_sha256!==createHash("sha256").update(p.text).digest("hex")||
+         p.reviewed!==false||p.negative_witness!==null)||
+       x.positive_witness!==null||x.verdict!=="INCONCLUSIVE")||
+     dossier.interactions.some(x=>!x.source_a?.blob||!x.source_b?.blob||
+       !ruleIds.has(x.rule_a)||!ruleIds.has(x.rule_b)||
+       x.pair_id!==x.rule_a+"|"+x.rule_b||
+       x.judgement!=="UNADJUDICATED"||x.positive_witness!==null||
+       x.negative_witness!==null))
+    throw Error("SEMANTIC_DOSSIER_CONTENT_INVALID");
+  const resolved=resolvePath(outputDirectory),root=resolvePath(process.cwd());
+  if(resolved===root||resolved.startsWith(root+pathSep))
+    throw Error("SEMANTIC_DOSSIER_OUT_OF_TREE_REQUIRED");
   if(head!==undefined&&!validSha(head))throw Error("SEMANTIC_DOSSIER_HEAD_INVALID");
   if(base!==undefined&&!validSha(base))throw Error("SEMANTIC_DOSSIER_BASE_INVALID");
-  mkdirSync(outputDirectory,{recursive:true});
+  mkdirSync(resolved,{recursive:true});
   const files={};
   for(const [name,rows] of [
     ["137-e1-e7-regras.jsonl",dossier.rules],
@@ -3183,7 +3207,7 @@ export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}
     ["9316-interacoes.jsonl",dossier.interactions]
   ]){
     const bytes=rows.map(row=>JSON.stringify(row)).join("\n")+"\n";
-    writeFileSync(joinPath(outputDirectory,name),bytes,{encoding:"utf8",flag:"w"});
+    writeFileSync(joinPath(resolved,name),bytes,{encoding:"utf8",flag:"w"});
     files[name]={rows:rows.length,bytes:Buffer.byteLength(bytes,"utf8"),
       sha256:createHash("sha256").update(bytes).digest("hex")};
   }
@@ -3191,7 +3215,7 @@ export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}
     head:head??null,protected_base:base??null,files,counts:dossier.counts,
     semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
     reviewed_by_independent_auditor:false,release:"NO_GO"};
-  writeFileSync(joinPath(outputDirectory,"manifest.json"),
+  writeFileSync(joinPath(resolved,"manifest.json"),
     JSON.stringify(manifest,null,2)+"\n",{encoding:"utf8",flag:"w"});
   return manifest;
 }
