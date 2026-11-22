@@ -45,6 +45,18 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gat
   const checks = [];
   const fail = (msg) => errors.push("P0 LIVE: " + msg);
   const items = itemsFor(m);
+  if (requireLive) {
+    const versions = ['V1', 'V2', 'V3', 'V4', 'V5'];
+    for (const version of versions) {
+      if (m?.controle?.certificados_por_versao?.[version]?.status !== 'PASS')
+        fail('GATE PROD bloqueado: certificado de código ' + version + ' não é PASS.');
+      if (m?.controle?.integracao_por_versao?.[version]?.interna?.status !== 'PASS')
+        fail('GATE PROD bloqueado: integração interna ' + version + ' não é PASS.');
+      if (version !== 'V1' && m?.controle?.integracao_por_versao?.[version]?.cumulativa?.status !== 'PASS')
+        fail('GATE PROD bloqueado: integração cumulativa ' + version + ' não é PASS.');
+    }
+    if (errors.length) return { errors, checks, checked: 0 };
+  }
   if (!items.length) return { errors, checks, checked: 0 };
   if (typeof apiGet !== "function") return { errors: ["P0 LIVE: serviço GitHub autenticado indisponível."], checks, checked: 0 };
   const read = readBytes || ((path) => readFileSync(path));
