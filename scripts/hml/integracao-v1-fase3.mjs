@@ -4769,12 +4769,12 @@ export async function f3S5ApproveOpinion({
   }
 }
 
-/** V119 depende de aprovação V118 real, nunca de uma intenção futura V119. */
-export function hasF3V118ConfirmedApproval(requests) {
+/** V119 registra somente após a pré-aprovação de apresentação (V119, action aprovacao). */
+export function hasF3V119PresentationApproval(requests) {
   return (
     Array.isArray(requests) &&
     requests.some(
-      (q) => q?.producerOrder === 18 && q.action === "aprovacao" && q.outcome === "confirmed",
+      (q) => q?.producerOrder === 19 && q.action === "aprovacao" && q.outcome === "confirmed",
     )
   );
 }
@@ -4824,7 +4824,7 @@ export async function f3S5RegisterPresentation({
                 q.outcome === "confirmed",
             ),
       ) ||
-    !hasF3V118ConfirmedApproval(book.summary().requests)
+    !hasF3V119PresentationApproval(book.summary().requests)
   ) {
     fail("F3_V119_PRESENTATION_PRECONDITION");
   }
