@@ -4354,6 +4354,17 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
     seal(book, 7, 7);
     book.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
     ensureV107Prerequisites(book);
+    seal(book, 14, 14);
+    book.confirm(uuid(14), { entityId: uuid(114), organizationId: F3 });
+    book.seal({
+      requestId: uuid(218),
+      producerOrder: 18,
+      actor: "master",
+      organizationId: F3,
+      kind: "prerequisito",
+      action: "parecer",
+    });
+    book.confirm(uuid(218), { entityId: uuid(318), organizationId: F3 });
     return book;
   };
   let positions = 0;
@@ -4445,9 +4456,10 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
       }),
     { code: "F3_FOREIGN_ORG" },
   );
-  // ADM01 (2), V102 (1), V103 (3), V105 (2), V106 (3) e V107 (3).
-  // O teste acima exige negativas de origem/versao em todas as 14 posicoes reais.
-  assert.equal(positions, 14);
+  // ADM01 (2), V102 (1), V103 (3), V105 (2), V106 (3), V107 (3),
+  // V113 (1), V116 (1), V118 (1) e V119 (1) totalizam 18 posicoes tipadas.
+  // Todas recebem negativas de origem/versao, sem dispensar verificacoes anteriores.
+  assert.equal(positions, 18);
 });
 
 test("F3 R3 RED (2): na cerca, ADM01 e V102 exigem a organização F3, vaga com valor conhecido congela e a chave não é o requestId", async (t) => {
@@ -4702,6 +4714,8 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
   for (const [order, f] of Object.entries(sut.F3_MUTATION_FLOWS)) {
     const stageLabels = {
       10: { fonte: 1, versao: 2, aprovacao: 3 },
+      18: { parecer: 1 },
+      19: { aprovacao: 1 },
     };
     if (f.prerequisito !== null) {
       assert.ok(stageLabels[order], "pré-requisito sem mapa fechado: " + order);
