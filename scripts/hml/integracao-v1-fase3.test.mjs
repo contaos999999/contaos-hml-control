@@ -885,6 +885,50 @@ test("F3 S2 V105: POST sem RETURNING exige UUID da lista real e organização co
   }
 });
 
+test("F3 S2 V106: versão, requestId, evento e contrato são observados sem duplicação", () => {
+  const organizationId = F3;
+  const contractId = uuid(889007);
+  const requestId = uuid(889008);
+  const object = "Contrato sintético F3 " + PROV.workflowRunId + " atualizado";
+  const before = {
+    schema_versao: "crud-cadastro-v1",
+    entidade: "contratos",
+    registro: { id: contractId, id_organizacao: organizationId, versao_registro: 3, objeto: "Antes" },
+  };
+  const after = {
+    schema_versao: "crud-cadastro-v1",
+    entidade: "contratos",
+    registro: { ...before.registro, versao_registro: 4, objeto: object },
+  };
+  const result = { ...after, request_id: requestId, evento_id: uuid(889099) };
+  const verify = (changed = {}) => sut.assertF3S2ContractUpdate({
+    before,
+    result,
+    after,
+    organizationId,
+    contractId,
+    object,
+    requestId,
+    ...changed,
+  });
+  assert.equal(verify(), contractId);
+  const bad = [
+    { result: { ...result, request_id: uuid(32) } },
+    { result: { ...result, evento_id: "not-uuid" } },
+    { result: { ...result, schema_versao: "crud-v0" } },
+    { result: { ...result, registro: { ...after.registro, id: uuid(33) } } },
+    { before: { ...before, registro: { ...before.registro, versao_registro: 0 } } },
+    { before: { ...before, registro: { ...before.registro, id_organizacao: uuid(34) } } },
+    { after: { ...after, registro: { ...after.registro, versao_registro: 5 } } },
+    { after: { ...after, registro: { ...after.registro, objeto: "Vazado" } } },
+    { after: { ...after, registro: { ...after.registro, id_organizacao: uuid(35) } } },
+    { contractId: uuid(36) },
+  ];
+  for (const value of bad) {
+    assert.throws(() => verify(value), { code: "F3_S2_V106_READBACK" });
+  }
+});
+
 const ledgerWith = ({ runs = [], entries = [] }) =>
   JSON.stringify({ ...JSON.parse(LEDGER_RAW), runs, entries }, null, 2) + "\n";
 const ledgerOf = (runs, entries = []) =>
