@@ -2675,8 +2675,7 @@ export async function f3S1LinkReader({
   organizationId,
   readerEmail,
 }) {
-  if (!isUuid(organizationId) || book.organizationF3() !== organizationId)
-    fail("F3_UI_READER_ORG");
+  if (!isUuid(organizationId) || book.organizationF3() !== organizationId) fail("F3_UI_READER_ORG");
   await page.goto(HML_ORIGIN + F3_S1_UI.users, { waitUntil: "networkidle" });
   await fence.drain();
   fence.assertSafe();
