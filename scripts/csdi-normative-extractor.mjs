@@ -54,7 +54,26 @@ for(const d of [...snap.context_documents,{path:snap.prompt_catalog.source_path,
  sources.push({path:d.path,git_blob_sha:d.blob_sha,sha256:hash(bytes),bytes:bytes.length,extracted_items:result.items.length});
  inventory.push(...result.items);ambiguities.push(...result.ambiguities);interaction_candidates.push(...result.links);
 }
-const report={schema:'contaos.csdi.normative-extraction.v1',repository:repo,commit,source_count:sources.length,sources,inventory,ambiguities,interaction_candidates,limitations:['Lexical extraction only; not adjudicated semantic completeness','References and implied cross-document pairs require independent exhaustive review','Seven-axis LIVE assertions are not produced by this extractor'],semantic_completeness:'INCONCLUSIVE',activation:'NO_GO'};
+// Reconcile all prompt IDs against canonical textual sources, never fabricate
+// original DOCX text when only its hash or catalog index is available.
+const promptCatalog=JSON.parse((await fetchBlob(snap.prompt_catalog.source_path,snap.prompt_catalog.source_blob_sha)).toString('utf8'));
+const regularIds=promptCatalog.regular.ids,atomicIds=promptCatalog.atomic.ids;
+const canonicalPaths=new Set(sources.map(x=>x.path));
+const crosswalk=promptCatalog.crosswalk?.regular_to_atomic||[];
+const mappedIds=new Set(crosswalk.map(x=>x.regular_id));
+const reconciled={
+ regular:{expected:100,indexed:regularIds.length,crosswalked:mappedIds.size,unmapped:regularIds.filter(id=>!mappedIds.has(id)),source_text_materialized:promptCatalog.regular.source_materialized_in_repository===true},
+ atomic:{expected:97,indexed:atomicIds.length,canonical_requirement_sources:promptCatalog.provenance?.atomic_requirement_sources||[],brand_source:promptCatalog.provenance?.brand_source,source_text_materialized:promptCatalog.atomic.source_materialized_in_repository===true},
+ unresolved_crosswalk:crosswalk.filter(x=>!x.review_evidence||/revisao|parcial|pendente/i.test(x.status||'')).map(x=>({regular_id:x.regular_id,status:x.status})),
+ canonical_refs_missing:[...(promptCatalog.provenance?.atomic_requirement_sources||[]),promptCatalog.provenance?.brand_source,promptCatalog.provenance?.regular_protocol].filter(p=>!canonicalPaths.has(p)),
+ original_archive_sha256:promptCatalog.provenance?.archive_sha256,
+ original_regular_sha256:promptCatalog.provenance?.regular_sha256,
+ original_atomic_sha256:promptCatalog.provenance?.atomic_sha256,
+ provenance_note:promptCatalog.provenance?.source_distinction
+};
+if(reconciled.regular.indexed!==100||reconciled.atomic.indexed!==97||reconciled.regular.crosswalked!==100||reconciled.canonical_refs_missing.length)throw Error('PROMPT_CANONICAL_RECONCILIATION_FAILED');
+if(reconciled.unresolved_crosswalk.length||!reconciled.regular.source_text_materialized||!reconciled.atomic.source_text_materialized)ambiguities.push({id:'PROMPT_LITERAL_RECONCILIATION_PENDING',source_ref:snap.prompt_catalog.source_path,disposition:'BLOCKING_SOURCE_GAP',text:'Original DOCX hashes and prior extraction recorded in provenance, but source bytes and unresolved crosswalks prevent fresh literal reconciliation'});
+const report={schema:'contaos.csdi.normative-extraction.v1',repository:repo,commit,source_count:sources.length,sources,inventory,ambiguities,interaction_candidates,prompt_reconciliation:reconciled,limitations:['Lexical extraction only; not adjudicated semantic completeness','References and implied cross-document pairs require independent exhaustive review','Seven-axis LIVE assertions are not produced by this extractor'],semantic_completeness:'INCONCLUSIVE',activation:'NO_GO'};
 if(sources.length!==26||sources.some(x=>x.extracted_items===0)||new Set(inventory.map(x=>x.id)).size!==inventory.length)throw Error('INVENTORY_INTEGRITY_FAILURE');
 const out=process.argv[2]||'csdi-normative-extraction.json';writeFileSync(out,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({output:out,commit,source_count:sources.length,items:inventory.length,ambiguities:ambiguities.length,interaction_candidates:interaction_candidates.length,semantic_completeness:'INCONCLUSIVE'}));
