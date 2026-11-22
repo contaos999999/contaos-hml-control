@@ -6015,3 +6015,45 @@ test("F3 V117: revisão funcional só arma RPC da competência vinculada à F3",
   assert.equal(flow.principal[0].inventory.p_id_competencia, 14);
   assert.deepEqual(flow.principal[0].free, ["p_request_id"]);
 });
+
+test("F3 CODE: coletor acionado por caseId e ausência de driver nunca vira PASS", async () => {
+  const catalogueRaw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
+  const noDrivers = sut.bindF3CodeCaseDrivers({
+    catalogue: published,
+    caseDrivers: {},
+    caseVerifiers: {},
+  });
+  assert.deepEqual(noDrivers.registeredCaseIds, []);
+  await assert.rejects(noDrivers.executeCase(published.cases[0]), {
+    code: "F3_DRIVER_PENDING",
+  });
+  assert.equal(await noDrivers.verifyCase(published.cases[0], []), false);
+  await assert.rejects(noDrivers.executeCase({ ...published.cases[0], producerOrder: 19 }), {
+    code: "F3_CODE_CASE_MISMATCH",
+  });
+  assert.throws(
+    () => sut.bindF3CodeCaseDrivers({
+      catalogue: published,
+      caseDrivers: { "IFV1-F3-C9999": async () => null },
+      caseVerifiers: {},
+    }),
+    { code: "F3_CODE_DRIVER_REGISTRY" },
+  );
+  const report = await sut.collectF3CodeCaseEvidence({
+    catalogue: published,
+    catalogueRaw,
+    provenance: {
+      frontendSha: "a".repeat(40),
+      backendSha: sut.F3_BACKEND_SHA,
+      workflowRunId: "12345",
+      jobId: "12346",
+    },
+    caseDrivers: {},
+    caseVerifiers: {},
+  });
+  assert.equal(report.state, "UNREVIEWED_NOT_CERTIFIED");
+  assert.equal(report.entries.length, 138);
+  assert.equal(report.counts.failed, 138);
+  assert.equal(report.counts.submittedUnverified, 0);
+  assert.ok(report.entries.every((e) => e.reason === "F3_DRIVER_PENDING"));
+});
