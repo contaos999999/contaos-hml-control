@@ -3994,10 +3994,9 @@ test("F3 S1 RBAC: reader and MASTER responses are strictly checked", () => {
   };
   const baseline = sut.parseF3S1EffectiveRbac(master, true);
   assert.equal(sut.assertF3S1MasterRbacUnchanged(baseline, baseline), true);
-  assert.throws(
-    () => sut.assertF3S1MasterRbacUnchanged(baseline, { ...baseline, allowed: [] }),
-    { code: "F3_UI_MASTER_RBAC_DRIFT" },
-  );
+  assert.throws(() => sut.assertF3S1MasterRbacUnchanged(baseline, { ...baseline, allowed: [] }), {
+    code: "F3_UI_MASTER_RBAC_DRIFT",
+  });
   for (const invalid of [
     { ...reader, master: true },
     { ...reader, versao: 7 },
@@ -4047,11 +4046,19 @@ test("F3 S1 RBAC: real UI reload must observe exact org-bound RPC", async () => 
   assert.deepEqual(observed.allowed, sut.F3_RBAC_LEITOR.allowed);
   assert.equal(reloads, 1);
   await assert.rejects(
-    sut.readF3S1EffectiveRbac(makePage({ p_id_organizacao: uuid(7003), p_id_contrato: null }), organizationId, false),
+    sut.readF3S1EffectiveRbac(
+      makePage({ p_id_organizacao: uuid(7003), p_id_contrato: null }),
+      organizationId,
+      false,
+    ),
     { code: "F3_UI_RBAC_READBACK" },
   );
   await assert.rejects(
-    sut.readF3S1EffectiveRbac(makePage({ p_id_organizacao: organizationId, p_id_contrato: null }, 403), organizationId, false),
+    sut.readF3S1EffectiveRbac(
+      makePage({ p_id_organizacao: organizationId, p_id_contrato: null }, 403),
+      organizationId,
+      false,
+    ),
     { code: "F3_UI_RBAC_READBACK" },
   );
 });
