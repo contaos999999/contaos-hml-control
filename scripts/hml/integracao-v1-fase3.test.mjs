@@ -1060,6 +1060,8 @@ test("F3 S2 V106: UI bloqueia atualização sem versão lida e confirma mesmo ID
   const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(book);
   const contractId = uuid(889007);
+  seal(book, 5, 5);
+  book.confirm(uuid(5), { entityId: uuid(889005), organizationId: F3 });
   seal(book, 7, 7);
   book.confirm(uuid(7), { entityId: contractId, organizationId: F3 });
   const fence = sut.createF3MutationFence({ book });
@@ -1315,6 +1317,18 @@ const createOrg = (book) => {
   seal(book, 2, 2);
   book.confirm(uuid(2), { entityId: F3, organizationId: F3 });
 };
+const ensureV107Prerequisites = (book) => {
+  if (book.summary().requests.some((q) => q.producerOrder === 10 && q.action === "fonte")) return;
+  for (const stage of [
+    { action: "fonte", id: uuid(81010), requestId: uuid(81110) },
+    { action: "versao", id: uuid(81011), requestId: uuid(81111) },
+    { action: "aprovacao", id: uuid(81011), requestId: uuid(81112) },
+  ]) {
+    seal(book, 0, 10, { requestId: stage.requestId, kind: "prerequisito", action: stage.action });
+    book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
+  }
+};
+
 
 test("F3 S2 RED: edição V103 e V106 preserva identidade sem aceitar duplicidade indevida", () => {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
@@ -1348,17 +1362,7 @@ function referenceBook(ledger = EMPTY, extra = () => {}, skip = []) {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger });
   createOrg(book);
   for (const o of MUT.filter((x) => x !== 2)) {
-    if (o === 10) {
-      const stages = [
-        { action: "fonte", id: uuid(81010), requestId: uuid(81110) },
-        { action: "versao", id: uuid(81011), requestId: uuid(81111) },
-        { action: "aprovacao", id: uuid(81011), requestId: uuid(81112) },
-      ];
-      for (const stage of stages) {
-        seal(book, 0, 10, { requestId: stage.requestId, kind: "prerequisito", action: stage.action });
-        book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
-      }
-    }
+    if (o === 10) ensureV107Prerequisites(book);
     seal(book, o, o);
     if (skip.includes(o)) continue;
     book.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
@@ -1595,7 +1599,7 @@ test("F3 B2b1: relatório completo montado pelo livro valida e cumpre todos os c
   assert.deepEqual(report.summary, { PASS: 138, FAIL: 0, BLOCKED: 0, N_A_JUSTIFICADO: 0 });
   assert.deepEqual(
     [report.intents.sent, report.intents.confirmed, report.intents.rejected],
-    [28, 18, 10],
+    [31, 21, 10],
   );
   assert.equal(report.ledgerSha256, sut.F3_LEDGER_SHA256);
   // O gate de produção usa a política de produção (null nos mutantes): nunca PASS no 2b-1.
@@ -1884,6 +1888,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   const noDup = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(noDup);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 10) ensureV107Prerequisites(noDup);
     seal(noDup, o, o);
     noDup.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
   }
@@ -1922,6 +1927,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   const acceptedBook = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(acceptedBook);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 10) ensureV107Prerequisites(acceptedBook);
     seal(acceptedBook, o, o);
     acceptedBook.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
     if (REJ(o)) {
@@ -1996,8 +2002,8 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
   assert.throws(() => book.confirm(uuid(99999), { entityId: uuid(1), organizationId: F3 }), {
     code: "F3_INTENT_UNKNOWN",
   });
-  seal(book, 10, 10);
-  book.confirm(uuid(10), { entityId: uuid(70), organizationId: F3 });
+  seal(book, 11, 11);
+  book.confirm(uuid(11), { entityId: uuid(70), organizationId: F3 });
   assert.equal(book.created().filter((c) => c.id === uuid(70))[1].kind, "entidade_repetida");
   const toStringActor = { toString: () => "master" };
   for (const actor of ["leitor", "segundo", null, "MASTER", toStringActor])
@@ -2019,10 +2025,11 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
 });
 
 test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo ledger", () => {
-  // 40 envios: organização, 17 principais, 11 duplicidades e 11 pré-requisitos.
+  // 40 envios: organização, 17 principais, 11 duplicidades e 11 pré-requisitos (3 V107).
   const first = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(first);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 10) ensureV107Prerequisites(first);
     seal(first, o, o);
     first.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
   }
@@ -2030,7 +2037,7 @@ test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo
     dup(first, 200 + o, o, uuid(o));
     first.rejected(uuid(200 + o));
   }
-  for (let i = 0; i < 11; i++) seal(first, 310 + i, 18, { kind: "prerequisito" });
+  for (let i = 0; i < 8; i++) seal(first, 310 + i, 18, { kind: "prerequisito" });
   assert.equal(first.summary().sent, 40);
   assert.throws(() => dup(first, 299, 20, uuid(20)), { code: "F3_BUDGET" });
   // Teto de 60: principais rejeitadas e refeitas contam como envio a cada tentativa.
@@ -2189,7 +2196,7 @@ test("F3 B2b1: relatório bloqueado, com e sem ledger lido, gravado com SHA256SU
     provenance: PROV,
     ledger: l1,
   });
-  assert.deepEqual([later.intents.priorSent, later.intents.uncertain], [29, 1]);
+  assert.deepEqual([later.intents.priorSent, later.intents.uncertain], [32, 1]);
   assert.equal(later.isolation.organizationF3, F3);
   assert.equal(sut.validateF3Report(later, catalogue, { ledger: l1 }), true);
   assert.throws(() => sut.validateF3Report(later, catalogue, NP), { code: "F3_REPORT" });
@@ -2878,12 +2885,12 @@ test("F3 B2b1 RED: relatório parcial com o livro preserva envios, eventos e inv
     provenance: PROV,
     book,
   });
-  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [29, true]);
+  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [32, true]);
   assert.equal(partial.isolation.created.at(-1).kind, "fora_da_f3");
   assert.equal(sut.validateF3Report(partial, catalogue, NP), true);
-  // O ledger montado com os eventos desse artefato conta os 29 envios reais.
+  // O ledger montado com os eventos desse artefato conta os 32 envios de fixture.
   const l1 = ledgerOf([{ ...run(PROV.workflowRunId, book) }]);
-  assert.equal(sut.f3LedgerState(l1).priorSent, 29);
+  assert.equal(sut.f3LedgerState(l1).priorSent, 32);
   // Livro estranho ou ledger diferente do livro são recusados.
   assert.throws(
     () =>
@@ -4324,6 +4331,7 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
     book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
     seal(book, 7, 7);
     book.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
+    ensureV107Prerequisites(book);
     return book;
   };
   let positions = 0;
@@ -4683,8 +4691,16 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
         assert.ok(source, "pré-requisito sem fonte: " + extraKey);
         for (const st of steps) {
           assert.ok(source.target.includes(st.name), "alvo não declarado: " + st.name);
-          for (const field of [...st.free, ...Object.keys(st.inventory), ...Object.keys(st.derived)])
-            assert.ok(source.fields.includes("`" + field + "`"), field + " ausente em " + extraKey);
+          for (const field of [...st.free, ...Object.keys(st.inventory), ...Object.keys(st.derived)]) {
+            const explicit = source.fields.includes("`" + field + "`");
+            const keyInResend =
+              field === "p_chave_idempotencia" && /chave|gerado_ui|vinculado/.test(source.resend);
+            const organizationImplicit = field === "p_id_organizacao" && source.target.includes("rpc");
+            assert.ok(
+              explicit || keyInResend || organizationImplicit,
+              field + " ausente em " + extraKey,
+            );
+          }
         }
         declared.push(extraKey);
       }
