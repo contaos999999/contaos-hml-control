@@ -880,8 +880,15 @@ function authorizedF3IdentityReuse(state, event, intent) {
   const approval =
     intent.producerOrder === 10 && intent.kind === "prerequisito" && intent.action === "aprovacao";
   const opinionApproval = intent.producerOrder === 18 && intent.kind === "principal";
+  const proposalPublication = intent.producerOrder === 9 && intent.kind === "principal";
   const source = F3_UPDATE_IDENTITY_SOURCE[intent.producerOrder];
-  if (!approval && !opinionApproval && (!source || intent.kind !== "principal")) return false;
+  if (
+    !approval &&
+    !opinionApproval &&
+    !proposalPublication &&
+    (!source || intent.kind !== "principal")
+  )
+    return false;
   return state.created.some((entry) => {
     const maker = state.intents.get(entry.requestId);
     return (
@@ -894,7 +901,11 @@ function authorizedF3IdentityReuse(state, event, intent) {
           ? maker?.producerOrder === 18 &&
             maker.kind === "prerequisito" &&
             maker.action === "parecer"
-          : maker?.producerOrder === source && maker.kind === "principal")
+          : proposalPublication
+            ? maker?.producerOrder === 9 &&
+              maker.kind === "prerequisito" &&
+              maker.action === "versao"
+            : maker?.producerOrder === source && maker.kind === "principal")
     );
   });
 }
@@ -1445,6 +1456,39 @@ export const F3_MUTATION_FLOWS = Object.freeze({
             p_id_versao: { producerOrder: 10, action: "versao" },
           },
           source: "src/components/contratos/BaseNormativaContrato.tsx:1366-1375",
+        }),
+      ],
+    },
+  ),
+  // V108: três preparações genuínas e publicação da versão previamente inventariada.
+  9: flow(
+    [
+      step("rpc", "publicar_versao_proposta_v108", {
+        free: ["p_chave_idempotencia"],
+        inventory: { p_id_versao: { producerOrder: 9, action: "versao" } },
+        source: "src/components/contratos/OrcamentoContrato.tsx:1500-1517",
+      }),
+    ],
+    {
+      proposta: [
+        step("rpc", "salvar_proposta_orcamentaria_v108", {
+          free: ["p_chave_idempotencia"],
+          inventory: { p_id_contrato: 7 },
+          source: "src/components/contratos/OrcamentoContrato.tsx:1044-1061",
+        }),
+      ],
+      versao: [
+        step("rpc", "registrar_versao_proposta_v108", {
+          free: ["p_id_arquivo_origem", "p_chave_idempotencia"],
+          inventory: { p_id_proposta: { producerOrder: 9, action: "proposta" } },
+          source: "src/components/contratos/OrcamentoContrato.tsx:1130-1150",
+        }),
+      ],
+      rubrica: [
+        step("rpc", "salvar_linha_orcamentaria_v108", {
+          free: ["p_chave_idempotencia"],
+          inventory: { p_id_versao_proposta: { producerOrder: 9, action: "versao" } },
+          source: "src/components/contratos/OrcamentoContrato.tsx:1268-1305",
         }),
       ],
     },
