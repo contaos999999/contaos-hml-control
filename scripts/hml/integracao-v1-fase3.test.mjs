@@ -8,6 +8,95 @@ const root = new URL("../../", import.meta.url);
 const csv = await readFile(new URL(sut.F3_MATRIX.path, root), "utf8");
 const published = JSON.parse(await readFile(new URL(sut.F3_CASES_PATH, root), "utf8"));
 
+
+test("F3 S1: contrato do piloto UI impede ativação e preserva as 138 linhas", async () => {
+  assert.equal(sut.F3_S1_UI.login, "/login");
+  assert.equal(sut.F3_S1_UI.organizations, "/selecionar-organizacao");
+  assert.equal(sut.F3_S1_UI.users, "/administracao/usuarios");
+  assert.equal(sut.F3_S1_UI.secondRole, "leitor");
+  assert.ok(Object.isFrozen(sut.F3_S1_UI));
+  const source = await readFile(new URL("./integracao-v1-fase3.mjs", import.meta.url), "utf8");
+  assert.match(source, /export async function driveF3S1Ui\(/);
+  assert.match(source, /async function pendingDriver\(\)/);
+  assert.match(source, /fail\("F3_DRIVER_PENDING"\)/);
+  assert.equal(source.split("process.env").length - 1, 1);
+  assert.equal(sut.F3_MATRIX.rows, 138);
+});
+
+test("F3 S1: credencial ausente, usuário igual e contexto de browser compartilhado param antes do UI", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  const context = {};
+  const a = { context: () => context };
+  const b = { context: () => context };
+  await assert.rejects(
+    sut.driveF3S1Ui({
+      book, masterPage: a, readerPage: b, masterFence: {}, readerFence: {},
+      mutationFence: {}, masterCredentials: { email: "master@example.test", password: "x" },
+      readerCredentials: { email: "reader@example.test", password: "x" },
+    }),
+    { code: "F3_UI_SESSION_CONFIGURATION" },
+  );
+  await assert.rejects(
+    sut.driveF3S1Ui({
+      book, masterPage: a, readerPage: { context: () => ({}) },
+      masterFence: {}, readerFence: {}, mutationFence: {},
+      masterCredentials: { email: "master@example.test", password: "x" },
+      readerCredentials: { email: "master@example.test", password: "x" },
+    }),
+    { code: "F3_UI_SAME_USER" },
+  );
+  const original = JSON.stringify(book.summary());
+  await assert.rejects(
+    sut.f3S1Login(
+      { goto: async () => { throw Error("UI_MUST_NOT_RUN"); } },
+      { email: "invalid", password: "x" },
+    ),
+    { code: "F3_UI_CREDENTIALS" },
+  );
+  assert.equal(JSON.stringify(book.summary()), original);
+});
+
+test("F3 S1: login UI autentica por POST real e recusa 401 sem expor credenciais", async () => {
+  const actions = [];
+  const makePage = (status, beforeLink = false) => ({
+    goto: async (url) => actions.push(["goto", new URL(url).pathname]),
+    locator: (name) => ({
+      fill: async (value) => actions.push(["fill", name, value.length]),
+      waitFor: async () => actions.push(["wait", name]),
+    }),
+    waitForResponse: async (predicate) => {
+      const target = {
+        url: () => "https://gklhhhyosgasnyoxlrui.supabase.co/auth/v1/token?grant_type=password",
+        request: () => ({ method: () => "POST" }),
+      };
+      assert.equal(predicate(target), true);
+      return { status: () => status };
+    },
+    getByRole: (role, options) => ({
+      click: async () => actions.push(["click", role, options.name]),
+    }),
+    getByText: (message) => ({
+      waitFor: async () => {
+        assert.ok(message.startsWith("Seu usuário não possui acesso ativo"));
+        assert.equal(beforeLink, true);
+      },
+    }),
+    waitForURL: async (predicate) => {
+      assert.equal(predicate(new URL("https://contaos-41-hml.vercel.app/selecionar-organizacao")), true);
+    },
+  });
+  const credentials = { email: "leitor@example.test", password: "example-only-test-not-a-secret" };
+  assert.equal(await sut.f3S1Login(makePage(200), credentials), "AUTHENTICATED");
+  assert.equal(
+    await sut.f3S1Login(makePage(200, true), credentials, { readerBeforeLink: true }),
+    "NO_ACTIVE_MEMBERSHIP",
+  );
+  await assert.rejects(sut.f3S1Login(makePage(401), credentials), { code: "F3_UI_LOGIN_FAILED" });
+  assert.ok(actions.some((a) => a[0] === "click" && a[2] === "Entrar"));
+  assert.equal(JSON.stringify(actions).includes(credentials.email), false);
+  assert.equal(JSON.stringify(actions).includes(credentials.password), false);
+});
+
 test("F3 B1: catálogo publicado é exatamente a derivação da matriz aceita", () => {
   assert.equal(createHash("sha256").update(csv).digest("hex"), sut.F3_MATRIX.sha256);
   assert.equal(sut.validateF3Cases(published, csv), true);
