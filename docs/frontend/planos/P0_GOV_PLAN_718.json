@@ -1,0 +1,12 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 718,
+  "approved": true,
+  "files": [
+    "scripts/p0-evidence-live-gate.mjs",
+    "scripts/p0-evidence-live-gate.test.mjs"
+  ],
+  "purpose": "Separar certificação de código V1–V5 de contraprovas LIVE exclusivas do GATE PROD, sem desativar CI/review/segurança.",
+  "authorization": "Titular autorizou explicitamente a alteração de scripts/p0-evidence-live-gate.mjs; testes necessários no mesmo escopo.",
+  "production": "NO-GO"
+}
