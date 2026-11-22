@@ -5743,3 +5743,214 @@ test("F3 V119 presentation: exact one matching readback without foreign competen
     });
   }
 });
+
+
+test("F3 remaining seven: CODE readback checks are fail-closed, never certification", () => {
+  const organizationId = F3;
+  const contractId = uuid(920001);
+  const versionId = uuid(920002);
+  const fileId = uuid(920003);
+  const documentId = uuid(920004);
+  const competenceId = uuid(920005);
+  const requirementId = uuid(920006);
+  const before108 = {
+    id: versionId,
+    id_contrato: contractId,
+    situacao: "rascunho",
+    hash: "a".repeat(64),
+  };
+  const after108 = {
+    ...before108,
+    situacao: "publicada",
+    rubricas_count: 1,
+    arquivo_origem: { status_seguranca: "aprovado" },
+  };
+  const before109 = {
+    id: uuid(920010),
+    id_contrato: contractId,
+    id_organizacao: organizationId,
+    versao_registro: 1,
+  };
+  const after109 = {
+    ...before109,
+    versao_registro: 2,
+    id_versao_publicada: uuid(920011),
+    itens: [{
+      obrigatorio: true,
+      aplicavel: true,
+      id_fonte_versao: uuid(920012),
+      regra_validacao: { documento: { obrigatorio: true } },
+    }],
+  };
+  const after110 = {
+    id: documentId,
+    id_contrato: contractId,
+    numero_versao: 1,
+    id_arquivo: fileId,
+    status_seguranca: "pendente",
+  };
+  const before111 = {
+    id: documentId,
+    numero_versao: 1,
+    id_arquivo: uuid(920014),
+  };
+  const after111 = {
+    ...before111,
+    numero_versao: 2,
+    id_arquivo: fileId,
+    status_seguranca: "aprovado",
+  };
+  const document115 = {
+    id: uuid(920015),
+    id_competencia: competenceId,
+    id_requisito: requirementId,
+    id_arquivo: fileId,
+    status_seguranca: "pendente",
+  };
+  const reportId = uuid(920016);
+  const executionId = uuid(920017);
+  const before122 = { id_arquivo: fileId, status_seguranca: "aprovado" };
+  const after122 = {
+    id: reportId,
+    id_arquivo: fileId,
+    id_execucao: executionId,
+    status_ingestao: "enfileirada",
+    processamento_documental: "concluido",
+  };
+
+  const checks = [
+    {
+      order: 9,
+      fn: sut.assertF3V108ProposalReadback,
+      input: { before: before108, after: after108, contractId, versionId },
+      bad: { after: { ...after108, arquivo_origem: { status_seguranca: "quarentena" } } },
+      code: "F3_V108_PROPOSAL_READBACK",
+    },
+    {
+      order: 11,
+      fn: sut.assertF3V109ListReadback,
+      input: {
+        before: before109,
+        after: after109,
+        organizationId,
+        contractId,
+        listId: before109.id,
+      },
+      bad: { after: { ...after109, itens: [] } },
+      code: "F3_V109_LIST_READBACK",
+    },
+    {
+      order: 12,
+      fn: sut.assertF3V110DocumentReadback,
+      input: { after: after110, contractId, fileId },
+      bad: { after: { ...after110, id_contrato: uuid(920018) } },
+      code: "F3_V110_DOCUMENT_READBACK",
+    },
+    {
+      order: 13,
+      fn: sut.assertF3V111DocumentVersionReadback,
+      input: { before: before111, after: after111, documentId, fileId },
+      bad: { after: { ...after111, numero_versao: 1 } },
+      code: "F3_V111_VERSION_READBACK",
+    },
+    {
+      order: 15,
+      fn: sut.assertF3V115CompetenceDocumentReadback,
+      input: { document: document115, competenceId, requirementId, fileId },
+      bad: { document: { ...document115, id_requisito: uuid(920019) } },
+      code: "F3_V115_COMPETENCE_DOCUMENT_READBACK",
+    },
+    {
+      order: 20,
+      fn: sut.assertF3V122HistoricalReadback,
+      input: { before: before122, after: after122, reportId, fileId, executionId },
+      bad: { after: { ...after122, status_ingestao: "erro" } },
+      code: "F3_V122_HISTORICAL_READBACK",
+    },
+  ];
+
+  for (const check of checks) {
+    const result = check.fn(check.input);
+    assert.equal(result.producerOrder, check.order);
+    assert.equal(result.state, "CONTRACT_NOT_CERTIFIED");
+    assert.throws(() => check.fn({ ...check.input, ...check.bad }), {
+      code: check.code,
+    });
+  }
+
+  const reviewExecution = uuid(920020);
+  const reviewResult = uuid(920021);
+  const previousExecution = uuid(920022);
+  const requestId = uuid(920023);
+  const documentVersionId = uuid(920024);
+  const context = {
+    schema_versao: "revisao-v117",
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    id_competencia: competenceId,
+    id_requisito: requirementId,
+    pode_revisar: true,
+    id_execucao_esperada: previousExecution,
+    id_resultado_esperado: null,
+    hash_esperado: "b".repeat(64),
+  };
+  const command = {
+    p_id_competencia: competenceId,
+    p_id_requisito: requirementId,
+    p_id_execucao_esperada: previousExecution,
+    p_id_resultado_esperado: null,
+    p_hash_esperado: context.hash_esperado,
+    p_resultado: "conforme",
+    p_justificativa: "Revisão de evidência sintética",
+    p_fundamento: "Teste de contrato CODE",
+    p_evidencias: [{ id_versao_documento: documentVersionId }],
+    p_request_id: requestId,
+  };
+  const receipt = {
+    schema_versao: "revisao-v117",
+    request_id: requestId,
+    id_competencia: competenceId,
+    id_requisito: requirementId,
+    id_execucao: reviewExecution,
+    id_resultado: reviewResult,
+  };
+  const analysisBefore = {
+    competencia: { id: competenceId },
+    execucao_atual: { id: previousExecution },
+  };
+  const analysisAfter = {
+    competencia: { id: competenceId },
+    estado_analise: "complete",
+    stale: false,
+    execucao_atual: { id: reviewExecution },
+    resultados: [{
+      id_requisito: requirementId,
+      id_resultado: reviewResult,
+      resultado: "conforme",
+    }],
+  };
+  const reviewInput = {
+    review: { context, command, result: receipt },
+    analysisBefore,
+    analysisAfter,
+    organizationId,
+    contractId,
+    competenceId,
+    requirementId,
+    documentVersionId,
+  };
+  const result117 = sut.assertF3V117DriverCodeContract(reviewInput);
+  assert.equal(result117.producerOrder, 17);
+  assert.equal(result117.state, "CONTRACT_NOT_CERTIFIED");
+  assert.throws(
+    () =>
+      sut.assertF3V117DriverCodeContract({
+        ...reviewInput,
+        analysisAfter: {
+          ...analysisAfter,
+          resultados: [{ ...analysisAfter.resultados[0], id_resultado: uuid(920025) }],
+        },
+      }),
+    { code: "F3_V117_V116_CONSUMER_MISMATCH" },
+  );
+});
