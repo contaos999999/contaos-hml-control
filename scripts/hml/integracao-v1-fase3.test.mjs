@@ -5435,7 +5435,6 @@ test("F3 S4 V116: UI nativa solicita uma análise sob a cerca e aguarda consumid
   );
 });
 
-
 test("F3 C0458 V117->V116: consumidor confirma identidade do resultado novo", () => {
   const competenceId = uuid(899414);
   const requirementId = uuid(899417);
@@ -5486,15 +5485,24 @@ test("F3 C0458 V117->V116: consumidor confirma identidade do resultado novo", ()
     { after: { ...after, execucao_atual: null } },
     { after: { ...after, resultados: [] } },
     { after: { ...after, resultados: [...after.resultados, ...after.resultados] } },
-    { after: { ...after, resultados: [
-      { ...after.resultados[0], id_requisito: uuid(899425) },
-    ] } },
-    { after: { ...after, resultados: [
-      { ...after.resultados[0], resultado: "nao_conforme" },
-    ] } },
-    { after: { ...after, resultados: [
-      { ...after.resultados[0], id_resultado: uuid(899426) },
-    ] } },
+    {
+      after: {
+        ...after,
+        resultados: [{ ...after.resultados[0], id_requisito: uuid(899425) }],
+      },
+    },
+    {
+      after: {
+        ...after,
+        resultados: [{ ...after.resultados[0], resultado: "nao_conforme" }],
+      },
+    },
+    {
+      after: {
+        ...after,
+        resultados: [{ ...after.resultados[0], id_resultado: uuid(899426) }],
+      },
+    },
   ];
   for (const changed of invalid) {
     assert.throws(
