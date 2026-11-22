@@ -4,9 +4,10 @@
   "approved": true,
   "files": [
     "scripts/hml/integracao-v1-fase3-code-executor.mjs",
-    "scripts/hml/integracao-v1-fase3-code-executor.test.mjs"
+    "scripts/hml/integracao-v1-fase3-code-executor.test.mjs",
+    ".github/workflows/contaos-f3-code-collector.yml"
   ],
-  "purpose": "Implementar coletor CODE por caseId com provas positivas/negativas e estados fail-closed, sem certificação automática; ampliar testes de resistência a recibos falsos e preservar trilha existente.",
+  "purpose": "Implementar coletor CODE por caseId com provas positivas/negativas e estados fail-closed, sem certificação automática; ampliar testes de resistência a recibos falsos e preservar trilha existente. Acrescentar CI de teste Node isolado para o coletor, sem execução LIVE e sem PASS das 138 relações.",
   "authorization": "Ordem expressa do titular em 22/11/2026 para implementar e certificar 138 relações após testes e revisão. Aprovação governamental deste escopo documental fica condicionada a PR PLAN protegida integrada antes de qualquer BUILD; não autoriza PASS funcional nem PROD.",
   "production": "NO-GO",
   "certification": "F3_NOT_CERTIFIED",
@@ -16,7 +17,8 @@
     "O coletor não deve gerar hashes artificiais ou aceitar strings sintéticas como comprovação de resultado",
     "Preservar ledgers CODE/HML existentes e F1/F2",
     "Revisão independente e CI no HEAD antes de merge",
-    "Nenhuma alteração em backend, PROD ou credenciais HML"
+    "Nenhuma alteração em backend, PROD ou credenciais HML",
+    "Workflow apenas testa a infraestrutura de coleta; todos os casos funcionais permanecem NOT_RUN até provas individualizadas"
   ],
   "normative_plan": {
     "pr": 722,
