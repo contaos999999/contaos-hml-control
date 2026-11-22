@@ -5950,17 +5950,17 @@ test("F3 remaining seven: CODE readback checks are fail-closed, never certificat
   );
 });
 
-test("F3 V119: apresentação exige aprovação V118 confirmada, não V119", () => {
-  const approval = { producerOrder: 18, action: "aprovacao", outcome: "confirmed" };
-  assert.equal(sut.hasF3V118ConfirmedApproval([approval]), true);
+test("F3 V119: apresentação exige pré-aprovação V119 confirmada, não parecer V118", () => {
+  const approval = { producerOrder: 19, action: "aprovacao", outcome: "confirmed" };
+  assert.equal(sut.hasF3V119PresentationApproval([approval]), true);
   for (const requests of [
     null,
     [],
-    [{ ...approval, producerOrder: 19 }],
+    [{ ...approval, producerOrder: 18 }],
     [{ ...approval, outcome: "sealed" }],
     [{ ...approval, action: "parecer" }],
   ]) {
-    assert.equal(sut.hasF3V118ConfirmedApproval(requests), false);
+    assert.equal(sut.hasF3V119PresentationApproval(requests), false);
   }
 });
 
