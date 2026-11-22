@@ -1,0 +1,67 @@
+name: ContaOS HML Authenticated Counterproofs
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  authenticated-hml:
+    name: Authenticated HML counterproofs (NO-GO on missing prerequisites)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: hml-counterproofs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: RED/GREEN infrastructure regressions
+        run: node --test scripts/hml-counterproofs/guard.test.mjs
+      - name: Install pinned Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: HML authenticated preflight (fail closed)
+        env:
+          CONTAOS_HML_FRONTEND_URL: ${{ vars.CONTAOS_HML_FRONTEND_URL }}
+          CONTAOS_HML_ALLOWED_HOST: ${{ vars.CONTAOS_HML_ALLOWED_HOST }}
+          CONTAOS_HML_EXPECTED_FRONTEND_SHA: ${{ github.sha }}
+          CONTAOS_HML_EXPECTED_BACKEND_SHA: ${{ vars.CONTAOS_HML_EXPECTED_BACKEND_SHA }}
+          CONTAOS_HML_ISOLATED_FIXTURES: ${{ vars.CONTAOS_HML_ISOLATED_FIXTURES }}
+          CONTAOS_HML_USER_A_EMAIL: ${{ secrets.CONTAOS_HML_USER_A_EMAIL }}
+          CONTAOS_HML_USER_A_PASSWORD: ${{ secrets.CONTAOS_HML_USER_A_PASSWORD }}
+          CONTAOS_HML_USER_B_EMAIL: ${{ secrets.CONTAOS_HML_USER_B_EMAIL }}
+          CONTAOS_HML_USER_B_PASSWORD: ${{ secrets.CONTAOS_HML_USER_B_PASSWORD }}
+        run: node scripts/hml-counterproofs/guard.mjs
+      - name: Real HML browser counterproofs
+        id: hml
+        env:
+          CONTAOS_HML_FRONTEND_URL: ${{ vars.CONTAOS_HML_FRONTEND_URL }}
+          CONTAOS_HML_ALLOWED_HOST: ${{ vars.CONTAOS_HML_ALLOWED_HOST }}
+          CONTAOS_HML_EXPECTED_FRONTEND_SHA: ${{ github.sha }}
+          CONTAOS_HML_EXPECTED_BACKEND_SHA: ${{ vars.CONTAOS_HML_EXPECTED_BACKEND_SHA }}
+          CONTAOS_HML_ISOLATED_FIXTURES: ${{ vars.CONTAOS_HML_ISOLATED_FIXTURES }}
+          CONTAOS_HML_USER_A_EMAIL: ${{ secrets.CONTAOS_HML_USER_A_EMAIL }}
+          CONTAOS_HML_USER_A_PASSWORD: ${{ secrets.CONTAOS_HML_USER_A_PASSWORD }}
+          CONTAOS_HML_USER_B_EMAIL: ${{ secrets.CONTAOS_HML_USER_B_EMAIL }}
+          CONTAOS_HML_USER_B_PASSWORD: ${{ secrets.CONTAOS_HML_USER_B_PASSWORD }}
+        shell: bash
+        run: |
+          set +e
+          bunx playwright test --config=playwright.hml-counterproofs.config.ts
+          code=$?
+          echo "CONTAOS_HML_TEST_EXIT=$code" >> "$GITHUB_ENV"
+          exit "$code"
+      - name: Immutable SHA-linked sanitized receipt
+        if: always()
+        env:
+          CONTAOS_HML_EXPECTED_BACKEND_SHA: ${{ vars.CONTAOS_HML_EXPECTED_BACKEND_SHA }}
+        run: node scripts/hml-counterproofs/receipt.mjs
+      - name: Upload sanitized evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hml-counterproofs-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/hml-counterproofs/receipt.json
+            artifacts/hml-counterproofs/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90
