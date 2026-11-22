@@ -2555,7 +2555,12 @@ export async function f3S1Login(page, credentials, { readerBeforeLink = false } 
       "Seu usuário não possui acesso ativo a nenhuma organização. Procure o administrador.",
       { exact: true },
     ).waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    const logout = page.waitForResponse(
+      (r) => r.url() === API_ORIGIN + "/auth/v1/logout" && r.request().method() === "POST",
+      { timeout: F3_S1_UI.timeout },
+    );
     await page.getByRole("button", { name: "Sair", exact: true }).click();
+    if ((await logout).status() !== 204) fail("F3_UI_LOGOUT");
     await page.locator("#login-senha").waitFor({ state: "visible" });
     return "NO_ACTIVE_MEMBERSHIP";
   }
@@ -2567,8 +2572,13 @@ export async function f3S1Login(page, credentials, { readerBeforeLink = false } 
 }
 
 async function f3S1Logout(page, fence) {
+  const logout = page.waitForResponse(
+    (r) => r.url() === API_ORIGIN + "/auth/v1/logout" && r.request().method() === "POST",
+    { timeout: F3_S1_UI.timeout },
+  );
   await page.getByRole("navigation", { name: "Ações da sessão", exact: true })
     .getByRole("button", { name: "Sair", exact: true }).click();
+  if ((await logout).status() !== 204) fail("F3_UI_LOGOUT");
   await page.waitForURL((u) => u.origin === HML_ORIGIN && u.pathname === F3_S1_UI.login);
   await fence.drain();
   fence.assertSafe();
