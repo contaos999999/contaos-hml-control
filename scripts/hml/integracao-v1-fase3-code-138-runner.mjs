@@ -6,7 +6,12 @@ import { createHash } from "node:crypto";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { assessF3CodeInventoryFromRepo, F3_CODE_CASES_PATH, F3_CODE_MATRIX_PATH } from "./integracao-v1-fase3-code-gate.mjs";
+const F3_CODE_CASES_PATH = "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json";
+const F3_CODE_MATRIX_PATH = "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json";
+const F3_CODE_LEDGER_PATH = "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_EVIDENCE_LEDGER.json";
+const F3_CODE_CSV_PATH = "docs/frontend/planos/INTEGRACAO_V1_7_FASES_MATRIZ_EXECUCAO_PROPOSTA.csv";
+const CATALOGUE_HASH = "bce15980d31ce22c8836e26621b267951296e905139b9833c8db4a7400c9ecbb";
+const CSV_HASH = "b8b4980bab5f841adc1db9c642e960f45a6874baad660bd18cd6a60ce87e32d9";
 
 const SHA40 = /^[a-f0-9]{40}$/;
 const CASE = /^IFV1-F3-C\d{4}$/;
@@ -70,10 +75,17 @@ export function buildF3Code138Preflight(catalogue, coverage, sources,
 }
 
 async function runCli(root=fileURLToPath(new URL("../../",import.meta.url)),env=process.env) {
-  await assessF3CodeInventoryFromRepo(root);
-  const [catRaw,mapRaw]=await Promise.all([F3_CODE_CASES_PATH,F3_CODE_MATRIX_PATH]
+  const [catRaw,mapRaw,ledgerRaw,csvRaw]=await Promise.all(
+    [F3_CODE_CASES_PATH,F3_CODE_MATRIX_PATH,F3_CODE_LEDGER_PATH,F3_CODE_CSV_PATH]
     .map(p=>readFile(join(root,p),"utf8")));
-  const catalogue=JSON.parse(catRaw),coverage=JSON.parse(mapRaw);
+  checked(sha(catRaw)===CATALOGUE_HASH && sha(csvRaw)===CSV_HASH,"F3_138_CANONICAL_HASH");
+  const catalogue=JSON.parse(catRaw),coverage=JSON.parse(mapRaw),ledger=JSON.parse(ledgerRaw);
+  checked(coverage.sourceCatalogueSha256===CATALOGUE_HASH &&
+    coverage.sourceCsvSha256===CSV_HASH && coverage.mandatory===120 &&
+    coverage.conditional===18 && coverage.certification==="NOT_CERTIFIED" &&
+    ledger.sourceCatalogueSha256===CATALOGUE_HASH && ledger.state==="NOT_CERTIFIED" &&
+    Array.isArray(ledger.entries)&&ledger.entries.length===0 &&
+    Array.isArray(ledger.runs)&&ledger.runs.length===0,"F3_138_LEDGER_INTEGRITY");
   const sourceFiles=[...new Set(coverage.cases.flatMap(c=>c.sourceHints.map(h=>h.split(":")[0])))];
   const sources={};
   for(const path of sourceFiles) {
