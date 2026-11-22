@@ -14003,14 +14003,15 @@ test(
     // A descoberta sem pin ainda valida metadados públicos e rejeita assets incompatíveis.
     const current = sut.resolveDeploymentIdentity(graph.modules);
     const historical = sut.NAVIGATION_DEPLOYMENT;
-    if (current.frontendSha === historical.frontendSha &&
-        current.deploymentId === historical.deploymentId) {
+    if (
+      current.frontendSha === historical.frontendSha &&
+      current.deploymentId === historical.deploymentId
+    ) {
       assert.deepEqual(sut.resolveDeploymentIdentity(graph.modules, historical), historical);
     } else {
-      assert.throws(
-        () => sut.resolveDeploymentIdentity(graph.modules, historical),
-        { code: "DEPLOYMENT_PIN_STALE" },
-      );
+      assert.throws(() => sut.resolveDeploymentIdentity(graph.modules, historical), {
+        code: "DEPLOYMENT_PIN_STALE",
+      });
     }
     // Em qualquer cenário, um pin adulterado não pode passar por descoberta automática.
     const tampered = {
@@ -14030,7 +14031,8 @@ test(
         harnessSha,
         frontendSha: current.frontendSha,
         deploymentId: current.deploymentId,
-        historicalPinStale: current.frontendSha !== historical.frontendSha ||
+        historicalPinStale:
+          current.frontendSha !== historical.frontendSha ||
           current.deploymentId !== historical.deploymentId,
         moduleCount: graph.modules.size,
         bytes: graph.bytes,
