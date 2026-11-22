@@ -1502,7 +1502,7 @@ export const F3_MUTATION_FLOWS = Object.freeze({
       step("rpc", "publicar_versao_proposta_v108", {
         free: ["p_chave_idempotencia"],
         inventory: { p_id_versao: { producerOrder: 9, action: "versao" } },
-        source: "src/components/contratos/OrcamentoContrato.tsx:1500-1517",
+        source: "src/components/contratos/OrcamentoContrato.tsx:981-1517",
       }),
     ],
     {
@@ -1510,21 +1510,21 @@ export const F3_MUTATION_FLOWS = Object.freeze({
         step("rpc", "salvar_proposta_orcamentaria_v108", {
           free: ["p_chave_idempotencia"],
           inventory: { p_id_contrato: 7 },
-          source: "src/components/contratos/OrcamentoContrato.tsx:1044-1061",
+          source: "src/components/contratos/OrcamentoContrato.tsx:981-1061",
         }),
       ],
       versao: [
         step("rpc", "registrar_versao_proposta_v108", {
           free: ["p_id_arquivo_origem", "p_chave_idempotencia"],
           inventory: { p_id_proposta: { producerOrder: 9, action: "proposta" } },
-          source: "src/components/contratos/OrcamentoContrato.tsx:1130-1150",
+          source: "src/components/contratos/OrcamentoContrato.tsx:981-1150",
         }),
       ],
       rubrica: [
         step("rpc", "salvar_linha_orcamentaria_v108", {
           free: ["p_chave_idempotencia"],
           inventory: { p_id_versao_proposta: { producerOrder: 9, action: "versao" } },
-          source: "src/components/contratos/OrcamentoContrato.tsx:1268-1305",
+          source: "src/components/contratos/OrcamentoContrato.tsx:981-1305",
         }),
       ],
     },
@@ -1600,7 +1600,7 @@ export const F3_MUTATION_FLOWS = Object.freeze({
         step("rpc", "criar_documento_contrato_completo", {
           free: ["p_id_arquivo", "p_chave_idempotencia"],
           inventory: { p_id_contrato: 7 },
-          source: "src/components/contratos/ImportarHistorico.tsx:134-152",
+          source: "src/lib/contratos/documentosDados.ts:755-774",
         }),
       ),
     },
