@@ -2348,6 +2348,31 @@ test("F3 B2b1: ledger fixado vazio, append-only, só PASS ligado ao replay, e re
     );
 });
 
+test("F3 S3: RPCs reais V113, V116, V118 e V119 correspondem ao contrato da cerca", async () => {
+  const contracts = [
+    [14, "criar_competencia", "src/lib/contratos/novaCompetenciaDados.ts"],
+    [16, "solicitar_analise_competencia", "src/lib/competencias/competenciaAnaliseDados.ts"],
+    [18, "aprovar_parecer_interno", "src/lib/competencias/parecerInternoDados.ts"],
+    [19, "registrar_apresentacao", "src/lib/competencias/apresentacaoDados.ts"],
+  ];
+  for (const [order, name, path] of contracts) {
+    const flow = sut.F3_MUTATION_FLOWS[order];
+    assert.equal(flow.principal.length, 1, "um RPC principal: " + order);
+    assert.equal(flow.principal[0].name, name);
+    assert.equal(flow.principal[0].target, "rpc");
+    const source = await readFile(new URL("../../" + path, import.meta.url), "utf8");
+    assert.ok(source.includes('"' + name + '"'), "RPC ausente no produto: " + name);
+  }
+  for (const [order, action, rpc] of [
+    [18, "parecer", "solicitar_parecer_interno"],
+    [19, "aprovacao", "aprovar_apresentacao"],
+  ]) {
+    const step = sut.F3_MUTATION_FLOWS[order].prerequisito[action][0];
+    assert.equal(step.target, "rpc");
+    assert.equal(step.name, rpc);
+  }
+});
+
 test("F3 S2: hash do transcript recusa remocao de evento de replay", () => {
   const report = completeReport();
   assert.match(report.intents.eventsSha256, /^[a-f0-9]{64}$/);
