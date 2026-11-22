@@ -2535,7 +2535,8 @@ function f3S1Credentials(credentials) {
     typeof credentials.password !== "string" ||
     !credentials.password ||
     credentials.password.length > 4096
-  ) fail("F3_UI_CREDENTIALS");
+  )
+    fail("F3_UI_CREDENTIALS");
 }
 
 /** Login exclusivamente pela interface. Não retorna token, email nem dados de Auth. */
@@ -2551,10 +2552,12 @@ export async function f3S1Login(page, credentials, { readerBeforeLink = false } 
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
   if ((await auth).status() !== 200) fail("F3_UI_LOGIN_FAILED");
   if (readerBeforeLink) {
-    await page.getByText(
-      "Seu usuário não possui acesso ativo a nenhuma organização. Procure o administrador.",
-      { exact: true },
-    ).waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await page
+      .getByText(
+        "Seu usuário não possui acesso ativo a nenhuma organização. Procure o administrador.",
+        { exact: true },
+      )
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
     const logout = page.waitForResponse(
       (r) => r.url() === API_ORIGIN + "/auth/v1/logout" && r.request().method() === "POST",
       { timeout: F3_S1_UI.timeout },
@@ -2564,10 +2567,9 @@ export async function f3S1Login(page, credentials, { readerBeforeLink = false } 
     await page.locator("#login-senha").waitFor({ state: "visible" });
     return "NO_ACTIVE_MEMBERSHIP";
   }
-  await page.waitForURL(
-    (url) => url.origin === HML_ORIGIN && url.pathname !== F3_S1_UI.login,
-    { timeout: F3_S1_UI.timeout },
-  );
+  await page.waitForURL((url) => url.origin === HML_ORIGIN && url.pathname !== F3_S1_UI.login, {
+    timeout: F3_S1_UI.timeout,
+  });
   return "AUTHENTICATED";
 }
 
@@ -2576,8 +2578,10 @@ async function f3S1Logout(page, fence) {
     (r) => r.url() === API_ORIGIN + "/auth/v1/logout" && r.request().method() === "POST",
     { timeout: F3_S1_UI.timeout },
   );
-  await page.getByRole("navigation", { name: "Ações da sessão", exact: true })
-    .getByRole("button", { name: "Sair", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Ações da sessão", exact: true })
+    .getByRole("button", { name: "Sair", exact: true })
+    .click();
   if ((await logout).status() !== 204) fail("F3_UI_LOGOUT");
   await page.waitForURL((u) => u.origin === HML_ORIGIN && u.pathname === F3_S1_UI.login);
   await fence.drain();
@@ -2589,7 +2593,8 @@ async function f3S1MasterSelect(page, fence) {
   await page.goto(HML_ORIGIN + F3_S1_UI.organizations, { waitUntil: "networkidle" });
   await fence.drain();
   fence.assertSafe();
-  const master = page.getByRole("radio")
+  const master = page
+    .getByRole("radio")
     .filter({ hasText: F3_S1_UI.originalMasterOrganization })
     .filter({ hasText: F3_S1_UI.originalMasterRole });
   if ((await master.count()) !== 1) fail("F3_UI_MASTER_ROLE");
@@ -2629,10 +2634,13 @@ export async function f3S1CreateOrganization({ page, fence, mutationFence, book,
     if (
       !Array.isArray(rows) ||
       rows.filter(
-        (v) => v?.id === organizationId && v.razao_social === name &&
+        (v) =>
+          v?.id === organizationId &&
+          v.razao_social === name &&
           v.perfil === "administrador_master",
       ).length !== 1
-    ) fail("F3_UI_ORG_READBACK");
+    )
+      fail("F3_UI_ORG_READBACK");
     const card = page.getByRole("radio").filter({ hasText: name });
     await card.waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
     if ((await card.count()) !== 1) fail("F3_UI_ORG_READBACK");
@@ -2660,7 +2668,12 @@ export async function f3S1CreateOrganization({ page, fence, mutationFence, book,
 }
 
 export async function f3S1LinkReader({
-  page, fence, mutationFence, book, organizationId, readerEmail,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  readerEmail,
 }) {
   if (!isUuid(organizationId) || book.organizationF3() !== organizationId)
     fail("F3_UI_READER_ORG");
@@ -2723,7 +2736,8 @@ export async function f3S1LinkReader({
       data?.id_usuario !== userId ||
       data?.vinculo?.perfil !== "leitor" ||
       data?.vinculo?.ativo !== true
-    ) fail("F3_UI_READER_LINK_RESPONSE");
+    )
+      fail("F3_UI_READER_LINK_RESPONSE");
     await dialog.waitFor({ state: "hidden", timeout: F3_S1_UI.timeout });
     await fence.drain();
     fence.assertSafe();
@@ -2744,14 +2758,26 @@ export async function f3S1LinkReader({
 
 /** Executa S1 sem produzir PASS das 138 linhas, sem logar tokens nem credenciais. */
 export async function driveF3S1Ui({
-  masterPage, readerPage, masterFence, readerFence, mutationFence,
-  book, masterCredentials, readerCredentials,
+  masterPage,
+  readerPage,
+  masterFence,
+  readerFence,
+  mutationFence,
+  book,
+  masterCredentials,
+  readerCredentials,
 } = {}) {
   if (
-    !masterPage || !readerPage || masterPage === readerPage ||
+    !masterPage ||
+    !readerPage ||
+    masterPage === readerPage ||
     masterPage.context() === readerPage.context() ||
-    !masterFence || !readerFence || !mutationFence || !BOOKS.has(book)
-  ) fail("F3_UI_SESSION_CONFIGURATION");
+    !masterFence ||
+    !readerFence ||
+    !mutationFence ||
+    !BOOKS.has(book)
+  )
+    fail("F3_UI_SESSION_CONFIGURATION");
   f3S1Credentials(masterCredentials);
   f3S1Credentials(readerCredentials);
   if (masterCredentials.email === readerCredentials.email) fail("F3_UI_SAME_USER");
@@ -2769,11 +2795,19 @@ export async function driveF3S1Ui({
     masterSignedIn = true;
     await f3S1MasterSelect(masterPage, masterFence);
     const organizationId = await f3S1CreateOrganization({
-      page: masterPage, fence: masterFence, mutationFence, book, name,
+      page: masterPage,
+      fence: masterFence,
+      mutationFence,
+      book,
+      name,
     });
     const userId = await f3S1LinkReader({
-      page: masterPage, fence: masterFence, mutationFence, book,
-      organizationId, readerEmail: readerCredentials.email,
+      page: masterPage,
+      fence: masterFence,
+      mutationFence,
+      book,
+      organizationId,
+      readerEmail: readerCredentials.email,
     });
     await f3S1Login(readerPage, readerCredentials);
     readerSignedIn = true;
@@ -2790,10 +2824,11 @@ export async function driveF3S1Ui({
     await readerFence.drain();
     readerFence.assertSafe();
     await readerPage.goto(HML_ORIGIN + F3_S1_UI.users, { waitUntil: "networkidle" });
-    await readerPage.getByText(
-      "Você não tem permissão para administrar usuários desta organização.",
-      { exact: true },
-    ).waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await readerPage
+      .getByText("Você não tem permissão para administrar usuários desta organização.", {
+        exact: true,
+      })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
     await readerFence.drain();
     readerFence.assertSafe();
     await f3S1Logout(readerPage, readerFence);
@@ -2803,7 +2838,10 @@ export async function driveF3S1Ui({
     book.assertIsolation();
     return Object.freeze({
       state: "S1_UI_OBSERVED_NOT_CERTIFIED",
-      organizationId, userId, masterLogout: true, readerLogout: true,
+      organizationId,
+      userId,
+      masterLogout: true,
+      readerLogout: true,
     });
   } finally {
     if (readerSignedIn) await f3S1Logout(readerPage, readerFence).catch(() => undefined);
