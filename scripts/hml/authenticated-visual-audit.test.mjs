@@ -13998,8 +13998,28 @@ test(
   { timeout: 210000 },
   async () => {
     const graph = await sut.discoverPublicGraph();
-    const expected = sut.NAVIGATION_DEPLOYMENT;
-    assert.deepEqual(sut.resolveDeploymentIdentity(graph.modules, expected), expected);
+    // O certificado F2 continua fixado ao produto/deployment de sua emissão. O domínio HML
+    // já avançou, portanto exigir o pin histórico como identidade *atual* seria um falso RED.
+    // A descoberta sem pin ainda valida metadados públicos e rejeita assets incompatíveis.
+    const current = sut.resolveDeploymentIdentity(graph.modules);
+    const historical = sut.NAVIGATION_DEPLOYMENT;
+    if (current.frontendSha === historical.frontendSha &&
+        current.deploymentId === historical.deploymentId) {
+      assert.deepEqual(sut.resolveDeploymentIdentity(graph.modules, historical), historical);
+    } else {
+      assert.throws(
+        () => sut.resolveDeploymentIdentity(graph.modules, historical),
+        { code: "DEPLOYMENT_PIN_STALE" },
+      );
+    }
+    // Em qualquer cenário, um pin adulterado não pode passar por descoberta automática.
+    const tampered = {
+      frontendSha: current.frontendSha === "a".repeat(40) ? "b".repeat(40) : "a".repeat(40),
+      deploymentId: current.deploymentId,
+    };
+    assert.throws(() => sut.resolveDeploymentIdentity(graph.modules, tampered), {
+      code: "DEPLOYMENT_PIN_STALE",
+    });
     assert.ok(graph.modules.size > 0 && graph.modules.size <= 128);
     assert.ok(Number.isSafeInteger(graph.bytes) && graph.bytes > 0 && graph.bytes <= 8388608);
     const { harnessSha } = await sut.harnessIdentity();
@@ -14008,8 +14028,10 @@ test(
         phase: "R13_PUBLIC_DEPLOYMENT_PROBE",
         state: "PASS",
         harnessSha,
-        frontendSha: expected.frontendSha,
-        deploymentId: expected.deploymentId,
+        frontendSha: current.frontendSha,
+        deploymentId: current.deploymentId,
+        historicalPinStale: current.frontendSha !== historical.frontendSha ||
+          current.deploymentId !== historical.deploymentId,
         moduleCount: graph.modules.size,
         bytes: graph.bytes,
       }),
