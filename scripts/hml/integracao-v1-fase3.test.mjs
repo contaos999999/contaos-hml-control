@@ -2356,6 +2356,12 @@ test("F3 S2: hash do transcript recusa remocao de evento de replay", () => {
     () => sut.validateF3Report(forged, catalogue, OPT),
     { code: "F3_REPORT" },
   );
+  const mismatched = structuredClone(report);
+  mismatched.intents.eventsSha256 = "f".repeat(64);
+  assert.throws(
+    () => sut.validateF3Report(mismatched, catalogue, OPT),
+    { code: "F3_REPORT" },
+  );
 });
 
 /**
