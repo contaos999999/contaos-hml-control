@@ -886,12 +886,14 @@ function authorizedF3IdentityReuse(state, event, intent) {
     intent.producerOrder === 11 &&
     intent.kind === "prerequisito" &&
     ["item", "publicacao"].includes(intent.action);
+  const docVersion = intent.producerOrder === 13 && intent.kind === "principal";
   const source = F3_UPDATE_IDENTITY_SOURCE[intent.producerOrder];
   if (
     !approval &&
     !opinionApproval &&
     !proposalPublication &&
     !listTransition &&
+    !docVersion &&
     (!source || intent.kind !== "principal")
   )
     return false;
@@ -913,7 +915,9 @@ function authorizedF3IdentityReuse(state, event, intent) {
               maker.action === "versao"
             : listTransition
               ? maker?.producerOrder === 11 && maker.kind === "principal"
-              : maker?.producerOrder === source && maker.kind === "principal")
+              : docVersion
+                ? maker?.producerOrder === 12 && maker.kind === "principal"
+                : maker?.producerOrder === source && maker.kind === "principal")
     );
   });
 }
@@ -1381,6 +1385,29 @@ const flow = (principal, prerequisito = null) =>
             ),
       ),
   });
+/**
+ * Quatro passos reais do upload simples V110/V111/V115/V122.
+ * Storage somente no bucket homologado pelo backend, path gerado e vinculado
+ * entre PUT e confirmar_upload_arquivo. TUS continua proibido.
+ */
+const f3UploadSteps = (businessStep) => [
+  step("edge", "storage-sign-upload", {
+    inventory: { id_organizacao: 2, id_contrato: 7 },
+    source: "src/lib/contratos/documentosDados.ts:410-454",
+  }),
+  step("storage", "contaos-documentos", {
+    free: ["path"],
+    pathFields: ["path"],
+    source: "src/lib/contratos/documentosDados.ts:454-461",
+  }),
+  step("rpc", "confirmar_upload_arquivo", {
+    free: ["p_path"],
+    pathFields: ["p_path"],
+    inventory: { p_id_organizacao: 2, p_id_contrato: 7 },
+    source: "src/lib/contratos/documentosDados.ts:639-660",
+  }),
+  businessStep,
+];
 export const F3_MUTATION_FLOWS = Object.freeze({
   2: flow([
     step("rpc", "criar_organizacao", {
@@ -1528,6 +1555,55 @@ export const F3_MUTATION_FLOWS = Object.freeze({
           source: "src/components/contratos/GerenciarListas.tsx:506-514",
         }),
       ],
+    },
+  ),
+  12: flow(
+    f3UploadSteps(
+      step("rpc", "criar_documento_contrato_completo", {
+        free: ["p_id_arquivo", "p_chave_idempotencia"],
+        inventory: { p_id_contrato: 7 },
+        source: "src/lib/contratos/documentosDados.ts:755-774",
+      }),
+    ),
+  ),
+  13: flow(
+    f3UploadSteps(
+      step("rpc", "adicionar_versao_documento_contrato", {
+        free: ["p_id_arquivo", "p_chave_idempotencia"],
+        inventory: { p_id_documento: 12 },
+        source: "src/lib/contratos/documentosDados.ts:776-791",
+      }),
+    ),
+  ),
+  15: flow(
+    f3UploadSteps(
+      step("rpc", "criar_documento_competencia_v115", {
+        free: ["p_id_requisito", "p_id_arquivo", "p_chave_idempotencia"],
+        inventory: { p_id_competencia: 14 },
+        source: "src/lib/competencias/competenciaDocumentosDados.ts:299-317",
+      }),
+    ),
+  ),
+  20: flow(
+    [
+      step("rpc", "registrar_relatorio_historico_hml", {
+        inventory: { p_id_arquivo: { producerOrder: 20, action: "documento" } },
+        source: "src/lib/contratos/ingestaoHistoricoDados.ts:72-82",
+      }),
+      step("rpc", "enfileirar_ingestao_historica_hml", {
+        free: ["p_id_versao_documento"],
+        inventory: { p_id_relatorio: 20 },
+        source: "src/lib/contratos/ingestaoHistoricoDados.ts:84-90",
+      }),
+    ],
+    {
+      documento: f3UploadSteps(
+        step("rpc", "criar_documento_contrato_completo", {
+          free: ["p_id_arquivo", "p_chave_idempotencia"],
+          inventory: { p_id_contrato: 7 },
+          source: "src/components/contratos/ImportarHistorico.tsx:134-152",
+        }),
+      ),
     },
   ),
   // S3: contratos de mutacao oficiais sem upload (fluxos de competencia e parecer).
