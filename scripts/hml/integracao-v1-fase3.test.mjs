@@ -5510,3 +5510,125 @@ test("F3 C0458 V117->V116: consumidor confirma identidade do resultado novo", ()
     });
   }
 });
+
+
+test("F3 C0455/C0463: visão geral bloqueia portão e apresentação após V117", () => {
+  const organizationId = F3;
+  const contractId = uuid(877007);
+  const competenceId = uuid(877014);
+  const before = {
+    competencia: { id: competenceId, id_contrato: contractId, id_organizacao: organizationId },
+  };
+  const after = {
+    ...before,
+    portao: { liberado: false },
+    blocking_summary: { parecer_aprovado: false, aprovacao_apresentacao_atual: false },
+    allowed_actions: { apresentar: false },
+  };
+  const input = { before, after, organizationId, contractId, competenceId };
+  for (const caseId of ["IFV1-F3-C0455", "IFV1-F3-C0463"]) {
+    assert.deepEqual(sut.assertF3V117OverviewConsumer({ ...input, caseId }), {
+      state: "CONSUMER_CODE_CONTRACT_NOT_CERTIFIED",
+      caseId,
+      competenceId,
+    });
+  }
+  const bad = [
+    { organizationId: uuid(877101) },
+    { contractId: uuid(877102) },
+    { competenceId: uuid(877103) },
+    { after: { ...after, portao: { liberado: true } } },
+    { after: { ...after, blocking_summary: { ...after.blocking_summary, parecer_aprovado: true } } },
+    {
+      after: {
+        ...after,
+        blocking_summary: {
+          ...after.blocking_summary,
+          aprovacao_apresentacao_atual: true,
+        },
+      },
+    },
+    { after: { ...after, allowed_actions: { apresentar: true } } },
+    { after: { ...after, competencia: { ...before.competencia, id: uuid(877104) } } },
+  ];
+  for (const changed of bad) {
+    assert.throws(() => sut.assertF3V117OverviewConsumer({
+      ...input,
+      caseId: "IFV1-F3-C0455",
+      ...changed,
+    }), { code: "F3_V117_OVERVIEW_CONSUMER_MISMATCH" });
+  }
+  assert.throws(() => sut.assertF3V117OverviewConsumer({
+    ...input,
+    caseId: "IFV1-F3-C9999",
+  }), { code: "F3_V117_OVERVIEW_CONSUMER_MISMATCH" });
+});
+
+test("F3 C0461: revisão substitui parecer anterior sem criar aprovação", () => {
+  const organizationId = F3;
+  const contractId = uuid(878007);
+  const competenceId = uuid(878014);
+  const opinion = {
+    id: uuid(878018),
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    id_competencia: competenceId,
+    status: "aprovado",
+  };
+  const before = [opinion];
+  const after = [{ ...opinion, status: "substituido" }];
+  const input = { before, after, organizationId, contractId, competenceId };
+  assert.deepEqual(sut.assertF3V117OpinionsConsumer(input), {
+    state: "CONSUMER_CODE_CONTRACT_NOT_CERTIFIED",
+    caseId: "IFV1-F3-C0461",
+    competenceId,
+    replaced: 1,
+  });
+  for (const change of [
+    { organizationId: uuid(878101) },
+    { contractId: uuid(878102) },
+    { competenceId: uuid(878103) },
+    { after: [] },
+    { after: [opinion] },
+    { after: [after[0], after[0]] },
+    { after: [{ ...after[0], id_contrato: uuid(878104) }] },
+  ]) {
+    assert.throws(() => sut.assertF3V117OpinionsConsumer({ ...input, ...change }), {
+      code: "F3_V117_OPINION_CONSUMER_MISMATCH",
+    });
+  }
+});
+
+test("F3 C0465: auditoria vincula o evento ao resultado V117 sem forjar acesso HML", () => {
+  const organizationId = F3;
+  const receipt = { resultId: uuid(879017) };
+  const event = {
+    id: uuid(879018),
+    evento: "RevisaoRequisitoRegistrada",
+    entidade: "resultados_requisitos",
+    id_entidade: receipt.resultId,
+    correlation_id: "f3-code-contract",
+  };
+  const input = { organizationId, queryOrganizationId: organizationId, receipt, events: [event] };
+  assert.deepEqual(sut.assertF3V117AuditConsumer(input), {
+    state: "CONSUMER_CODE_CONTRACT_NOT_CERTIFIED",
+    caseId: "IFV1-F3-C0465",
+    auditRoleContract: { master: "ALLOW", leitor: "DENY" },
+    resultId: receipt.resultId,
+  });
+  for (const change of [
+    { organizationId: uuid(879101) },
+    { queryOrganizationId: uuid(879102) },
+    { receipt: { resultId: uuid(879103) } },
+    { events: [] },
+    { events: [event, event] },
+    { events: [{ ...event, evento: "OutroEvento" }] },
+    { events: [{ ...event, entidade: "contratos" }] },
+    { events: [{ ...event, id_entidade: uuid(879104) }] },
+    { events: [{ ...event, correlation_id: "" }] },
+  ]) {
+    assert.throws(() => sut.assertF3V117AuditConsumer({ ...input, ...change }), {
+      code: "F3_V117_AUDIT_CONSUMER_MISMATCH",
+    });
+  }
+});
