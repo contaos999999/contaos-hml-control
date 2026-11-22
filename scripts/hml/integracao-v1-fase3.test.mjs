@@ -1244,7 +1244,8 @@ test("F3 S4 V113: UI real cria competência com corpo cercado e confirma só ap�
   const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
   const fields = {};
   const listeners = [];
-  let posts = 0, reads = 0;
+  let posts = 0,
+    reads = 0;
   const emit = (url, method, status, data) => {
     const r = {
       url: () => url,
@@ -1260,19 +1261,18 @@ test("F3 S4 V113: UI real cria competência com corpo cercado e confirma só ap�
     async goto(url) {
       if (new URL(url).pathname === "/contratos/" + contractId + "/competencias") {
         reads++;
-        emit(
-          api + "/rest/v1/competencias?id_contrato=eq." + contractId,
-          "GET",
-          200,
-          [{ id: competenceId, competencia_referencia: reference }],
-        );
+        emit(api + "/rest/v1/competencias?id_contrato=eq." + contractId, "GET", 200, [
+          { id: competenceId, competencia_referencia: reference },
+        ]);
       }
     },
     locator(selector) {
       assert.equal(selector, "#v113-mes");
       return {
         waitFor: async () => undefined,
-        fill: async (value) => { fields[selector] = value; },
+        fill: async (value) => {
+          fields[selector] = value;
+        },
       };
     },
     waitForResponse(predicate) {
@@ -1317,8 +1317,12 @@ test("F3 S4 V113: UI real cria competência com corpo cercado e confirma só ap�
   };
   assert.equal(
     await sut.f3S4CreateCompetence({
-      page, fence: native, mutationFence: guarded, book,
-      organizationId: F3, contractId,
+      page,
+      fence: native,
+      mutationFence: guarded,
+      book,
+      organizationId: F3,
+      contractId,
     }),
     competenceId,
   );
@@ -1326,13 +1330,22 @@ test("F3 S4 V113: UI real cria competência com corpo cercado e confirma só ap�
   assert.equal(reads, 1);
   assert.equal(listeners.length, 0);
   const entry = book.created().at(-1);
-  assert.deepEqual({ id: entry.id, kind: entry.kind, organizationId: entry.organizationId }, {
-    id: competenceId, kind: "registro", organizationId: F3,
-  });
+  assert.deepEqual(
+    { id: entry.id, kind: entry.kind, organizationId: entry.organizationId },
+    {
+      id: competenceId,
+      kind: "registro",
+      organizationId: F3,
+    },
+  );
   await assert.rejects(
     sut.f3S4CreateCompetence({
-      page, fence: native, mutationFence: guarded, book,
-      organizationId: uuid(889013), contractId,
+      page,
+      fence: native,
+      mutationFence: guarded,
+      book,
+      organizationId: uuid(889013),
+      contractId,
     }),
     { code: "F3_S4_V113_PRECONDITION" },
   );
