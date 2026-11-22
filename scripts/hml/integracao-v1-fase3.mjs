@@ -2909,6 +2909,149 @@ export async function driveF3S1Ui({
   }
 }
 
+/**
+ * S2, produtor 5 (V102). Executa a ação exclusivamente pela UI e pela cerca CDP já instalada.
+ * Confirma o INSERT apenas depois da releitura da lista filtrada à organização F3.
+ * Não cria tokens, não consulta uma entidade com service_role, nem repete POST incerto.
+ */
+export function assertF3S2ContractorReadback({ created, rows, organizationId, name, query }) {
+  if (
+    !isUuid(organizationId) ||
+    typeof name !== "string" ||
+    !name.startsWith("ContaOS HML F3 ") ||
+    !created ||
+    !isUuid(created.id) ||
+    created.razao_social !== name ||
+    created.situacao !== "ativo" ||
+    !(query instanceof URL) ||
+    query.origin !== API_ORIGIN ||
+    query.pathname !== "/rest/v1/contratantes" ||
+    query.searchParams.getAll("id_organizacao").length !== 1 ||
+    query.searchParams.get("id_organizacao") !== "eq." + organizationId ||
+    !Array.isArray(rows)
+  ) {
+    fail("F3_S2_V102_READBACK");
+  }
+  const matches = rows.filter(
+    (row) =>
+      row?.id === created.id &&
+      row.razao_social === name &&
+      row.situacao === "ativo",
+  );
+  if (matches.length !== 1 || rows.some((row) => row?.id === created.id && !matches.includes(row))) {
+    fail("F3_S2_V102_READBACK");
+  }
+  return created.id;
+}
+
+export async function f3S2CreateContractor({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  name,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(organizationId) ||
+    book.organizationF3() !== organizationId ||
+    name !== "ContaOS HML F3 " + book.provenance().workflowRunId + " Contratante"
+  ) {
+    fail("F3_S2_V102_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratantes/novo", { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Novo contratante" }).waitFor({
+    state: "visible",
+    timeout: F3_S1_UI.timeout,
+  });
+  await fence.drain();
+  fence.assertSafe();
+  await page.locator("#v102-razao").fill(name);
+  await page.locator("#v102-tipo").selectOption("juridica");
+  await page.locator("#v102-documento").fill("");
+  const payload = {
+    id_organizacao: organizationId,
+    tipo_pessoa: "juridica",
+    documento: null,
+    razao_social: name,
+    nome_fantasia: null,
+    contato: {},
+    situacao: "ativo",
+  };
+  const requestId = mutationFence.arm({ producerOrder: 5, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (response) => {
+        const target = new URL(response.url());
+        return (
+          response.request().method() === "POST" &&
+          target.origin === API_ORIGIN &&
+          target.pathname === "/rest/v1/contratantes" &&
+          target.search === "?select=id%2Crazao_social%2Csituacao"
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.getByRole("button", { name: "Salvar", exact: true }).click();
+    const reply = await posted;
+    if (reply.status() !== 201) fail("F3_S2_V102_HTTP");
+    const created = await reply.json();
+    if (!isUuid(created?.id) || created.razao_social !== name || created.situacao !== "ativo") {
+      fail("F3_S2_V102_RESPONSE");
+    }
+    await page
+      .getByRole("heading", { name: "Contratante cadastrado com sucesso." })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_S2_V102_UNCERTAIN");
+    }
+    const listing = page.waitForResponse(
+      (response) => {
+        const target = new URL(response.url());
+        return (
+          response.request().method() === "GET" &&
+          target.origin === API_ORIGIN &&
+          target.pathname === "/rest/v1/contratantes" &&
+          target.searchParams.get("id_organizacao") === "eq." + organizationId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.goto(HML_ORIGIN + "/contratantes", { waitUntil: "networkidle" });
+    const listed = await listing;
+    if (listed.status() !== 200) fail("F3_S2_V102_READBACK");
+    const id = assertF3S2ContractorReadback({
+      created,
+      rows: await listed.json(),
+      organizationId,
+      name,
+      query: new URL(listed.url()),
+    });
+    const row = page.getByRole("row").filter({ hasText: name });
+    await row.waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    if ((await row.count()) !== 1) fail("F3_S2_V102_UI_READBACK");
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: id, organizationId });
+    book.assertIsolation();
+    return id;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Nenhum envio comprovado: não inventar mutação nem descartar a causa original.
+    }
+    throw error;
+  }
+}
+
 async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }
