@@ -4682,6 +4682,16 @@ export async function f3S5ApproveOpinion({
   }
 }
 
+/** V119 depende de aprovação V118 real, nunca de uma intenção futura V119. */
+export function hasF3V118ConfirmedApproval(requests) {
+  return (
+    Array.isArray(requests) &&
+    requests.some(
+      (q) => q?.producerOrder === 18 && q.action === "aprovacao" && q.outcome === "confirmed",
+    )
+  );
+}
+
 /** V119: registro gera um pacote novo e não é confirmação da aprovação anterior. */
 export function assertF3S5PresentationReadback({ presentationId, rows, competenceId }) {
   if (
@@ -4727,11 +4737,7 @@ export async function f3S5RegisterPresentation({
                 q.outcome === "confirmed",
             ),
       ) ||
-    !book
-      .summary()
-      .requests.some(
-        (q) => q.producerOrder === 19 && q.action === "aprovacao" && q.outcome === "confirmed",
-      )
+    !hasF3V118ConfirmedApproval(book.summary().requests)
   ) {
     fail("F3_V119_PRESENTATION_PRECONDITION");
   }
