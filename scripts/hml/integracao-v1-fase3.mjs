@@ -830,11 +830,7 @@ export const F3_UPDATE_IDENTITY_SOURCE = Object.freeze({ 6: 5, 8: 7 });
 
 function authorizedF3IdentityReuse(state, event, intent) {
   const producer = F3_UPDATE_IDENTITY_SOURCE[intent.producerOrder];
-  if (
-    !producer ||
-    intent.kind !== "principal" ||
-    event.organizationId !== state.organizationF3
-  ) {
+  if (!producer || intent.kind !== "principal" || event.organizationId !== state.organizationF3) {
     return false;
   }
   return state.created.some(
