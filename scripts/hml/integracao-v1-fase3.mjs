@@ -5221,6 +5221,190 @@ export function assertF3V117DriverCodeContract({
   });
 }
 
+/** V117: revisão pela UI e leitura posterior V116; não certifica caseId. */
+export async function f3S4ReviewRequirement({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  competenceId,
+  requirementId,
+  requirementCode,
+  documentVersionId,
+  documentName,
+  documentVersionNumber,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(organizationId) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(competenceId) ||
+    !isUuid(requirementId) ||
+    !isUuid(documentVersionId) ||
+    typeof requirementCode !== "string" ||
+    !requirementCode.trim() ||
+    typeof documentName !== "string" ||
+    !documentName.trim() ||
+    !Number.isSafeInteger(documentVersionNumber) ||
+    documentVersionNumber < 1 ||
+    !book.created().some((entry) =>
+      entry.id === competenceId &&
+      entry.organizationId === organizationId &&
+      book.summary().requests.some(
+        (request) =>
+          request.requestId === entry.requestId &&
+          request.producerOrder === 14 &&
+          request.outcome === "confirmed",
+      ),
+    ) ||
+    !book.created().some((entry) =>
+      entry.id === documentVersionId &&
+      entry.organizationId === organizationId &&
+      book.summary().requests.some(
+        (request) =>
+          request.requestId === entry.requestId &&
+          request.producerOrder === 15 &&
+          request.outcome === "confirmed",
+      ),
+    )
+  ) {
+    fail("F3_V117_UI_PRECONDITION");
+  }
+  const reading = (response) =>
+    response.request().method() === "POST" &&
+    response.url() === API_ORIGIN + "/rest/v1/rpc/obter_analise_competencia_v116";
+  const initial = page.waitForResponse(reading, { timeout: F3_S1_UI.timeout });
+  await page.goto(HML_ORIGIN + "/competencias/" + competenceId + "/analise", {
+    waitUntil: "networkidle",
+  });
+  const initialResponse = await initial;
+  if (initialResponse.status() !== 200) fail("F3_V117_UI_INITIAL");
+  const analysisBefore = await initialResponse.json();
+  if (
+    analysisBefore?.competencia?.id !== competenceId ||
+    analysisBefore.competencia.id_organizacao !== organizationId ||
+    analysisBefore.competencia.id_contrato !== contractId ||
+    analysisBefore.estado_analise !== "complete" ||
+    analysisBefore.stale !== false ||
+    !isUuid(analysisBefore.execucao_atual?.id)
+  ) {
+    fail("F3_V117_UI_PRECONDITION");
+  }
+  await page.getByRole("button", {
+    name: "Abrir requisito " + requirementCode,
+    exact: true,
+  }).click();
+  const editor = page.getByRole("region", { name: "Revisão humana do requisito" });
+  const contextRead = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url() === API_ORIGIN + "/rest/v1/rpc/obter_contexto_revisao_v117",
+    { timeout: F3_S1_UI.timeout },
+  );
+  await editor.getByRole("button", { name: "Revisar resultado", exact: true }).click();
+  const contextResponse = await contextRead;
+  if (contextResponse.status() !== 200) fail("F3_V117_UI_CONTEXT");
+  const contextRequest = contextResponse.request().postDataJSON();
+  if (
+    contextRequest?.p_id_competencia !== competenceId ||
+    contextRequest?.p_id_requisito !== requirementId
+  ) {
+    fail("F3_V117_UI_CONTEXT");
+  }
+  const context = await contextResponse.json();
+  if (
+    context?.schema_versao !== "revisao-v117" ||
+    context.id_organizacao !== organizationId ||
+    context.id_contrato !== contractId ||
+    context.id_competencia !== competenceId ||
+    context.id_requisito !== requirementId ||
+    context.pode_revisar !== true ||
+    context.id_execucao_esperada !== analysisBefore.execucao_atual.id
+  ) {
+    fail("F3_V117_UI_PRECONDITION");
+  }
+  await editor.getByLabel("Resultado da revisão").selectOption("conforme");
+  const justificativa = "Revisão funcional F3 vinculada ao requisito e evidência aprovada";
+  const fundamento = "Validação de integração F3 CODE";
+  await editor.getByLabel("Justificativa da revisão").fill(justificativa);
+  await editor.getByLabel("Fundamento da revisão").fill(fundamento);
+  await editor.getByRole("checkbox", {
+    name: "Selecionar " + documentName + " versão " + documentVersionNumber,
+    exact: true,
+  }).check();
+  await editor.getByRole("button", { name: "Revisar e confirmar", exact: true }).click();
+  await fence.drain();
+  fence.assertSafe();
+  const payload = {
+    p_id_competencia: competenceId,
+    p_id_requisito: requirementId,
+    p_id_execucao_esperada: context.id_execucao_esperada,
+    p_id_resultado_esperado: context.id_resultado_esperado,
+    p_hash_esperado: context.hash_esperado,
+    p_resultado: "conforme",
+    p_justificativa: justificativa,
+    p_fundamento: fundamento,
+    p_evidencias: [{ id_versao_documento: documentVersionId }],
+    p_request_id: f3Slot("uuid", "v117_review"),
+  };
+  const requestId = mutationFence.arm({ producerOrder: 17, bodies: [payload] });
+  try {
+    const sent = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/registrar_revisao_requisito_v117",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await editor.getByRole("button", { name: "Confirmar revisão", exact: true }).click();
+    const posted = await sent;
+    if (posted.status() !== 200) fail("F3_V117_UI_HTTP");
+    const command = posted.request().postDataJSON();
+    const result = await posted.json();
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V117_UI_UNCERTAIN");
+    }
+    const reread = page.waitForResponse(reading, { timeout: F3_S1_UI.timeout });
+    await page.reload({ waitUntil: "networkidle" });
+    const consumer = await reread;
+    if (consumer.status() !== 200) fail("F3_V117_UI_READBACK");
+    const correlated = assertF3V117DriverCodeContract({
+      review: { context, command, result },
+      analysisBefore,
+      analysisAfter: await consumer.json(),
+      organizationId,
+      contractId,
+      competenceId,
+      requirementId,
+      documentVersionId,
+    });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: correlated.resultId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId,
+      resultId: correlated.resultId,
+    });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Resultado incerto: exige readback e nunca repete com outra chave.
+    }
+    throw error;
+  }
+}
+
 /** V122 — só há relatório utilizável quando a ingestão foi vinculada ao arquivo seguro. */
 export function assertF3V122HistoricalReadback({ before, after, reportId, fileId, executionId }) {
   if (
