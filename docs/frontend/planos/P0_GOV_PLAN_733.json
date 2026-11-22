@@ -12,7 +12,7 @@
   "production": "NO-GO",
   "certification": "F3_NOT_CERTIFIED",
   "constraints": [
-    "Apenas os dois arquivos explicitamente listados nesta PR BUILD",
+    "Somente os três arquivos explicitamente listados em files para a PR BUILD #733; não acrescentar outros sem revisão de escopo",
     "Nenhum PASS para os 138 casos sem provas reais, verificadas e revisadas",
     "O coletor não deve gerar hashes artificiais ou aceitar strings sintéticas como comprovação de resultado",
     "Preservar ledgers CODE/HML existentes e F1/F2",
