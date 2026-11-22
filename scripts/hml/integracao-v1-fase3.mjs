@@ -4208,6 +4208,53 @@ export function assertF3V117ReviewReceipt({
   });
 }
 
+/** C0458 (V117 -> V116): vínculo entre recibo novo e resultado observado.
+ * Este verificador roda sobre respostas do consumidor oficial: não cria nem substitui
+ * a execução de UI, a prova dos perfis MASTER/leitor ou o certificado CODE. */
+export function assertF3V117V116ConsumerReadback({
+  receipt,
+  before,
+  after,
+  competenceId,
+  requirementId,
+}) {
+  const invalid = () => fail("F3_V117_V116_CONSUMER_MISMATCH");
+  if (
+    !isUuid(competenceId) ||
+    !isUuid(requirementId) ||
+    !isUuid(receipt?.executionId) ||
+    !isUuid(receipt?.resultId) ||
+    receipt?.state !== "CONTRACT_CORRELATED_NOT_CERTIFIED" ||
+    before?.competencia?.id !== competenceId ||
+    after?.competencia?.id !== competenceId ||
+    after?.estado_analise !== "complete" ||
+    after?.stale !== false ||
+    after?.execucao_atual?.id !== receipt.executionId ||
+    !Array.isArray(after?.resultados) ||
+    before?.execucao_atual?.id === receipt.executionId
+  ) {
+    invalid();
+  }
+  const matches = after.resultados.filter(
+    (row) => row?.id_requisito === requirementId,
+  );
+  if (
+    matches.length !== 1 ||
+    matches[0].id_resultado !== receipt.resultId ||
+    matches[0].resultado !== "conforme"
+  ) {
+    invalid();
+  }
+  return Object.freeze({
+    state: "CONSUMER_CODE_CONTRACT_NOT_CERTIFIED",
+    caseId: "IFV1-F3-C0458",
+    competenceId,
+    requirementId,
+    executionId: receipt.executionId,
+    resultId: receipt.resultId,
+  });
+}
+
 async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }
