@@ -1079,7 +1079,15 @@ test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade ent
       code: "F3_INTENT_STATE",
     },
   );
-  // Materialização tardia de uma principal abandonada: duas principais confirmadas, critério falha.
+  // READBACK adversarial: positivo depois de negativo no mesmo run era removível
+  // sem alterar o resumo e fazia a propriedade de replay aceitar um evento apagado.
+  const beforeSecondRead = JSON.stringify([b3.summary(), b3.created()]);
+  assert.throws(
+    () => b3.reconcile(uuid(7), { found: true, entityId: uuid(777), organizationId: F3 }),
+    { code: "F3_INTENT_STATE" },
+  );
+  assert.equal(JSON.stringify([b3.summary(), b3.created()]), beforeSecondRead);
+  // Materialização tardia como PRIMEIRA releitura de uma execução nova continua válida.
   const b4 = sut.createF3IntentBook({ provenance: PROV, ledger: l2 });
   b4.reconcile(uuid(7), { found: true, entityId: uuid(777), organizationId: F3 });
   assert.ok(criteria(r3(b4), { policy: POLICY, ledger: l2 }).includes("PRINCIPALS"));
