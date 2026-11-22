@@ -6114,6 +6114,7 @@ test("F3 CODE: coletor acionado por caseId e ausência de driver nunca vira PASS
     },
     caseDrivers: {},
     caseVerifiers: {},
+    collector: realCollector,
   });
   assert.equal(report.state, "UNREVIEWED_NOT_CERTIFIED");
   assert.equal(report.entries.length, 138);
