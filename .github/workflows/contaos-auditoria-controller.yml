@@ -103,6 +103,30 @@ jobs:
           node scripts/p0-rca-impact-gate.mjs --audit-semantic-inventory | tee /tmp/p0-semantic-source-inventory.json
           node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync("/tmp/p0-semantic-source-inventory.json","utf8"));if(!x.source_verified||x.anchored_lines!==118||x.axis_backlog?.axis_slots!==826||x.axis_backlog?.normative_rule_count!==137||x.axis_backlog?.normative_axis_slots!==959||x.axis_backlog?.anchored_normative_rules!==137||x.axis_backlog?.unlinked_normative_rules!==0||x.axis_backlog?.positionally_verified_rules!==90||x.axis_backlog?.segment_located_rules!==37||x.axis_backlog?.provisionally_located_rules!==0||x.axis_backlog?.all_possible_rule_pairs!==9316||x.axis_backlog?.untriaged_rule_pairs!==9316||x.reverse_coverage?.source_count!==118||x.reverse_coverage?.uncovered_source_count!==18||x.reverse_coverage?.covered_source_count!==100||x.reverse_coverage?.uncovered?.some(r=>!r.category||r.assessment!=="REQUIRES_INDEPENDENT_SEMANTIC_REVIEW")||x.reverse_coverage?.rule_count!==137||x.reverse_coverage?.unproven_rule_count!==137||x.reverse_coverage?.source_count!==x.reverse_coverage?.covered_source_count+x.reverse_coverage?.uncovered_source_count||x.reverse_coverage?.invalid?.length!==0||x.reverse_coverage?.semantic_completeness!=="INCONCLUSIVE"||x.reverse_coverage?.release!=="NO_GO"||x.semantic_preaudit_gate?.semantic_preaudit!=="INCONCLUSIVE"||x.semantic_preaudit_gate?.semantic_completeness!=="INCONCLUSIVE"||x.semantic_preaudit_gate?.release!=="NO_GO"||x.semantic_release_gate?.semantic_completeness!=="INCONCLUSIVE"||x.semantic_release_gate?.release!=="NO_GO"||x.semantic_release_gate?.rule_count!==137||x.semantic_release_gate?.sentence_count!==381||x.semantic_release_gate?.source_count!==118||x.semantic_release_gate?.pair_count!==9316||x.semantic_release_gate?.issues?.length<5||!x.sentence_candidates?.partition_verified||x.sentence_candidates?.candidate_count<=118||x.sentence_candidates?.unreviewed!==x.sentence_candidates?.candidate_count||x.axis_backlog?.semantic_completeness!=="INCONCLUSIVE"||x.axis_backlog?.rows?.length!==118||x.semantic_completeness!=="INCONCLUSIVE"||x.release!=="NO_GO")process.exit(1);console.log("SEMANTIC_SOURCE_INVENTORY VERIFIED; SEMANTIC_COMPLETENESS INCONCLUSIVE");'
 
+      # Dossiê textual completo, NÃO certificação semântica; sem privilégio de publicação.
+      - name: P0 SEMANTIC DOSSIER - negative tests E1-E7 381 9316
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-name-pattern="P0 SEMANTIC DOSSIER:" scripts/p0-rca-impact-gate.test.mjs
+          node --test --test-name-pattern="P0 TEN MATERIAL DISPUTES:" scripts/p0-rca-impact-gate.test.mjs
+
+      - name: P0 SEMANTIC DOSSIER - export read-only SHA256 manifest NO-GO
+        shell: bash
+        env:
+          INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha || 'e007c4bad8f2c66c489c55e4752b71bb19c5ced0' }}
+        run: |
+          set -euo pipefail
+          node scripts/p0-rca-impact-gate.mjs --export-semantic-dossier --dossier-dir="$RUNNER_TEMP/contaos-semantic-corpus"
+          node -e 'const fs=require("fs");const p=process.env.RUNNER_TEMP+"/contaos-semantic-corpus/manifest.json";const m=JSON.parse(fs.readFileSync(p,"utf8"));if(m.counts?.rules!==137||m.counts?.axes!==959||m.counts?.sentences!==381||m.counts?.pairs!==9316||m.counts?.unique_pairs!==9316||m.semantic_completeness!=="INCONCLUSIVE"||m.release!=="NO_GO")process.exit(1);console.log("SEMANTIC DOSSIER MATERIALIZED, SHA256 VERIFIED, SEMANTIC_CERTIFICATION NO-GO")'
+
+      - name: P0 SEMANTIC DOSSIER - upload source-bound worklist
+        uses: actions/upload-artifact@v4
+        with:
+          name: contaos-p0-semantic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/contaos-semantic-corpus/
+          retention-days: 30
+          if-no-files-found: error
       - name: P0 V2 LAYER 01
         shell: bash
         run: |
