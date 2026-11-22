@@ -27,6 +27,32 @@ export function canonicalBackendSource() {
   return /^[a-f0-9]{40}$/.test(snap.source_commit||'')?snap.source_commit:null;
  } catch {return null;}
 }
+export function verifyBrowserReport(report) {
+  const expected = new Set(['HML-AUTH-001','HML-AUTH-002','HML-AUTH-003']);
+  if (!report || !Array.isArray(report.suites) || !Array.isArray(report.errors) ||
+      report.errors.length !== 0 || !report.stats ||
+      report.stats.expected !== 3 || report.stats.unexpected !== 0 ||
+      report.stats.flaky !== 0 || report.stats.skipped !== 0) return false;
+  const seen = new Set();
+  const visit = (suites) => {
+    if (!Array.isArray(suites)) return false;
+    for (const suite of suites) {
+      if (!suite || !Array.isArray(suite.specs)) return false;
+      for (const spec of suite.specs) {
+        const id = /^HML-AUTH-00[123]:/.exec(spec?.title || '')?.[0]?.slice(0, -1);
+        if (!id || !expected.has(id) || seen.has(id) || spec.ok !== true ||
+            !Array.isArray(spec.tests) || spec.tests.length !== 1) return false;
+        const entry=spec.tests[0];
+        if (entry.status !== 'expected' || !Array.isArray(entry.results) ||
+            entry.results.length !== 1 || entry.results[0]?.status !== 'passed') return false;
+        seen.add(id);
+      }
+      if (!visit(suite.suites || [])) return false;
+    }
+    return true;
+  };
+  return visit(report.suites) && seen.size === expected.size;
+}
 export const REQUIRED = [
   'CONTAOS_HML_FRONTEND_URL', 'CONTAOS_HML_ALLOWED_HOST',
   'CONTAOS_HML_USER_A_EMAIL', 'CONTAOS_HML_USER_A_PASSWORD',
