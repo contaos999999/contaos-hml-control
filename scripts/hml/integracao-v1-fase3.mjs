@@ -4509,7 +4509,7 @@ export async function f3S3SetApplicability({
     p_id_versao: versionId,
     p_aplicavel: true,
     p_fundamento: "Teste funcional isolado F3 CODE",
-    p_atualizado_em_esperado: before.atualizado_em ?? null,
+    p_atualizado_em_esperado: before?.atualizado_em ?? null,
     p_chave_idempotencia: f3Slot("uuid", "v107_aplicabilidade"),
   };
   const requestId = mutationFence.arm({ producerOrder: 10, bodies: [body] });
