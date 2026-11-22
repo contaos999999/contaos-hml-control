@@ -2974,6 +2974,15 @@ export async function runF3Session({
     // Um driver parcial (inclusive S1) nunca pode certificar os 138 casos.
     // O retorno completo deve trazer relatório validado pelo gate existente.
     if (result?.state !== "F3_COMPLETE" || !result.report) fail("F3_DRIVER_PENDING");
+    // O relatório deve pertencer a ESTA execução, não a outro driver ou sessão anterior.
+    // O livro é a fonte canônica de eventos, inventário e proveniência das mutações.
+    if (
+      JSON.stringify(result.report.provenance) !== JSON.stringify(book.provenance()) ||
+      JSON.stringify(result.report.intents) !== JSON.stringify(book.summary()) ||
+      result.report.isolation?.organizationF3 !== book.organizationF3() ||
+      JSON.stringify(result.report.isolation?.created) !== JSON.stringify(book.created())
+    )
+      fail("F3_DRIVER_REPORT_MISMATCH");
     if (f3Gate(result.report, catalogue, { ledger }) !== "PASS") fail("F3_GATE_INCOMPLETE");
     return { code: "F3_COMPLETE", report: result.report };
   } catch (error) {
