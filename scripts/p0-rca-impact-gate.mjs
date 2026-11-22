@@ -3334,3 +3334,46 @@ export function executePriorityCausalCounterproofs(triage){
     issues,probes:outputs,
     semantic_completeness:"INCONCLUSIVE",activation:"NO_GO"};
 }
+
+/** Author's material interpretations of all 18 reverse source gaps; NEVER proof of independent review. */
+export const P0_REVERSE_GAP_REVIEWS=Object.freeze([["PLAN",3,"NORMATIVE_STATUS_BOUNDARY","Sem BUILD","PLAN-S3-06","A situação proposta e a vedação de efeito retroativo impedem tratar um PLAN como instalação ou certificação."],["PLAN",7,"NORMATIVE_FRESHNESS","Reconsultar a ref viva","PLAN-S31-06","O SHA histórico é apenas baseline inicial: a origem viva tem de ser consultada de novo antes do BUILD."],["PLAN",8,"HISTORICAL_NON_CERTIFICATION","não certifica sozinha","PLAN-S3-06","O estado anterior de uma PR não atesta por si a conclusão funcional nem o certificado exigível."],["PLAN",9,"ARCHITECTURE_PRESERVATION","Preservar seus métodos","PLAN-S3-03","Inventário de arquitetura com proibição efetiva de substituir métodos, recibos, perfis e histórico existentes."],["PLAN",10,"HISTORICAL_WORKFLOW_LIST","Workflows existentes",null,"Enumeração factual de workflows observados, que não significa execução, requerimento ou aprovação atual."],["PLAN",11,"RULESET_OBSERVED_ONLY","Não afirmar que já há check","PLAN-S31-01","Configuração do ruleset relatada como observação temporal; não permite afirmar gate de missão instalado."],["PLAN",12,"MANDATORY_SOURCES_AND_SCOPE","Fontes obrigatórias","PLAN-S4-14","Exige consulta às fontes canônicas antes da execução e limita a inspeção de backend no presente escopo."],["PLAN",13,"NO_FALSE_INSTALLATION","proíbe declarar","PLAN-S4-14","Veda converter documentação ou testes locais em instalação e limita explicitamente artefatos protegidos."],["PLAN",17,"EXPLICIT_PROBLEM_STATEMENT","Isso",null,"É diagnóstico de lacuna de missão e expressamente não comprova violação de regras de merge existentes."],["PLAN",19,"SEGREGATION_OF_DUTIES","Implementadores não se autocertificam","PLAN-S31-07","Auditor não assume autorização do titular nem poderes de bypass, merge ou operação de produção."],["PLAN",89,"REQUIRED_TESTS","GREEN: testes existentes","PLAN-S3-06","Estabelece matriz de testes, mutantes e execução por fonte confiável, distinta de mera definição de check."],["PLAN",117,"STRUCTURAL_TABLE_HEADER","Causa e classificação",null,"Cabeçalho de duas colunas para organização de RCA; não há efeito jurídico técnico autônomo."],["PLAN",123,"STRUCTURAL_SECTION_HEADER","ZERO-DRIFT",null,"Cabeçalho isolado de seção, cujo conteúdo normativo é expresso nos parágrafos subsequentes."],["PLAN",128,"CONDITIONAL_VISUAL_NA","Qualquer alteração futura de UI","PLAN-S4-14","Dispensa visual condicionada ao diff documental; alteração de interface obriga novo plano e teste."],["PLAN",133,"PAST_REVIEW_ONLY","Segundo parecer",null,"Parecer histórico CHANGES_REQUESTED de SHA anterior não satisfaz revisão vigente ou contraditório atual."],["PLAN",141,"PAST_REVIEW_ONLY","Terceiro parecer",null,"Parecer histórico da mesma série não é prova de revisão ou aprovação no HEAD atualmente avaliado."],["EMENDA",7,"STRUCTURAL_TABLE_HEADER","Ressalva comprovada",null,"Cabeçalho descritivo da matriz; os requisitos aplicáveis constam nas linhas específicas abaixo."],["EMENDA",63,"STRUCTURAL_SECTION_HEADER","ZERO-DRIFT",null,"Cabeçalho isolado da diretriz visual, sem predicado independente do conteúdo da seção."]].map(([doc,line,kind,marker,linked,reason])=>
+  Object.freeze({doc,line,kind,marker,related:linked?[linked]:[],reason})));
+export function materialReviewOfReverseGaps(inventory,worklist,reverse){
+  const issues=[];
+  const bySource=new Map((inventory?.lines||[]).map(x=>[x.id,x]));
+  const knownRules=new Set((worklist?.normative_rules||[]).map(x=>x.rule_id));
+  const seen=new Set();
+  if(!inventory?.inventory_verified||!worklist?.worklist_verified||
+    reverse?.uncovered_source_count!==18||!Array.isArray(reverse.uncovered))
+    issues.push("SEMANTIC_REVERSE_MATERIAL_BASELINE");
+  const records=(reverse?.uncovered||[]).map(u=>{
+    const doc=u.path?.includes("/EMENDA_")?"EMENDA":"PLAN";
+    const key=doc+":"+u.line;
+    const def=P0_REVERSE_GAP_REVIEWS.find(x=>x.doc===doc&&x.line===u.line);
+    const row=bySource.get(u.source_id);
+    if(!def||!row||seen.has(key)||u.path!==row.path||
+      u.line!==row.line||u.blob!==row.blob||
+      u.text_sha256!==row.text_sha256||!row.text.includes(def.marker)||
+      def.related.some(id=>!knownRules.has(id))||def.reason.length<55)
+      issues.push("SEMANTIC_REVERSE_MATERIAL_INVALID: "+key);
+    seen.add(key);
+    return {source_id:u.source_id,path:u.path,line:u.line,
+      blob:u.blob,text_sha256:u.text_sha256,text:row?.text??null,
+      kind:def?.kind??"MISSING_INTERPRETATION",
+      reason:def?.reason??null,related:def?.related??[],
+      review_level:"AUTHOR_PROPOSAL",
+      independent_review:null,positive_witness:null,negative_witness:null,
+      verdict:"REQUIRES_INDEPENDENT_SEMANTIC_REVIEW"};
+  });
+  for(const def of P0_REVERSE_GAP_REVIEWS)
+    if(!seen.has(def.doc+":"+def.line))
+      issues.push("SEMANTIC_REVERSE_MATERIAL_OMITTED: "+def.doc+":"+def.line);
+  if(records.length!==18||seen.size!==18)
+    issues.push("SEMANTIC_REVERSE_MATERIAL_INCOMPLETE");
+  return {schema:"contaos.semantic-reverse-gap-material.v1",records,
+    total:records.length,unique:seen.size,
+    source_linked:records.filter(r=>r.related.length>0).length,
+    structural_or_historical:records.filter(r=>r.related.length===0).length,
+    issues,adjudicated_independently:0,uncovered_spans_remaining:18,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}

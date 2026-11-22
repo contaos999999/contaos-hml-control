@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, writeSemanticDossierJsonl, validatePrioritySemanticDisputes, executePriorityCausalCounterproofs, P0_PRIORITY_CAUSAL_MODELS, P0_PRIORITY_CAUSAL_PROBES, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, writeSemanticDossierJsonl, validatePrioritySemanticDisputes, executePriorityCausalCounterproofs, materialReviewOfReverseGaps, P0_REVERSE_GAP_REVIEWS, P0_PRIORITY_CAUSAL_MODELS, P0_PRIORITY_CAUSAL_PROBES, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2539,4 +2539,36 @@ test("P0 TEN CAUSAL MODELS: each source-grounded pair has a positive and discrim
     cases:output.cases,positive:output.positive_models,
     negative:output.negative_models,live:0,
     semantic_completeness:output.semantic_completeness})+"\n");
+});
+
+test("P0 REVERSE 18 MATERIAL: provenance and distinct interpretations for all reverse source gaps",()=>{
+  const blobs=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES).map(
+    ([path,blob])=>[path,{content:readFileSync(path,"utf8"),blob}]));
+  const inv=inventoryProtectedSemanticLines(blobs);
+  const work=buildSevenAxisSemanticBacklog(inv);
+  const reverse=auditSemanticReverseCoverage(inv,work);
+  const result=materialReviewOfReverseGaps(inv,work,reverse);
+  assert.deepEqual(result.issues,[]);
+  assert.deepEqual([result.total,result.unique,result.uncovered_spans_remaining],[18,18,18]);
+  assert.equal(P0_REVERSE_GAP_REVIEWS.length,18);
+  assert.ok(result.records.every(r=>r.text&&r.reason.length>=55&&
+    r.independent_review===null&&r.positive_witness===null&&
+    r.verdict==="REQUIRES_INDEPENDENT_SEMANTIC_REVIEW"));
+  const missing=structuredClone(reverse);
+  missing.uncovered.splice(2,1);
+  assert.ok(materialReviewOfReverseGaps(inv,work,missing).issues.some(x=>
+    x.startsWith("SEMANTIC_REVERSE_MATERIAL_OMITTED")));
+  const forged=structuredClone(reverse);
+  forged.uncovered[0].text_sha256="0".repeat(64);
+  assert.ok(materialReviewOfReverseGaps(inv,work,forged).issues.some(x=>
+    x.startsWith("SEMANTIC_REVERSE_MATERIAL_INVALID")));
+  const wrongRule=structuredClone(work);
+  wrongRule.normative_rules=wrongRule.normative_rules.filter(x=>
+    x.rule_id!=="PLAN-S4-14");
+  assert.ok(materialReviewOfReverseGaps(inv,wrongRule,reverse).issues.some(x=>
+    x.startsWith("SEMANTIC_REVERSE_MATERIAL_INVALID")));
+  assert.equal(result.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(result.release,"NO_GO");
+  process.stdout.write("P0-REVERSE-MATERIAL "+JSON.stringify({
+    reviewed:result.total,independent:0,remaining:18,release:"NO_GO"})+"\\n");
 });
