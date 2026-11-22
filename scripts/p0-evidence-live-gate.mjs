@@ -37,7 +37,10 @@ function itemsFor(m) {
   return items;
 }
 
-export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = {}) {
+export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gate = 'CODE_CERTIFICATION' } = {}) {
+  if (!['CODE_CERTIFICATION', 'GATE_PROD'].includes(gate))
+    return { errors: ['P0 LIVE: gate desconhecido, operação bloqueada.'], checks: [], checked: 0 };
+  const requireLive = gate === 'GATE_PROD';
   const errors = [];
   const checks = [];
   const fail = (msg) => errors.push("P0 LIVE: " + msg);
@@ -177,6 +180,7 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
           fail(label + ": Teste C visual/E2E SKIPPED, SHA divergente ou artefatos não comprovados.");
           return;
         }
+        if (requireLive) {
         const e2e = rec.hml_e2e;
         const hmlId = ciRef(e2e?.run_url);
         // Uma auditoria visual Trilha A, mesmo SUCCESS, nao autentica
@@ -270,6 +274,7 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
           fail(label + ": relatório HML não está vinculado aos casos/jobs/artefatos GitHub reais.");
           return;
         }
+        } // Contraprovas LIVE exclusivamente no GATE PROD.
       }
       checks.push({ label, pr: rr.pr, run: runId, sha: rec.pr_merge_sha, reviewer: review.user.login });
     } catch (e) {
@@ -336,13 +341,14 @@ async function main() {
   try { m = JSON.parse(readFileSync(P0_MANIFEST, "utf8")); }
   catch (e) { console.error("P0 LIVE FAIL: manifesto inválido " + e.message); process.exitCode = 1; return; }
   const token = String(process.env.GITHUB_TOKEN || "");
-  const result = await verifyEvidenceLive(m, { apiGet: (path) => githubGet(path, token) });
+  const gate = process.env.CONTAOS_CERTIFICATION_GATE || "CODE_CERTIFICATION";
+  const result = await verifyEvidenceLive(m, { apiGet: (path) => githubGet(path, token), gate });
   if (result.errors.length) {
     result.errors.forEach((msg) => console.error(msg));
     process.exitCode = 1;
     return;
   }
-  console.log("P0 LIVE PASS: " + result.checked +
+  console.log("P0 " + gate + " PASS: " + result.checked +
     " certificados não legados validados em GitHub REST; casos PENDENTE não foram presumidos certificados.");
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) ===
