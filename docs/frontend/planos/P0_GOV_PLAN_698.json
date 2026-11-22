@@ -1,0 +1,21 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 698,
+  "files": [
+    ".github/workflows/contaos-hml-authenticated-counterproofs.yml"
+  ],
+  "plan_documento": "docs/frontend/planos/PLAN_P0_HML_AUTHENTICATED_COUNTERPROOFS_2026-11-21.md",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/698",
+  "plan_base_sha": "1f8667b3c522bd7951cd1b47669fe46b24d30e28",
+  "plan_aprovacao": "Autorização expressa do titular para resolver BUILD HML; escopo restrito a corrigir incompatibilidade Ubuntu 26.04/Playwright 1.58.2 comprovada no run 44977265839.",
+  "justificativa": "Fixar ubuntu-24.04 no workflow Playwright sem bypass e reexecutar HML",
+  "ativacao_autorizada": false,
+  "full_diff": true,
+  "red": {
+    "run_id": 44977326652,
+    "job_id": 137070022947,
+    "head": "06795c729f02905479cb187423c671fd6551596e",
+    "conclusion": "failure"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 692,
+  "files": [
+    "scripts/csdi-receipt-validator.mjs",
+    "scripts/csdi-receipt-validator.test.mjs",
+    "scripts/csdi-live-consumer.mjs",
+    "scripts/csdi-live-consumer.test.mjs",
+    ".github/workflows/csdi-structural-tests.yml",
+    "docs/frontend/planos/PROPOSTA_EMENDA_CSDI_SUBSTITUICAO_AUDITOR_INDEPENDENTE.md",
+    "docs/frontend/planos/INVENTARIO_MIGRACAO_CSDI.md",
+    "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md",
+    "docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md",
+    ".github/workflows/csdi-normative-extraction.yml",
+    "scripts/csdi-normative-extractor.mjs",
+    "scripts/csdi-zero-drift-counterproof.mjs"
+  ],
+  "plan_documento": "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/692",
+  "plan_base_sha": "e007c4bad8f2c66c489c55e4752b71bb19c5ced0",
+  "plan_blob": "21c31ff831f1d1a2a4d9fec78d7dfacd019247c3",
+  "plan_aprovacao": "Decisão expressa do titular em 2026-11-21, limitada à substituição do parecer externo no gate semântico e BUILD do consumidor CSDI sem ativação",
+  "justificativa": "Implementar certificação semântica interna fail-closed com provas integrais, sete eixos, contraditório interno e evidência LIVE, sem modificar segurança/ativação/PROD",
+  "ativacao_autorizada": false,
+  "full_diff": true,
+  "amendment_proposed": true,
+  "amendment_approved": true,
+  "pending_scope_additions": [
+    ".github/workflows/csdi-normative-extraction.yml",
+    "scripts/csdi-normative-extractor.mjs",
+    "scripts/csdi-zero-drift-counterproof.mjs"
+  ],
+  "amendment_red": {
+    "run_id": 44973889031,
+    "job_id": 137059362148,
+    "head": "1da72682c22c14afb1205ce28015861bd38e3704",
+    "conclusion": "failure"
+  },
+  "amendment_requires": "Review and explicit approval before adding files to approved list; no gate bypass",
+  "amendment_approval_basis": "Ordem expressa do titular nesta conversa: resolver PLAN protegido na main autorizando expressamente todos os arquivos modificados, sem mudar foco; autorização de escopo, não de ativação/PROD.",
+  "amendment_approval_scope": [
+    ".github/workflows/csdi-normative-extraction.yml",
+    "scripts/csdi-normative-extractor.mjs",
+    "scripts/csdi-zero-drift-counterproof.mjs"
+  ]
+}
