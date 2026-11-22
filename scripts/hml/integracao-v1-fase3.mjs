@@ -2526,6 +2526,7 @@ const F3_S1_ORGS = API_ORIGIN + "/rest/v1/rpc/listar_organizacoes_disponiveis";
 const F3_S1_CREATE = API_ORIGIN + "/rest/v1/rpc/criar_organizacao";
 const F3_S1_EDGE = API_ORIGIN + "/functions/v1/admin-invite-user";
 const F3_S1_LINK = API_ORIGIN + "/rest/v1/rpc/salvar_vinculo_usuario_adm";
+const F3_S1_LIST = API_ORIGIN + "/rest/v1/rpc/listar_usuarios_vinculos_adm";
 
 function f3S1Credentials(credentials) {
   if (
@@ -2667,6 +2668,32 @@ export async function f3S1CreateOrganization({ page, fence, mutationFence, book,
   }
 }
 
+/** Conferência posterior à escrita: o retorno do save, sozinho, não é persistência. */
+export function assertF3S1ReaderReadback(snapshot, userId, email) {
+  if (
+    !isUuid(userId) ||
+    typeof email !== "string" ||
+    !email ||
+    snapshot?.schema_versao !== "adm01-v2" ||
+    !Array.isArray(snapshot?.itens)
+  ) {
+    fail("F3_UI_READER_READBACK");
+  }
+  const matching = snapshot.itens.filter(
+    (item) =>
+      item?.id_usuario === userId &&
+      typeof item.email === "string" &&
+      item.email.toLowerCase() === email.toLowerCase() &&
+      item.vinculo?.perfil === "leitor" &&
+      item.vinculo?.ativo === true &&
+      item.vinculo?.escopo_todos_contratos === false,
+  );
+  if (matching.length !== 1) {
+    fail("F3_UI_READER_READBACK");
+  }
+  return true;
+}
+
 export async function f3S1LinkReader({
   page,
   fence,
@@ -2720,6 +2747,10 @@ export async function f3S1LinkReader({
       (r) => r.url() === F3_S1_LINK && r.request().method() === "POST",
       { timeout: F3_S1_UI.timeout },
     );
+    const readback = page.waitForResponse(
+      (r) => r.url() === F3_S1_LIST && r.request().method() === "POST",
+      { timeout: F3_S1_UI.timeout },
+    );
     await dialog.getByRole("button", { name: "Salvar vínculo", exact: true }).click();
     const invited = await invite;
     if (invited.status() !== 200) fail("F3_UI_READER_INVITE");
@@ -2737,6 +2768,15 @@ export async function f3S1LinkReader({
       data?.vinculo?.ativo !== true
     )
       fail("F3_UI_READER_LINK_RESPONSE");
+    const listed = await readback;
+    if (listed.status() !== 200) {
+      fail("F3_UI_READER_READBACK");
+    }
+    const query = listed.request().postDataJSON();
+    if (query?.p_id_organizacao !== organizationId || query?.p_pagina !== 1) {
+      fail("F3_UI_READER_READBACK");
+    }
+    assertF3S1ReaderReadback(await listed.json(), userId, readerEmail);
     await dialog.waitFor({ state: "hidden", timeout: F3_S1_UI.timeout });
     await fence.drain();
     fence.assertSafe();
