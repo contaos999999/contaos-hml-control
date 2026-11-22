@@ -20,5 +20,19 @@
   "plan_aprovacao": "Decisão expressa do titular em 2026-11-21, limitada à substituição do parecer externo no gate semântico e BUILD do consumidor CSDI sem ativação",
   "justificativa": "Implementar certificação semântica interna fail-closed com provas integrais, sete eixos, contraditório interno e evidência LIVE, sem modificar segurança/ativação/PROD",
   "ativacao_autorizada": false,
-  "full_diff": true
+  "full_diff": true,
+  "amendment_proposed": true,
+  "amendment_approved": false,
+  "pending_scope_additions": [
+    ".github/workflows/csdi-normative-extraction.yml",
+    "scripts/csdi-normative-extractor.mjs",
+    "scripts/csdi-zero-drift-counterproof.mjs"
+  ],
+  "amendment_red": {
+    "run_id": 44973889031,
+    "job_id": 137059362148,
+    "head": "1da72682c22c14afb1205ce28015861bd38e3704",
+    "conclusion": "failure"
+  },
+  "amendment_requires": "Review and explicit approval before adding files to approved list; no gate bypass"
 }
