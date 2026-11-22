@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, validatePrioritySemanticDisputes, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2362,4 +2362,30 @@ test("P0 MATERIAL TRIAGE: 137 rule texts, seven E axes, 381 sentence contents an
   process.stdout.write("P0-MATERIAL-TRIAGE "+JSON.stringify({
     counts:result.counts,breakdown:result.breakdown,
     heads_are_evidence:false,semantic_completeness:result.semantic_completeness})+"\n");
+});
+
+
+test("P0 TEN MATERIAL DISPUTES: ten source-bound E1–E7 hypotheses, no external certification",()=>{
+  const snapshots=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES).map(
+    ([path,blob])=>[path,{content:readFileSync(path,"utf8"),blob}]));
+  const inv=inventoryProtectedSemanticLines(snapshots);
+  const worklist=buildSevenAxisSemanticBacklog(inv);
+  const atom=inventorySemanticSentenceCandidates(inv);
+  const reverse=auditSemanticReverseCoverage(inv,worklist);
+  const triage=analyzeSemanticCorpusForReview({
+    inventory:inv,worklist,sentenceInventory:atom,reverseCoverage:reverse});
+  const verified=validatePrioritySemanticDisputes(triage);
+  assert.deepEqual(verified.issues,[]);
+  assert.equal(verified.cases,10);
+  assert.equal(verified.source_bound_hypotheses,10);
+  assert.equal(P0_SEMANTIC_PRIORITY_DISPUTES.length,10);
+  assert.equal(verified.live_verified,0);
+  assert.equal(verified.independent_contradictions,0);
+  assert.equal(verified.verdict,"INCONCLUSIVE");
+  assert.equal(verified.release,"NO_GO");
+  const mutant=structuredClone(triage);
+  mutant.interactions=mutant.interactions.filter(x=>
+    !x.pair_id.includes("PLAN-S31-05|PLAN-S31-07"));
+  assert.ok(validatePrioritySemanticDisputes(mutant).issues.some(x=>
+    x.includes("ANCHOR_INVALID")));
 });

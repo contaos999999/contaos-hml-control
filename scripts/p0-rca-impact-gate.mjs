@@ -2856,3 +2856,135 @@ export function analyzeSemanticCorpusForReview({
     semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
     merge:"NO_GO",activation:"NO_GO"};
 }
+
+
+/**
+ * Contraditório substantivo inicial para dez relações prioritárias, ancorado
+ * em IDs atômicos (e não apenas nos parágrafos temáticos da governança).
+ * E1..E7 explicitam o objeto a provar; LIVE e parecer externo NÃO existem.
+ */
+export const P0_SEMANTIC_PRIORITY_DISPUTES=Object.freeze([
+  {
+    rules:["PLAN-S31-05","PLAN-S31-07"],case:"AUTHORIZATION_OUTLIVES_REVIEW",
+    E1:"Titular autoriza; revisor elegível aprova; App publica somente se ambos vigentes.",
+    E2:"A revisão do HEAD está APPROVED, porém a autorização vinculada foi revogada antes da decisão do grupo.",
+    E3:"Novo success só com revisão e autorização vigentes; a revisão isolada não pode habilitar merge.",
+    E4:"Contraprova exige revisão APPROVED mantida, autorização revogada e grupo impedido nativamente.",
+    E5:"GitHub API LIVE: reviews atuais, decisão titular assinada, status do grupo, timeline e bloqueio nativo.",
+    E6:"A revogação invalida recibos/geração e qualquer status anterior, sem retry automático.",
+    E7:"BUILD de lógica não é prova da revogação na fila real; ativação permanece NO-GO."
+  },
+  {
+    rules:["EMENDA-21","EMENDA-23"],case:"N17_TWO_REVIEWS_AUTHORIZATION_ONLY",
+    E1:"Titular revoga autorização individual; duas revisoras elegíveis permanecem aprovadas; autor é terceira identidade.",
+    E2:"Uma autorização específica é revogada sem retirar as duas reviews; ruleset nativo ainda vê aprovações suficientes.",
+    E3:"App e GitHub devem impedir merge apesar da segunda aprovação, sem confundir revogação com dismiss de review.",
+    E4:"Teste adversarial real com terceira autoria, duas APPROVED intactas e revogação exclusiva.",
+    E5:"Logs e readback autenticados do ruleset/grupo antes de eventual merge; ainda indisponível.",
+    E6:"O novo ciclo exige autorização renovada e novo SHA do grupo; sem reuso do status antigo.",
+    E7:"N17(c) é obrigação separada de ativação, não requisito que o BUILD possa simular como PASS."
+  },
+  {
+    rules:["PLAN-S31-04","PLAN-S31-06"],case:"ADMISSION_VERSUS_MERGE_GROUP",
+    E1:"App avalia admissão e GitHub aplica proteção ao SHA efêmero do grupo.",
+    E2:"Um status de admissão antigo está verde quando a base avança e nasce novo merge_group.",
+    E3:"Só novo success no SHA correto do grupo permite merge; status da PR não o substitui.",
+    E4:"Negativo cruza base avançada ancestral, SHA de grupo distinto e admissão ainda verde.",
+    E5:"PR/grupo/ref/pais/head/base e statuses autenticados pelo GitHub em teste isolado.",
+    E6:"Base e grupo alterados revogam a decisão anterior; produzir avaliação nova.",
+    E7:"Teste offline da composição é BUILD, enforcement da fila é ativação separada."
+  },
+  {
+    rules:["PLAN-S3-03","PLAN-S3-06"],case:"ACTIVE_VERSUS_CERTIFIED",
+    E1:"Supervisor registra estado, auditor emite parecer e GitHub integra checkpoints.",
+    E2:"PR filha tem tests DONE e relatório final sem merge nem checkpoint na main.",
+    E3:"Missão continua ACTIVE; somente duas provas aplicáveis autorizam CERTIFIED.",
+    E4:"Forçar relatório DONE no SHA sem readback de main deve falhar a certificação.",
+    E5:"Contrato, PRs, CI, auditor independente, commit e checkpoint autenticados LIVE.",
+    E6:"Deriva de HEAD ou cancelamento sem titular invalida encerramento automático.",
+    E7:"Precertificação BUILD não substitui integração protegida nem ativa serviços."
+  },
+  {
+    rules:["PLAN-S31-01","PLAN-S31-03"],case:"APP_IDENTITY_VERSUS_CHECK_NAME",
+    E1:"GitHub App dedicado tem autoridade limitada de publicar commit statuses.",
+    E2:"Um Check Run homônimo ficou verde, mas foi emitido por Actions/integration_id diferente.",
+    E3:"Status não-autorizado não satisfaz o gate de missão, mesmo com nome idêntico.",
+    E4:"Injetar resultado homônimo e exigir falha com regra de origem ainda vigente.",
+    E5:"Integration ID do App e associação ao SHA/ruleset LIVE, ainda não comprovados.",
+    E6:"Troca de identidade exige autorização e invalida publicações pregressas.",
+    E7:"A identidade privilegiada não é instalada nem ativada pelo BUILD da #690."
+  },
+  {
+    rules:["PLAN-S4-13","EMENDA-12"],case:"FULL_DIFF_NO_DOCUMENTAL_ESCAPE",
+    E1:"Guard RCA obedece ao manifesto protegido da base anterior, não à PR avaliada.",
+    E2:"Diff inclui caminho extra não autorizado, apesar de a PR alegar mudança documental.",
+    E3:"full_diff=true impõe recusa antes da saída N/A visual.",
+    E4:"Adicionar décimo quinto caminho e manifesto falsificado no próprio HEAD deve FAIL.",
+    E5:"Diff paginado e manifesto da base pré-integração, identidades/SHAs LIVE.",
+    E6:"Novo diff/HEAD requer reavaliação integral, não pode reutilizar avaliação anterior.",
+    E7:"BUILD limitado à allowlist de 14; emenda prévia indispensável a expansão."
+  },
+  {
+    rules:["PLAN-S3-07","PLAN-S3-08"],case:"WATCHDOG_VERSUS_ANTISTAGNATION",
+    E1:"Watchdog observa e controlador executa apenas retomada autorizada.",
+    E2:"Duas tentativas repetidas sem delta causal e um heartbeat relatado artificialmente.",
+    E3:"Watchdog gera diagnóstico e RCA ampliada, jamais CERTIFIED.",
+    E4:"Dois retries sem mudança + API instável não podem gerar novo PASS.",
+    E5:"Runs agendados, causais e contratos recuperados, todos vinculados ao HEAD.",
+    E6:"Retomada somente de checkpoint confiável e decisão autorizada.",
+    E7:"Automação de observação não substitui sessão executora nem controle PROD."
+  },
+  {
+    rules:["PLAN-S31-05","EMENDA-19"],case:"REVOCATION_AFTER_GREEN_STATUS",
+    E1:"Titular revoga; App avalia e GitHub deve aplicar veto nativo antes do merge.",
+    E2:"Status do grupo foi publicado success; revogação chega enquanto entrada está ativa.",
+    E3:"A barreira nativa deve preservar não mesclável mesmo com webhook tardio.",
+    E4:"Reordenar evento de revogação e status antigo; comprovar impedimento antes do merge.",
+    E5:"Timeline real do merge_group e regra aplicada com timestamps e origem autenticados.",
+    E6:"Revogação exige invalidar tentativa corrente e emitir decisão nova após autorização.",
+    E7:"Sem prova de atomicidade da barreira, ativação permanece NO-GO."
+  },
+  {
+    rules:["PLAN-S4-14","EMENDA-11"],case:"VISUAL_NA_WITH_REAL_APP_DIFF",
+    E1:"Guard e Teste C verificam o diff, não apenas o rótulo do autor.",
+    E2:"Governança declara impacto_visual N/A mas diff inclui mudança de UI não prevista.",
+    E3:"Escopo extra e classificação visual falsa devem falhar independentemente de CI verde.",
+    E4:"Diff de componente de produto com justificativa documental N/A.",
+    E5:"Comparação de arquivos e triagem visual Teste C do HEAD exato, com ZIP hash.",
+    E6:"Novo arquivo/HEAD reabre a verificação de escopo e impacto.",
+    E7:"A aprovação documental não autoriza alterar frontend nem PRODUCTION."
+  },
+  {
+    rules:["PLAN-S3-06","PLAN-S3-10"],case:"CERTIFICATION_VERSUS_RECOVERY",
+    E1:"Auditor apresenta prova técnica, titular autoriza e GitHub consolida checkpoint.",
+    E2:"CI e pré-auditoria da PR passam, porém não existe readback pós-merge.",
+    E3:"ACTIVE ou BLOCKED_EXTERNAL permanece; CERTIFIED não pode ser emitido.",
+    E4:"Sucesso no BUILD sem certificado integrado deve continuar NO-GO.",
+    E5:"Própria PR, review independente, main integrada e histórico verificável.",
+    E6:"Alteração de HEAD, ref ou autorização exige evidência nova e preserva último checkpoint.",
+    E7:"Recuperação não é certificação nem dispensa fila/HML/PROD."
+  },
+]);
+export function validatePrioritySemanticDisputes(triage){
+  const issues=[];const selected=new Set();
+  const byId=new Map((triage?.rules||[]).map(x=>[x.rule_id,x]));
+  const byPair=new Map((triage?.interactions||[]).map(x=>[x.pair_id,x]));
+  for(const d of P0_SEMANTIC_PRIORITY_DISPUTES){
+    const [left,right]=d.rules;
+    const a=byId.get(left),b=byId.get(right);
+    const ordered=(triage?.rules||[]).filter(x=>d.rules.includes(x.rule_id)).map(x=>x.rule_id);
+    const pair=byPair.get(ordered.join("|"));
+    if(!a?.anchor||!b?.anchor||!pair||selected.has(pair.pair_id))
+      issues.push("SEMANTIC_PRIORITY_ANCHOR_INVALID: "+d.case);
+    if(Object.keys(d).filter(x=>/^E[1-7]$/.test(x)).length!==7||
+       ["E1","E2","E3","E4","E5","E6","E7"].some(k=>
+         typeof d[k]!=="string"||d[k].length<55))
+      issues.push("SEMANTIC_PRIORITY_SEVEN_AXES_INCOMPLETE: "+d.case);
+    if(pair)selected.add(pair.pair_id);
+  }
+  return {cases:P0_SEMANTIC_PRIORITY_DISPUTES.length,
+    anchors_valid:issues.length===0,issues,
+    // These are substantive hypotheses, NOT the adjudication of 9316 or proof.
+    source_bound_hypotheses:selected.size,live_verified:0,
+    independent_contradictions:0,verdict:"INCONCLUSIVE",release:"NO_GO"};
+}
