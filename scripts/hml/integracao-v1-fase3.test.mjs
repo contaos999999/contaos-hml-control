@@ -1333,6 +1333,18 @@ const ensureV107Prerequisites = (book) => {
     book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
   }
 };
+// O principal V118 referencia exatamente o parecer produzido pelo prerequisito.
+// Os cenarios legados devem registrar essas identidades no livro, nao contorna-las.
+const seedF3NoUploadPrereq = (book, order) => {
+  if (order === 18) {
+    seal(book, 1818, 18, { kind: "prerequisito", action: "parecer" });
+    book.confirm(uuid(1818), { entityId: uuid(11818), organizationId: F3 });
+  }
+  if (order === 19) {
+    seal(book, 1919, 19, { kind: "prerequisito", action: "aprovacao" });
+    book.confirm(uuid(1919), { entityId: uuid(11919), organizationId: F3 });
+  }
+};
 
 test("F3 S2 RED: edição V103 e V106 preserva identidade sem aceitar duplicidade indevida", () => {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
@@ -1367,14 +1379,7 @@ function referenceBook(ledger = EMPTY, extra = () => {}, skip = []) {
   createOrg(book);
   for (const o of MUT.filter((x) => x !== 2)) {
     if (o === 10) ensureV107Prerequisites(book);
-    if (o === 18) {
-      seal(book, 1818, 18, { kind: "prerequisito", action: "parecer" });
-      book.confirm(uuid(1818), { entityId: uuid(11818), organizationId: F3 });
-    }
-    if (o === 19) {
-      seal(book, 1919, 19, { kind: "prerequisito", action: "aprovacao" });
-      book.confirm(uuid(1919), { entityId: uuid(11919), organizationId: F3 });
-    }
+    seedF3NoUploadPrereq(book, o);
     seal(book, o, o);
     if (skip.includes(o)) continue;
     book.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
@@ -1611,7 +1616,7 @@ test("F3 B2b1: relatório completo montado pelo livro valida e cumpre todos os c
   assert.deepEqual(report.summary, { PASS: 138, FAIL: 0, BLOCKED: 0, N_A_JUSTIFICADO: 0 });
   assert.deepEqual(
     [report.intents.sent, report.intents.confirmed, report.intents.rejected],
-    [31, 21, 10],
+    [33, 23, 10],
   );
   assert.equal(report.ledgerSha256, sut.F3_LEDGER_SHA256);
   // O gate de produção usa a política de produção (null nos mutantes): nunca PASS no 2b-1.
@@ -1851,7 +1856,7 @@ test("F3 B2b1 RED: intenções e inventário declarados precisam ser o replay do
     rejects(completeReport(fn), ["F3_ISOLATION"]);
   // Pré-requisito pendente: válido, mas o critério PENDING falha.
   const pending = completeReport(() => {}, {
-    book: referenceBook(EMPTY, (b) => seal(b, 500, 18, { kind: "prerequisito" })),
+    book: referenceBook(EMPTY, (b) => seal(b, 500, 17, { kind: "prerequisito" })),
   });
   assert.deepEqual(criteria(pending), ["PENDING"]);
   // Principal sem desfecho: os casos do produtor não podem ser PASS.
@@ -1901,6 +1906,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   createOrg(noDup);
   for (const o of MUT.filter((x) => x !== 2)) {
     if (o === 10) ensureV107Prerequisites(noDup);
+    seedF3NoUploadPrereq(noDup, o);
     seal(noDup, o, o);
     noDup.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
   }
@@ -2042,6 +2048,7 @@ test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo
   createOrg(first);
   for (const o of MUT.filter((x) => x !== 2)) {
     if (o === 10) ensureV107Prerequisites(first);
+    seedF3NoUploadPrereq(first, o);
     seal(first, o, o);
     first.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
   }
@@ -2049,7 +2056,7 @@ test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo
     dup(first, 200 + o, o, uuid(o));
     first.rejected(uuid(200 + o));
   }
-  for (let i = 0; i < 8; i++) seal(first, 310 + i, 18, { kind: "prerequisito" });
+  for (let i = 0; i < 6; i++) seal(first, 310 + i, 17, { kind: "prerequisito" });
   assert.equal(first.summary().sent, 40);
   assert.throws(() => dup(first, 299, 20, uuid(20)), { code: "F3_BUDGET" });
   // Teto de 60: principais rejeitadas e refeitas contam como envio a cada tentativa.
@@ -2199,7 +2206,7 @@ test("F3 B2b1: relatório bloqueado, com e sem ledger lido, gravado com SHA256SU
   const l1 = ledgerOf([
     run(
       1,
-      referenceBook(EMPTY, (b) => seal(b, 500, 18, { kind: "prerequisito" })),
+      referenceBook(EMPTY, (b) => seal(b, 500, 17, { kind: "prerequisito" })),
     ),
   ]);
   const later = sut.blockedF3Report({
@@ -2208,7 +2215,7 @@ test("F3 B2b1: relatório bloqueado, com e sem ledger lido, gravado com SHA256SU
     provenance: PROV,
     ledger: l1,
   });
-  assert.deepEqual([later.intents.priorSent, later.intents.uncertain], [32, 1]);
+  assert.deepEqual([later.intents.priorSent, later.intents.uncertain], [34, 1]);
   assert.equal(later.isolation.organizationF3, F3);
   assert.equal(sut.validateF3Report(later, catalogue, { ledger: l1 }), true);
   assert.throws(() => sut.validateF3Report(later, catalogue, NP), { code: "F3_REPORT" });
@@ -2932,7 +2939,7 @@ test("F3 B2b1 RED: fato observado é registrado, transição é atômica e o iso
 
 test("F3 B2b1 RED: relatório parcial com o livro preserva envios, eventos e inventário", () => {
   const book = referenceBook(EMPTY, (b) => {
-    seal(b, 500, 18, { kind: "prerequisito" });
+    seal(b, 500, 17, { kind: "prerequisito" });
     b.uncertain(uuid(500));
     b.reconcile(uuid(500), { found: true, entityId: uuid(5000), organizationId: uuid(999) });
   });
@@ -2942,12 +2949,12 @@ test("F3 B2b1 RED: relatório parcial com o livro preserva envios, eventos e inv
     provenance: PROV,
     book,
   });
-  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [32, true]);
+  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [34, true]);
   assert.equal(partial.isolation.created.at(-1).kind, "fora_da_f3");
   assert.equal(sut.validateF3Report(partial, catalogue, NP), true);
-  // O ledger montado com os eventos desse artefato conta os 32 envios de fixture.
+  // O ledger montado com os eventos desse artefato conta os 34 envios de fixture.
   const l1 = ledgerOf([{ ...run(PROV.workflowRunId, book) }]);
-  assert.equal(sut.f3LedgerState(l1).priorSent, 32);
+  assert.equal(sut.f3LedgerState(l1).priorSent, 34);
   // Livro estranho ou ledger diferente do livro são recusados.
   assert.throws(
     () =>
@@ -3706,11 +3713,26 @@ test("F3 §12.6: ações sem chave rejeitam reenvio no livro após readback", ()
   ]) {
     const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
     if (order !== 2) createOrg(book);
-    if (order === 6 || order === 7) {
+    if ([6, 7, 14, 16, 18, 19].includes(order)) {
       seal(book, 5, 5);
       book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
     }
-    seal(book, 421, order, { kind });
+    if ([14, 16, 18, 19].includes(order)) {
+      seal(book, 7, 7);
+      book.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
+    }
+    if ([16, 18, 19].includes(order)) {
+      seal(book, 14, 14);
+      book.confirm(uuid(14), { entityId: uuid(114), organizationId: F3 });
+    }
+    if (order === 18 && kind === "principal") seedF3NoUploadPrereq(book, 18);
+    const extra =
+      kind === "prerequisito" && order === 18
+        ? { kind, action: "parecer" }
+        : kind === "prerequisito" && order === 19
+          ? { kind, action: "aprovacao" }
+          : { kind };
+    seal(book, 421, order, extra);
     book.uncertain(uuid(421));
     book.reconcile(uuid(421), { found: false });
     const before = book.summary();
@@ -4818,14 +4840,8 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     "11 V109, pré-requisito 2",
     "12 V110, principal",
     "13 V111, principal",
-    "14 V113, principal",
     "15 V115, principal",
-    "16 V116, principal",
     "17 V117, principal",
-    "18 V118, pré-requisito 1",
-    "18 V118, principal",
-    "19 V119, pré-requisito 1",
-    "19 V119, principal",
     "20 V122, pré-requisito 1",
     "20 V122, principal",
   ];
