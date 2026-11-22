@@ -71,9 +71,11 @@ test("F3 CODE: missing or duplicate case fails closed even with identical case c
 for (const item of matrix.cases) {
   test("F3 SOURCE LINK " + item.caseId + " verifies referenced product files exist (not functional proof)", async () => {
     for (const hint of item.sourceHints) {
-      const path = hint.split(":")[0];
+      const [path, anchor] = hint.split(":");
       assert.match(path, /^src\/[a-zA-Z0-9_./-]+\.(ts|tsx)$/);
       assert.equal((await stat(join(root, path))).isFile(), true, hint);
+      const source = await readFile(join(root, path), "utf8");
+      assert.ok(source.split("\n").length >= Number(anchor), hint);
     }
     assert.equal(item.proofState, "NOT_RUN");
   });
