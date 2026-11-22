@@ -9,11 +9,12 @@ import {
   F3_CODE_CASES_PATH,
   F3_CODE_MATRIX_PATH,
   F3_CODE_LEDGER_PATH,
+  F3_CODE_CSV_PATH,
 } from "./integracao-v1-fase3-code-gate.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const originals = await Promise.all(
-  [F3_CODE_CASES_PATH, F3_CODE_MATRIX_PATH, F3_CODE_LEDGER_PATH].map((path) =>
+  [F3_CODE_CASES_PATH, F3_CODE_MATRIX_PATH, F3_CODE_LEDGER_PATH, F3_CODE_CSV_PATH].map((path) =>
     readFile(join(root, path), "utf8"),
   ),
 );
@@ -38,7 +39,7 @@ test("F3 CODE: inventory has 138 NOT_RUN cases, 276 source hints and no false PA
 test("F3 CODE: stale or altered canonical case source fails closed", () => {
   const altered = originals[0].replace('"count": 138', '"count": 137');
   assert.throws(
-    () => assessF3CodeInventory(altered, originals[1], originals[2]),
+    () => assessF3CodeInventory(altered, originals[1], originals[2], originals[3]),
     { code: "F3_CODE_CASES_DRIFT" },
   );
 });
@@ -48,14 +49,27 @@ test("F3 CODE: a forged executed receipt or completeness flag never becomes PASS
   forged.cases[0].proofState = "PASS";
   forged.cases[0].testIds = ["fabricated-test"];
   assert.throws(
-    () => assessF3CodeInventory(originals[0], JSON.stringify(forged), originals[2]),
+    () => assessF3CodeInventory(originals[0], JSON.stringify(forged), originals[2], originals[3]),
     { code: "F3_CODE_UNVERIFIED_RECEIPT" },
   );
   const ledger = JSON.parse(originals[2]);
   ledger.state = "CERTIFIED";
   assert.throws(
-    () => assessF3CodeInventory(originals[0], originals[1], JSON.stringify(ledger)),
+    () => assessF3CodeInventory(originals[0], originals[1], JSON.stringify(ledger), originals[3]),
     { code: "F3_CODE_UNVERIFIED_RECEIPT" },
+  );
+});
+
+test("F3 CODE: stale CSV or redirected source hint never passes as canonical", () => {
+  assert.throws(
+    () => assessF3CodeInventory(originals[0], originals[1], originals[2], originals[3] + " "),
+    { code: "F3_CODE_MATRIX_SOURCE_DRIFT" },
+  );
+  const forged = JSON.parse(originals[1]);
+  forged.cases[0].sourceHints = [...forged.cases[1].sourceHints];
+  assert.throws(
+    () => assessF3CodeInventory(originals[0], JSON.stringify(forged), originals[2], originals[3]),
+    { code: "F3_CODE_SOURCE_MAP" },
   );
 });
 
@@ -63,7 +77,7 @@ test("F3 CODE: missing or duplicate case fails closed even with identical case c
   const forged = JSON.parse(originals[1]);
   forged.cases[1] = structuredClone(forged.cases[0]);
   assert.throws(
-    () => assessF3CodeInventory(originals[0], JSON.stringify(forged), originals[2]),
+    () => assessF3CodeInventory(originals[0], JSON.stringify(forged), originals[2], originals[3]),
     { code: "F3_CODE_MATRIX_MISMATCH" },
   );
 });
