@@ -1,0 +1,32 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 727,
+  "approved": true,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B2B_S2_PRODUTORES_5_10.md"
+  ],
+  "purpose": "Resgatar S2 produtores 5–10 da PR714 corrigindo root cause de 3 falhas Trilha A em replay, posição tipada e fluxo V107, sem reduzir cobertura.",
+  "authorization": "Titular determinou completar todos os drivers; a PR727 é um incremento verificável de recuperação histórica, prévia à certificação formal F3.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Preservar alterações #720/#723/#725 e F1/F2",
+    "Corrigir falhas de propriedade replay e origem sem remover asserções",
+    "Não alterar ledger CODE/HML nem criar PASS",
+    "Não ativar HML ou PROD",
+    "CI e revisão no HEAD exato antes de merge"
+  ],
+  "normative_plan": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba"
+  },
+  "prior_work": {
+    "pr": 714,
+    "head": "83df6095718bdcf2dba325d262e001024b0bb828",
+    "trilha_a_run": 45025511784,
+    "failed_tests": 3
+  }
+}
