@@ -3070,7 +3070,7 @@ export function assembleSemanticContradictionDossier(triage) {
     if(modality.length===0)issuesSentence.push("CONTEXTUALITY_NEEDS_CONFIRMATION");
     // Semicolons expose additional candidates while retaining every byte.
     // These are subordinate hypotheses, not extra certified rules.
-    const delimiters=[...text.matchAll(/;\\s*/g)];
+    const delimiters=[...text.matchAll(/;\s*/g)];
     const candidateEnds=delimiters.map(m=>m.index+m[0].length);
     let start=0;
     const subordinate_clauses=[...candidateEnds,text.length].map(end=>{
