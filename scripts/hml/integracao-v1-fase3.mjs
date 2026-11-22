@@ -39,7 +39,7 @@ export const F3_CASES_PATH = "docs/frontend/auditorias/integracao-funcional-v1/f
 export const F3_CASES_SHA256 = "bce15980d31ce22c8836e26621b267951296e905139b9833c8db4a7400c9ecbb";
 // Baseline normativo fixo (PLAN 7.5, M-R2-1): nenhuma leitura nova do repositório develop.
 export const F3_BACKEND_SHA = "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6";
-export const F3_BUDGET = Object.freeze({ total: 60, perRun: 30, planned: 33, minutes: 45 });
+export const F3_BUDGET = Object.freeze({ total: 60, perRun: 30, planned: 39, minutes: 45 });
 export const F3_CASE_STATUS = Object.freeze(["PASS", "FAIL", "BLOCKED", "N_A_JUSTIFICADO"]);
 export const F3_CLEANUP_STATUS = Object.freeze([
   "ISOLATED_NO_DELETE",
@@ -661,12 +661,15 @@ export function assertJsonTree(value, code, depth = 0) {
 // Núcleo único das intenções. Uma só máquina de estados (applyEvent) define as transições; o
 // livro grava cada transição como evento; relatório e ledger carregam os eventos e os
 // validadores os reexecutam. Intenções têm tipo: principal (a criação do produtor, uma aberta
-// por produtor), prerequisito (no máximo 5 na fase, PLAN 7.2) e duplicidade (no máximo uma por
-// principal, PLAN 4.3). Uma intenção ausente por readback pode ser abandonada; abandonada não
+// por produtor), prerequisito (11 no total e limite exato por produtor, conforme
+// F3_FLUXOS_PRODUTORES.md R2) e duplicidade (no máximo uma por principal, PLAN 4.3). Uma intenção ausente por readback pode ser abandonada; abandonada não
 // conta como pendente, mas precisa ser relida na execução que fecha a matriz.
 // ---------------------------------------------------------------------------------------------
 export const F3_INTENT_KINDS = Object.freeze(["principal", "prerequisito", "duplicidade"]);
-export const F3_MAX_PREREQUISITES = 5;
+// R2 do levantamento dos fluxos: V108=3, V107=3, V109=2, V118=1, V119=1, V122=1.
+// Os demais produtores NÃO podem abrir pré-requisitos arbitrários.
+export const F3_PREREQUISITES_BY_PRODUCER = Object.freeze({ 9: 3, 10: 3, 11: 2, 18: 1, 19: 1, 20: 1 });
+export const F3_MAX_PREREQUISITES = Object.values(F3_PREREQUISITES_BY_PRODUCER).reduce((a, b) => a + b, 0);
 // Teto provado: no máximo 8 eventos por intenção por execução (selar, incerto, ausente, reenviar,
 // incerto, ausente, abandonar, encontrada) e no máximo 60 intenções na fase.
 export const F3_MAX_EVENTS_PER_RUN = 8 * 60;
@@ -761,8 +764,12 @@ function sealIntent(st, e) {
     return;
   }
   if (e.kind === "prerequisito") {
-    if (e.producerOrder === 2 || st.organizationF3 === null) fail("F3_INTENT_PRODUCER");
-    if (all.filter((i) => i.kind === "prerequisito").length >= F3_MAX_PREREQUISITES)
+    if (st.organizationF3 === null || !Object.hasOwn(F3_PREREQUISITES_BY_PRODUCER, e.producerOrder))
+      fail("F3_INTENT_PRODUCER");
+    const producerUsed = same.filter((i) => i.kind === "prerequisito").length;
+    const globalUsed = all.filter((i) => i.kind === "prerequisito").length;
+    if (producerUsed >= F3_PREREQUISITES_BY_PRODUCER[e.producerOrder] ||
+        globalUsed >= F3_MAX_PREREQUISITES)
       fail("F3_INTENT_PREREQUISITES");
     return;
   }
