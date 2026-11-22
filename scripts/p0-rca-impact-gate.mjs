@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const PLAN = "docs/frontend/planos/PLANO_ATIVO.json";
@@ -389,9 +390,14 @@ export function runCase(entry) {
   if (p.error || p.status !== 0) return false;
   const out = String(p.stdout || "");
   if (node) {
-    // O subprocesso já isola cada prova. Sem isolamento adicional por arquivo,
-    // Node não produz wrapper ok/pass1 para arquivo vazio ou zero seleção:
-    // só os testes realmente declarados podem satisfazer o parser abaixo.
+    // O Node 22/24 pode publicar o próprio caminho do arquivo vazio como TAP # Subtest
+    // e ok 1. Esse nome é o wrapper do runner, nunca um caso de teste declarado.
+    // Rejeitar aliases equivalentes sem confundir com um caso legítimo de título
+    // "real.test.mjs" quando o arquivo informado é "/tmp/.../real.test.mjs".
+    if (typeof entry.arquivo === "string" && resolve(entry.caso) === resolve(entry.arquivo))
+      return false;
+    // O subprocesso já isola cada prova. Só um subteste efetivamente declarado,
+    // não o invólucro do arquivo, pode preencher o recibo PASS.
     const pass = /(?:^|\n)# pass (\d+)\r?(?:\n|$)/.exec(out);
     const fail = /(?:^|\n)# fail (\d+)\r?(?:\n|$)/.exec(out);
     // Node pode retornar exit 0, "# pass 1" para o ARQUIVO inteiro mesmo
