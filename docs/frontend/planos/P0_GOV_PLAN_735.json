@@ -1,0 +1,27 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 735,
+  "approved": true,
+  "files": [
+    "scripts/hml/integracao-v1-fase3-code-138-runner.mjs",
+    "scripts/hml/integracao-v1-fase3-code-138-runner.test.mjs",
+    ".github/workflows/contaos-f3-code-138-attempt.yml"
+  ],
+  "purpose": "Percorrer todos os 138 caseIds canônicos com execução determinística fail-closed de diagnósticos e manifestos individuais sem presumir evidências de testes funcionais inexistentes.",
+  "authorization": "Ordem expressa do titular para concluir os drivers, executar os 138 casos CODE e não antecipar LIVE GATE PROD. Este PLAN autoriza apenas coleta diagnóstica não certificadora e workflow dispatch explícito para tentativa 138/138; os próximos drivers reais exigem PLAN específico.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Não editar matriz e ledger CODE normativos nem ledger LIVE",
+    "Não simular produtor ou consumidor ou considerar fonte existente como teste integrado",
+    "Reportar BLOCKED caso falte driver/teste positivo/negativo efetivamente comprovado",
+    "Saída não-zero se houver casos sem evidência funcional ou reviews pendentes",
+    "Não alterar backend, autenticação, fixtures ou PROD",
+    "Workflow manual isolado, upload de evidências mesmo com falhas",
+    "Testes unitários do runner não equivalem a testes funcionais 138/138"
+  ],
+  "normative_plan": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba"
+  }
+}
