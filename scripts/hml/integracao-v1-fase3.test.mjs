@@ -205,6 +205,11 @@ test("F3 S1: login UI autentica por POST real e recusa 401 sem expor credenciais
         url: () => "https://gklhhhyosgasnyoxlrui.supabase.co/auth/v1/token?grant_type=password",
         request: () => ({ method: () => "POST" }),
       };
+      const logout = {
+        url: () => "https://gklhhhyosgasnyoxlrui.supabase.co/auth/v1/logout",
+        request: () => ({ method: () => "POST" }),
+      };
+      if (predicate(logout)) return { status: () => 204 };
       assert.equal(predicate(target), true);
       return { status: () => status };
     },
