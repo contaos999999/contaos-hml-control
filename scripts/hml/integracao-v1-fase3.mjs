@@ -4873,6 +4873,182 @@ export function assertF3V108ProposalReadback({ before, after, contractId, versio
   return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 9, versionId });
 }
 
+/** V108: publicação pela interface com mutação cercada e três readbacks autoritativos. */
+export async function f3S3PublishProposal({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  versionId,
+  before,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(organizationId) ||
+    organizationId !== book.organizationF3() ||
+    !isUuid(contractId) ||
+    !isUuid(versionId) ||
+    before?.id !== versionId ||
+    before.id_contrato !== contractId ||
+    !isUuid(before.id_proposta) ||
+    !isUuid(before.id_arquivo_origem) ||
+    !Number.isSafeInteger(before.numero_versao) ||
+    before.numero_versao < 1 ||
+    before.situacao !== "rascunho" ||
+    !SHA64.test(before.hash ?? "") ||
+    before.arquivo_origem?.status_seguranca !== "aprovado" ||
+    !book.created().some((entry) =>
+      entry.id === versionId &&
+      entry.organizationId === organizationId &&
+      book.summary().requests.some((request) =>
+        request.requestId === entry.requestId &&
+        request.producerOrder === 9 &&
+        request.kind === "prerequisito" &&
+        request.action === "versao" &&
+        request.outcome === "confirmed",
+      ),
+    )
+  ) {
+    fail("F3_V108_PUBLISH_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", {
+    name: "Ver rubricas da versão " + before.numero_versao,
+    exact: true,
+  }).click();
+  await page.getByRole("button", { name: "Publicar versão", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  const fundamento = "Publicação F3 isolada com versão e documento-base aprovados";
+  await dialog.getByLabel("Fundamento da publicação").fill(fundamento);
+  await dialog.getByRole("checkbox", {
+    name: "Confirmo que revisei a versão e desejo publicá-la.",
+  }).check();
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 9,
+    bodies: [{
+      p_id_organizacao: organizationId,
+      p_id_versao: versionId,
+      p_hash_esperado: before.hash,
+      p_fundamento: fundamento,
+      p_chave_idempotencia: f3Slot("uuid", "v108_publicar"),
+    }],
+  });
+  try {
+    const sent = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/publicar_versao_proposta_v108",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Confirmar publicação", exact: true }).click();
+    if ((await sent).status() !== 200) fail("F3_V108_PUBLISH_HTTP");
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V108_PUBLISH_UNCERTAIN");
+    }
+    const matchingGet = (table, field, value) => (response) => {
+      if (response.request().method() !== "GET") return false;
+      const url = new URL(response.url());
+      return (
+        url.origin === API_ORIGIN &&
+        url.pathname === "/rest/v1/" + table &&
+        url.searchParams.get(field) === "eq." + value
+      );
+    };
+    const propostaPending = page.waitForResponse(
+      matchingGet("propostas_orcamentarias", "id_contrato", contractId),
+      { timeout: F3_S1_UI.timeout },
+    );
+    const versaoPending = page.waitForResponse(
+      matchingGet("versoes_proposta", "id_proposta", before.id_proposta),
+      { timeout: F3_S1_UI.timeout },
+    );
+    const rubricaPending = page.waitForResponse(
+      matchingGet("linhas_orcamentarias", "id_versao_proposta", versionId),
+      { timeout: F3_S1_UI.timeout },
+    );
+    const arquivoPending = page.waitForResponse((response) => {
+      if (response.request().method() !== "GET") return false;
+      const url = new URL(response.url());
+      return (
+        url.origin === API_ORIGIN &&
+        url.pathname === "/rest/v1/arquivos" &&
+        (url.searchParams.get("id") ?? "").includes(before.id_arquivo_origem)
+      );
+    }, { timeout: F3_S1_UI.timeout });
+    await page.reload({ waitUntil: "networkidle" });
+    const observed = await Promise.all([
+      propostaPending,
+      versaoPending,
+      rubricaPending,
+      arquivoPending,
+    ]);
+    if (observed.some((response) => response.status() !== 200)) {
+      fail("F3_V108_PUBLISH_READBACK");
+    }
+    const [propostas, versoes, rubricas, arquivos] = await Promise.all(
+      observed.map((response) => response.json()),
+    );
+    if (
+      ![propostas, versoes, rubricas, arquivos].every(Array.isArray) ||
+      propostas.filter((row) =>
+        row?.id === before.id_proposta &&
+        row.id_contrato === contractId &&
+        row.id_organizacao === organizationId,
+      ).length !== 1
+    ) {
+      fail("F3_V108_PUBLISH_READBACK");
+    }
+    const matchingVersions = versoes.filter((row) =>
+      row?.id === versionId &&
+      row.id_proposta === before.id_proposta &&
+      row.id_arquivo_origem === before.id_arquivo_origem,
+    );
+    const matchingFiles = arquivos.filter((row) =>
+      row?.id === before.id_arquivo_origem &&
+      row.id_organizacao === organizationId &&
+      row.id_contrato === contractId,
+    );
+    if (matchingVersions.length !== 1 || matchingFiles.length !== 1 || rubricas.length < 1) {
+      fail("F3_V108_PUBLISH_READBACK");
+    }
+    assertF3V108ProposalReadback({
+      before,
+      after: {
+        ...matchingVersions[0],
+        id_contrato: contractId,
+        rubricas_count: rubricas.filter((row) => row?.id_versao_proposta === versionId).length,
+        arquivo_origem: matchingFiles[0],
+      },
+      contractId,
+      versionId,
+    });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: versionId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({ requestId, versionId, state: "UI_OBSERVED_NOT_CERTIFIED" });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Readback incerto não autoriza nova publicação com outra chave.
+    }
+    throw error;
+  }
+}
+
 /** V109 — lista só libera o snapshot após uma versão publicada e item material válido. */
 export function assertF3V109ListReadback({ before, after, organizationId, contractId, listId }) {
   if (
