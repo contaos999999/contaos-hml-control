@@ -18,7 +18,6 @@ import { isProxy } from "node:util/types";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { resolve, join } from "node:path";
-import { collectF3CodeEvidence } from "./integracao-v1-fase3-code-executor.mjs";
 import {
   API_ORIGIN,
   HML_ORIGIN,
@@ -6406,9 +6405,11 @@ export async function collectF3CodeCaseEvidence({
   provenance,
   caseDrivers,
   caseVerifiers,
+  collector,
 }) {
+  if (typeof collector !== "function") fail("F3_CODE_COLLECTOR_REQUIRED");
   const binding = bindF3CodeCaseDrivers({ catalogue, caseDrivers, caseVerifiers });
-  return collectF3CodeEvidence({
+  return collector({
     catalogue,
     catalogueRaw,
     provenance,
