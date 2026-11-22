@@ -3176,10 +3176,14 @@ export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}
   // Counts alone do not establish content validity. Refuse forged, duplicated
   // or pre-approved rows even if caller supplies an empty issues array.
   const ruleIds=new Set(dossier.rules.map(x=>x.rule_id));
+  const ruleById=new Map(dossier.rules.map(x=>[x.rule_id,x]));
   const sentenceIds=new Set(dossier.sentences.map(x=>x.sentence_id));
   const pairIds=new Set(dossier.interactions.map(x=>x.pair_id));
   if(ruleIds.size!==137||sentenceIds.size!==381||pairIds.size!==9316||
      dossier.rules.some(x=>!x.source_anchor?.blob||!x.exact_text||
+       x.source_anchor.blob!==PROTECTED_SEMANTIC_SOURCES[x.source_anchor.path]||
+       !["E1","E2","E3","E4","E5","E6","E7"].every(axis=>
+         Object.prototype.hasOwnProperty.call(x.axes||{},axis))||
        Object.keys(x.axes||{}).length!==7||x.axes.E5?.positive_witness!==null||
        x.axes.E5?.negative_witness!==null||x.decision!=="INCONCLUSIVE")||
      dossier.sentences.some(x=>!x.source_id||!x.text_sha256||
@@ -3190,6 +3194,8 @@ export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}
        x.positive_witness!==null||x.verdict!=="INCONCLUSIVE")||
      dossier.interactions.some(x=>!x.source_a?.blob||!x.source_b?.blob||
        !ruleIds.has(x.rule_a)||!ruleIds.has(x.rule_b)||
+       x.rule_a_text!==ruleById.get(x.rule_a)?.exact_text||
+       x.rule_b_text!==ruleById.get(x.rule_b)?.exact_text||
        x.pair_id!==x.rule_a+"|"+x.rule_b||
        x.judgement!=="UNADJUDICATED"||x.positive_witness!==null||
        x.negative_witness!==null))
