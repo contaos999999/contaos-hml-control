@@ -6,7 +6,7 @@ permissions:
 jobs:
   authenticated-hml:
     name: Authenticated HML counterproofs (NO-GO on missing prerequisites)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     environment: hml-counterproofs
     steps:
