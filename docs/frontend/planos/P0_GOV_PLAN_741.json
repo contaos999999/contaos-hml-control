@@ -1,0 +1,26 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 741,
+  "approved": true,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD_V117_V116_CONSUMER.md"
+  ],
+  "purpose": "Acoplar a prova CODE do contrato de consumidor V116 à revisão V117, com checagem de execução, requisito, competência e resultado posterior e negativos para leitura stale, cruzada ou antiga.",
+  "authorization": "Usuário pediu encerrar F3 o mais rápido possível, sem LIVE HML antes da V5. Autoriza apenas o contrato C0458 e regressões, não certificação final.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Preservar catálogo F3 e todos os ledgers",
+    "Sem backend/RLS/fixtures alterados",
+    "Sem simulação de prova LIVE nem PASS por teste unitário",
+    "No máximo 3 arquivos listados",
+    "CI e parecer independente antes de merge",
+    "Não desabilitar branch protection"
+  ],
+  "normative_plan": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba"
+  }
+}
