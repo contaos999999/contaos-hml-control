@@ -58,12 +58,12 @@ test("F3 B1: CSV estrito rejeita aspas soltas e aceita campos com vírgula entre
 
 test("F3 B1: orçamento de intenções conta tentativas e recusa excesso", () => {
   assert.equal(sut.F3_BUDGET.total, 60);
-  assert.equal(sut.F3_BUDGET.perRun, 30);
-  assert.ok(sut.assertF3Budget({ priorSent: 0, newIntents: 30 }));
-  assert.ok(sut.assertF3Budget({ priorSent: 30, newIntents: 30 }));
+  assert.equal(sut.F3_BUDGET.perRun, 40);
+  assert.ok(sut.assertF3Budget({ priorSent: 0, newIntents: 40 }));
+  assert.ok(sut.assertF3Budget({ priorSent: 20, newIntents: 40 }));
   for (const bad of [
-    { priorSent: 0, newIntents: 31 },
-    { priorSent: 31, newIntents: 30 },
+    { priorSent: 0, newIntents: 41 },
+    { priorSent: 21, newIntents: 40 },
     { priorSent: -1, newIntents: 1 },
     { priorSent: 0, newIntents: 1.5 },
     { priorConfirmed: 0, newIntents: 1 },
@@ -219,16 +219,74 @@ const run = (k, book, harnessSha = PROV.harnessSha) => ({
   frontendSha: PROV.frontendSha,
   harnessSha,
   deploymentId: PROV.deploymentId,
+  artifactId: "14076439209",
+  sha256: "d".repeat(64),
+  reviewId: "5900720754",
   events: book.summary().events,
 });
-const seal = (book, n, producerOrder, extra = {}) =>
+// Envio como a cerca faz (PLAN §12.5): selo e um vínculo (bind) por passo do fluxo declarado,
+// com valores de vaga novos e as referências tiradas do inventário do livro. Produtor ainda sem
+// fluxo declarado vincula um passo sem referências.
+let freshN = 700000;
+const sha = (v) => createHash("sha256").update(v).digest("hex");
+const freshSha = () => sha(uuid(++freshN));
+const BINDS = new Map();
+// Sem a entidade de inventário que o fluxo exige, nada é selado (como a cerca, ao armar).
+const missing = () => {
+  throw Object.assign(new Error("F3_FOREIGN_ORG"), { code: "F3_FOREIGN_ORG" });
+};
+function bindsFor(book, producerOrder, kind) {
+  const f = sut.F3_MUTATION_FLOWS[producerOrder];
+  const steps = f && (kind === "prerequisito" ? f.prerequisito : f.principal);
+  if (!steps) return [{ step: 0, bodySha256: freshSha(), slots: [freshSha()], refs: [] }];
+  const orderOf = new Map(book.summary().requests.map((q) => [q.requestId, q.producerOrder]));
+  const pick = (origin) =>
+    origin === 2
+      ? book.organizationF3()
+      : book
+          .created()
+          .filter((c) => c.kind === "registro" && orderOf.get(c.requestId) === origin)
+          .at(-1)?.id;
+  return steps.map((st, step) => ({
+    step,
+    bodySha256: freshSha(),
+    slots: st.free.map(freshSha),
+    refs: [
+      ...Object.entries(st.inventory).map(([field, origin]) => ({
+        field,
+        entityId: pick(origin) ?? missing(),
+        version: null,
+      })),
+      ...Object.entries(st.derived).map(([field, of]) => ({
+        field,
+        entityId: pick(st.inventory[of]) ?? missing(),
+        version: 1,
+      })),
+    ],
+  }));
+}
+const seal = (book, n, producerOrder, extra = {}) => {
+  const requestId = extra.requestId ?? uuid(n);
+  const args = { requestId, producerOrder, actor: "master", organizationId: book.organizationF3() };
+  // ID já usado: a recusa é a do livro (replay), antes de qualquer vínculo.
+  if (book.summary().requests.some((q) => q.requestId === requestId))
+    return book.seal({ ...args, ...extra });
+  const binds = bindsFor(book, producerOrder, extra.kind ?? "principal");
   book.seal({
-    requestId: uuid(n),
+    requestId,
     producerOrder,
     actor: "master",
     organizationId: book.organizationF3(),
     ...extra,
   });
+  BINDS.set(requestId, binds);
+  for (const b of binds) book.bind(requestId, b);
+};
+/** Reenvio pelo livro com os mesmos vínculos do envio original. */
+const resend = (book, requestId) => {
+  book.resend(requestId);
+  for (const b of BINDS.get(requestId)) book.bind(requestId, b);
+};
 const dup = (book, n, o, base) => seal(book, n, o, { kind: "duplicidade", duplicateOf: base });
 const createOrg = (book) => {
   seal(book, 2, 2);
@@ -237,7 +295,7 @@ const createOrg = (book) => {
 
 /** Execução de referência: organização F3, uma principal por produtor e duplicidade em 4–13. */
 function referenceBook(ledger = EMPTY, extra = () => {}, skip = []) {
-  const book = sut.createF3IntentBook({ ledger });
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger });
   createOrg(book);
   for (const o of MUT.filter((x) => x !== 2)) {
     seal(book, o, o);
@@ -318,6 +376,157 @@ const rejects = (r, codes = ["F3_REPORT"], o = OPT) =>
   );
 const forProducer = (r, o, fn) => r.cases.filter((c) => c.producerOrder === o).forEach(fn);
 
+// R5: o contrato pertence ao livro e ao replay, não só à cerca de rede.
+const rawSealR5 = (book, n, order, kind = "principal") =>
+  book.seal({
+    requestId: uuid(n),
+    producerOrder: order,
+    actor: "master",
+    organizationId: book.organizationF3(),
+    kind,
+  });
+const eventR5 = (op, requestId, extra = {}) => ({
+  op,
+  requestId,
+  producerOrder: null,
+  kind: null,
+  duplicateOf: null,
+  entityId: null,
+  organizationId: null,
+  ...extra,
+});
+test("F3 R5: found parcial não confirma nem entra no replay do ledger", () => {
+  for (const abandoned of [false, true]) {
+    for (const prior of [false, true]) {
+      let book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+      createOrg(book);
+      rawSealR5(book, 4, 4);
+      const steps = bindsFor(book, 4, "principal");
+      assert.equal(steps.length, 2);
+      book.bind(uuid(4), steps[0]);
+      book.uncertain(uuid(4)); // falha parcial permanece registrável
+      if (abandoned) {
+        book.reconcile(uuid(4), { found: false });
+        book.abandon(uuid(4));
+      }
+      const previous = run(1, book);
+      if (prior) book = sut.createF3IntentBook({ provenance: PROV, ledger: ledgerOf([previous]) });
+      const before = book.summary();
+      const created = book.created();
+      assert.throws(
+        () =>
+          book.reconcile(uuid(4), {
+            found: true,
+            entityId: entity(4),
+            organizationId: F3,
+          }),
+        { code: "F3_INTENT_BIND" },
+      );
+      assert.deepEqual(book.summary(), before);
+      assert.deepEqual(book.created(), created);
+      const forged = run(prior ? 2 : 1, book);
+      forged.events.push(eventR5("found", uuid(4), { entityId: entity(4), organizationId: F3 }));
+      assert.throws(() => ledgerOf(prior ? [previous, forged] : [forged]), { code: "F3_LEDGER" });
+    }
+  }
+});
+test("F3 R5: found completo e tardio preserva vínculos duráveis após resend", () => {
+  for (const afterResend of [false, true]) {
+    const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+    createOrg(book);
+    seal(book, 4, 4);
+    book.uncertain(uuid(4));
+    if (afterResend) {
+      book.reconcile(uuid(4), { found: false });
+      book.resend(uuid(4));
+      book.bind(uuid(4), BINDS.get(uuid(4))[0]); // contador corrente1, histórico completo2
+      book.uncertain(uuid(4));
+    }
+    book.reconcile(uuid(4), { found: true, entityId: entity(4), organizationId: F3 });
+    assert.equal(book.summary().requests.find((q) => q.requestId === uuid(4)).outcome, "confirmed");
+    assert.doesNotThrow(() => ledgerOf([run(1, book)]));
+  }
+});
+test("F3 R5: derived liga a mesma entidade inventory em todos os fluxos declarados", () => {
+  for (const [orderText, flow] of Object.entries(sut.F3_MUTATION_FLOWS)) {
+    const order = Number(orderText);
+    for (const [step, declared] of flow.principal.entries()) {
+      for (const [derived, inventory] of Object.entries(declared.derived)) {
+        const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+        createOrg(book);
+        // Dependências transitivas também são produzidas (contrato7 requer contratante5).
+        const origins = new Set();
+        const need = (origin) => {
+          if (origin === 2 || origins.has(origin)) return;
+          for (const st of sut.F3_MUTATION_FLOWS[origin]?.principal ?? [])
+            for (const dependency of Object.values(st.inventory)) need(dependency);
+          origins.add(origin);
+        };
+        for (const origin of Object.values(declared.inventory)) need(origin);
+        for (const origin of origins) {
+          for (const n of [origin, origin + 1000]) {
+            seal(book, n, origin, n === origin ? {} : { kind: "prerequisito" });
+            book.confirm(uuid(n), { entityId: uuid(n + 10000), organizationId: F3 });
+          }
+        }
+        rawSealR5(book, 3000 + order, order);
+        const steps = bindsFor(book, order, "principal");
+        for (let k = 0; k < step; k++) book.bind(uuid(3000 + order), steps[k]);
+        const good = steps[step];
+        const bad = structuredClone(good);
+        const sourceOrigin = declared.inventory[inventory];
+        const sourceRef = good.refs.find((r) => r.field === inventory);
+        const otherId = uuid(sourceOrigin + 10000);
+        assert.notEqual(sourceRef.entityId, otherId);
+        bad.refs.find((r) => r.field === derived).entityId = otherId;
+        const before = book.summary();
+        assert.throws(() => book.bind(uuid(3000 + order), bad), { code: "F3_VALUE_ORIGIN" });
+        assert.deepEqual(book.summary(), before);
+        const forged = run(1, book);
+        forged.events.push({ op: "bind", requestId: uuid(3000 + order), ...bad });
+        assert.throws(() => ledgerOf([forged]), { code: "F3_LEDGER" });
+        book.bind(uuid(3000 + order), good);
+        book.uncertain(uuid(3000 + order));
+        assert.doesNotThrow(() => ledgerOf([run(1, book)]));
+      }
+    }
+  }
+});
+
+// JSON.parse é usado para sintaxe; a varredura mantém um conjunto por objeto
+// antes de aceitar seu resultado last-wins. Strings escapadas viram a mesma chave.
+function strictJsonKeysR5(text) {
+  const parsed = JSON.parse(text);
+  const stack = [];
+  const token = /"(?:[^"\\]|\\.)*"|[{}\[\]]/g;
+  for (const match of text.matchAll(token)) {
+    const value = match[0];
+    if (value === "{") stack.push(new Set());
+    else if (value === "[") stack.push(null);
+    else if (value === "}" || value === "]") stack.pop();
+    else if (/^\s*:/.test(text.slice(match.index + value.length))) {
+      const key = JSON.parse(value),
+        keys = stack.at(-1);
+      if (keys.has(key)) throw new Error("DUPLICATE_JSON_MEMBER: " + key);
+      keys.add(key);
+    }
+  }
+  return parsed;
+}
+test("F3 R5: PLANO_ATIVO não perde histórico por membro JSON duplicado", async () => {
+  strictJsonKeysR5(await readFile(new URL("docs/frontend/planos/PLANO_ATIVO.json", root), "utf8"));
+});
+test("F3 R5: duplicata é por objeto, com aninhamento e chaves escapadas", () => {
+  for (const raw of ['{"x":1,"x":2}', '{"a":{"x":1,"x":2}}', '{"x":1,"\\u0078":2}'])
+    assert.throws(() => strictJsonKeysR5(raw), /DUPLICATE_JSON_MEMBER/);
+  assert.deepEqual(strictJsonKeysR5('{"a":{"x":1},"b":{"x":2},"c":[{"x":3},{"x":4}]}'), {
+    a: { x: 1 },
+    b: { x: 2 },
+    c: [{ x: 3 }, { x: 4 }],
+  });
+  assert.equal(strictJsonKeysR5('{"texto":"{ \\\"x\\\": 1 }"}').texto, '{ "x": 1 }');
+});
+
 test("F3 B2b1: relatório completo montado pelo livro valida e cumpre todos os critérios", () => {
   const report = completeReport();
   assert.equal(valid(report), true);
@@ -368,7 +577,9 @@ test("F3 B2b1 RED: âncoras do módulo, catálogo e ledger escolhidos por quem c
   });
   // Livro e validador só aceitam ledger validado.
   for (const ledger of [undefined, null, {}, JSON.parse(LEDGER_RAW), { ...EMPTY }])
-    assert.throws(() => sut.createF3IntentBook({ ledger }), { code: "F3_LEDGER_REQUIRED" });
+    assert.throws(() => sut.createF3IntentBook({ provenance: PROV, ledger }), {
+      code: "F3_LEDGER_REQUIRED",
+    });
   assert.throws(() => sut.validateF3Report(completeReport(), catalogue, { policy: POLICY }), {
     code: "F3_LEDGER_REQUIRED",
   });
@@ -412,7 +623,7 @@ test("F3 B2b1 RED: só árvore JSON pura, folhas com toJSON ou objeto no lugar d
 });
 
 test("F3 B2b1: a organização F3 nasce na execução; rejeitada ou abandonada libera nova tentativa", () => {
-  const book = sut.createF3IntentBook({ ledger: EMPTY });
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   assert.equal(book.organizationF3(), null);
   assert.throws(() => seal(book, 5, 5, { organizationId: F3 }), { code: "F3_FOREIGN_ORG" });
   assert.throws(() => seal(book, 5, 5), { code: "F3_FOREIGN_ORG" });
@@ -424,7 +635,7 @@ test("F3 B2b1: a organização F3 nasce na execução; rejeitada ou abandonada l
   });
   assert.equal(book.state(uuid(2)), "sealed");
   // A e87f7e68 devolvida como organização criada é fato observado: inventariada fora da F3.
-  const wrong = sut.createF3IntentBook({ ledger: EMPTY });
+  const wrong = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   seal(wrong, 2, 2);
   wrong.confirm(uuid(2), { entityId: sut.F3_E87_ORG, organizationId: sut.F3_E87_ORG });
   assert.equal(wrong.organizationF3(), null);
@@ -433,7 +644,7 @@ test("F3 B2b1: a organização F3 nasce na execução; rejeitada ou abandonada l
   assert.equal(book.organizationF3(), F3);
   assert.throws(() => seal(book, 3, 2, { organizationId: F3 }), { code: "F3_INTENT_PRODUCER" });
   // Rejeitada libera; pendente bloqueia; abandonada depois de ausência comprovada libera.
-  const retry = sut.createF3IntentBook({ ledger: EMPTY });
+  const retry = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   seal(retry, 40, 2);
   retry.rejected(uuid(40));
   seal(retry, 41, 2);
@@ -441,9 +652,7 @@ test("F3 B2b1: a organização F3 nasce na execução; rejeitada ou abandonada l
   assert.throws(() => seal(retry, 42, 2), { code: "F3_INTENT_PRODUCER" });
   assert.throws(() => retry.abandon(uuid(41)), { code: "F3_INTENT_STATE" });
   retry.reconcile(uuid(41), { found: false, entityId: null, organizationId: null });
-  retry.resend(uuid(41));
-  retry.uncertain(uuid(41));
-  retry.reconcile(uuid(41), { found: false, entityId: null, organizationId: null });
+  assert.throws(() => retry.resend(uuid(41)), { code: "F3_UNCERTAIN_RESEND" });
   retry.abandon(uuid(41));
   seal(retry, 42, 2);
   retry.confirm(uuid(42), { entityId: F3, organizationId: F3 });
@@ -457,7 +666,7 @@ test("F3 B2b1: a organização F3 nasce na execução; rejeitada ou abandonada l
     ],
   );
   // Duplicidade aceita da organização também é outra organização.
-  const accepted = sut.createF3IntentBook({ ledger: EMPTY });
+  const accepted = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(accepted);
   dup(accepted, 6, 2, uuid(2));
   assert.deepEqual(accepted.confirm(uuid(6), { entityId: uuid(60), organizationId: uuid(60) }), {
@@ -466,14 +675,14 @@ test("F3 B2b1: a organização F3 nasce na execução; rejeitada ou abandonada l
   assert.equal(accepted.created()[1].kind, "organizacao_duplicada");
 });
 
-test("F3 B2b1 RED: tipos de intenção, uma principal por produtor, 5 pré-requisitos e 1 duplicidade", () => {
-  const book = sut.createF3IntentBook({ ledger: EMPTY });
+test("F3 B2b1 RED: tipos de intenção, uma principal por produtor, 11 pré-requisitos e 1 duplicidade", () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(book);
   seal(book, 5, 5);
   assert.throws(() => seal(book, 6, 5), { code: "F3_INTENT_PRODUCER" });
   book.confirm(uuid(5), { entityId: entity(5), organizationId: F3 });
   assert.throws(() => seal(book, 6, 5), { code: "F3_INTENT_PRODUCER" });
-  for (let i = 0; i < 5; i++) seal(book, 300 + i, 18, { kind: "prerequisito" });
+  for (let i = 0; i < 11; i++) seal(book, 300 + i, 18, { kind: "prerequisito" });
   assert.throws(() => seal(book, 399, 18, { kind: "prerequisito" }), {
     code: "F3_INTENT_PREREQUISITES",
   });
@@ -611,7 +820,7 @@ test("F3 B2b1 RED: chaves herdadas e conjunto de contadores fora do fixado falha
 
 test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => {
   assert.throws(() => sut.validateF3Report(completeReport(), catalogue, NP), { code: "F3_REPORT" });
-  const noDup = sut.createF3IntentBook({ ledger: EMPTY });
+  const noDup = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(noDup);
   for (const o of MUT.filter((x) => x !== 2)) {
     seal(noDup, o, o);
@@ -649,7 +858,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
     ["F3_ISOLATION"],
   );
   // Duplicidade aceita pelo produto vira FAIL, com a segunda entidade no inventário.
-  const acceptedBook = sut.createF3IntentBook({ ledger: EMPTY });
+  const acceptedBook = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(acceptedBook);
   for (const o of MUT.filter((x) => x !== 2)) {
     seal(acceptedBook, o, o);
@@ -700,8 +909,10 @@ test("F3 B2b1 RED: campo livre ou credencial no relatório é recusado", () => {
 });
 
 test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora da F3 e 2º usuário", () => {
-  const book = sut.createF3IntentBook({ ledger: EMPTY });
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(book);
+  seal(book, 5, 5);
+  book.confirm(uuid(5), { entityId: uuid(50), organizationId: F3 });
   seal(book, 7, 7);
   assert.throws(() => seal(book, 7, 8), { code: "F3_INTENT_REPLAY" });
   book.uncertain(uuid(7));
@@ -712,7 +923,7 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
   seal(book, 8, 8);
   book.uncertain(uuid(8));
   book.reconcile(uuid(8), { found: false, entityId: null, organizationId: null });
-  book.resend(uuid(8));
+  resend(book, uuid(8));
   assert.throws(() => book.resend(uuid(8)), { code: "F3_UNCERTAIN_RESEND" });
   book.confirm(uuid(8), { entityId: uuid(80), organizationId: F3 });
   assert.equal(book.summary().requests.find((q) => q.requestId === uuid(8)).sends, 2);
@@ -740,25 +951,26 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
   assert.throws(() => seal(book, 11, 11, { organizationId: sut.F3_E87_ORG }), {
     code: "F3_FOREIGN_ORG",
   });
-  assert.throws(() => sut.createF3IntentBook({ ledger: EMPTY, priorSent: 0 }), {
+  assert.throws(() => sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY, priorSent: 0 }), {
     code: "F3_INTENT_OPTIONS",
   });
   assert.equal(sut.assertF3SecondUserProfile("leitor"), true);
 });
 
-test("F3 B2b1 RED: orçamento de 30 por execução e 60 no total, acumulado pelo ledger", () => {
-  // 30 envios: organização, 17 principais e 12 duplicidades; o 31º é recusado.
-  const first = sut.createF3IntentBook({ ledger: EMPTY });
+test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo ledger", () => {
+  // 40 envios: organização, 17 principais, 11 duplicidades e 11 pré-requisitos.
+  const first = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(first);
   for (const o of MUT.filter((x) => x !== 2)) {
     seal(first, o, o);
     first.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
   }
-  for (const o of MUT.filter((x) => x !== 2).slice(0, 12)) {
+  for (const o of MUT.filter((x) => x !== 2).slice(0, 11)) {
     dup(first, 200 + o, o, uuid(o));
     first.rejected(uuid(200 + o));
   }
-  assert.equal(first.summary().sent, 30);
+  for (let i = 0; i < 11; i++) seal(first, 310 + i, 18, { kind: "prerequisito" });
+  assert.equal(first.summary().sent, 40);
   assert.throws(() => dup(first, 299, 20, uuid(20)), { code: "F3_BUDGET" });
   // Teto de 60: principais rejeitadas e refeitas contam como envio a cada tentativa.
   const rejectLoop = (book, start, count) => {
@@ -767,17 +979,17 @@ test("F3 B2b1 RED: orçamento de 30 por execução e 60 no total, acumulado pelo
       book.rejected(uuid(n));
     }
   };
-  const a = sut.createF3IntentBook({ ledger: EMPTY });
+  const a = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(a);
   rejectLoop(a, 1000, 29);
   const la = ledgerOf([run(1, a)]);
-  const b = sut.createF3IntentBook({ ledger: la });
+  const b = sut.createF3IntentBook({ provenance: PROV, ledger: la });
   rejectLoop(b, 2000, 30);
   const lb = ledgerOf([run(1, a), run(2, b)]);
   assert.equal(sut.f3LedgerState(lb).priorSent, 60);
-  const c = sut.createF3IntentBook({ ledger: lb });
+  const c = sut.createF3IntentBook({ provenance: PROV, ledger: lb });
   assert.throws(() => seal(c, 3000, 5), { code: "F3_BUDGET" });
-  // Ledger com mais de 30 envios numa execução é recusado no replay.
+  // Ledger com mais de 40 envios numa execução é recusado no replay.
   const over = {
     ...run(1, first),
     events: [
@@ -785,9 +997,9 @@ test("F3 B2b1 RED: orçamento de 30 por execução e 60 no total, acumulado pelo
       {
         op: "seal",
         requestId: uuid(3001),
-        producerOrder: 18,
-        kind: "prerequisito",
-        duplicateOf: null,
+        producerOrder: 20,
+        kind: "duplicidade",
+        duplicateOf: uuid(20),
         entityId: null,
         organizationId: null,
       },
@@ -797,7 +1009,7 @@ test("F3 B2b1 RED: orçamento de 30 por execução e 60 no total, acumulado pelo
 });
 
 test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade entre execuções", () => {
-  const b1 = sut.createF3IntentBook({ ledger: EMPTY });
+  const b1 = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(b1);
   seal(b1, 5, 5);
   b1.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
@@ -819,7 +1031,7 @@ test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade ent
       [uuid(7), "uncertain", true, 0, false],
     ],
   );
-  const b2 = sut.createF3IntentBook({ ledger: l1 });
+  const b2 = sut.createF3IntentBook({ provenance: PROV, ledger: l1 });
   assert.equal(b2.organizationF3(), F3);
   assert.equal(b2.created().length, 2);
   assert.throws(() => seal(b2, 5, 8), { code: "F3_INTENT_REPLAY" });
@@ -827,8 +1039,8 @@ test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade ent
   assert.equal(b2.summary().uncertain, 3);
   b2.reconcile(uuid(6), { found: true, entityId: uuid(106), organizationId: F3 });
   b2.reconcile(uuid(205), { found: false, entityId: null, organizationId: null });
-  b2.resend(uuid(205));
-  b2.rejected(uuid(205));
+  assert.throws(() => b2.resend(uuid(205)), { code: "F3_UNCERTAIN_RESEND" });
+  b2.abandon(uuid(205));
   // Ausência comprovada e abandono: não conta como pendente; libera nova principal.
   b2.reconcile(uuid(7), { found: false, entityId: null, organizationId: null });
   b2.abandon(uuid(7));
@@ -837,10 +1049,10 @@ test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade ent
   dup(b2, 206, 6, uuid(6));
   b2.rejected(uuid(206));
   const s2 = b2.summary();
-  assert.deepEqual([s2.priorSent, s2.sent, s2.uncertain, s2.abandoned], [5, 3, 0, 1]);
+  assert.deepEqual([s2.priorSent, s2.sent, s2.uncertain, s2.abandoned], [5, 2, 0, 2]);
   const l2 = ledgerOf([run(1, b1), run(2, b2)]);
   // Na execução seguinte, a abandonada precisa ser relida para o critério fechar.
-  const b3 = sut.createF3IntentBook({ ledger: l2 });
+  const b3 = sut.createF3IntentBook({ provenance: PROV, ledger: l2 });
   const r3 = (book) =>
     completeReport(
       (r) => {
@@ -858,6 +1070,7 @@ test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade ent
     );
   assert.ok(criteria(r3(b3), { policy: POLICY, ledger: l2 }).includes("ABANDONED_RECHECKED"));
   b3.reconcile(uuid(7), { found: false, entityId: null, organizationId: null });
+  b3.reconcile(uuid(205), { found: false });
   assert.ok(!criteria(r3(b3), { policy: POLICY, ledger: l2 }).includes("ABANDONED_RECHECKED"));
   // Releitura repetida na mesma execução seria evento sem efeito: recusada.
   assert.throws(
@@ -866,8 +1079,16 @@ test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade ent
       code: "F3_INTENT_STATE",
     },
   );
-  // Materialização tardia de uma principal abandonada: duas principais confirmadas, critério falha.
-  const b4 = sut.createF3IntentBook({ ledger: l2 });
+  // READBACK adversarial: positivo depois de negativo no mesmo run era removível
+  // sem alterar o resumo e fazia a propriedade de replay aceitar um evento apagado.
+  const beforeSecondRead = JSON.stringify([b3.summary(), b3.created()]);
+  assert.throws(
+    () => b3.reconcile(uuid(7), { found: true, entityId: uuid(777), organizationId: F3 }),
+    { code: "F3_INTENT_STATE" },
+  );
+  assert.equal(JSON.stringify([b3.summary(), b3.created()]), beforeSecondRead);
+  // Materialização tardia como PRIMEIRA releitura de uma execução nova continua válida.
+  const b4 = sut.createF3IntentBook({ provenance: PROV, ledger: l2 });
   b4.reconcile(uuid(7), { found: true, entityId: uuid(777), organizationId: F3 });
   assert.ok(criteria(r3(b4), { policy: POLICY, ledger: l2 }).includes("PRINCIPALS"));
   // Relatório validado contra ledger diferente do seu falha.
@@ -880,8 +1101,8 @@ test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade ent
   });
 });
 
-test("F3 B2b1: relatório bloqueado, com e sem ledger lido, gravado com SHA256SUMS", async () => {
-  const { mkdtemp, readFile: rf, readdir } = await import("node:fs/promises");
+test("F3 B2b1: relatório bloqueado, com e sem ledger lido, gravado com SHA256SUMS", async (t) => {
+  const { mkdtemp, readFile: rf, readdir, rm } = await import("node:fs/promises");
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
   const blocked = sut.blockedF3Report({
@@ -923,6 +1144,7 @@ test("F3 B2b1: relatório bloqueado, com e sem ledger lido, gravado com SHA256SU
     },
   );
   const dir = await mkdtemp(join(tmpdir(), "f3-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
   const casesRaw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
   await sut.writeF3Artifacts(dir, blocked, catalogue, casesRaw, NP);
   assert.deepEqual((await readdir(dir)).sort(), ["F3_CASES.json", "F3_REPORT.json", "SHA256SUMS"]);
@@ -937,6 +1159,7 @@ test("F3 B2b1: relatório bloqueado, com e sem ledger lido, gravado com SHA256SU
   }
   // casesRaw diferente do catálogo emitido, ou relatório inválido, nunca é gravado.
   const dir2 = await mkdtemp(join(tmpdir(), "f3-"));
+  t.after(() => rm(dir2, { recursive: true, force: true }));
   await assert.rejects(sut.writeF3Artifacts(dir2, blocked, catalogue, casesRaw + " ", NP), {
     code: "F3_CASES_HASH",
   });
@@ -1022,7 +1245,7 @@ test("F3 B2b1: ledger fixado vazio, append-only, só PASS ligado ao replay, e re
   assert.deepEqual([...sut.F3_HARNESS_EQUIVALENCES], []);
   // Recibo preservado no relatório da execução seguinte: proveniência e intenção do ledger.
   const now = { ...PROV, workflowRunId: "99" };
-  const next = sut.createF3IntentBook({ ledger });
+  const next = sut.createF3IntentBook({ provenance: PROV, ledger });
   const blockedNow = sut.blockedF3Report({
     code: "F3_DRIVER_PENDING",
     catalogue,
@@ -1073,12 +1296,13 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
     refused = 0;
   const codes = new Set(),
     kinds = new Set();
+  let e87 = 0;
   for (let k = 0; k < 500; k++) {
     let ledger = EMPTY;
     const runs = [];
     const nRuns = 1 + rnd(3);
     for (let r = 1; r <= nRuns; r++) {
-      const book = sut.createF3IntentBook({ ledger });
+      const book = sut.createF3IntentBook({ provenance: PROV, ledger });
       const steps = 5 + rnd(30);
       for (let s = 0; s < steps; s++) {
         const known = book.summary().requests;
@@ -1111,7 +1335,7 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
                     organizationId: null,
                   });
             else if (st === "absent")
-              action < 5 ? book.resend(org.requestId) : book.abandon(org.requestId);
+              action < 5 ? resend(book, org.requestId) : book.abandon(org.requestId);
             continue;
           }
           if (action === 0) seal(book, 0, ORDERS[rnd(ORDERS.length)], { requestId: id() });
@@ -1152,7 +1376,7 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
                   : { found: false, entityId: null, organizationId: null },
               );
             } else if (st === "absent")
-              action <= 6 ? book.resend(q.requestId) : book.abandon(q.requestId);
+              action <= 6 ? resend(book, q.requestId) : book.abandon(q.requestId);
           }
         } catch (error) {
           // Qualquer recusa, de qualquer código, não altera nada (transação).
@@ -1211,12 +1435,18 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
         );
         tampers += 1;
       }
-      for (const c of book.created()) kinds.add(c.kind);
+      for (const c of book.created()) {
+        kinds.add(c.kind);
+        if (c.organizationId === sut.F3_E87_ORG || c.id === sut.F3_E87_ORG) e87 += 1;
+      }
       runs.push({
         workflowRunId: String(r),
         frontendSha: PROV.frontendSha,
         harnessSha: PROV.harnessSha,
         deploymentId: PROV.deploymentId,
+        artifactId: String(1000 + r),
+        sha256: "e".repeat(64),
+        reviewId: String(2000 + r),
         events: summary.events,
       });
       const priorBefore = sut.f3LedgerState(ledger).priorSent;
@@ -1241,6 +1471,9 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
   console.log("# propriedade: tipos=" + [...kinds].sort() + " codigos=" + [...codes].sort());
   for (const kind of sut.F3_ENTITY_KINDS) assert.ok(kinds.has(kind), kind);
   assert.ok(codes.has("F3_INTENT_ENTITY"));
+  // M-A: o ramo e87 tem de ser exercitado de fato, não só o tipo fora_da_f3 por outra via.
+  console.log("# propriedade: entidades_e87=" + e87);
+  assert.ok(e87 > 0, "nenhuma entidade da e87f7e68 gerada");
 });
 
 test("F3 B2b1 RED: perfil diferente de leitor e RBAC divergente da fotografia v6 falham", () => {
@@ -1414,7 +1647,7 @@ test("F3 B2b1: executor confere YAML e ledger por SHA antes do driver", async ()
     "assertF3WorkflowContract(",
     "validateF3Cases(",
     "validateF3Ledger(",
-    'fail("F3_DRIVER_PENDING")',
+    "runF3Session({ catalogue, ledger, provenance, signal: abort.signal })",
     "writeF3Artifacts(",
   ].map((needle) => body.indexOf(needle));
   assert.ok(
@@ -1425,13 +1658,39 @@ test("F3 B2b1: executor confere YAML e ledger por SHA antes do driver", async ()
   assert.equal(createHash("sha256").update(yaml).digest("hex"), sut.F3_WORKFLOW_SHA256);
 });
 
-test("F3 B2b1 RED (M4): executor só lê chaves de proveniência e não grava valor de secret", async () => {
-  const { mkdtemp, readFile: rf, cp, mkdir } = await import("node:fs/promises");
+test("F3 B2b1 RED (M4): executor só lê chaves de proveniência e não grava valor de secret", async (t) => {
+  const {
+    mkdtemp,
+    readFile: rf,
+    cp,
+    mkdir,
+    rm,
+    symlink,
+    lstat,
+    unlink,
+    access,
+  } = await import("node:fs/promises");
   const { tmpdir } = await import("node:os");
-  const { join } = await import("node:path");
+  const { join, resolve, relative, isAbsolute } = await import("node:path");
+  const { fileURLToPath, pathToFileURL } = await import("node:url");
   // Cópia isolada do executor e do que ele lê, para o relatório bloqueado ir a um diretório temporário.
   const dir = await mkdtemp(join(tmpdir(), "f3-env-"));
   const repo = new URL("../../", import.meta.url);
+  const deps = fileURLToPath(new URL("node_modules", repo));
+  const link = join(dir, "node_modules");
+  t.after(async () => {
+    const rel = relative(resolve(tmpdir()), resolve(dir));
+    assert.ok(rel && !rel.startsWith("..") && !isAbsolute(rel), "cleanup restrito ao fixture TEMP");
+    const entry = await lstat(link).catch((e) => {
+      if (e.code !== "ENOENT") throw e;
+    });
+    if (entry) {
+      assert.ok(entry.isSymbolicLink(), "não remover diretório de dependências real");
+      await unlink(link); // remover a junction, nunca percorrer seu alvo
+    }
+    await rm(dir, { recursive: true, force: true });
+    await access(deps); // dependências compartilhadas continuam presentes
+  });
   for (const rel of [
     "scripts/hml/integracao-v1-fase3.mjs",
     "scripts/hml/authenticated-visual-audit.mjs",
@@ -1444,15 +1703,9 @@ test("F3 B2b1 RED (M4): executor só lê chaves de proveniência e não grava va
     await mkdir(join(dir, rel, ".."), { recursive: true });
     await cp(new URL(rel, repo), join(dir, rel));
   }
-  await cp(new URL("node_modules", repo), join(dir, "node_modules"), {
-    recursive: true,
-    dereference: false,
-    verbatimSymlinks: true,
-  }).catch(async () => {
-    const { symlink } = await import("node:fs/promises");
-    await symlink(new URL("node_modules", repo).pathname, join(dir, "node_modules"));
-  });
-  const copy = await import(join(dir, "scripts/hml/integracao-v1-fase3.mjs"));
+  await access(deps); // ausência é diagnóstico, não instalação dentro do teste
+  await symlink(deps, link, process.platform === "win32" ? "junction" : "dir");
+  const copy = await import(pathToFileURL(join(dir, "scripts/hml/integracao-v1-fase3.mjs")).href);
   const secret = "valor-secreto-do-segundo-usuario-0001";
   const read = new Set();
   const base = {
@@ -1510,13 +1763,13 @@ test("F3 B2b1 RED (M4): imports só de node:* e do auditor, sem require nem impo
 });
 
 test("F3 B2b1 RED: fato observado é registrado, transição é atômica e o isolamento reprova", () => {
-  const book = sut.createF3IntentBook({ ledger: EMPTY });
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(book);
   seal(book, 5, 5);
   book.uncertain(uuid(5));
   // Violação de protocolo recusada sem efeito colateral (antes marcava rechecked).
   const before = JSON.stringify([book.summary(), book.created()]);
-  seal(book, 6, 6);
+  seal(book, 4, 4); // ADM01: só depende da organização
   const afterSeal = JSON.stringify([book.summary(), book.created()]);
   assert.notEqual(before, afterSeal);
   assert.throws(() => book.reconcile(uuid(5), { found: true, entityId: "x", organizationId: F3 }), {
@@ -1525,7 +1778,7 @@ test("F3 B2b1 RED: fato observado é registrado, transição é atômica e o iso
   assert.equal(JSON.stringify([book.summary(), book.created()]), afterSeal);
   // Entidade achada fora da F3 entra no inventário; recibo PASS sobre ela é recusado.
   book.reconcile(uuid(5), { found: true, entityId: uuid(105), organizationId: uuid(999) });
-  book.confirm(uuid(6), { entityId: uuid(105), organizationId: F3 });
+  book.confirm(uuid(4), { entityId: uuid(105), organizationId: F3 });
   assert.deepEqual(
     book
       .created()
@@ -1533,14 +1786,15 @@ test("F3 B2b1 RED: fato observado é registrado, transição é atômica e o iso
       .map((c) => c.kind),
     ["fora_da_f3", "entidade_repetida"],
   );
-  const full = referenceBook(EMPTY, () => {}, [5]);
-  full.uncertain(uuid(5));
-  full.reconcile(uuid(5), { found: true, entityId: entity(5), organizationId: uuid(999) });
+  // V116 não é dependência de inventário de nenhum fluxo declarado.
+  const full = referenceBook(EMPTY, () => {}, [16]);
+  full.uncertain(uuid(16));
+  full.reconcile(uuid(16), { found: true, entityId: entity(16), organizationId: uuid(999) });
   const r = completeReport(() => {}, { book: full });
   assert.throws(() => valid(r), { code: "F3_ISOLATION" });
   const blocked5 = completeReport(
     (x) =>
-      forProducer(x, 5, (c) => {
+      forProducer(x, 16, (c) => {
         c.positive = "FAIL";
         c.duplicate = "NOT_RUN";
         c.status = "FAIL";
@@ -1591,15 +1845,17 @@ test("F3 B2b1 RED: relatório parcial com o livro preserva envios, eventos e inv
     () => big.intents.events[0],
   );
   assert.throws(() => sut.validateF3Report(big, catalogue, NP), { code: "F3_REPORT" });
-  assert.equal(sut.F3_MAX_EVENTS_PER_RUN, 480);
+  // (8 + 2 × 4 vínculos) eventos por intenção × 60 intenções.
+  assert.equal(sut.F3_MAX_EVENTS_PER_RUN, 960);
 });
 
-test("F3 B2b1 RED: gravador só com a política de produção; entrada do ledger pela execução citada", async () => {
-  const { mkdtemp, readFile: rf } = await import("node:fs/promises");
+test("F3 B2b1 RED: gravador só com a política de produção; entrada do ledger pela execução citada", async (t) => {
+  const { mkdtemp, readFile: rf, rm } = await import("node:fs/promises");
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
   const casesRaw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
   const dir = await mkdtemp(join(tmpdir(), "f3-w-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
   // 138 PASS sob política de teste: válido no diagnóstico, nunca gravado.
   const report = completeReport();
   assert.deepEqual(criteria(report), []);
@@ -1611,12 +1867,12 @@ test("F3 B2b1 RED: gravador só com a política de produção; entrada do ledger
   });
   await assert.rejects(rf(join(dir, "F3_REPORT.json")));
   // Entrada PASS citando a execução 1 para entidade confirmada só na execução 2.
-  const b1 = sut.createF3IntentBook({ ledger: EMPTY });
+  const b1 = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(b1);
   seal(b1, 5, 5);
   b1.uncertain(uuid(5));
   const r1 = run(1, b1);
-  const b2 = sut.createF3IntentBook({ ledger: ledgerOf([r1]) });
+  const b2 = sut.createF3IntentBook({ provenance: PROV, ledger: ledgerOf([r1]) });
   b2.reconcile(uuid(5), { found: true, entityId: entity(5), organizationId: F3 });
   const r2 = run(2, b2, "c".repeat(40));
   const c5 = catalogue.cases.find((c) => c.producerOrder === 5);
@@ -1626,9 +1882,9 @@ test("F3 B2b1 RED: gravador só com a política de produção; entrada do ledger
     ...PROV,
     requestId: uuid(5),
     entityIds: [entity(5)],
-    artifactId: "1",
+    artifactId: "14076439209",
     sha256: "d".repeat(64),
-    reviewId: "1",
+    reviewId: "5900720754",
     ...extra,
   });
   assert.ok(ledgerOf([r1, r2], [entry({ workflowRunId: "2", harnessSha: "c".repeat(40) })]));
@@ -1639,7 +1895,7 @@ test("F3 B2b1 RED: gravador só com a política de produção; entrada do ledger
   ])
     assert.throws(() => ledgerOf([r1, r2], [bad]), { code: "F3_LEDGER" });
   // Entrada sobre entidade fora da F3 é recusada.
-  const b3 = sut.createF3IntentBook({ ledger: EMPTY });
+  const b3 = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(b3);
   seal(b3, 5, 5);
   b3.confirm(uuid(5), { entityId: entity(5), organizationId: uuid(999) });
@@ -1649,4 +1905,1648 @@ test("F3 B2b1 RED: gravador só com a política de produção; entrada do ledger
   // Execução do ledger sem proveniência completa é recusada.
   const { frontendSha: _f, ...noFront } = r1;
   assert.throws(() => ledgerOf([noFront]), { code: "F3_LEDGER" });
+});
+
+// ---------------------------------------------------------------------------------------------
+// BUILD-2b-2a: proveniência amarrada ao livro (M2), execução ligada ao artefato (M3), isolamento
+// dos pré-requisitos e cerca de mutação ligada ao livro.
+
+test("F3 B2b2a RED (M2): o livro exige proveniência completa e o relatório herda a do livro", () => {
+  assert.throws(() => sut.createF3IntentBook({ ledger: EMPTY }), { code: "F3_PROVENANCE" });
+  for (const k of ["frontendSha", "harnessSha", "deploymentId", "workflowRunId"])
+    assert.throws(
+      () => sut.createF3IntentBook({ ledger: EMPTY, provenance: { ...PROV, [k]: null } }),
+      { code: "F3_PROVENANCE" },
+    );
+  assert.throws(
+    () => sut.createF3IntentBook({ ledger: EMPTY, provenance: { ...PROV, extra: 1 } }),
+    { code: "F3_PROVENANCE" },
+  );
+  assert.throws(() => sut.createF3IntentBook({ ledger: EMPTY, provenance: PROV, x: 1 }), {
+    code: "F3_INTENT_OPTIONS",
+  });
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  assert.deepEqual(book.provenance(), PROV);
+  const fromBook = sut.blockedF3Report({ code: "F3_X", catalogue, book });
+  assert.deepEqual(fromBook.provenance, PROV);
+  assert.equal(sut.validateF3Report(fromBook, catalogue, { ledger: EMPTY }), true);
+  assert.throws(
+    () =>
+      sut.blockedF3Report({
+        code: "F3_X",
+        catalogue,
+        book,
+        provenance: { ...PROV, harnessSha: "c".repeat(40) },
+      }),
+    { code: "F3_REPORT" },
+  );
+  // Relatório com eventos e proveniência nula não valida, nem BLOCKED.
+  const tampered = structuredClone(fromBook);
+  tampered.provenance.harnessSha = null;
+  tampered.cases.forEach((r) => (r.harnessSha = null));
+  assert.throws(() => sut.validateF3Report(tampered, catalogue, { ledger: EMPTY }), {
+    code: "F3_REPORT",
+  });
+  // Sem eventos, o BLOCKED com proveniência nula continua válido (falha antes do livro).
+  const early = sut.blockedF3Report({
+    code: "F3_X",
+    catalogue,
+    ledger: EMPTY,
+    provenance: { ...PROV, harnessSha: null },
+  });
+  assert.equal(sut.validateF3Report(early, catalogue, { ledger: EMPTY }), true);
+});
+
+test("F3 B2b2a RED (M3): execução do ledger aponta artefato e revisão, herdados pela entrada", () => {
+  const b1 = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(b1);
+  const r1 = run(1, b1);
+  assert.ok(ledgerOf([r1]));
+  for (const bad of [
+    { artifactId: undefined },
+    { artifactId: null },
+    { artifactId: "0" },
+    { sha256: "D".repeat(64) },
+    { sha256: "d".repeat(63) },
+    { reviewId: "" },
+  ]) {
+    const r = { ...r1, ...bad };
+    for (const k of Object.keys(bad)) if (bad[k] === undefined) delete r[k];
+    assert.throws(() => ledgerOf([r]), { code: "F3_LEDGER" }, JSON.stringify(bad));
+  }
+  const c0 = catalogue.cases[0];
+  const entry = (extra = {}) => ({
+    caseId: c0.caseId,
+    status: "PASS",
+    ...PROV,
+    workflowRunId: "1",
+    requestId: null,
+    entityIds: [],
+    artifactId: r1.artifactId,
+    sha256: r1.sha256,
+    reviewId: r1.reviewId,
+    ...extra,
+  });
+  assert.ok(ledgerOf([r1], [entry()]));
+  for (const bad of [{ artifactId: "77" }, { sha256: "f".repeat(64) }, { reviewId: "88" }])
+    assert.throws(() => ledgerOf([r1], [entry(bad)]), { code: "F3_LEDGER" });
+});
+
+test("F3 B2b2a RED: entidade fora da F3, repetida ou de pré-requisito não isolada encerra", () => {
+  const clean = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(clean);
+  seal(clean, 5, 5);
+  clean.confirm(uuid(5), { entityId: entity(5), organizationId: F3 });
+  seal(clean, 6, 6, { kind: "prerequisito" });
+  clean.confirm(uuid(6), { entityId: uuid(606), organizationId: F3 });
+  assert.equal(clean.assertIsolation(), true);
+  const cases = [
+    (b) => {
+      seal(b, 5, 5);
+      b.confirm(uuid(5), { entityId: uuid(505), organizationId: sut.F3_E87_ORG });
+    },
+    (b) => {
+      seal(b, 5, 5, { kind: "prerequisito" });
+      b.confirm(uuid(5), { entityId: uuid(505), organizationId: uuid(77) });
+    },
+    (b) => {
+      seal(b, 5, 5, { kind: "prerequisito" });
+      b.confirm(uuid(5), { entityId: F3, organizationId: F3 });
+    },
+  ];
+  // Repetida numa principal reprova o gate pelo recibo, mas não encerra a execução.
+  const repeated = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(repeated);
+  seal(repeated, 5, 5);
+  repeated.confirm(uuid(5), { entityId: F3, organizationId: F3 });
+  assert.equal(repeated.created()[1].kind, "entidade_repetida");
+  assert.equal(repeated.assertIsolation(), true);
+  for (const breach of cases) {
+    const b = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+    createOrg(b);
+    breach(b);
+    assert.throws(() => b.assertIsolation(), { code: "F3_ISOLATION_BREACH" });
+    // O fato continua no inventário do relatório parcial.
+    const report = sut.blockedF3Report({ code: "F3_ISOLATION_BREACH", catalogue, book: b });
+    assert.equal(report.isolation.created.length, 2);
+    assert.equal(sut.validateF3Report(report, catalogue, { ledger: EMPTY }), true);
+  }
+});
+
+test("F3 B2b2a RED: runF3Session leva o livro ao relatório parcial e confere o isolamento", async () => {
+  // Driver que muta e falha: o relatório carrega envios, eventos e inventário.
+  const failing = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async (book) => {
+      createOrg(book);
+      seal(book, 5, 5);
+      throw Object.assign(new Error("x"), { code: "F3_DRIVER_X" });
+    },
+  });
+  assert.equal(failing.code, "F3_DRIVER_X");
+  assert.equal(failing.report.intents.sent, 2);
+  // seal, bind e confirm da organização; seal e bind do V102.
+  assert.equal(failing.report.intents.events.length, 5);
+  assert.deepEqual(failing.report.provenance, PROV);
+  assert.equal(sut.validateF3Report(failing.report, catalogue, { ledger: EMPTY }), true);
+  // Conferência final de isolamento depois do driver.
+  const breach = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async (book) => {
+      createOrg(book);
+      seal(book, 5, 5);
+      book.confirm(uuid(5), { entityId: uuid(505), organizationId: sut.F3_E87_ORG });
+    },
+  });
+  assert.equal(breach.code, "F3_ISOLATION_BREACH");
+  // Proveniência incompleta: sem livro, nenhum evento, código próprio.
+  const noProv = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: { ...PROV, deploymentId: null },
+    drive: async () => assert.fail("driver não pode rodar sem livro"),
+  });
+  assert.equal(noProv.code, "F3_PROVENANCE");
+  assert.equal(noProv.report.intents.events.length, 0);
+  assert.equal(sut.validateF3Report(noProv.report, catalogue, { ledger: EMPTY }), true);
+  // Driver de produção ainda pendente.
+  const pending = await sut.runF3Session({ catalogue, ledger: EMPTY, provenance: PROV });
+  assert.equal(pending.code, "F3_DRIVER_PENDING");
+});
+
+// Cerca: só URLs reais da API, contra o requestAllowed verdadeiro do auditor. Relógio e ID são
+// os de produção, substituídos só por mock nos testes.
+const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
+const RPC = (name) => API + "/rest/v1/rpc/" + name;
+// Corpo do SYS04 na ordem do produto (criarOrganizacaoDados.ts:35-40).
+const ORG_BODY = Object.freeze({
+  p_razao_social: "ContaOS F3 Sintética",
+  p_timezone: "America/Sao_Paulo",
+  p_cnpj: "11222333000181",
+});
+let tick = 0;
+const req = (extra = {}) => ({
+  url: RPC("criar_organizacao"),
+  method: "POST",
+  resourceType: "Fetch",
+  postData: JSON.stringify(ORG_BODY),
+  stage: "REQUEST",
+  interceptionId: "i" + ++tick,
+  sessionId: "s1",
+  ...extra,
+});
+const respond = (r) => ({ ...r, stage: "RESPONSE" });
+function fenceWith(t, setup = () => {}) {
+  const clock = { t: 0 };
+  let n = 0;
+  t.mock.method(performance, "now", () => clock.t);
+  t.mock.method(globalThis.crypto, "randomUUID", () => uuid(7000 + ++n));
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  setup(book);
+  return { book, fence: sut.createF3MutationFence({ book }), clock };
+}
+const armOrg = (f, body = ORG_BODY) => f.fence.arm({ producerOrder: 2, bodies: [body] });
+const orgOk = (b) => createOrg(b);
+const shuffle = (o) =>
+  Object.fromEntries(
+    Object.entries(o)
+      .reverse()
+      .map(([k, v]) => [k, v && typeof v === "object" && !Array.isArray(v) ? shuffle(v) : v]),
+  );
+
+test("F3 B2b2a RED: cerca só aceita opções de produção e um livro do módulo", (t) => {
+  const f = fenceWith(t);
+  for (const extra of [{ readPolicy: () => true }, { now: () => 0 }, { newId: () => uuid(1) }])
+    assert.throws(() => sut.createF3MutationFence({ book: f.book, ...extra }), {
+      code: "F3_FENCE_OPTIONS",
+    });
+  assert.throws(() => sut.createF3MutationFence({ book: {} }), { code: "F3_FENCE_BOOK" });
+});
+
+test("F3 B2b2a RED: leitura vai à allowlist real; GET, HEAD e OPTIONS nunca são mutação", (t) => {
+  const f = fenceWith(t, orgOk);
+  // Leitura de tabela de fluxo (contratantes) passa e não congela, mesmo com a cerca ociosa.
+  const list = req({
+    url: API + "/rest/v1/contratantes?select=id%2Crazao_social",
+    method: "GET",
+    postData: undefined,
+  });
+  assert.equal(f.fence.policy(list), true);
+  assert.equal(f.fence.policy(respond(list)), true);
+  assert.equal(f.fence.policy({ ...list, method: "HEAD", interceptionId: "h" }), true);
+  assert.equal(f.fence.policy({ ...list, method: "OPTIONS", interceptionId: "o" }), true);
+  // RPC de leitura da allowlist passa; RPC desconhecida é recusada sem congelar.
+  const read = req({ url: RPC("listar_organizacoes_disponiveis"), postData: "{}" });
+  assert.equal(f.fence.policy(read), true);
+  assert.equal(f.fence.policy(req({ url: RPC("rpc_inexistente"), postData: "{}" })), false);
+  // Origem alheia é recusada pela allowlist sem congelar.
+  assert.equal(f.fence.policy(req({ url: "https://x.test/a", method: "GET" })), false);
+  assert.equal(f.fence.frozen(), false);
+  // Mutação de produtor sem fluxo, em tabela, Storage ou URL malformada: mutação sem intenção.
+  for (const m of [
+    req({ url: API + "/rest/v1/contratos", postData: "{}" }),
+    req({ url: API + "/rest/v1/contratantes?id=eq.1", method: "PATCH", postData: "{}" }),
+    req({ url: API + "/rest/v1/contratantes?id=eq.1", method: "DELETE" }),
+    req({ url: API + "/storage/v1/object/upload/sign/b/x?token=t", method: "PUT" }),
+    req({ url: "https://gklhhhyosgasnyoxlrui.storage.supabase.co/storage/v1/upload/resumable" }),
+    req({ url: API + "//rest/v1/rpc/criar_organizacao" }),
+  ]) {
+    assert.equal(sut.isF3Mutation(m), true, m.url + " " + m.method);
+    const g = fenceWith(t, orgOk);
+    assert.equal(g.fence.policy(m), false, m.url);
+    assert.equal(g.fence.frozen(), true, m.url);
+  }
+  // RPC sem fluxo declarado ou com nome malformado não é de fluxo: a allowlist real a recusa, e
+  // a cerca nativa encerra o contexto em qualquer recusa.
+  for (const m of [
+    req({ url: RPC("publicar_versao_proposta_v108"), postData: "{}" }),
+    req({ url: API + "/rest/v1/rpc/criar_organizacao/" }),
+  ]) {
+    assert.equal(sut.isF3Mutation(m), false, m.url);
+    assert.equal(fenceWith(t, orgOk).fence.policy(m), false, m.url);
+  }
+});
+
+test("F3 B2b2a RED: intenção armada sai uma vez, selada antes, com preflight sem selo", (t) => {
+  const f = fenceWith(t);
+  const id = armOrg(f);
+  assert.equal(id, uuid(7001));
+  assert.throws(() => f.book.state(id), { code: "F3_INTENT_UNKNOWN" });
+  assert.throws(() => armOrg(f), { code: "F3_FENCE_PENDING" });
+  // Preflight do passo armado passa sem selo; preflight de outro passo, não.
+  const pre = req({ method: "OPTIONS", postData: undefined });
+  assert.equal(f.fence.policy(pre), true);
+  assert.equal(f.fence.policy(respond(pre)), true);
+  assert.equal(
+    f.fence.policy(req({ url: RPC("salvar_vinculo_usuario_adm"), method: "OPTIONS" })),
+    false,
+  );
+  assert.equal(f.book.summary().sent, 0);
+  // Corpo em outra ordem de chaves é o mesmo corpo.
+  const send = req({ postData: JSON.stringify(shuffle(ORG_BODY)) });
+  assert.equal(f.fence.policy(send), true);
+  assert.equal(f.book.state(id), "sealed");
+  assert.equal(f.book.summary().sent, 1);
+  assert.equal(f.fence.policy(respond(send)), true);
+  // Repetição depois do fim do fluxo: bloqueia e congela.
+  assert.equal(f.fence.policy(req()), false);
+  assert.deepEqual(f.fence.settle(), { requestId: id, sealed: true, complete: true, slots: {} });
+  assert.equal(f.book.summary().sent, 1);
+  // Requisição atrasada depois do settle, idêntica: nenhuma intenção a admite.
+  const late = fenceWith(t);
+  armOrg(late);
+  assert.equal(late.fence.policy(req()), true);
+  late.fence.settle();
+  assert.equal(late.fence.policy(req()), false);
+  assert.equal(late.book.summary().sent, 1);
+});
+
+test("F3 B2b2a RED: desvio de corpo, método, URL, ticket, prazo ou resposta bloqueia", (t) => {
+  const variants = [
+    req({ postData: JSON.stringify({ ...ORG_BODY, p_nome_fantasia: "x" }) }),
+    req({ postData: JSON.stringify({ ...ORG_BODY, p_razao_social: "outra" }) }),
+    req({ postData: JSON.stringify({ ...ORG_BODY, p_cnpj: 11222333000181 }) }),
+    req({ postData: "{" }),
+    req({ postData: undefined }),
+    req({ method: "PATCH" }),
+    req({ method: "PUT" }),
+    req({ url: RPC("criar_organizacao") + "?x=1" }),
+    req({ interceptionId: undefined }),
+    req({ stage: "OTHER" }),
+  ];
+  for (const [i, v] of variants.entries()) {
+    const f = fenceWith(t);
+    armOrg(f);
+    assert.equal(f.fence.policy(v), false, "variante " + i);
+    assert.equal(f.book.summary().sent, 0, "variante " + i);
+    assert.equal(f.fence.settle().sealed, false);
+  }
+  const late = fenceWith(t);
+  armOrg(late);
+  late.clock.t = sut.F3_FENCE_WINDOW_MS;
+  assert.equal(late.fence.policy(req()), false);
+  assert.equal(late.book.summary().sent, 0);
+  // Resposta com ticket de outra URL ou corpo divergente congela.
+  const resp = fenceWith(t);
+  armOrg(resp);
+  const sent = req();
+  assert.equal(resp.fence.policy(sent), true);
+  assert.equal(
+    resp.fence.policy(respond({ ...sent, postData: JSON.stringify({ ...ORG_BODY, x: 1 }) })),
+    false,
+  );
+  assert.equal(resp.fence.frozen(), true);
+  // Ticket reaproveitado no estágio REQUEST congela.
+  const dupTicket = fenceWith(t);
+  armOrg(dupTicket);
+  const first = req();
+  assert.equal(dupTicket.fence.policy(first), true);
+  assert.equal(dupTicket.fence.policy(first), false);
+});
+
+test("F3 B2b2a RED: arm valida pela regra do livro, por inteiro e por isolamento", (t) => {
+  const f = fenceWith(t);
+  // Antes da organização, só a principal do SYS04.
+  for (const bad of [
+    { producerOrder: 2, bodies: [ORG_BODY], kind: "prerequisito" },
+    { producerOrder: 2, bodies: [ORG_BODY], kind: "duplicidade" },
+    { producerOrder: 2, bodies: [ORG_BODY], kind: "x" },
+    { producerOrder: 5, bodies: [{}] },
+  ])
+    assert.throws(
+      () => f.fence.arm(bad),
+      (e) => /^F3_/.test(e.code),
+      JSON.stringify(bad),
+    );
+  for (const order of ["2", "__proto__", "constructor", 2.5, 99, 9])
+    assert.throws(() => f.fence.arm({ producerOrder: order, bodies: [ORG_BODY] }), {
+      code: "F3_FLOW_UNDEFINED",
+    });
+  assert.throws(() => f.fence.arm({ producerOrder: 2, bodies: [] }), { code: "F3_FENCE_ARM" });
+  assert.throws(() => f.fence.arm({ producerOrder: 2, bodies: [ORG_BODY], extra: 1 }), {
+    code: "F3_FENCE_ARM",
+  });
+  assert.throws(() => f.fence.arm({ producerOrder: 2, bodies: [new Proxy({ ...ORG_BODY }, {})] }), {
+    code: "F3_FENCE_ARM",
+  });
+  assert.throws(() => f.fence.settle(), { code: "F3_FENCE_IDLE" });
+  assert.equal(f.book.summary().sent, 0);
+  // Organização já existe: a segunda principal do SYS04 é recusada ao armar, não no clique.
+  const twice = fenceWith(t, orgOk);
+  assert.throws(() => armOrg(twice), { code: "F3_INTENT_PRODUCER" });
+  assert.equal(twice.fence.frozen(), false);
+  // Violação de isolamento anterior impede armar qualquer intenção nova.
+  const breach = fenceWith(t, (b) => {
+    createOrg(b);
+    seal(b, 5, 5);
+    b.confirm(uuid(5), { entityId: uuid(505), organizationId: sut.F3_E87_ORG });
+  });
+  assert.throws(() => breach.fence.arm({ producerOrder: 5, bodies: [{ id_organizacao: F3 }] }), {
+    code: "F3_ISOLATION_BREACH",
+  });
+});
+
+// V106 na ordem do produto (cadastroOperacionalDados.ts:210-215): p_request_id é a 4ª chave.
+const v106 = (contrato, chave) => ({
+  p_id_organizacao: F3,
+  p_versao_esperada: 3,
+  p_motivo: "Ajuste sintético F3",
+  p_request_id: chave,
+  p_id_contrato: contrato,
+  p_alteracoes: { objeto: "Objeto F3", valor_total: 10 },
+});
+const withContract = (b) => {
+  createOrg(b);
+  seal(b, 5, 5);
+  b.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+  seal(b, 7, 7);
+  b.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
+};
+
+function versionResponse(url, method, data, args) {
+  return {
+    url: () => url,
+    status: () => 200,
+    json: async () => data,
+    request: () => ({ url: () => url, method: () => method, postData: () => JSON.stringify(args) }),
+  };
+}
+async function contractFence(t) {
+  const f = fenceWith(t, withContract);
+  assert.equal(
+    await f.fence.observeVersion(
+      versionResponse(
+        RPC("obter_cadastro_operacional_v1"),
+        "POST",
+        {
+          schema_versao: "crud-cadastro-v1",
+          entidade: "contratos",
+          registro: { id: uuid(107), id_organizacao: F3, versao_registro: 3 },
+        },
+        { p_id: uuid(107), p_id_organizacao: F3, p_entidade: "contratos" },
+      ),
+    ),
+    true,
+  );
+  return f;
+}
+
+test("F3 B2b2a RED: vaga da UI em qualquer posição, só em campo free, e UUID só do inventário", async (t) => {
+  const f = await contractFence(t);
+  const id = f.fence.arm({
+    producerOrder: 8,
+    bodies: [v106(uuid(107), sut.f3Slot("uuid", "chave"))],
+  });
+  const body = shuffle(v106(uuid(107), uuid(4242)));
+  assert.equal(
+    f.fence.policy(req({ url: RPC("atualizar_contrato_v1"), postData: JSON.stringify(body) })),
+    true,
+  );
+  assert.deepEqual(f.fence.settle(), {
+    requestId: id,
+    sealed: true,
+    complete: true,
+    slots: { chave: uuid(4242) },
+  });
+  // Vaga com valor que não é UUID bloqueia.
+  const bad = await contractFence(t);
+  bad.fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), sut.f3Slot("uuid", "chave"))] });
+  assert.equal(
+    bad.fence.policy(
+      req({ url: RPC("atualizar_contrato_v1"), postData: JSON.stringify(v106(uuid(107), "x")) }),
+    ),
+    false,
+  );
+  assert.equal(bad.book.summary().sent, 3);
+  // Vaga fora de campo free, vaga de caminho e UUID fora do inventário: recusados ao armar.
+  const validated = await contractFence(t);
+  const arm = (body) => () => validated.fence.arm({ producerOrder: 8, bodies: [body] });
+  assert.throws(arm({ ...v106(uuid(107), uuid(1)), p_motivo: sut.f3Slot("uuid", "m") }), {
+    code: "F3_FENCE_ARM",
+  });
+  assert.throws(arm(v106(uuid(107), sut.f3Slot("path", "p"))), { code: "F3_FENCE_ARM" });
+  // Cada recusa isolada: a chave vai em vaga, e só o campo do caso traz o UUID alheio.
+  const k = sut.f3Slot("uuid", "chave");
+  assert.ok((await contractFence(t)).fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), k)] }));
+  // Toda recusa de origem congela a cerca (PLAN §12.6), então cada caso usa uma cerca nova:
+  // contrato desconhecido, e87f7e68 na organização, UUID embutido em texto e UUID em lista.
+  for (const body of [
+    v106(uuid(999), k),
+    { ...v106(uuid(107), k), p_id_organizacao: sut.F3_E87_ORG },
+    { ...v106(uuid(107), k), p_alteracoes: { ref: "x-" + sut.F3_E87_ORG } },
+    { ...v106(uuid(107), k), p_alteracoes: { lista: [{ id: uuid(998) }] } },
+  ]) {
+    const g = await contractFence(t);
+    assert.throws(() => g.fence.arm({ producerOrder: 8, bodies: [body] }), {
+      code: "F3_FOREIGN_ORG",
+    });
+    assert.equal(g.fence.frozen(), true);
+    assert.equal(g.book.summary().sent, 3);
+  }
+  assert.throws(() => sut.f3Slot("uuid", "Nome Invalido"), { code: "F3_FENCE_ARM" });
+});
+
+test("F3 B2b2a RED: fluxo de dois passos (ADM01) e inserção em tabela (V102)", (t) => {
+  const f = fenceWith(t, orgOk);
+  const edge = {
+    id_organizacao: F3,
+    email: "leitor@example.test",
+    chave_idempotencia: sut.f3Slot("uuid", "convite"),
+  };
+  const save = {
+    p_id_organizacao: F3,
+    p_id_usuario: sut.f3Slot("uuid", "usuario"),
+    p_email: "leitor@example.test",
+    p_perfil: "leitor",
+    p_escopo_todos_contratos: true,
+    p_ativo: true,
+    p_ids_contratos_ativar: [],
+    p_ids_contratos_revogar: [],
+    p_versao_esperada: null,
+    p_chave_idempotencia: sut.f3Slot("uuid", "vinculo"),
+  };
+  const id = f.fence.arm({ producerOrder: 4, bodies: [edge, save] });
+  const saveReq = req({
+    url: RPC("salvar_vinculo_usuario_adm"),
+    postData: JSON.stringify({
+      ...save,
+      p_id_usuario: uuid(31),
+      p_chave_idempotencia: uuid(32),
+    }),
+  });
+  // Fora de ordem: o segundo passo antes do primeiro bloqueia.
+  const early = fenceWith(t, orgOk);
+  early.fence.arm({ producerOrder: 4, bodies: [edge, save] });
+  assert.equal(early.fence.policy(saveReq), false);
+  assert.equal(early.book.summary().sent, 1);
+  const edgeReq = req({
+    url: API + "/functions/v1/admin-invite-user",
+    postData: JSON.stringify({ ...edge, chave_idempotencia: uuid(30) }),
+  });
+  assert.equal(f.fence.policy(edgeReq), true);
+  assert.equal(f.book.state(id), "sealed");
+  assert.equal(f.fence.policy(saveReq), true);
+  assert.equal(f.book.summary().sent, 2);
+  assert.deepEqual(f.fence.settle(), {
+    requestId: id,
+    sealed: true,
+    complete: true,
+    slots: { convite: uuid(30), usuario: uuid(31), vinculo: uuid(32) },
+  });
+  // Interrompido depois do primeiro passo: selado, incompleto.
+  const half = fenceWith(t, orgOk);
+  half.fence.arm({ producerOrder: 4, bodies: [edge, save] });
+  assert.equal(half.fence.policy(edgeReq), true);
+  assert.deepEqual(
+    [half.fence.settle()].map((x) => [x.sealed, x.complete]),
+    [[true, false]],
+  );
+  // V102: POST na tabela com a query exata do cliente; outra query ou PATCH bloqueia.
+  const v102 = { id_organizacao: F3, tipo_pessoa: "juridica", razao_social: "Contratante F3" };
+  const url = API + "/rest/v1/contratantes?select=id%2Crazao_social%2Csituacao";
+  const ok = fenceWith(t, orgOk);
+  ok.fence.arm({ producerOrder: 5, bodies: [v102] });
+  assert.equal(ok.fence.policy(req({ url, postData: JSON.stringify(shuffle(v102)) })), true);
+  for (const bad of [
+    req({ url: API + "/rest/v1/contratantes", postData: JSON.stringify(v102) }),
+    req({ url, method: "PATCH", postData: JSON.stringify(v102) }),
+  ]) {
+    const g = fenceWith(t, orgOk);
+    g.fence.arm({ producerOrder: 5, bodies: [v102] });
+    assert.equal(g.fence.policy(bad), false);
+  }
+});
+
+test("F3 §12.6: ações sem chave rejeitam reenvio no livro após readback", () => {
+  for (const [order, kind] of [
+    [2, "principal"],
+    [5, "principal"],
+    [6, "principal"],
+    [7, "principal"],
+    [14, "principal"],
+    [16, "principal"],
+    [18, "principal"],
+    [18, "prerequisito"],
+    [19, "prerequisito"],
+    [20, "principal"],
+  ]) {
+    const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+    if (order !== 2) createOrg(book);
+    if (order === 6 || order === 7) {
+      seal(book, 5, 5);
+      book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+    }
+    seal(book, 421, order, { kind });
+    book.uncertain(uuid(421));
+    book.reconcile(uuid(421), { found: false });
+    const before = book.summary();
+    assert.throws(() => book.resend(uuid(421)), { code: "F3_UNCERTAIN_RESEND" });
+    assert.deepEqual(book.summary(), before);
+  }
+});
+
+test("F3 §12.6: SYS04 sem chave só permite reconciliar após envio incerto", (t) => {
+  const f = fenceWith(t);
+  const id = armOrg(f);
+  assert.equal(f.fence.policy(req()), true);
+  f.fence.settle();
+  f.book.uncertain(id);
+  assert.throws(() => f.fence.arm({ producerOrder: 2, bodies: [ORG_BODY], resendOf: id }), {
+    code: "F3_UNCERTAIN_RESEND",
+  });
+  f.book.reconcile(id, { found: false });
+  assert.throws(() => f.fence.arm({ producerOrder: 2, bodies: [ORG_BODY], resendOf: id }), {
+    code: "F3_UNCERTAIN_RESEND",
+  });
+  assert.throws(() => f.book.resend(id), { code: "F3_UNCERTAIN_RESEND" });
+  assert.equal(f.book.summary().sent, 1);
+});
+
+test("F3 §12.6: tentativa TUS bloqueia a sessão com o código canônico", async () => {
+  const result = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive(book) {
+      const fence = sut.createF3MutationFence({ book });
+      assert.equal(
+        fence.policy(
+          req({
+            url: API + "/storage/v1/upload/resumable",
+            postData: undefined,
+          }),
+        ),
+        false,
+      );
+      assert.equal(book.frozen(), true);
+    },
+  });
+  assert.equal(result.code, "F3_UPLOAD_RESUMABLE");
+  assert.equal(result.report.intents.sent, 0);
+});
+
+test("F3 §12.6: espera vencida ou recusada devolve o código da espera", async () => {
+  let reads = 0;
+  const read = async () => {
+    reads++;
+    return "pending";
+  };
+  const expired = await sut.observeF3Wait("W1", performance.now() - 480001, read);
+  assert.deepEqual(expired, { status: "BLOCKED", code: "F3_WAIT_VERIFICADOR_PRAZO" });
+  assert.equal(reads, 0);
+  const refused = await sut.observeF3Wait("W2", performance.now(), async () => "failed");
+  assert.deepEqual(refused, { status: "BLOCKED", code: "F3_WAIT_VERIFICADOR_RECUSA" });
+  assert.deepEqual(await sut.observeF3Wait("W3", performance.now(), async () => "ready"), {
+    status: "READY",
+    code: null,
+  });
+});
+
+test("F3 §12.4: prazos e códigos das cinco esperas são fixos", () => {
+  assert.deepEqual(sut.F3_WAIT_POLICIES, {
+    W1: {
+      timeoutMs: 480000,
+      timeout: "F3_WAIT_VERIFICADOR_PRAZO",
+      failure: "F3_WAIT_VERIFICADOR_RECUSA",
+    },
+    W2: {
+      timeoutMs: 480000,
+      timeout: "F3_WAIT_VERIFICADOR_PRAZO",
+      failure: "F3_WAIT_VERIFICADOR_RECUSA",
+    },
+    W3: { timeoutMs: 360000, timeout: "F3_WAIT_ANALISE_PRAZO", failure: "F3_WAIT_ANALISE_FALHA" },
+    W4: { timeoutMs: 360000, timeout: "F3_WAIT_PARECER_PRAZO", failure: "F3_WAIT_PARECER_FALHA" },
+    W5: {
+      timeoutMs: 480000,
+      timeout: "F3_WAIT_PROCESSAMENTO_PRAZO",
+      failure: "F3_WAIT_PROCESSAMENTO_FALHA",
+    },
+  });
+  assert.ok(Object.isFrozen(sut.F3_WAIT_POLICIES));
+  assert.ok(Object.values(sut.F3_WAIT_POLICIES).every(Object.isFrozen));
+});
+
+test("F3 §12.6: V103 aponta para contratante inventariado", async (t) => {
+  const fixture = () =>
+    fenceWith(t, (book) => {
+      createOrg(book);
+      seal(book, 5, 5);
+      book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+    });
+  const body = {
+    p_id_organizacao: F3,
+    p_id_contratante: uuid(105),
+    p_versao_esperada: 1,
+    p_tipo_pessoa: "pj",
+    p_documento: "00000000000100",
+    p_razao_social: "Contratante F3",
+    p_nome_fantasia: "F3",
+    p_contato: {},
+    p_situacao: "ativo",
+  };
+  const f = fixture();
+  assert.equal(
+    await f.fence.observeVersion(
+      versionResponse(
+        API + "/rest/v1/contratantes?id_organizacao=eq." + F3 + "&id=eq." + uuid(105),
+        "GET",
+        { id: uuid(105), id_organizacao: F3, versao_registro: 1 },
+      ),
+    ),
+    true,
+  );
+  f.fence.arm({ producerOrder: 6, bodies: [body] });
+  assert.equal(
+    f.fence.policy(
+      req({
+        url: RPC("atualizar_contratante"),
+        postData: JSON.stringify(body),
+      }),
+    ),
+    true,
+  );
+  assert.equal(f.fence.settle().complete, true);
+  const bad = fixture();
+  assert.throws(
+    () =>
+      bad.fence.arm({
+        producerOrder: 6,
+        bodies: [{ ...body, p_id_contratante: F3 }],
+      }),
+    { code: "F3_FOREIGN_ORG" },
+  );
+  assert.equal(bad.fence.frozen(), true);
+});
+
+test("F3 §12.6: V105 aceita contrato com contratante criado por V102", (t) => {
+  const f = fenceWith(t, (book) => {
+    createOrg(book);
+    seal(book, 5, 5);
+    book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+  });
+  const body = {
+    id_organizacao: F3,
+    id_contratante: uuid(105),
+    numero: "F3-001",
+    objeto: "Contrato sintético",
+    inicio: "2026-11-14",
+  };
+  f.fence.arm({ producerOrder: 7, bodies: [body] });
+  assert.equal(
+    f.fence.policy(
+      req({
+        url: API + "/rest/v1/contratos",
+        postData: JSON.stringify(body),
+      }),
+    ),
+    true,
+  );
+  assert.equal(f.fence.settle().complete, true);
+});
+
+test("F3 §12.6: leitura atrasada não substitui versão mais nova", async (t) => {
+  const f = await contractFence(t);
+  const response = versionResponse(
+    RPC("obter_cadastro_operacional_v1"),
+    "POST",
+    {
+      schema_versao: "crud-cadastro-v1",
+      entidade: "contratos",
+      registro: { id: uuid(107), id_organizacao: F3, versao_registro: 2 },
+    },
+    { p_id: uuid(107), p_id_organizacao: F3, p_entidade: "contratos" },
+  );
+  assert.equal(await f.fence.observeVersion(response), false);
+  assert.ok(
+    f.fence.arm({
+      producerOrder: 8,
+      bodies: [v106(uuid(107), sut.f3Slot("uuid", "chave"))],
+    }),
+  );
+});
+
+test("F3 §12.6: V106 recusa versão sem releitura confirmada", (t) => {
+  const f = fenceWith(t, withContract);
+  const body = v106(uuid(107), sut.f3Slot("uuid", "chave"));
+  assert.throws(() => f.fence.arm({ producerOrder: 8, bodies: [body] }), {
+    code: "F3_VALUE_ORIGIN",
+  });
+  assert.equal(f.fence.frozen(), true);
+});
+
+test("F3 §12.6: V106 exige organização e contrato em suas posições", async (t) => {
+  const key = sut.f3Slot("uuid", "chave");
+  for (const body of [v106(F3, key), { ...v106(uuid(107), key), p_id_organizacao: uuid(107) }]) {
+    const f = await contractFence(t);
+    assert.throws(() => f.fence.arm({ producerOrder: 8, bodies: [body] }), {
+      code: "F3_FOREIGN_ORG",
+    });
+    assert.equal(f.fence.frozen(), true);
+    assert.equal(f.book.summary().sent, 3);
+  }
+});
+
+test("F3 §12.6: V106 recusa IDs de entidade como chave gerada pela UI", async (t) => {
+  for (const key of [F3, sut.F3_E87_ORG, uuid(107)]) {
+    const f = await contractFence(t);
+    f.fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), sut.f3Slot("uuid", "chave"))] });
+    assert.equal(
+      f.fence.policy(
+        req({
+          url: RPC("atualizar_contrato_v1"),
+          postData: JSON.stringify(v106(uuid(107), key)),
+        }),
+      ),
+      false,
+    );
+    assert.equal(f.fence.frozen(), true);
+    assert.equal(f.book.summary().sent, 3);
+  }
+});
+
+test("F3 §12.6: V106 recusa chave já enviada em outra intenção", async (t) => {
+  const f = await contractFence(t);
+  const bodies = [v106(uuid(107), sut.f3Slot("uuid", "chave"))];
+  const send = () =>
+    f.fence.policy(
+      req({
+        url: RPC("atualizar_contrato_v1"),
+        postData: JSON.stringify(v106(uuid(107), uuid(420))),
+      }),
+    );
+  const first = f.fence.arm({ producerOrder: 8, bodies });
+  assert.equal(send(), true);
+  f.fence.settle();
+  f.book.rejected(first);
+  f.fence.arm({ producerOrder: 8, bodies });
+  assert.equal(send(), false);
+  assert.equal(f.fence.frozen(), true);
+  assert.equal(f.book.summary().sent, 4);
+});
+
+for (const sameKey of [true, false]) {
+  test(`F3 §12.6: V106 ${sameKey ? "preserva a chave" : "recusa chave nova"} no reenvio`, async (t) => {
+    const f = await contractFence(t);
+    const bodies = [v106(uuid(107), sut.f3Slot("uuid", "chave"))];
+    const id = f.fence.arm({ producerOrder: 8, bodies });
+    const send = (key) =>
+      f.fence.policy(
+        req({
+          url: RPC("atualizar_contrato_v1"),
+          postData: JSON.stringify(v106(uuid(107), key)),
+        }),
+      );
+    assert.equal(send(uuid(420)), true);
+    f.fence.settle();
+    f.book.uncertain(id);
+    f.book.reconcile(id, { found: false });
+    f.fence.arm({ producerOrder: 8, bodies, resendOf: id });
+    assert.equal(send(uuid(sameKey ? 420 : 421)), sameKey);
+    assert.equal(f.fence.frozen(), !sameKey);
+    assert.equal(f.book.summary().sent, sameKey ? 5 : 4);
+    // O reenvio aceito grava um vínculo idêntico ao original; o recusado não grava nada.
+    const binds = f.book.summary().events.filter((e) => e.op === "bind" && e.requestId === id);
+    assert.equal(binds.length, sameKey ? 2 : 1);
+    if (sameKey) assert.deepEqual(binds[1], binds[0]);
+  });
+}
+
+test("F3 B2b2a: propriedade da cerca, semente fixa: ordem de chaves e leituras não mudam nada", async (t) => {
+  let seed = 0x2b2a5eed;
+  const rnd = (n) => {
+    seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
+    return (seed >>> 16) % n;
+  };
+  const reads = [
+    () => req({ url: API + "/rest/v1/contratos?select=id", method: "GET", postData: undefined }),
+    () => req({ url: API + "/rest/v1/contratantes", method: "HEAD", postData: undefined }),
+    () => req({ url: RPC("listar_organizacoes_disponiveis"), postData: "{}" }),
+    () => req({ url: RPC("listar_organizacoes_disponiveis"), method: "OPTIONS" }),
+  ];
+  let accepted = 0,
+    blocked = 0;
+  for (let k = 0; k < 300; k++) {
+    const f = await contractFence(t);
+    const chave = sut.f3Slot("uuid", "chave");
+    f.fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), chave)] });
+    const n = 1 + rnd(6);
+    let sent = 0;
+    for (let i = 0; i < n; i++) {
+      const read = reads[rnd(reads.length)]();
+      assert.equal(f.fence.policy(read), true);
+      assert.equal(f.fence.policy(respond(read)), true);
+    }
+    const mutate = rnd(4);
+    const value = mutate === 0 ? "outro" : "Ajuste sintético F3";
+    let body = { ...v106(uuid(107), uuid(5000 + k)), p_motivo: value };
+    for (let s = rnd(4); s > 0; s--) body = shuffle(body);
+    const r = req({ url: RPC("atualizar_contrato_v1"), postData: JSON.stringify(body) });
+    const out = f.fence.policy(r);
+    // Invariantes: aceito ⇔ corpo igual ao armado; aceito ⇒ selado; leitura nunca congela.
+    assert.equal(out, mutate !== 0);
+    if (out) {
+      accepted++;
+      sent = 1;
+      assert.equal(f.book.summary().requests.at(-1).outcome, "sealed");
+    } else blocked++;
+    assert.equal(f.book.summary().sent, 3 + sent);
+    assert.equal(f.fence.frozen(), !out);
+  }
+  assert.ok(accepted > 150 && blocked > 30, [accepted, blocked].join());
+});
+
+test("F3 B2b2a: fluxos só de produtores mutantes, com fonte que existe no código", async () => {
+  const names = [];
+  for (const [order, flow] of Object.entries(sut.F3_MUTATION_FLOWS)) {
+    assert.ok(sut.F3_MUTATING_ORDERS.includes(Number(order)), order);
+    assert.deepEqual(Object.keys(flow), ["principal", "prerequisito"]);
+    for (const s of [...flow.principal, ...(flow.prerequisito ?? [])]) {
+      const m = /^(src\/[^:]+):(\d+)-(\d+)$/.exec(s.source);
+      assert.ok(m, s.source);
+      const lines = (await readFile(new URL("../../" + m[1], import.meta.url), "utf8")).split("\n");
+      const excerpt = lines.slice(Number(m[2]) - 1, Number(m[3])).join("\n");
+      assert.ok(excerpt.includes(s.name), s.name + " em " + s.source);
+      for (const k of s.free) assert.ok(new RegExp("\\b" + k + "\\b").test(excerpt), k);
+      assert.ok(Object.isFrozen(s) && Object.isFrozen(s.free));
+      names.push(s.name);
+    }
+  }
+  assert.ok(names.includes("criar_organizacao") && names.includes("admin-invite-user"));
+});
+
+// ---------------------------------------------------------------------------------------------
+// Parecer R2 (HEAD af50cff): grupos C, D, E e G.
+
+test("F3 B2b2a R2 RED (C): uma cerca por livro, congelamento no livro e leitor só leitura", (t) => {
+  const f = fenceWith(t);
+  assert.throws(() => sut.createF3MutationFence({ book: f.book }), { code: "F3_FENCE_DUPLICATE" });
+  armOrg(f);
+  assert.equal(f.fence.policy(req({ postData: "{" })), false);
+  assert.equal(f.book.frozen(), true);
+  // Congelado, o livro não sela nem reenvia por nenhum caminho; fatos ainda entram.
+  assert.throws(() => seal(f.book, 2, 2), { code: "F3_FENCE_FROZEN" });
+  assert.throws(
+    () => f.book.check({ op: "seal", requestId: uuid(9), producerOrder: 2, kind: "principal" }),
+    { code: "F3_FENCE_FROZEN" },
+  );
+  const g = fenceWith(t);
+  armOrg(g);
+  assert.equal(g.fence.policy(req()), true);
+  g.fence.settle();
+  g.fence.policy(req({ url: API + "/rest/v1/contratos", postData: "{}" }));
+  g.book.confirm(uuid(7001), { entityId: F3, organizationId: F3 });
+  assert.equal(g.book.state(uuid(7001)), "confirmed");
+  // book.check com chave a mais diverge de seal: recusado.
+  const h = fenceWith(t);
+  assert.throws(
+    () =>
+      h.book.check({ op: "seal", requestId: uuid(9), producerOrder: 2, kind: "principal", x: 1 }),
+    { code: "F3_INTENT_STATE" },
+  );
+  // Leitor: leitura passa; qualquer mutação, mesmo de fluxo e corpo exato, é recusada.
+  const read = req({ url: API + "/rest/v1/contratos?select=id", method: "GET" });
+  assert.equal(sut.f3ReadOnlyPolicy(read), true);
+  assert.equal(sut.f3ReadOnlyPolicy({ ...read, stage: "RESPONSE" }), true);
+  for (const m of [
+    req(),
+    req({ url: API + "/rest/v1/contratantes?select=id%2Crazao_social%2Csituacao" }),
+    req({ url: API + "/functions/v1/admin-invite-user" }),
+    { ...read, stage: "OTHER" },
+    null,
+  ])
+    assert.equal(sut.f3ReadOnlyPolicy(m), false);
+});
+
+test("F3 B2b2a R2 RED (C): desvio da cerca encerra a sessão com F3_FENCE_FROZEN", async (t) => {
+  t.mock.method(globalThis.crypto, "randomUUID", () => uuid(7001));
+  const out = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: async (book) => {
+      const fence = sut.createF3MutationFence({ book });
+      fence.arm({ producerOrder: 2, bodies: [ORG_BODY] });
+      fence.policy(req({ postData: "{" }));
+      // O que o driver vê depois é sintoma (a cerca nativa fecha o contexto).
+      throw Object.assign(new Error("x"), { code: "FENCE_REQUEST" });
+    },
+  });
+  assert.equal(out.code, "F3_FENCE_FROZEN");
+  assert.equal(out.report.blockCode, "F3_FENCE_FROZEN");
+  assert.equal(sut.validateF3Report(out.report, catalogue, { ledger: EMPTY }), true);
+});
+
+test("F3 B2b2a R2 RED (D): prazo e cancelamento congelam o livro e devolvem o parcial", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let held;
+  const pending = sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    drive: (book) => {
+      held = book;
+      createOrg(book);
+      return new Promise(() => {});
+    },
+  });
+  await Promise.resolve();
+  await Promise.resolve();
+  t.mock.timers.tick(sut.F3_SESSION_DEADLINE_MS);
+  const out = await pending;
+  assert.equal(out.code, "F3_SESSION_DEADLINE");
+  assert.equal(out.report.intents.sent, 1);
+  // O driver pode continuar vivo, mas o livro congelado não sela mais.
+  assert.throws(() => seal(held, 5, 5), { code: "F3_FENCE_FROZEN" });
+  assert.ok(sut.F3_SESSION_DEADLINE_MS < 45 * 60 * 1000);
+  t.mock.timers.reset();
+  const abort = new AbortController();
+  const aborted = sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    signal: abort.signal,
+    drive: (book) => {
+      createOrg(book);
+      return new Promise(() => {});
+    },
+  });
+  await Promise.resolve();
+  abort.abort();
+  const a = await aborted;
+  assert.equal(a.code, "F3_SESSION_ABORTED");
+  assert.equal(a.report.intents.sent, 1);
+  assert.equal(sut.validateF3Report(a.report, catalogue, { ledger: EMPTY }), true);
+  // Já cancelado antes de começar: o driver nem chega a mutar.
+  const pre = new AbortController();
+  pre.abort();
+  let ran = false;
+  const b = await sut.runF3Session({
+    catalogue,
+    ledger: EMPTY,
+    provenance: PROV,
+    signal: pre.signal,
+    drive: async (book) => {
+      ran = true;
+      createOrg(book);
+    },
+  });
+  assert.equal(b.code, "F3_SESSION_ABORTED");
+  assert.equal(b.report.intents.sent, 0, String(ran));
+});
+
+test("F3 B2b2a R2 RED (G): catálogo do módulo antes do driver e allowlist sem RPC produtora", async () => {
+  let ran = false;
+  await assert.rejects(
+    sut.runF3Session({
+      catalogue: structuredClone(catalogue),
+      ledger: EMPTY,
+      provenance: PROV,
+      drive: async () => (ran = true),
+    }),
+    { code: "F3_REPORT" },
+  );
+  assert.equal(ran, false);
+  const { requestAllowed } = await import("./authenticated-visual-audit.mjs");
+  const names = [
+    ...sut.F3_PRODUCERS.filter((p) => sut.F3_MUTATING_ORDERS.includes(p.order)).map(
+      (p) => p.producer,
+    ),
+    ...sut.F3_PRODUCER_RPC_VARIANTS,
+  ];
+  assert.ok(names.length >= 21);
+  for (const n of names)
+    assert.equal(requestAllowed({ url: RPC(n), method: "POST", postData: "{}" }), false, n);
+});
+
+test("F3 B2b2a R2 RED (E): ticket reusado no meio do fluxo e vaga repetida com outro valor", (t) => {
+  const edge = {
+    id_organizacao: F3,
+    email: "leitor@example.test",
+    chave_idempotencia: sut.f3Slot("uuid", "k"),
+  };
+  const save = {
+    p_id_organizacao: F3,
+    p_id_usuario: sut.f3Slot("uuid", "usuario"),
+    p_email: "leitor@example.test",
+    p_perfil: "leitor",
+    p_escopo_todos_contratos: true,
+    p_ativo: true,
+    p_ids_contratos_ativar: [],
+    p_ids_contratos_revogar: [],
+    p_versao_esperada: null,
+    p_chave_idempotencia: sut.f3Slot("uuid", "k"),
+  };
+  const edgeReq = (key) =>
+    req({
+      url: API + "/functions/v1/admin-invite-user",
+      postData: JSON.stringify({ ...edge, chave_idempotencia: key }),
+      interceptionId: "fixo",
+    });
+  const saveReq = (key, interceptionId = "outro") =>
+    req({
+      url: RPC("salvar_vinculo_usuario_adm"),
+      postData: JSON.stringify({ ...save, p_id_usuario: uuid(31), p_chave_idempotencia: key }),
+      interceptionId,
+    });
+  // Mesmo ticket no segundo passo: bloqueia e congela, sem segundo envio do passo.
+  const reuse = fenceWith(t, orgOk);
+  reuse.fence.arm({ producerOrder: 4, bodies: [edge, save] });
+  assert.equal(reuse.fence.policy(edgeReq(uuid(30))), true);
+  assert.equal(reuse.fence.policy(saveReq(uuid(30), "fixo")), false);
+  assert.equal(reuse.book.frozen(), true);
+  // A mesma vaga em dois passos: o segundo valor tem de ser igual ao primeiro.
+  const diff = fenceWith(t, orgOk);
+  diff.fence.arm({ producerOrder: 4, bodies: [edge, save] });
+  assert.equal(diff.fence.policy(edgeReq(uuid(30))), true);
+  assert.equal(diff.fence.policy(saveReq(uuid(39))), false);
+  const same = fenceWith(t, orgOk);
+  same.fence.arm({ producerOrder: 4, bodies: [edge, save] });
+  assert.equal(same.fence.policy(edgeReq(uuid(30))), true);
+  assert.equal(same.fence.policy(saveReq(uuid(30))), true);
+});
+
+// ---------------------------------------------------------------------------------------------
+// Parecer R3 (review 5906840506, HEAD 6b9aecf): grupos 1 a 3.
+
+test("F3 R3 RED (1): o vínculo é regra do livro; removido, trocado ou ausente no reenvio, o replay recusa", () => {
+  const base = () => {
+    const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+    createOrg(book);
+    seal(book, 5, 5);
+    book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+    seal(book, 7, 7);
+    book.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
+    return book;
+  };
+  const book = base();
+  seal(book, 8, 8);
+  // Log canônico: sem o vínculo, ou com o hash trocado, o relatório deixa de ser o replay.
+  const report = sut.blockedF3Report({ code: "F3_DRIVER_X", catalogue, book });
+  assert.equal(sut.validateF3Report(report, catalogue, { ledger: EMPTY }), true);
+  const at = report.intents.events.findLastIndex((e) => e.op === "bind");
+  const without = structuredClone(report);
+  without.intents.events.splice(at, 1);
+  const swapped = structuredClone(report);
+  swapped.intents.events[at].bodySha256 = "f".repeat(64);
+  const slot = structuredClone(report);
+  slot.intents.events[at].slots[0] = "e".repeat(64);
+  for (const bad of [without, swapped, slot])
+    assert.throws(
+      () => sut.validateF3Report(bad, catalogue, { ledger: EMPTY }),
+      (e) => /^F3_/.test(e.code),
+    );
+  // Desfecho sem vínculo, vínculo fora de ordem ou repetido: recusados pelo livro.
+  const raw = base();
+  raw.seal({ requestId: uuid(8), producerOrder: 8, actor: "master", organizationId: F3 });
+  for (const op of [
+    () => raw.uncertain(uuid(8)),
+    () => raw.rejected(uuid(8)),
+    () => raw.confirm(uuid(8), { entityId: uuid(108), organizationId: F3 }),
+  ])
+    assert.throws(op, { code: "F3_INTENT_BIND" });
+  const [b] = bindsFor(raw, 8, "principal");
+  assert.throws(() => raw.bind(uuid(8), { ...b, step: 1 }), { code: "F3_INTENT_BIND" });
+  raw.bind(uuid(8), b);
+  assert.throws(() => raw.bind(uuid(8), b), { code: "F3_INTENT_BIND" });
+  // Reenvio: só com vínculo registrado e idêntico ao original (corpo, vagas e referências).
+  raw.uncertain(uuid(8));
+  raw.reconcile(uuid(8), { found: false });
+  raw.resend(uuid(8));
+  assert.throws(() => raw.uncertain(uuid(8)), { code: "F3_INTENT_BIND" });
+  for (const other of [
+    { ...b, bodySha256: "a".repeat(64) },
+    { ...b, slots: [freshSha()] },
+    { ...b, refs: b.refs.map((x) => (x.version ? { ...x, version: 2 } : x)) },
+  ])
+    assert.throws(() => raw.bind(uuid(8), other), { code: "F3_INTENT_RESEND_BIND" });
+  raw.bind(uuid(8), b);
+  raw.uncertain(uuid(8));
+  // Um só reenvio por intenção: depois de nova ausência, só resta abandonar.
+  raw.reconcile(uuid(8), { found: false });
+  assert.throws(() => raw.resend(uuid(8)), { code: "F3_UNCERTAIN_RESEND" });
+  raw.abandon(uuid(8));
+  // Ledger com reenvio de intenção sem vínculo: recusado no replay.
+  const noBind = (op, extra = {}) => ({
+    op,
+    requestId: uuid(8),
+    producerOrder: null,
+    kind: null,
+    duplicateOf: null,
+    entityId: null,
+    organizationId: null,
+    ...extra,
+  });
+  const run1 = run(1, base());
+  const forged = {
+    ...run1,
+    events: [
+      ...run1.events,
+      noBind("seal", { producerOrder: 8, kind: "principal" }),
+      noBind("uncertain"),
+    ],
+  };
+  assert.throws(
+    () => ledgerOf([forged]),
+    (e) => /^F3_/.test(e.code),
+  );
+});
+
+test("F3 R3 RED (1 e 2): valor gerado em tempo de execução é novo para o livro, em qualquer fluxo", () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  seal(book, 4, 4);
+  const used = BINDS.get(uuid(4))[0].slots[0];
+  book.rejected(uuid(4));
+  // ADM01 (dois passos, três vagas) e um produtor ainda sem fluxo: a mesma regra.
+  for (const order of [4, 16]) {
+    for (const taken of [
+      sha(sut.F3_E87_ORG),
+      sha(F3),
+      sha(uuid(2)),
+      sha(uuid(900 + order)),
+      used,
+    ]) {
+      const b = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+      createOrg(b);
+      seal(b, 4, 4);
+      b.rejected(uuid(4));
+      const id = uuid(900 + order);
+      b.seal({ requestId: id, producerOrder: order, actor: "master", organizationId: F3 });
+      const [first] = bindsFor(b, order, "principal");
+      const reused = taken === used ? BINDS.get(uuid(4))[0].slots[0] : taken;
+      assert.throws(
+        () => b.bind(id, { ...first, slots: [reused, ...first.slots.slice(1)] }),
+        { code: "F3_VALUE_ORIGIN" },
+        order + " " + taken,
+      );
+      b.bind(id, first);
+    }
+  }
+  // Confirmação só com todos os passos do fluxo declarado (ADM01 tem dois).
+  const half = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(half);
+  half.seal({ requestId: uuid(4), producerOrder: 4, actor: "master", organizationId: F3 });
+  const [s0, s1] = bindsFor(half, 4, "principal");
+  half.bind(uuid(4), s0);
+  assert.throws(() => half.confirm(uuid(4), { entityId: uuid(104), organizationId: F3 }), {
+    code: "F3_INTENT_BIND",
+  });
+  half.bind(uuid(4), s1);
+  assert.throws(() => half.bind(uuid(4), { ...s1, step: 2 }), { code: "F3_INTENT_BIND" });
+  half.confirm(uuid(4), { entityId: uuid(104), organizationId: F3 });
+});
+
+test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada classe de valor errado é recusada", () => {
+  const chain = () => {
+    const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+    createOrg(book);
+    seal(book, 4, 4);
+    book.confirm(uuid(4), { entityId: uuid(104), organizationId: F3 });
+    seal(book, 5, 5);
+    book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+    seal(book, 7, 7);
+    book.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
+    return book;
+  };
+  let positions = 0;
+  for (const [order, flow] of Object.entries(sut.F3_MUTATION_FLOWS)) {
+    if (Number(order) === 2) continue;
+    flow.principal.forEach((st, stepIndex) => {
+      const fields = [...Object.keys(st.inventory), ...Object.keys(st.derived)];
+      const attempt = (edit) => {
+        const book = chain();
+        const id = uuid(950);
+        // V102 e V105 já têm principal confirmada na cadeia; a duplicidade usa o mesmo fluxo.
+        const open = book
+          .summary()
+          .requests.find((q) => q.producerOrder === Number(order) && q.kind === "principal");
+        book.seal({
+          requestId: id,
+          producerOrder: Number(order),
+          actor: "master",
+          organizationId: F3,
+          ...(open ? { kind: "duplicidade", duplicateOf: open.requestId } : {}),
+        });
+        const binds = bindsFor(book, Number(order), "principal");
+        for (const b of binds.slice(0, stepIndex)) book.bind(id, b);
+        const b = structuredClone(binds[stepIndex]);
+        edit(b);
+        return () => book.bind(id, b);
+      };
+      attempt(() => {})();
+      fields.forEach((field, k) => {
+        positions++;
+        const origin = st.inventory[field] ?? st.inventory[st.derived[field]];
+        // e87f7e68, UUID desconhecido, a organização no lugar de um registro (ou um registro
+        // no lugar da organização) e registro de outro produtor.
+        const wrong = [
+          sut.F3_E87_ORG,
+          uuid(998),
+          origin === 2 ? uuid(107) : F3,
+          origin === 5 ? uuid(107) : uuid(104),
+        ];
+        for (const entityId of wrong)
+          assert.throws(
+            attempt((b) => (b.refs[k].entityId = entityId)),
+            { code: "F3_FOREIGN_ORG" },
+            order + " " + field + " " + entityId,
+          );
+        // Posição a menos, a mais ou com outro nome: recusada.
+        assert.throws(
+          attempt((b) => b.refs.splice(k, 1)),
+          { code: "F3_INTENT_BIND" },
+        );
+        assert.throws(
+          attempt((b) => (b.refs[k].field = "outro_campo")),
+          { code: "F3_INTENT_BIND" },
+        );
+        // Versão observada só em posição derivada, e sempre nela.
+        const derived = Object.hasOwn(st.derived, field);
+        assert.throws(
+          attempt((b) => (b.refs[k].version = derived ? null : 3)),
+          { code: "F3_VALUE_ORIGIN" },
+        );
+      });
+      assert.throws(
+        attempt((b) => b.slots.push(freshSha())),
+        { code: "F3_INTENT_BIND" },
+      );
+    });
+  }
+  // Entidade repetida não é registro isolado: não serve de inventário, mesmo criada pelo
+  // produtor declarado e na organização F3.
+  const repeated = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(repeated);
+  seal(repeated, 4, 4);
+  repeated.confirm(uuid(4), { entityId: uuid(104), organizationId: F3 });
+  seal(repeated, 5, 5);
+  repeated.confirm(uuid(5), { entityId: uuid(104), organizationId: F3 });
+  assert.equal(repeated.created().at(-1).kind, "entidade_repetida");
+  repeated.seal({ requestId: uuid(6), producerOrder: 6, actor: "master", organizationId: F3 });
+  assert.throws(
+    () =>
+      repeated.bind(uuid(6), {
+        step: 0,
+        bodySha256: freshSha(),
+        slots: [],
+        refs: [
+          { field: "p_id_organizacao", entityId: F3, version: null },
+          { field: "p_id_contratante", entityId: uuid(104), version: null },
+          { field: "p_versao_esperada", entityId: uuid(104), version: 1 },
+        ],
+      }),
+    { code: "F3_FOREIGN_ORG" },
+  );
+  // ADM01 (2), V102 (1), V103 (3), V105 (2) e V106 (3) posições tipadas.
+  assert.equal(positions, 11);
+});
+
+test("F3 R3 RED (2): na cerca, ADM01 e V102 exigem a organização F3, vaga com valor conhecido congela e a chave não é o requestId", async (t) => {
+  const edge = (org = F3) => ({
+    id_organizacao: org,
+    email: "leitor@example.test",
+    chave_idempotencia: sut.f3Slot("uuid", "convite"),
+  });
+  const save = {
+    p_id_organizacao: F3,
+    p_id_usuario: sut.f3Slot("uuid", "usuario"),
+    p_email: "leitor@example.test",
+    p_perfil: "leitor",
+    p_chave_idempotencia: sut.f3Slot("uuid", "vinculo"),
+  };
+  const withRecord = (b) => {
+    createOrg(b);
+    seal(b, 5, 5);
+    b.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+  };
+  const v102 = (org) => ({
+    ...(org === undefined ? {} : { id_organizacao: org }),
+    tipo_pessoa: "juridica",
+    razao_social: "Contratante F3",
+  });
+  // Organização trocada por registro isolado, pela e87f7e68, por UUID desconhecido ou ausente.
+  for (const arm of [
+    (f) => f.fence.arm({ producerOrder: 4, bodies: [edge(uuid(105)), save] }),
+    (f) =>
+      f.fence.arm({ producerOrder: 4, bodies: [edge(), { ...save, p_id_organizacao: uuid(105) }] }),
+    (f) =>
+      f.fence.arm({
+        producerOrder: 5,
+        kind: "duplicidade",
+        duplicateOf: uuid(5),
+        bodies: [v102(uuid(105))],
+      }),
+    (f) =>
+      f.fence.arm({
+        producerOrder: 5,
+        kind: "duplicidade",
+        duplicateOf: uuid(5),
+        bodies: [v102(sut.F3_E87_ORG)],
+      }),
+    (f) =>
+      f.fence.arm({
+        producerOrder: 5,
+        kind: "duplicidade",
+        duplicateOf: uuid(5),
+        bodies: [v102(uuid(998))],
+      }),
+    (f) =>
+      f.fence.arm({
+        producerOrder: 5,
+        kind: "duplicidade",
+        duplicateOf: uuid(5),
+        bodies: [v102()],
+      }),
+  ]) {
+    const f = fenceWith(t, withRecord);
+    assert.throws(() => arm(f), { code: "F3_FOREIGN_ORG" });
+    assert.equal(f.fence.frozen(), true);
+  }
+  // Vaga do ADM01 com a e87f7e68, a organização ou entidade do inventário: congela, sem selo.
+  const edgeReq = (key) =>
+    req({
+      url: API + "/functions/v1/admin-invite-user",
+      postData: JSON.stringify({ ...edge(), chave_idempotencia: key }),
+    });
+  for (const key of [sut.F3_E87_ORG, F3, uuid(105)]) {
+    const f = fenceWith(t, withRecord);
+    f.fence.arm({ producerOrder: 4, bodies: [edge(), save] });
+    assert.equal(f.fence.policy(edgeReq(key)), false, key);
+    assert.equal(f.fence.frozen(), true);
+    assert.equal(f.book.summary().sent, 2);
+  }
+  const user = fenceWith(t, withRecord);
+  user.fence.arm({ producerOrder: 4, bodies: [edge(), save] });
+  assert.equal(user.fence.policy(edgeReq(uuid(30))), true);
+  assert.equal(
+    user.fence.policy(
+      req({
+        url: RPC("salvar_vinculo_usuario_adm"),
+        postData: JSON.stringify({
+          ...save,
+          p_id_usuario: sut.F3_E87_ORG,
+          p_chave_idempotencia: uuid(32),
+        }),
+        interceptionId: "s2",
+      }),
+    ),
+    false,
+  );
+  assert.equal(user.fence.frozen(), true);
+  // A chave da UI igual ao requestId da própria intenção: recusada.
+  const own = await contractFence(t);
+  const id = own.fence.arm({
+    producerOrder: 8,
+    bodies: [v106(uuid(107), sut.f3Slot("uuid", "chave"))],
+  });
+  assert.equal(
+    own.fence.policy(
+      req({ url: RPC("atualizar_contrato_v1"), postData: JSON.stringify(v106(uuid(107), id)) }),
+    ),
+    false,
+  );
+  assert.equal(own.fence.frozen(), true);
+  assert.equal(own.book.summary().sent, 3);
+});
+
+test("F3 R3 RED (2 e 3): versão observada vale para V103 e V106, tem de ser a lida, e a leitura só conta se for da organização F3", async (t) => {
+  const contratante = (version, extra = {}) =>
+    versionResponse(
+      API + "/rest/v1/contratantes?id_organizacao=eq." + F3 + "&id=eq." + uuid(105),
+      "GET",
+      { id: uuid(105), id_organizacao: F3, versao_registro: version, ...extra },
+    );
+  const v103 = (version) => ({
+    p_id_organizacao: F3,
+    p_id_contratante: uuid(105),
+    p_versao_esperada: version,
+    p_razao_social: "Contratante F3",
+  });
+  // V103: sem leitura, ou com versão diferente da lida, recusa e congela.
+  const none = fenceWith(t, withContract);
+  assert.throws(() => none.fence.arm({ producerOrder: 6, bodies: [v103(1)] }), {
+    code: "F3_VALUE_ORIGIN",
+  });
+  assert.equal(none.fence.frozen(), true);
+  for (const [fenceOf, order, body] of [
+    [
+      async () => {
+        const f = fenceWith(t, withContract);
+        assert.equal(await f.fence.observeVersion(contratante(4)), true);
+        return f;
+      },
+      6,
+      v103,
+    ],
+    [
+      () => contractFence(t),
+      8,
+      (v) => ({ ...v106(uuid(107), sut.f3Slot("uuid", "chave")), p_versao_esperada: v }),
+    ],
+  ]) {
+    const seen = order === 6 ? 4 : 3;
+    const ok = await fenceOf();
+    assert.ok(ok.fence.arm({ producerOrder: order, bodies: [body(seen)] }));
+    const other = await fenceOf();
+    assert.throws(() => other.fence.arm({ producerOrder: order, bodies: [body(seen + 1)] }), {
+      code: "F3_VALUE_ORIGIN",
+    });
+    assert.equal(other.fence.frozen(), true);
+  }
+  // Leituras que não contam: linha de outra organização, resposta que não é 200 e contratante
+  // sem o filtro da organização F3.
+  const f = fenceWith(t, withContract);
+  assert.equal(await f.fence.observeVersion(contratante(4, { id_organizacao: uuid(999) })), false);
+  assert.equal(await f.fence.observeVersion({ ...contratante(4), status: () => 206 }), false);
+  assert.equal(
+    await f.fence.observeVersion(
+      versionResponse(API + "/rest/v1/contratantes?id=eq." + uuid(105), "GET", {
+        id: uuid(105),
+        id_organizacao: F3,
+        versao_registro: 4,
+      }),
+    ),
+    false,
+  );
+  assert.throws(() => f.fence.arm({ producerOrder: 6, bodies: [v103(4)] }), {
+    code: "F3_VALUE_ORIGIN",
+  });
+});
+
+test("F3 R3 RED (3): TUS bloqueado desde o preflight, em qualquer método e nas duas origens; prazo da espera também depois da leitura", async (t) => {
+  const STORAGE = "https://gklhhhyosgasnyoxlrui.storage.supabase.co";
+  for (const origin of [API, STORAGE])
+    for (const method of ["OPTIONS", "POST", "PATCH", "HEAD"]) {
+      const result = await sut.runF3Session({
+        catalogue,
+        ledger: EMPTY,
+        provenance: PROV,
+        drive(book) {
+          const fence = sut.createF3MutationFence({ book });
+          const url = origin + "/storage/v1/upload/resumable" + (method === "PATCH" ? "/abc" : "");
+          assert.equal(fence.policy(req({ url, method, postData: undefined })), false);
+          assert.equal(book.frozen(), true);
+        },
+      });
+      assert.equal(result.code, "F3_UPLOAD_RESUMABLE", origin + " " + method);
+    }
+  // Espera: o prazo vence durante a leitura; instante de selo no futuro é recusado.
+  const clock = { t: 1000000 };
+  t.mock.method(performance, "now", () => clock.t);
+  const slow = await sut.observeF3Wait("W4", clock.t - 1000, async () => {
+    clock.t += 6 * 60000;
+    return "ready";
+  });
+  assert.deepEqual(slow, { status: "BLOCKED", code: "F3_WAIT_PARECER_PRAZO" });
+  await assert.rejects(
+    sut.observeF3Wait("W4", clock.t + 60000, async () => "ready"),
+    {
+      code: "F3_WAIT_INPUT",
+    },
+  );
+});
+
+test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada linha tem fluxo ou incremento declarado", async () => {
+  // Barreira do NR-008 (PLAN §12.6 e §12.7): a cerca nasce do levantamento campo a campo. A
+  // linha é lida inteira: rótulo, alvo, coluna da chave no reenvio e campos. Um fluxo sem linha
+  // reprova; uma linha sem fluxo só é aceita na lista fechada dos incrementos seguintes
+  // (BUILD2B2_DRIVERS.md), que encolhe a cada incremento.
+  const md = await readFile(
+    new URL("docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md", root),
+    "utf8",
+  );
+  assert.ok(!md.includes("[REVISAR]"));
+  const sec = md.slice(md.indexOf("## 3."), md.indexOf("## 4."));
+  const rows = sec
+    .split("\n")
+    .filter((l) => /^\| \d+ [A-Z0-9]+, /.test(l))
+    .map((l) => {
+      const cells = l.split("|").map((c) => c.trim());
+      const m = /^(\d+) ([A-Z0-9]+), (.+)$/.exec(cells[1]);
+      return {
+        order: Number(m[1]),
+        origin: m[2],
+        label: m[3],
+        key: m[1] + " " + m[2] + ", " + m[3],
+        target: cells[2],
+        fields: cells[4],
+        resend: cells[5],
+      };
+    });
+  assert.equal(new Set(rows.map((r) => r.key)).size, rows.length);
+  assert.equal(rows.length, 30);
+  const kindOf = (r) => (r.label.startsWith("pré-requisito") ? "prerequisito" : "principal");
+  for (const r of rows) {
+    const p = sut.F3_PRODUCERS.find((x) => x.order === r.order);
+    assert.equal(p?.origin, r.origin, r.key);
+    assert.ok(sut.F3_MUTATING_ORDERS.includes(r.order));
+    // Coluna "Chave no reenvio": sem chave no levantamento ⇔ o livro nunca reenvia a ação.
+    assert.equal(
+      r.resend.startsWith("sem chave"),
+      !sut.f3AllowsResend({ producerOrder: r.order, kind: kindOf(r) }),
+      r.key,
+    );
+  }
+  assert.equal(rows.filter((r) => kindOf(r) === "prerequisito").length, sut.F3_MAX_PREREQUISITES);
+  // Fluxo declarado ↔ linha "N ORIGEM, principal": alvo e posições tipadas constam da linha.
+  const declared = [];
+  for (const [order, f] of Object.entries(sut.F3_MUTATION_FLOWS)) {
+    assert.equal(f.prerequisito, null, "pré-requisito exige linha própria: " + order);
+    const p = sut.F3_PRODUCERS.find((x) => x.order === Number(order));
+    const key = order + " " + p.origin + ", principal";
+    const row = rows.find((r) => r.key === key);
+    assert.ok(row, "fluxo sem linha: " + key);
+    for (const st of f.principal) {
+      assert.ok(row.target.includes(st.name), st.name + " na linha " + key);
+      for (const field of [...st.free, ...Object.keys(st.inventory), ...Object.keys(st.derived)])
+        assert.ok(row.fields.includes("`" + field + "`"), field + " na linha " + key);
+      for (const field of Object.keys(st.inventory))
+        assert.ok(
+          new RegExp("`" + field + "`[^;.]*`inventario`").test(row.fields),
+          field + " inventario em " + key,
+        );
+      for (const field of Object.keys(st.derived))
+        assert.ok(
+          new RegExp("`" + field + "` `derivado`").test(row.fields),
+          field + " derivado em " + key,
+        );
+    }
+    declared.push(key);
+  }
+  // Linhas ainda sem fluxo: lista fechada, por linha, do 2b-2b (variante) e do 2b-2c em diante.
+  const PENDING = [
+    "4 ADM01, variante sem convite",
+    "9 V108, pré-requisito 1",
+    "9 V108, pré-requisito 2",
+    "9 V108, pré-requisito 3",
+    "9 V108, principal",
+    "10 V107, pré-requisito 1",
+    "10 V107, pré-requisito 2",
+    "10 V107, pré-requisito 3",
+    "10 V107, principal",
+    "11 V109, principal",
+    "11 V109, pré-requisito 1",
+    "11 V109, pré-requisito 2",
+    "12 V110, principal",
+    "13 V111, principal",
+    "14 V113, principal",
+    "15 V115, principal",
+    "16 V116, principal",
+    "17 V117, principal",
+    "18 V118, pré-requisito 1",
+    "18 V118, principal",
+    "19 V119, pré-requisito 1",
+    "19 V119, principal",
+    "20 V122, pré-requisito 1",
+    "20 V122, principal",
+  ];
+  assert.deepEqual(
+    rows.map((r) => r.key).filter((k) => !declared.includes(k)),
+    PENDING,
+  );
 });
