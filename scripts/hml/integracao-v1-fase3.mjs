@@ -3052,6 +3052,175 @@ export async function f3S2CreateContractor({
   }
 }
 
+/** V103 atualiza a identidade inventariada em V102; nunca cria uma segunda entidade. */
+export function assertF3S2ContractorUpdate({
+  before,
+  result,
+  after,
+  organizationId,
+  contractorId,
+  fantasy,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractorId) ||
+    typeof fantasy !== "string" ||
+    !fantasy.startsWith("ContaOS HML F3 ") ||
+    before?.id !== contractorId ||
+    before?.id_organizacao !== organizationId ||
+    !Number.isSafeInteger(before.versao_registro) ||
+    before.versao_registro < 1 ||
+    result?.schema_versao !== "v103-v1" ||
+    result.contratante?.id !== contractorId ||
+    result.contratante?.id_organizacao !== organizationId ||
+    after?.id !== contractorId ||
+    after.id_organizacao !== organizationId ||
+    after.nome_fantasia !== fantasy ||
+    !Number.isSafeInteger(after.versao_registro) ||
+    after.versao_registro !== before.versao_registro + 1 ||
+    result.contratante.versao_registro !== after.versao_registro ||
+    result.contratante.nome_fantasia !== fantasy
+  ) {
+    fail("F3_S2_V103_READBACK");
+  }
+  return contractorId;
+}
+
+export async function f3S2UpdateContractor({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractorId,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(contractorId) ||
+    book.organizationF3() !== organizationId ||
+    !book.created().some(
+      (e) =>
+        e.id === contractorId &&
+        e.kind === "registro" &&
+        e.organizationId === organizationId &&
+        book.summary().requests.some(
+          (q) => q.requestId === e.requestId && q.producerOrder === 5 && q.outcome === "confirmed",
+        ),
+    )
+  ) {
+    fail("F3_S2_V103_PRECONDITION");
+  }
+  const route = HML_ORIGIN + "/contratantes/" + contractorId + "/editar";
+  const matchingRead = (r) => {
+    const u = new URL(r.url());
+    return (
+      r.request().method() === "GET" &&
+      u.origin === API_ORIGIN &&
+      u.pathname === "/rest/v1/contratantes" &&
+      u.searchParams.get("id_organizacao") === "eq." + organizationId &&
+      u.searchParams.get("id") === "eq." + contractorId
+    );
+  };
+  const initial = page.waitForResponse(matchingRead, { timeout: F3_S1_UI.timeout });
+  await page.goto(route, { waitUntil: "networkidle" });
+  const first = await initial;
+  if (first.status() !== 200 || !(await mutationFence.observeVersion(first))) {
+    fail("F3_S2_V103_VERSION");
+  }
+  const before = await first.json();
+  if (
+    before?.id !== contractorId ||
+    before.id_organizacao !== organizationId ||
+    !Number.isSafeInteger(before.versao_registro) ||
+    before.versao_registro < 1
+  ) {
+    fail("F3_S2_V103_VERSION");
+  }
+  await fence.drain();
+  fence.assertSafe();
+  const fantasy = "ContaOS HML F3 " + book.provenance().workflowRunId + " Atualizado";
+  await page.locator("#v103-fantasia").fill(fantasy);
+  const contact = {};
+  for (const key of ["email", "telefone"]) {
+    const value = before.contato?.[key];
+    if (typeof value === "string" && value.trim()) contact[key] = value.trim();
+  }
+  const payload = {
+    p_id_organizacao: organizationId,
+    p_id_contratante: contractorId,
+    p_versao_esperada: before.versao_registro,
+    p_tipo_pessoa: before.tipo_pessoa,
+    p_documento: before.documento ?? "",
+    p_razao_social: before.razao_social,
+    p_nome_fantasia: fantasy,
+    p_contato: contact,
+    p_situacao: before.situacao,
+  };
+  const requestId = mutationFence.arm({ producerOrder: 6, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/atualizar_contratante",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.getByRole("button", { name: "Salvar", exact: true }).click();
+    const reply = await posted;
+    if (reply.status() !== 200) fail("F3_S2_V103_HTTP");
+    const result = await reply.json();
+    if (
+      result?.schema_versao !== "v103-v1" ||
+      result.contratante?.id !== contractorId ||
+      result.contratante.id_organizacao !== organizationId
+    ) {
+      fail("F3_S2_V103_RESPONSE");
+    }
+    await page
+      .getByRole("heading", { name: "Contratante atualizado com sucesso." })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_S2_V103_UNCERTAIN");
+    }
+    const reloaded = page.waitForResponse(matchingRead, { timeout: F3_S1_UI.timeout });
+    await page.goto(route, { waitUntil: "networkidle" });
+    const readback = await reloaded;
+    if (readback.status() !== 200) fail("F3_S2_V103_READBACK");
+    const updated = await readback.json();
+    assertF3S2ContractorUpdate({
+      before,
+      result,
+      after: updated,
+      organizationId,
+      contractorId,
+      fantasy,
+    });
+    await page
+      .getByRole("heading", { name: "Editar contratante" })
+      .waitFor({ state: "visible", timeout: F3_S1_UI.timeout });
+    if ((await page.locator("#v103-fantasia").inputValue()) !== fantasy) {
+      fail("F3_S2_V103_UI_READBACK");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: contractorId, organizationId });
+    book.assertIsolation();
+    return contractorId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Sem envio comprovado, não inventar evento nem perder a causa original.
+    }
+    throw error;
+  }
+}
+
 async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }
