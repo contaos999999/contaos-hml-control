@@ -4062,3 +4062,11 @@ test("F3 S1 RBAC: real UI reload must observe exact org-bound RPC", async () => 
     { code: "F3_UI_RBAC_READBACK" },
   );
 });
+
+test("F3 S1 RBAC: actual AppShell consumer calls effective permissions RPC adapter", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const shell = await readFile(new URL("../../src/components/layout/ContaOSAppShell.tsx", import.meta.url), "utf8");
+  const rpc = await readFile(new URL("../../src/lib/administracao/rbacRpc.ts", import.meta.url), "utf8");
+  assert.match(shell, /consultarPermissoesEfetivas\(organizacao, contextoAtual\.contrato\)/);
+  assert.match(rpc, /chamar\("consultar_permissoes_efetivas", \{/);
+});
