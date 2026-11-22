@@ -308,20 +308,24 @@ test("F3 S1: criação UI e vínculo ADM01 passam pela cerca real do livro, não
               listeners.some((listener) => listener.predicate(readbackRequest)),
               "salvar vínculo exige observador independente de readback",
             );
-            response(readbackUrl, {
-              schema_versao: "adm01-v2",
-              itens: [
-                {
-                  id_usuario: userId,
-                  email: fields.get("#adm01-email"),
-                  vinculo: {
-                    perfil: "leitor",
-                    ativo: true,
-                    escopo_todos_contratos: false,
+            response(
+              readbackUrl,
+              {
+                schema_versao: "adm01-v2",
+                itens: [
+                  {
+                    id_usuario: userId,
+                    email: fields.get("#adm01-email"),
+                    vinculo: {
+                      perfil: "leitor",
+                      ativo: true,
+                      escopo_todos_contratos: false,
+                    },
                   },
-                },
-              ],
-            }, { p_id_organizacao: organizationId, p_pagina: 1 });
+                ],
+              },
+              { p_id_organizacao: organizationId, p_pagina: 1 },
+            );
           },
         }),
         waitFor: async () => undefined,
