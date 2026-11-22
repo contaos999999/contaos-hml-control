@@ -5411,6 +5411,94 @@ export async function f3RunSignedDocumentUpload({
   }
 }
 
+/** V110: upload da UI e readback independente de documento, versão e arquivo. */
+export async function f3S3CreateContractDocument({
+  page, fence, mutationFence, book, organizationId, contractId, file,
+}) {
+  if (
+    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId || !isUuid(contractId)
+  ) {
+    fail("F3_V110_PRECONDITION");
+  }
+  const title = "ContaOS HML F3 " + book.provenance().workflowRunId + " Documento";
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/documentos", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Enviar documentos", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Enviar documentos" });
+  await dialog.locator("#v110-novo-arquivos").setInputFiles(file);
+  await dialog.getByLabel("Título de " + file.name, { exact: true }).fill(title);
+  await dialog.getByLabel("Tipo do documento").selectOption("outro");
+  await dialog.getByLabel("Categoria").fill("hml");
+  const verifyReadback = async ({ businessResult, fileId }) => {
+    const getResponse = (table) =>
+      page.waitForResponse(
+        (response) =>
+          response.request().method() === "GET" &&
+          new URL(response.url()).origin === API_ORIGIN &&
+          new URL(response.url()).pathname === "/rest/v1/" + table,
+        { timeout: F3_S1_UI.timeout },
+      );
+    const documentRead = getResponse("documentos_contrato");
+    const versionRead = getResponse("versoes_documento");
+    const fileRead = getResponse("arquivos");
+    await page.reload({ waitUntil: "networkidle" });
+    const [docResponse, versionResponse, fileResponse] = await Promise.all([
+      documentRead, versionRead, fileRead,
+    ]);
+    if (
+      [docResponse, versionResponse, fileResponse].some((response) => response.status() !== 200)
+    ) {
+      fail("F3_V110_READBACK");
+    }
+    const [docs, versions, files] = await Promise.all(
+      [docResponse, versionResponse, fileResponse].map((response) => response.json()),
+    );
+    if (![docs, versions, files].every(Array.isArray)) fail("F3_V110_READBACK");
+    const document = docs.filter((row) =>
+      row?.id === businessResult.id_documento &&
+      row.id_contrato === contractId &&
+      row.titulo === title,
+    );
+    const version = versions.filter((row) =>
+      row?.id === businessResult.id_versao &&
+      row.id_documento_contrato === businessResult.id_documento &&
+      row.id_arquivo === fileId,
+    );
+    const metadata = files.filter((row) => row?.id === fileId);
+    if (document.length !== 1 || version.length !== 1 || metadata.length !== 1) {
+      fail("F3_V110_READBACK");
+    }
+    assertF3V110DocumentReadback({
+      after: {
+        ...document[0],
+        numero_versao: version[0].numero_versao,
+        id_arquivo: version[0].id_arquivo,
+        status_seguranca: metadata[0].status_seguranca,
+      },
+      contractId, fileId,
+    });
+    return true;
+  };
+  return f3RunSignedDocumentUpload({
+    page, fence, mutationFence, book, organizationId, contractId,
+    order: 12, file,
+    business: {
+      p_id_contrato: contractId,
+      p_tipo: "outro",
+      p_titulo: title,
+      p_categoria: "hml",
+      p_vigencia_inicio: null,
+      p_vigencia_fim: null,
+      p_observacoes: null,
+    },
+    submit: async () =>
+      dialog.getByRole("button", { name: "Enviar e registrar", exact: true }).click(),
+    verifyReadback,
+  });
+}
+
 /** V109: resultado do comando conferido contra uma segunda consulta do produto. */
 export function assertF3S3ListCreationReadback({
   receipt,
