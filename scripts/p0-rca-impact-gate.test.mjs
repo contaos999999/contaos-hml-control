@@ -12,7 +12,7 @@ import { validateRcaImpact, verifyRcaOperational, runCase, parseFullDiffNameStat
   PRECERT_REQUIRED_CHECKS, ADVERSARIAL_V2_LENSES, ADVERSARIAL_V2_STEP_NAMES,
   ADVERSARIAL_V2_CHECK_NAME, ADVERSARIAL_V2_CAUSAL_CASES, classifyGithubReadError, validateAssistantPrecertRelease,
   parseAssistantPreaudit, verifyAssistantPrecertInGithub,
-  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, validatePrioritySemanticDisputes, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
+  auditFullProtocolCoverage, auditNormativeSemanticCompleteness, PROTECTED_SEMANTIC_SOURCES, inventoryProtectedSemanticLines, analyzeSemanticCorpusForReview, assembleSemanticContradictionDossier, validatePrioritySemanticDisputes, P0_SEMANTIC_PRIORITY_DISPUTES, verifySemanticSourceClaims, inventorySemanticSentenceCandidates, buildSevenAxisSemanticBacklog, auditSemanticReverseCoverage, assessSemanticPreauditGate, assessSemanticCompletenessGate, validateSevenAxisSemanticBacklog, attestFullProtocolExecutions, parseFullProtocolSuiteResult, attestProtectedNormativeSources, verifyPrecertRunOrigin, classifyPrecertReadiness } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -2388,4 +2388,57 @@ test("P0 TEN MATERIAL DISPUTES: ten source-bound E1–E7 hypotheses, no external
     !x.pair_id.includes("PLAN-S31-05|PLAN-S31-07"));
   assert.ok(validatePrioritySemanticDisputes(mutant).issues.some(x=>
     x.includes("ANCHOR_INVALID")));
+});
+
+
+test("P0 SEMANTIC DOSSIER: all 137 E1–E7, 381 clauses, 9316 pairs are source read, without fictional live witnesses",()=>{
+  const files=Object.fromEntries(Object.entries(PROTECTED_SEMANTIC_SOURCES).map(
+    ([path,blob])=>[path,{content:readFileSync(path,"utf8"),blob}]));
+  const inventory=inventoryProtectedSemanticLines(files);
+  const worklist=buildSevenAxisSemanticBacklog(inventory);
+  const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
+  const reverseCoverage=auditSemanticReverseCoverage(inventory,worklist);
+  const triage=analyzeSemanticCorpusForReview({
+    inventory,worklist,sentenceInventory,reverseCoverage});
+  const result=assembleSemanticContradictionDossier(triage);
+  assert.deepEqual(result.issues,[]);
+  assert.deepEqual(
+    [result.counts.rules,result.counts.axes,result.counts.sentences,
+      result.counts.pairs,result.counts.unique_pairs],[137,959,381,9316,9316]);
+  assert.equal(
+    Object.values(result.counts.relationship_counts).reduce((a,b)=>a+b,0),9316);
+  assert.equal(result.rules[0].source_anchor.blob,
+    PROTECTED_SEMANTIC_SOURCES[
+      "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md"]);
+  assert.ok(result.rules.every(r=>
+    r.exact_text&&r.source_anchor&&Object.keys(r.axes).length===7&&
+    r.axes.E5.head===null&&r.axes.E5.positive_witness===null&&
+    r.axes.E5.negative_witness===null&&r.decision==="INCONCLUSIVE"));
+  assert.ok(result.sentences.every(x=>x.exact_text&&x.source_id&&
+    x.text_sha256&&x.positive_witness===null&&x.human_classification===null));
+  assert.ok(result.interactions.every(x=>x.source_a&&x.source_b&&
+    x.rule_a_text&&x.rule_b_text&&x.relationship&&
+    x.judgement==="UNADJUDICATED"&&x.positive_witness===null));
+  assert.equal(result.rules_certified,0);
+  assert.equal(result.sentences_certified,0);
+  assert.equal(result.interactions_certified,0);
+  assert.equal(result.semantic_preaudit,"INCONCLUSIVE");
+  assert.equal(result.semantic_completeness,"INCONCLUSIVE");
+  assert.equal(result.release,"NO_GO");
+  for(const [type,mutation] of [
+    ["rule",x=>x.rules.pop()],
+    ["sentence",x=>x.sentences.splice(75,1)],
+    ["pair",x=>x.interactions.splice(9315,1)],
+    ["source",x=>{x.interactions[0].left_source_id=null;}],
+  ]){
+    const tampered=structuredClone(triage);
+    mutation(tampered);
+    const rejected=assembleSemanticContradictionDossier(tampered);
+    assert.ok(rejected.issues.length>0,type+" missing must fail closed");
+    assert.equal(rejected.semantic_completeness,"INCONCLUSIVE");
+    assert.equal(rejected.release,"NO_GO");
+  }
+  process.stdout.write("P0-SEVEN-AXES-MATERIAL "+JSON.stringify({
+    counts:result.counts,source_read_verified:result.source_read_verified,
+    external_proofs:0,semantic_completeness:result.semantic_completeness})+"\n");
 });
