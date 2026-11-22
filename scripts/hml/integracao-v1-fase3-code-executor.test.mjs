@@ -4,10 +4,11 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { collectF3CodeEvidence, F3_CODE_EXECUTION_SCHEMA } from "./integracao-v1-fase3-code-executor.mjs";
 
-const catalogue = JSON.parse(await readFile(
+const catalogueRaw = await readFile(
   fileURLToPath(new URL("../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json", import.meta.url)),
   "utf8",
-));
+);
+const catalogue = JSON.parse(catalogueRaw);
 const provenance = {
   frontendSha: "a".repeat(40),
   backendSha: "b".repeat(40),
@@ -26,7 +27,7 @@ function proof(c, kind) {
 }
 test("F3 CODE executor: 138 caseIds, no missing runs ever becomes certified", async () => {
   const report = await collectF3CodeEvidence({
-    catalogue, provenance,
+    catalogue, catalogueRaw, provenance,
     executeCase: async () => { throw Object.assign(new Error("not implemented"), { code: "F3_DRIVER_PENDING" }); },
     verifyCase: async () => true,
   });
@@ -40,7 +41,7 @@ test("F3 CODE executor: 138 caseIds, no missing runs ever becomes certified", as
 });
 test("F3 CODE executor: N/A without approved amendment remains blocked", async () => {
   const report = await collectF3CodeEvidence({
-    catalogue, provenance,
+    catalogue, catalogueRaw, provenance,
     executeCase: async () => ({ applicability: "NOT_APPLICABLE" }),
     verifyCase: async () => true,
   });
@@ -49,7 +50,7 @@ test("F3 CODE executor: N/A without approved amendment remains blocked", async (
 });
 test("F3 CODE executor: incomplete evidence and negative omission fail closed", async () => {
   const report = await collectF3CodeEvidence({
-    catalogue, provenance,
+    catalogue, catalogueRaw, provenance,
     executeCase: async (c) => ({ applicability: "APPLICABLE", tests: [proof(c, "positive")] }),
     verifyCase: async () => true,
   });
@@ -58,7 +59,7 @@ test("F3 CODE executor: incomplete evidence and negative omission fail closed", 
 });
 test("F3 CODE executor: full evidence is still unreviewed, never self-certified", async () => {
   const report = await collectF3CodeEvidence({
-    catalogue, provenance,
+    catalogue, catalogueRaw, provenance,
     executeCase: async (c) => ({
       applicability: "APPLICABLE",
       tests: [proof(c, "positive"), proof(c, "negative")],
@@ -72,7 +73,7 @@ test("F3 CODE executor: full evidence is still unreviewed, never self-certified"
 });
 test("F3 CODE executor: verification rejection forbids collected status", async () => {
   const report = await collectF3CodeEvidence({
-    catalogue, provenance,
+    catalogue, catalogueRaw, provenance,
     executeCase: async (c) => ({
       applicability: "APPLICABLE",
       tests: [proof(c, "positive"), proof(c, "negative")],
@@ -84,7 +85,7 @@ test("F3 CODE executor: verification rejection forbids collected status", async 
 });
 test("F3 CODE executor: invalid provenance and duplicate catalogue IDs reject execution", async () => {
   const args = {
-    catalogue, provenance,
+    catalogue, catalogueRaw, provenance,
     executeCase: async () => ({ applicability: "NOT_APPLICABLE" }),
     verifyCase: async () => true,
   };
@@ -94,6 +95,12 @@ test("F3 CODE executor: invalid provenance and duplicate catalogue IDs reject ex
   const copy = structuredClone(catalogue);
   copy.cases[1].caseId = copy.cases[0].caseId;
   await assert.rejects(collectF3CodeEvidence({ ...args, catalogue: copy }), {
-    code: "F3_CODE_CASE_ID",
+    code: "F3_CODE_CATALOGUE_DRIFT",
+  });
+  await assert.rejects(collectF3CodeEvidence({ ...args, catalogueRaw: catalogueRaw + " " }), {
+    code: "F3_CODE_CATALOGUE_DRIFT",
+  });
+  await assert.rejects(collectF3CodeEvidence({ ...args, catalogue: { ...catalogue, count: 137 } }), {
+    code: "F3_CODE_CATALOGUE_DRIFT",
   });
 });
