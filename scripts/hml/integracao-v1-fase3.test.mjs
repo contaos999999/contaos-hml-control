@@ -4927,6 +4927,7 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     const stageLabels = {
       9: { proposta: 1, versao: 2, rubrica: 3 },
       10: { fonte: 1, versao: 2, aprovacao: 3 },
+      11: { item: 1, publicacao: 2 },
       18: { parecer: 1 },
       19: { aprovacao: 1 },
     };
@@ -4988,9 +4989,6 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
   // Linhas ainda sem fluxo: lista fechada, por linha, do 2b-2b (variante) e do 2b-2c em diante.
   const PENDING = [
     "4 ADM01, variante sem convite",
-    "11 V109, principal",
-    "11 V109, pré-requisito 1",
-    "11 V109, pré-requisito 2",
     "12 V110, principal",
     "13 V111, principal",
     "15 V115, principal",
@@ -5993,4 +5991,18 @@ test("F3 V108: mutações armadas apenas para quatro RPCs do produto e versão p
     flow.prerequisito.versao[0].inventory.p_id_proposta,
     { producerOrder: 9, action: "proposta" },
   );
+});
+
+test("F3 V109: três transições declaradas e vinculadas ao contrato e à lista criada", () => {
+  const flow = sut.F3_MUTATION_FLOWS[11];
+  assert.equal(flow.principal[0].name, "executar_comando_lista_v1");
+  assert.equal(flow.principal[0].inventory.p_id_contrato, 7);
+  assert.deepEqual(Object.keys(flow.prerequisito), ["item", "publicacao"]);
+  for (const action of ["item", "publicacao"]) {
+    const step = flow.prerequisito[action][0];
+    assert.equal(step.name, "executar_comando_lista_v1");
+    assert.equal(step.inventory.p_id_lista, 11);
+    assert.equal(step.derived.p_versao_esperada, "p_id_lista");
+    assert.deepEqual(step.free, ["p_request_id"]);
+  }
 });
