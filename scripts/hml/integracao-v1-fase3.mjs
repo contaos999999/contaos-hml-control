@@ -693,7 +693,6 @@ const EVENT_KEYS = Object.freeze([
   "organizationId",
 ]);
 const ACTION_EVENT_KEYS = Object.freeze([...EVENT_KEYS, "action"]);
-const ACTION_INTENT_KEYS = Object.freeze([...INTENT_KEYS, "action"]);
 const F3_ACTION_RE = /^[a-z][a-z0-9_]{0,40}$/;
 const EVENT_OPS = Object.freeze([
   "seal",
@@ -717,6 +716,7 @@ const INTENT_KEYS = Object.freeze([
   "rechecked",
   "binds",
 ]);
+const ACTION_INTENT_KEYS = Object.freeze([...INTENT_KEYS, "action"]);
 const INTENTS_KEYS = Object.freeze([
   "priorSent",
   "sent",
