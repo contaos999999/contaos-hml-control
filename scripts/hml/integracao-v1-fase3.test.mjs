@@ -922,12 +922,9 @@ test("F3 S2 V105: UI cria contrato via fence, e a identidade nasce somente na li
   const page = {
     async goto(url) {
       if (new URL(url).pathname === "/contratos") {
-        emit(
-          api + "/rest/v1/contratos?select=id%2Cnumero&id_organizacao=eq." + F3,
-          "GET",
-          200,
-          [{ id: contractId, id_organizacao: F3, numero: number, objeto: object }],
-        );
+        emit(api + "/rest/v1/contratos?select=id%2Cnumero&id_organizacao=eq." + F3, "GET", 200, [
+          { id: contractId, id_organizacao: F3, numero: number, objeto: object },
+        ]);
       }
     },
     locator(key) {

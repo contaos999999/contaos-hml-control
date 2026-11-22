@@ -3112,8 +3112,7 @@ export async function f3S2UpdateContractor({
             .summary()
             .requests.some(
               (q) =>
-                q.requestId === e.requestId && q.producerOrder === 5 &&
-                q.outcome === "confirmed",
+                q.requestId === e.requestId && q.producerOrder === 5 && q.outcome === "confirmed",
             ),
       )
   ) {
