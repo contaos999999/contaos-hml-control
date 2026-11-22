@@ -4235,9 +4235,7 @@ export function assertF3V117V116ConsumerReadback({
   ) {
     invalid();
   }
-  const matches = after.resultados.filter(
-    (row) => row?.id_requisito === requirementId,
-  );
+  const matches = after.resultados.filter((row) => row?.id_requisito === requirementId);
   if (
     matches.length !== 1 ||
     matches[0].id_resultado !== receipt.resultId ||
