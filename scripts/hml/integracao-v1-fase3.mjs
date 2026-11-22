@@ -5123,6 +5123,170 @@ export function assertF3V109ListReadback({ before, after, organizationId, contra
   return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 11, listId });
 }
 
+/** V109: resultado do comando conferido contra uma segunda consulta do produto. */
+export function assertF3S3ListCreationReadback({
+  receipt,
+  snapshot,
+  organizationId,
+  contractId,
+  name,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    typeof name !== "string" ||
+    !name.trim() ||
+    receipt?.schema_versao !== "crud-lista-v1" ||
+    receipt.acao !== "criar_lista" ||
+    receipt.id_organizacao !== organizationId ||
+    receipt.id_contrato !== contractId ||
+    !isUuid(receipt.request_id) ||
+    !isUuid(receipt.lista?.id) ||
+    receipt.lista.id_organizacao !== organizationId ||
+    receipt.lista.id_contrato !== contractId ||
+    receipt.lista.nome !== name ||
+    !isUuid(receipt.id_versao) ||
+    snapshot?.schema_versao !== "crud-lista-v1" ||
+    snapshot.id_organizacao !== organizationId ||
+    snapshot.id_contrato !== contractId ||
+    snapshot.lista?.id !== receipt.lista.id ||
+    snapshot.lista.nome !== name ||
+    snapshot.lista.id_organizacao !== organizationId ||
+    snapshot.lista.id_contrato !== contractId ||
+    snapshot.versao?.id !== receipt.id_versao ||
+    snapshot.versao.id_lista !== receipt.lista.id ||
+    snapshot.versao.id_organizacao !== organizationId ||
+    snapshot.versao.id_contrato !== contractId ||
+    snapshot.total_versoes < 1
+  ) {
+    fail("F3_V109_CREATE_READBACK");
+  }
+  return Object.freeze({
+    state: "UI_OBSERVED_NOT_CERTIFIED",
+    listId: receipt.lista.id,
+    versionId: receipt.id_versao,
+    requestId: receipt.request_id,
+  });
+}
+
+/** Criar lista pela UI real, com cerca do comando e leitura posterior da RPC consumidora. */
+export async function f3S3CreateList({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  name,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    typeof name !== "string" ||
+    name !== "ContaOS HML F3 " + book.provenance().workflowRunId + " Lista" ||
+    !book.created().some((item) =>
+      item.id === contractId &&
+      item.organizationId === organizationId &&
+      book.summary().requests.some(
+        (r) => r.requestId === item.requestId && r.producerOrder === 7 &&
+          r.outcome === "confirmed",
+      ),
+    )
+  ) {
+    fail("F3_V109_CREATE_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/regras", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Gestão de listas" });
+  await panel.getByRole("button", { name: "Criar lista", exact: true }).click();
+  await panel.getByLabel("Nome", { exact: true }).fill(name);
+  const motive = "Criação isolada de lista e leitura do consumidor V109";
+  await panel.getByLabel("Motivo", { exact: true }).fill(motive);
+  await panel.getByRole("button", { name: "Revisar operação", exact: true }).click();
+  await fence.drain();
+  fence.assertSafe();
+  const intent = mutationFence.arm({
+    producerOrder: 11,
+    bodies: [{
+      p_id_organizacao: organizationId,
+      p_id_contrato: contractId,
+      p_id_lista: null,
+      p_versao_esperada: null,
+      p_acao: "criar_lista",
+      p_payload: { nome: name, descricao: null, vigencia_inicio: null, vigencia_fim: null },
+      p_motivo: motive,
+      p_request_id: f3Slot("uuid", "v109_criar"),
+    }],
+  });
+  try {
+    const posted = page.waitForResponse(
+      (response) => response.url() === API_ORIGIN +
+        "/rest/v1/rpc/executar_comando_lista_v1" &&
+        response.request().method() === "POST",
+      { timeout: F3_S1_UI.timeout },
+    );
+    const readback = page.waitForResponse(
+      (response) => response.url() === API_ORIGIN +
+        "/rest/v1/rpc/obter_lista_operacional_v1" &&
+        response.request().method() === "POST" &&
+        (() => {
+          try {
+            const args = response.request().postDataJSON();
+            return args.p_id_organizacao === organizationId &&
+              args.p_id_contrato === contractId &&
+              isUuid(args.p_id_lista);
+          } catch {
+            return false;
+          }
+        })(),
+      { timeout: F3_S1_UI.timeout },
+    );
+    await panel.getByRole("button", { name: "Confirmar operação", exact: true }).click();
+    const response = await posted;
+    if (response.status() !== 200) fail("F3_V109_CREATE_HTTP");
+    const cmd = response.request().postDataJSON();
+    const receipt = await response.json();
+    if (
+      cmd?.p_id_contrato !== contractId ||
+      cmd.p_id_organizacao !== organizationId ||
+      cmd.p_acao !== "criar_lista" ||
+      cmd.p_request_id !== receipt.request_id
+    ) {
+      fail("F3_V109_CREATE_RESPONSE");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== intent) {
+      fail("F3_V109_CREATE_UNCERTAIN");
+    }
+    const observed = await readback;
+    if (observed.status() !== 200) fail("F3_V109_CREATE_READBACK");
+    const snapshot = await observed.json();
+    const result = assertF3S3ListCreationReadback({
+      receipt, snapshot, organizationId, contractId, name,
+    });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(intent, { entityId: result.listId, organizationId });
+    book.assertIsolation();
+    return result;
+  } catch (error) {
+    try {
+      if (book.state(intent) === "sealed") book.uncertain(intent);
+    } catch {
+      // Um comando incerto não pode ser repetido com nova chave.
+    }
+    throw error;
+  }
+}
+
 /** V110 — arquivo confirmado não é prova de documento até leitura da nova versão. */
 export function assertF3V110DocumentReadback({ after, contractId, fileId }) {
   if (
