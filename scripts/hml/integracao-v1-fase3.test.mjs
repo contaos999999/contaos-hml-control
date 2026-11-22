@@ -891,6 +891,125 @@ test("F3 S2 V105: POST sem RETURNING exige UUID da lista real e organização co
   }
 });
 
+test("F3 S2 V105: UI cria contrato via fence, e a identidade nasce somente na lista", async () => {
+  const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(book);
+  const contractorId = uuid(889005);
+  seal(book, 5, 5);
+  book.confirm(uuid(5), { entityId: contractorId, organizationId: F3 });
+  const fence = sut.createF3MutationFence({ book });
+  const contractId = uuid(889007);
+  const name = "ContaOS HML F3 " + PROV.workflowRunId + " Contratante";
+  const number = "F3-" + PROV.workflowRunId;
+  const object = "Contrato sintético F3 " + PROV.workflowRunId;
+  const fields = {};
+  const listeners = [];
+  let selected = false;
+  let postedCount = 0;
+  const api = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const emit = (url, method, status, data) => {
+    const response = {
+      url: () => url,
+      status: () => status,
+      request: () => ({ method: () => method, url: () => url }),
+      json: async () => data,
+    };
+    for (let i = listeners.length - 1; i >= 0; i--) {
+      if (listeners[i].predicate(response)) {
+        listeners.splice(i, 1)[0].resolve(response);
+      }
+    }
+  };
+  const page = {
+    async goto(url) {
+      if (new URL(url).pathname === "/contratos") {
+        emit(
+          api + "/rest/v1/contratos?select=id%2Cnumero&id_organizacao=eq." + F3,
+          "GET",
+          200,
+          [{ id: contractId, id_organizacao: F3, numero: number, objeto: object }],
+        );
+      }
+    },
+    locator(key) {
+      return {
+        fill: async (value) => {
+          fields[key] = value;
+        },
+      };
+    },
+    waitForResponse(predicate) {
+      return new Promise((resolve) => listeners.push({ predicate, resolve }));
+    },
+    getByRole(role, options) {
+      if (role === "heading") {
+        return {
+          waitFor: async () =>
+            assert.ok(["Novo contrato", "Contrato cadastrado com sucesso."].includes(options.name)),
+        };
+      }
+      if (role === "option") {
+        return {
+          filter: ({ hasText }) => ({
+            click: async () => {
+              assert.equal(hasText, name);
+              selected = true;
+            },
+          }),
+        };
+      }
+      if (role === "link") {
+        return {
+          waitFor: async () => assert.equal(options.name, "Abrir contrato " + number),
+        };
+      }
+      if (role === "button" && options.name === "Salvar") {
+        return {
+          click: async () => {
+            assert.equal(selected, true);
+            const body = {
+              id_organizacao: F3,
+              id_contratante: contractorId,
+              numero: fields["#v105-numero"],
+              objeto: fields["#v105-objeto"],
+              inicio: fields["#v105-inicio"],
+            };
+            const req = {
+              url: api + "/rest/v1/contratos",
+              method: "POST",
+              postData: JSON.stringify(body),
+              sessionId: "test_native_session",
+              interceptionId: "v105_post",
+            };
+            assert.equal(fence.policy({ ...req, stage: "REQUEST" }), true);
+            assert.equal(fence.policy({ ...req, stage: "RESPONSE" }), true);
+            postedCount++;
+            emit(req.url, "POST", 201, null);
+          },
+        };
+      }
+      throw Error("BAD_ROLE: " + role);
+    },
+  };
+  const native = { drain: async () => undefined, assertSafe: () => undefined };
+  assert.equal(
+    await sut.f3S2CreateContract({
+      page,
+      fence: native,
+      mutationFence: fence,
+      book,
+      organizationId: F3,
+      contractorId,
+      contractorName: name,
+    }),
+    contractId,
+  );
+  assert.equal(postedCount, 1);
+  assert.equal(book.created().at(-1).id, contractId);
+  assert.equal(book.created().at(-1).kind, "registro");
+  assert.equal(listeners.length, 0);
+});
+
 test("F3 S2 V106: versão, requestId, evento e contrato são observados sem duplicação", () => {
   const organizationId = F3;
   const contractId = uuid(889007);
