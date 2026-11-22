@@ -5642,7 +5642,6 @@ test("F3 C0465: auditoria vincula o evento ao resultado V117 sem forjar acesso H
   }
 });
 
-
 test("F3 SYS04 preference: local selection is bound to the current user and organization", () => {
   const userId = uuid(900301);
   const organizationId = F3;
@@ -5660,10 +5659,9 @@ test("F3 SYS04 preference: local selection is bound to the current user and orga
     { idUsuario: userId, idOrganizacao: uuid(900303) },
     { idUsuario: userId, idOrganizacao: "foreign" },
   ]) {
-    assert.throws(
-      () => sut.assertF3S1PreferenceReadback({ value, userId, organizationId }),
-      { code: "F3_SYS04_PREFERENCE_READBACK" },
-    );
+    assert.throws(() => sut.assertF3S1PreferenceReadback({ value, userId, organizationId }), {
+      code: "F3_SYS04_PREFERENCE_READBACK",
+    });
   }
 });
 
@@ -5744,7 +5742,6 @@ test("F3 V119 presentation: exact one matching readback without foreign competen
   }
 });
 
-
 test("F3 remaining seven: CODE readback checks are fail-closed, never certification", () => {
   const organizationId = F3;
   const contractId = uuid(920001);
@@ -5775,12 +5772,14 @@ test("F3 remaining seven: CODE readback checks are fail-closed, never certificat
     ...before109,
     versao_registro: 2,
     id_versao_publicada: uuid(920011),
-    itens: [{
-      obrigatorio: true,
-      aplicavel: true,
-      id_fonte_versao: uuid(920012),
-      regra_validacao: { documento: { obrigatorio: true } },
-    }],
+    itens: [
+      {
+        obrigatorio: true,
+        aplicavel: true,
+        id_fonte_versao: uuid(920012),
+        regra_validacao: { documento: { obrigatorio: true } },
+      },
+    ],
   };
   const after110 = {
     id: documentId,
@@ -5923,11 +5922,13 @@ test("F3 remaining seven: CODE readback checks are fail-closed, never certificat
     estado_analise: "complete",
     stale: false,
     execucao_atual: { id: reviewExecution },
-    resultados: [{
-      id_requisito: requirementId,
-      id_resultado: reviewResult,
-      resultado: "conforme",
-    }],
+    resultados: [
+      {
+        id_requisito: requirementId,
+        id_resultado: reviewResult,
+        resultado: "conforme",
+      },
+    ],
   };
   const reviewInput = {
     review: { context, command, result: receipt },
