@@ -5955,3 +5955,17 @@ test("F3 remaining seven: CODE readback checks are fail-closed, never certificat
     { code: "F3_V117_V116_CONSUMER_MISMATCH" },
   );
 });
+
+test("F3 V119: apresentação exige aprovação V118 confirmada, não V119", () => {
+  const approval = { producerOrder: 18, action: "aprovacao", outcome: "confirmed" };
+  assert.equal(sut.hasF3V118ConfirmedApproval([approval]), true);
+  for (const requests of [
+    null,
+    [],
+    [{ ...approval, producerOrder: 19 }],
+    [{ ...approval, outcome: "sealed" }],
+    [{ ...approval, action: "parecer" }],
+  ]) {
+    assert.equal(sut.hasF3V118ConfirmedApproval(requests), false);
+  }
+});
