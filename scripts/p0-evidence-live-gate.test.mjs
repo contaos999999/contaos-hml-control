@@ -349,9 +349,9 @@ test("P0-CERT-LIVE-001 — CI certifica código sem contraprova HML autenticada"
   const result = await verifyEvidenceLive(x.manifest, {
     apiGet: async (path) => {
       if (path.startsWith("/contents/")) {
-        const match = /^\\/contents\\/(.+)\\?ref=[a-f0-9]{40}$/.exec(path);
-        if (!match || !x.remoteFiles.has(match[1])) throw new Error("GitHub REST HTTP 404");
-        return { encoding: "base64", content: x.remoteFiles.get(match[1]).toString("base64") };
+        const key = path.slice("/contents/".length).split("?ref=")[0];
+        if (!x.remoteFiles.has(key)) throw new Error("GitHub REST HTTP 404");
+        return { encoding: "base64", content: x.remoteFiles.get(key).toString("base64") };
       }
       if (!(path in x.responses)) throw new Error("GitHub REST HTTP 404");
       return x.responses[path];
