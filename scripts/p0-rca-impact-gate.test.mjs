@@ -2383,6 +2383,12 @@ test("P0 TEN MATERIAL DISPUTES: ten source-bound E1–E7 hypotheses, no external
   assert.equal(verified.independent_contradictions,0);
   assert.equal(verified.verdict,"INCONCLUSIVE");
   assert.equal(verified.release,"NO_GO");
+  const falsifiedText=structuredClone(triage);
+  const wrong=falsifiedText.rules.find(x=>x.rule_id==="EMENDA-04");
+  wrong.exact_text=wrong.exact_text.replaceAll("full_diff","TERM_REMOVED");
+  assert.ok(validatePrioritySemanticDisputes(falsifiedText).issues.some(x=>
+    x==="SEMANTIC_PRIORITY_TEXT_MISMATCH: FULL_DIFF_NO_DOCUMENTAL_ESCAPE"),
+    "ID válido com fonte textual alterada não valida uma relação normativa");
   const mutant=structuredClone(triage);
   mutant.interactions=mutant.interactions.filter(x=>
     !x.pair_id.includes("PLAN-S31-05|PLAN-S31-07"));
