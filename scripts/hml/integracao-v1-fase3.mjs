@@ -1859,7 +1859,7 @@ export function createF3MutationFence(options = {}) {
       if (request.method !== "PUT") return freeze();
       const scope = book.organizationF3() + "/uploads/";
       const path = u.pathname.slice(("/storage/v1/object/upload/sign/" + s.name + "/").length);
-      if (!path.startsWith(scope) || !/^.+\/[0-9a-f-]{36}\/[^/]+$/.test("/" + path.slice(scope.length))) {
+      if (!path.startsWith(scope) || !/^[0-9a-f-]{36}\/[^/]+$/.test(path.slice(scope.length))) {
         return freeze("F3_FOREIGN_ORG");
       }
       body = { path };
