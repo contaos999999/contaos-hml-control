@@ -58,14 +58,15 @@ test("F3 B1: CSV estrito rejeita aspas soltas e aceita campos com vírgula entre
 
 test("F3 B1: orçamento de intenções conta tentativas e recusa excesso", () => {
   assert.equal(sut.F3_BUDGET.total, 60);
-  assert.equal(sut.F3_BUDGET.perRun, 30);
+  assert.equal(sut.F3_BUDGET.perRun, 40);
   assert.equal(sut.F3_BUDGET.planned, 39);
   assert.equal(sut.F3_MAX_PREREQUISITES, 11);
   assert.deepEqual(sut.F3_PREREQUISITES_BY_PRODUCER, { 9: 3, 10: 3, 11: 2, 18: 1, 19: 1, 20: 1 });
-  assert.ok(sut.assertF3Budget({ priorSent: 0, newIntents: 30 }));
+  assert.ok(sut.assertF3Budget({ priorSent: 0, newIntents: 40 }));
+  assert.ok(sut.assertF3Budget({ priorSent: 20, newIntents: 40 }));
   assert.ok(sut.assertF3Budget({ priorSent: 30, newIntents: 30 }));
   for (const bad of [
-    { priorSent: 0, newIntents: 31 },
+    { priorSent: 0, newIntents: 41 },
     { priorSent: 31, newIntents: 30 },
     { priorSent: -1, newIntents: 1 },
     { priorSent: 0, newIntents: 1.5 },
@@ -756,19 +757,27 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
   assert.equal(sut.assertF3SecondUserProfile("leitor"), true);
 });
 
-test("F3 B2b1 RED: orçamento de 30 por execução e 60 no total, acumulado pelo ledger", () => {
-  // 30 envios: organização, 17 principais e 12 duplicidades; o 31º é recusado.
+test("F3 B2b2 R2: orçamento de 40 por execução e 60 no total, acumulado pelo ledger", () => {
+  // 40 envios: organização, 17 principais, 11 pre-requisitos e 11 duplicidades.
   const first = sut.createF3IntentBook({ ledger: EMPTY });
   createOrg(first);
   for (const o of MUT.filter((x) => x !== 2)) {
     seal(first, o, o);
     first.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
   }
-  for (const o of MUT.filter((x) => x !== 2).slice(0, 12)) {
+  let nextPrereq = 500;
+  for (const [order, cap] of Object.entries(sut.F3_PREREQUISITES_BY_PRODUCER)) {
+    for (let i = 0; i < cap; i++) {
+      const id = nextPrereq++;
+      seal(first, id, Number(order), { kind: "prerequisito" });
+      first.rejected(uuid(id));
+    }
+  }
+  for (const o of MUT.filter((x) => x !== 2).slice(0, 11)) {
     dup(first, 200 + o, o, uuid(o));
     first.rejected(uuid(200 + o));
   }
-  assert.equal(first.summary().sent, 30);
+  assert.equal(first.summary().sent, 40);
   assert.throws(() => dup(first, 299, 20, uuid(20)), { code: "F3_BUDGET" });
   // Teto de 60: principais rejeitadas e refeitas contam como envio a cada tentativa.
   const rejectLoop = (book, start, count) => {
@@ -787,7 +796,7 @@ test("F3 B2b1 RED: orçamento de 30 por execução e 60 no total, acumulado pelo
   assert.equal(sut.f3LedgerState(lb).priorSent, 60);
   const c = sut.createF3IntentBook({ ledger: lb });
   assert.throws(() => seal(c, 3000, 5), { code: "F3_BUDGET" });
-  // Ledger com mais de 30 envios numa execução é recusado no replay.
+  // Ledger com mais de 40 envios numa execução é recusado no replay.
   const over = {
     ...run(1, first),
     events: [
