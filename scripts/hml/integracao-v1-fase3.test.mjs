@@ -2345,6 +2345,19 @@ test("F3 B2b1: ledger fixado vazio, append-only, só PASS ligado ao replay, e re
     );
 });
 
+
+test("F3 S2: hash do transcript recusa remocao de evento de replay", () => {
+  const report = completeReport();
+  assert.match(report.intents.eventsSha256, /^[a-f0-9]{64}$/);
+  assert.ok(report.intents.events.length > 2);
+  const forged = structuredClone(report);
+  forged.intents.events.splice(1, 1);
+  assert.throws(
+    () => sut.validateF3Report(forged, catalogue, OPT),
+    { code: "F3_REPORT" },
+  );
+});
+
 /**
  * Propriedades com semente fixa: ações aleatórias no livro, em até três execuções, sempre geram
  * ledger e relatório válidos; uma ação recusada não altera o estado; e uma adulteração isolada
