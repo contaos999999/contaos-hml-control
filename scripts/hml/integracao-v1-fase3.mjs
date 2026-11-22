@@ -5059,10 +5059,11 @@ export async function f3S3PublishProposal({
       row.id_proposta === before.id_proposta &&
       row.id_arquivo_origem === before.id_arquivo_origem,
     );
+    // A projeção real COLUNAS_ARQUIVO não contém id_organizacao/id_contrato.
+    // A origem do arquivo é vinculada pela versão da proposta, cuja organização
+    // e contrato foram comprovados no readback da proposta acima.
     const matchingFiles = arquivos.filter((row) =>
-      row?.id === before.id_arquivo_origem &&
-      row.id_organizacao === organizationId &&
-      row.id_contrato === contractId,
+      row?.id === before.id_arquivo_origem,
     );
     if (matchingVersions.length !== 1 || matchingFiles.length !== 1 || rubricas.length < 1) {
       fail("F3_V108_PUBLISH_READBACK");
