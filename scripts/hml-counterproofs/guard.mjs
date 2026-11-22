@@ -18,6 +18,15 @@ export function loadAttestation() {
   return JSON.parse(raw);
  } catch {return null;}
 }
+const BACKEND_SNAPSHOT = 'docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json';
+export function canonicalBackendSource() {
+ try {
+  const snap=JSON.parse(readFileSync(BACKEND_SNAPSHOT,'utf8'));
+  if(snap.schema!=='contaos.frontend.canonical-source-snapshot.v1' ||
+     snap.source_repo!=='contaos999999/develop' || snap.source_branch!=='main') return null;
+  return /^[a-f0-9]{40}$/.test(snap.source_commit||'')?snap.source_commit:null;
+ } catch {return null;}
+}
 export const REQUIRED = [
   'CONTAOS_HML_FRONTEND_URL', 'CONTAOS_HML_ALLOWED_HOST',
   'CONTAOS_HML_USER_A_EMAIL', 'CONTAOS_HML_USER_A_PASSWORD',
@@ -51,6 +60,8 @@ export function preflight(env, context = {}, evidence = null) {
       env.CONTAOS_HML_EXPECTED_FRONTEND_SHA !== context.sha) errors.push('FRONTEND_SHA_MISMATCH');
   // This is only source SHA syntax. Backend publication parity remains an independent NO-GO gate.
   if (!/^[a-f0-9]{40}$/i.test(env.CONTAOS_HML_EXPECTED_BACKEND_SHA || '')) errors.push('BACKEND_SHA_UNVERIFIED');
+  const canonicalSource=canonicalBackendSource();
+  if (!canonicalSource || env.CONTAOS_HML_EXPECTED_BACKEND_SHA !== canonicalSource) errors.push('BACKEND_SOURCE_SHA_MISMATCH');
   if (!context.runId || !context.runAttempt || context.repository !== 'contaos999999/contaos-hml-control') errors.push('MISSING_RUN_PROVENANCE');
   if (!fixtureProofValid(evidence, context)) errors.push('LIVE_AUTH_RLS_ATTESTATION_MISSING_OR_FAILED');
   return { pass: errors.length === 0, errors, release: 'HML_AUTH_RLS_ONLY_NO_BACKEND_CERTIFICATION' };
