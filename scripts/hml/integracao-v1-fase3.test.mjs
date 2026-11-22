@@ -1367,6 +1367,14 @@ function referenceBook(ledger = EMPTY, extra = () => {}, skip = []) {
   createOrg(book);
   for (const o of MUT.filter((x) => x !== 2)) {
     if (o === 10) ensureV107Prerequisites(book);
+    if (o === 18) {
+      seal(book, 1818, 18, { kind: "prerequisito", action: "parecer" });
+      book.confirm(uuid(1818), { entityId: uuid(11818), organizationId: F3 });
+    }
+    if (o === 19) {
+      seal(book, 1919, 19, { kind: "prerequisito", action: "aprovacao" });
+      book.confirm(uuid(1919), { entityId: uuid(11919), organizationId: F3 });
+    }
     seal(book, o, o);
     if (skip.includes(o)) continue;
     book.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
@@ -1751,22 +1759,22 @@ test("F3 B2b1 RED: tipos de intenção, uma principal por produtor, 11 pré-requ
   assert.throws(() => seal(book, 6, 5), { code: "F3_INTENT_PRODUCER" });
   book.confirm(uuid(5), { entityId: entity(5), organizationId: F3 });
   assert.throws(() => seal(book, 6, 5), { code: "F3_INTENT_PRODUCER" });
-  for (let i = 0; i < 11; i++) seal(book, 300 + i, 18, { kind: "prerequisito" });
-  assert.throws(() => seal(book, 399, 18, { kind: "prerequisito" }), {
+  for (let i = 0; i < 11; i++) seal(book, 300 + i, 17, { kind: "prerequisito" });
+  assert.throws(() => seal(book, 399, 17, { kind: "prerequisito" }), {
     code: "F3_INTENT_PREREQUISITES",
   });
   dup(book, 7, 5, uuid(5));
   book.rejected(uuid(7));
   assert.throws(() => dup(book, 8, 5, uuid(5)), { code: "F3_INTENT_DUPLICATE_OF" });
   assert.throws(() => dup(book, 9, 6, uuid(5)), { code: "F3_INTENT_DUPLICATE_OF" });
-  assert.throws(() => dup(book, 9, 18, uuid(300)), { code: "F3_INTENT_DUPLICATE_OF" });
+  assert.throws(() => dup(book, 9, 17, uuid(300)), { code: "F3_INTENT_DUPLICATE_OF" });
   assert.throws(() => seal(book, 9, 6, { kind: "duplicidade" }), { code: "F3_INTENT_KIND" });
   assert.throws(() => seal(book, 9, 6, { duplicateOf: uuid(5) }), { code: "F3_INTENT_KIND" });
   assert.throws(() => seal(book, 9, 6, { kind: "segunda" }), { code: "F3_INTENT_KIND" });
   // Recibo não pode apontar para pré-requisito nem para duplicidade.
-  const prereq = referenceBook(EMPTY, (b) => seal(b, 500, 18, { kind: "prerequisito" }));
+  const prereq = referenceBook(EMPTY, (b) => seal(b, 500, 17, { kind: "prerequisito" }));
   rejects(
-    completeReport((r) => forProducer(r, 18, (c) => (c.requestId = uuid(500))), { book: prereq }),
+    completeReport((r) => forProducer(r, 17, (c) => (c.requestId = uuid(500))), { book: prereq }),
     ["F3_REPORT", "F3_ISOLATION"],
   );
   rejects(
@@ -4330,7 +4338,7 @@ test("F3 R3 RED (1 e 2): valor gerado em tempo de execução é novo para o livr
   const used = BINDS.get(uuid(4))[0].slots[0];
   book.rejected(uuid(4));
   // ADM01 (dois passos, três vagas) e um produtor ainda sem fluxo: a mesma regra.
-  for (const order of [4, 16]) {
+  for (const order of [4, 19]) {
     for (const taken of [
       sha(sut.F3_E87_ORG),
       sha(F3),
@@ -4342,6 +4350,14 @@ test("F3 R3 RED (1 e 2): valor gerado em tempo de execução é novo para o livr
       createOrg(b);
       seal(b, 4, 4);
       b.rejected(uuid(4));
+      if (order === 19) {
+        seal(b, 5, 5);
+        b.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+        seal(b, 7, 7);
+        b.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
+        seal(b, 14, 14);
+        b.confirm(uuid(14), { entityId: uuid(114), organizationId: F3 });
+      }
       const id = uuid(900 + order);
       b.seal({ requestId: id, producerOrder: order, actor: "master", organizationId: F3 });
       const [first] = bindsFor(b, order, "principal");
@@ -4381,14 +4397,7 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
     ensureV107Prerequisites(book);
     seal(book, 14, 14);
     book.confirm(uuid(14), { entityId: uuid(114), organizationId: F3 });
-    book.seal({
-      requestId: uuid(218),
-      producerOrder: 18,
-      actor: "master",
-      organizationId: F3,
-      kind: "prerequisito",
-      action: "parecer",
-    });
+    seal(book, 218, 18, { kind: "prerequisito", action: "parecer" });
     book.confirm(uuid(218), { entityId: uuid(318), organizationId: F3 });
     return book;
   };
