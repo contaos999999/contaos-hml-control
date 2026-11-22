@@ -1444,6 +1444,52 @@ export const F3_MUTATION_FLOWS = Object.freeze({
       ],
     },
   ),
+  // S3: contratos de mutacao oficiais sem upload (fluxos de competencia e parecer).
+  14: flow([
+    step("rpc", "criar_competencia", {
+      inventory: { p_id_contrato: 7 },
+      source: "src/lib/contratos/novaCompetenciaDados.ts:65-75",
+    }),
+  ]),
+  16: flow([
+    step("rpc", "solicitar_analise_competencia", {
+      inventory: { p_id_competencia: 14 },
+      source: "src/lib/competencias/competenciaAnaliseDados.ts:188-197",
+    }),
+  ]),
+  18: flow(
+    [
+      step("rpc", "aprovar_parecer_interno", {
+        inventory: { p_id_parecer: { producerOrder: 18, action: "parecer" } },
+        source: "src/lib/competencias/parecerInternoDados.ts:150-166",
+      }),
+    ],
+    {
+      parecer: [
+        step("rpc", "solicitar_parecer_interno", {
+          inventory: { p_id_competencia: 14 },
+          source: "src/lib/competencias/parecerInternoDados.ts:136-146",
+        }),
+      ],
+    },
+  ),
+  19: flow(
+    [
+      step("rpc", "registrar_apresentacao", {
+        free: ["p_idempotency_key"],
+        inventory: { p_id_competencia: 14 },
+        source: "src/lib/competencias/apresentacaoDados.ts:88-104",
+      }),
+    ],
+    {
+      aprovacao: [
+        step("rpc", "aprovar_apresentacao", {
+          inventory: { p_id_competencia: 14 },
+          source: "src/lib/competencias/apresentacaoDados.ts:56-70",
+        }),
+      ],
+    },
+  ),
 });
 export const F3_FENCE_WINDOW_MS = 60000;
 const STORAGE_ORIGIN = API_ORIGIN.replace(/\.supabase\.co$/, ".storage.supabase.co");
