@@ -4781,6 +4781,171 @@ export async function f3S5RegisterPresentation({
   }
 }
 
+/** V108 — prova CODE do resultado publicado; não substitui UP e W1. */
+export function assertF3V108ProposalReadback({ before, after, contractId, versionId }) {
+  if (
+    !isUuid(contractId) ||
+    !isUuid(versionId) ||
+    before?.id !== versionId ||
+    before.id_contrato !== contractId ||
+    before.situacao !== "rascunho" ||
+    after?.id !== versionId ||
+    after.id_contrato !== contractId ||
+    after.situacao !== "publicada" ||
+    after.hash !== before.hash ||
+    !/^[a-f0-9]{64}$/i.test(after.hash ?? "") ||
+    after.rubricas_count < 1 ||
+    after.arquivo_origem?.status_seguranca !== "aprovado"
+  ) {
+    fail("F3_V108_PROPOSAL_READBACK");
+  }
+  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 9, versionId });
+}
+
+/** V109 — lista só libera o snapshot após uma versão publicada e item material válido. */
+export function assertF3V109ListReadback({ before, after, organizationId, contractId, listId }) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(listId) ||
+    before?.id === undefined ||
+    before.id !== listId ||
+    before.id_organizacao !== organizationId ||
+    before.id_contrato !== contractId ||
+    after?.id !== listId ||
+    after.id_organizacao !== organizationId ||
+    after.id_contrato !== contractId ||
+    after.versao_registro <= before.versao_registro ||
+    !isUuid(after.id_versao_publicada) ||
+    !Array.isArray(after.itens) ||
+    !after.itens.some(
+      (item) =>
+        item.obrigatorio === true &&
+        item.aplicavel === true &&
+        isUuid(item.id_fonte_versao) &&
+        item.regra_validacao?.documento?.obrigatorio === true,
+    )
+  ) {
+    fail("F3_V109_LIST_READBACK");
+  }
+  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 11, listId });
+}
+
+/** V110 — arquivo confirmado não é prova de documento até leitura da nova versão. */
+export function assertF3V110DocumentReadback({ after, contractId, fileId }) {
+  if (
+    !isUuid(contractId) ||
+    !isUuid(fileId) ||
+    !isUuid(after?.id) ||
+    after.id_contrato !== contractId ||
+    after.numero_versao !== 1 ||
+    after.id_arquivo !== fileId ||
+    !["pendente", "aprovado"].includes(after.status_seguranca)
+  ) {
+    fail("F3_V110_DOCUMENT_READBACK");
+  }
+  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 12, documentId: after.id });
+}
+
+/** V111 — incremento não pode substituir ou destruir a versão anterior. */
+export function assertF3V111DocumentVersionReadback({ before, after, documentId, fileId }) {
+  if (
+    !isUuid(documentId) ||
+    !isUuid(fileId) ||
+    before?.id !== documentId ||
+    after?.id !== documentId ||
+    !Number.isSafeInteger(before.numero_versao) ||
+    after.numero_versao !== before.numero_versao + 1 ||
+    after.id_arquivo !== fileId ||
+    before.id_arquivo === fileId ||
+    !["pendente", "aprovado"].includes(after.status_seguranca)
+  ) {
+    fail("F3_V111_VERSION_READBACK");
+  }
+  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 13, documentId });
+}
+
+/** V115 — evidência do requisito deve pertencer à competência e à versão segura. */
+export function assertF3V115CompetenceDocumentReadback({
+  document,
+  competenceId,
+  requirementId,
+  fileId,
+}) {
+  if (
+    !isUuid(competenceId) ||
+    !isUuid(requirementId) ||
+    !isUuid(fileId) ||
+    !isUuid(document?.id) ||
+    document.id_competencia !== competenceId ||
+    document.id_requisito !== requirementId ||
+    document.id_arquivo !== fileId ||
+    !["pendente", "aprovado"].includes(document.status_seguranca)
+  ) {
+    fail("F3_V115_COMPETENCE_DOCUMENT_READBACK");
+  }
+  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 15, documentId: document.id });
+}
+
+/** V117 — concatena os contratos CODE já integrados, nunca declara PASS de caso. */
+export function assertF3V117DriverCodeContract({
+  review,
+  analysisBefore,
+  analysisAfter,
+  organizationId,
+  contractId,
+  competenceId,
+  requirementId,
+  documentVersionId,
+}) {
+  const receipt = assertF3V117ReviewReceipt({
+    ...review,
+    organizationId,
+    contractId,
+    competenceId,
+    requirementId,
+    documentVersionId,
+  });
+  const consumer = assertF3V117V116ConsumerReadback({
+    receipt,
+    before: analysisBefore,
+    after: analysisAfter,
+    competenceId,
+    requirementId,
+  });
+  return Object.freeze({
+    state: "CONTRACT_NOT_CERTIFIED",
+    producerOrder: 17,
+    requestId: receipt.requestId,
+    resultId: consumer.resultId,
+  });
+}
+
+/** V122 — só há relatório utilizável quando a ingestão foi vinculada ao arquivo seguro. */
+export function assertF3V122HistoricalReadback({
+  before,
+  after,
+  reportId,
+  fileId,
+  executionId,
+}) {
+  if (
+    !isUuid(reportId) ||
+    !isUuid(fileId) ||
+    !isUuid(executionId) ||
+    before?.id_arquivo !== fileId ||
+    before.status_seguranca !== "aprovado" ||
+    after?.id !== reportId ||
+    after.id_arquivo !== fileId ||
+    after.id_execucao !== executionId ||
+    !["enfileirada", "processando", "concluida"].includes(after.status_ingestao) ||
+    after.processamento_documental !== "concluido"
+  ) {
+    fail("F3_V122_HISTORICAL_READBACK");
+  }
+  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 20, reportId });
+}
+
 async function pendingDriver() {
   fail("F3_DRIVER_PENDING");
 }
