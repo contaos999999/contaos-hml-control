@@ -1351,7 +1351,11 @@ export function createF3IntentBook(options = {}) {
 // inventory liga o campo à ordem do produtor que criou a entidade (2 é a organização F3);
 // derived liga o campo de versão observada ao campo de inventário da entidade lida. O que não é
 // declarado é literal (gerado_harness) e nunca contém UUID fora do inventário isolado.
-const step = (target, name, { query = "", free = [], pathFields = [], inventory = {}, derived = {}, source }) =>
+const step = (
+  target,
+  name,
+  { query = "", free = [], pathFields = [], inventory = {}, derived = {}, source },
+) =>
   Object.freeze({
     target,
     name,
@@ -1518,11 +1522,13 @@ export const F3_MUTATION_FLOWS = Object.freeze({
           source: "src/lib/contratos/baseNormativaDados.ts:173-184",
         }),
         step("storage", "contaos-documentos", {
-          free: ["path"], pathFields: ["path"],
+          free: ["path"],
+          pathFields: ["path"],
           source: "src/lib/contratos/baseNormativaDados.ts:181-184",
         }),
         step("rpc", "confirmar_upload_arquivo", {
-          free: ["p_path"], pathFields: ["p_path"],
+          free: ["p_path"],
+          pathFields: ["p_path"],
           inventory: { p_id_organizacao: 2, p_id_contrato: 7 },
           source: "src/lib/contratos/baseNormativaDados.ts:187-219",
         }),
@@ -1841,14 +1847,19 @@ function bindOf(s, stepIndex, body, placeholder = false) {
   const slots = s.free.map((k) => {
     const pathField = s.pathFields.includes(k);
     const v = placeholder
-      ? pathField ? "isolated/uploads/" + crypto.randomUUID() + "/proof.pdf" : crypto.randomUUID()
+      ? pathField
+        ? "isolated/uploads/" + crypto.randomUUID() + "/proof.pdf"
+        : crypto.randomUUID()
       : body[k];
     if (
       pathField
-        ? typeof v !== "string" || !/^[A-Za-z0-9_.\/-]{1,512}$/.test(v) ||
-          v.includes("..") || !v.includes("/uploads/")
+        ? typeof v !== "string" ||
+          !/^[A-Za-z0-9_.\/-]{1,512}$/.test(v) ||
+          v.includes("..") ||
+          !v.includes("/uploads/")
         : !isUuid(v)
-    ) fail("F3_VALUE_ORIGIN");
+    )
+      fail("F3_VALUE_ORIGIN");
     return sha256hex(v);
   });
   const refs = [
@@ -1879,13 +1890,22 @@ const ORIGIN_CODES = Object.freeze(["F3_FOREIGN_ORG", "F3_VALUE_ORIGIN"]);
 function isolatedBookList(book, id, organizationId, contractId) {
   if (!isUuid(id) || !isUuid(organizationId) || !isUuid(contractId)) return false;
   if (organizationId !== book.organizationF3()) return false;
-  return book.created().some((entry) =>
-    entry.id === id && entry.organizationId === organizationId &&
-    book.summary().requests.some((q) =>
-      q.requestId === entry.requestId && q.producerOrder === 11 &&
-      q.kind === "principal" && q.outcome === "confirmed",
-    ),
-  );
+  return book
+    .created()
+    .some(
+      (entry) =>
+        entry.id === id &&
+        entry.organizationId === organizationId &&
+        book
+          .summary()
+          .requests.some(
+            (q) =>
+              q.requestId === entry.requestId &&
+              q.producerOrder === 11 &&
+              q.kind === "principal" &&
+              q.outcome === "confirmed",
+          ),
+    );
 }
 
 export function createF3MutationFence(options = {}) {
@@ -2044,7 +2064,8 @@ export function createF3MutationFence(options = {}) {
           args?.p_id_organizacao !== org ||
           !isUuid(args.p_id_contrato) ||
           !isUuid(args.p_id_lista)
-        ) return false;
+        )
+          return false;
         id = args.p_id_lista;
         order = 11;
       } else return false;
@@ -2081,16 +2102,32 @@ export function createF3MutationFence(options = {}) {
           data.versao.id_organizacao !== org ||
           data.versao.id_contrato !== args.p_id_contrato ||
           !isUuid(data.versao.id) ||
-          !book.created().some((entry) => entry.id === id &&
-            entry.organizationId === org &&
-            book.summary().requests.some((q) => q.requestId === entry.requestId &&
-              q.producerOrder === 11 && q.kind === "principal" && q.outcome === "confirmed"))
-        ) return false;
-        observedListVersions.set(id, Object.freeze({
-          versionId: data.versao.id,
-          organizationId: org,
-          contractId: args.p_id_contrato,
-        }));
+          !book
+            .created()
+            .some(
+              (entry) =>
+                entry.id === id &&
+                entry.organizationId === org &&
+                book
+                  .summary()
+                  .requests.some(
+                    (q) =>
+                      q.requestId === entry.requestId &&
+                      q.producerOrder === 11 &&
+                      q.kind === "principal" &&
+                      q.outcome === "confirmed",
+                  ),
+            )
+        )
+          return false;
+        observedListVersions.set(
+          id,
+          Object.freeze({
+            versionId: data.versao.id,
+            organizationId: org,
+            contractId: args.p_id_contrato,
+          }),
+        );
       }
       observedVersions.set(reference, row.versao_registro);
       return true;
@@ -5080,16 +5117,37 @@ export function assertF3V108ProposalReadback({ before, after, contractId, versio
 
 /** V108: proposta inicial via formulário real, com ID capturado pela consulta do produto. */
 export async function f3S3CreateProposal({
-  page, fence, mutationFence, book, organizationId, contractId,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
 }) {
   if (
-    !page || !fence || !mutationFence || !BOOKS.has(book) ||
-    book.organizationF3() !== organizationId || !isUuid(contractId) ||
-    !book.created().some((entry) => entry.id === contractId &&
-      entry.organizationId === organizationId &&
-      book.summary().requests.some((q) => q.requestId === entry.requestId &&
-        q.producerOrder === 7 && q.outcome === "confirmed"))
-  ) fail("F3_V108_PROPOSAL_PRECONDITION");
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === contractId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 7 &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V108_PROPOSAL_PRECONDITION");
   const title = "ContaOS HML F3 " + book.provenance().workflowRunId + " Proposta";
   await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
     waitUntil: "networkidle",
@@ -5100,19 +5158,24 @@ export async function f3S3CreateProposal({
   await fence.drain();
   fence.assertSafe();
   const requestId = mutationFence.arm({
-    producerOrder: 9, kind: "prerequisito", action: "proposta",
-    bodies: [{
-      p_id_organizacao: organizationId,
-      p_id_contrato: contractId,
-      p_id_proposta: null,
-      p_titulo: title,
-      p_versao_esperada: null,
-      p_chave_idempotencia: f3Slot("uuid", "v108_proposal"),
-    }],
+    producerOrder: 9,
+    kind: "prerequisito",
+    action: "proposta",
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_contrato: contractId,
+        p_id_proposta: null,
+        p_titulo: title,
+        p_versao_esperada: null,
+        p_chave_idempotencia: f3Slot("uuid", "v108_proposal"),
+      },
+    ],
   });
   try {
     const posted = page.waitForResponse(
-      (r) => r.request().method() === "POST" &&
+      (r) =>
+        r.request().method() === "POST" &&
         r.url() === API_ORIGIN + "/rest/v1/rpc/salvar_proposta_orcamentaria_v108",
       { timeout: F3_S1_UI.timeout },
     );
@@ -5120,30 +5183,44 @@ export async function f3S3CreateProposal({
     const response = await posted;
     if (response.status() !== 200) fail("F3_V108_PROPOSAL_HTTP");
     const args = response.request().postDataJSON();
-    if (args?.p_id_organizacao !== organizationId || args.p_id_contrato !== contractId ||
-        args.p_titulo !== title || args.p_id_proposta !== null) {
+    if (
+      args?.p_id_organizacao !== organizationId ||
+      args.p_id_contrato !== contractId ||
+      args.p_titulo !== title ||
+      args.p_id_proposta !== null
+    ) {
       fail("F3_V108_PROPOSAL_COMMAND");
     }
     const settled = mutationFence.settle();
     if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
       fail("F3_V108_PROPOSAL_UNCERTAIN");
     }
-    const read = page.waitForResponse((r) => {
-      if (r.request().method() !== "GET") return false;
-      const url = new URL(r.url());
-      return url.origin === API_ORIGIN &&
-        url.pathname === "/rest/v1/propostas_orcamentarias" &&
-        url.searchParams.get("id_contrato") === "eq." + contractId;
-    }, { timeout: F3_S1_UI.timeout });
+    const read = page.waitForResponse(
+      (r) => {
+        if (r.request().method() !== "GET") return false;
+        const url = new URL(r.url());
+        return (
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/propostas_orcamentarias" &&
+          url.searchParams.get("id_contrato") === "eq." + contractId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
     await page.reload({ waitUntil: "networkidle" });
     const snapshot = await read;
     if (snapshot.status() !== 200) fail("F3_V108_PROPOSAL_READBACK");
     const rows = await snapshot.json();
-    const matches = Array.isArray(rows) ? rows.filter((row) =>
-      isUuid(row?.id) && row.id_organizacao === organizationId &&
-      row.id_contrato === contractId && row.titulo === title &&
-      row.situacao === "rascunho",
-    ) : [];
+    const matches = Array.isArray(rows)
+      ? rows.filter(
+          (row) =>
+            isUuid(row?.id) &&
+            row.id_organizacao === organizationId &&
+            row.id_contrato === contractId &&
+            row.titulo === title &&
+            row.situacao === "rascunho",
+        )
+      : [];
     if (matches.length !== 1) fail("F3_V108_PROPOSAL_READBACK");
     await fence.drain();
     fence.assertSafe();
@@ -5151,35 +5228,63 @@ export async function f3S3CreateProposal({
     book.assertIsolation();
     return Object.freeze({
       state: "UI_OBSERVED_NOT_CERTIFIED",
-      requestId, proposalId: matches[0].id,
+      requestId,
+      proposalId: matches[0].id,
     });
   } catch (error) {
-    try { if (book.state(requestId) === "sealed") book.uncertain(requestId); } catch {}
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {}
     throw error;
   }
 }
 
 /** V108: upload simples no formulário de versão; só registra após arquivo capturado. */
 export async function f3S3CreateProposalVersion({
-  page, fence, mutationFence, book, organizationId, contractId,
-  proposalId, file, startDate,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  proposalId,
+  file,
+  startDate,
 }) {
   if (
-    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
     book.organizationF3() !== organizationId ||
-    !isUuid(contractId) || !isUuid(proposalId) ||
-    !file || !/^[A-Za-z0-9_.-]{1,80}\.pdf$/.test(file.name ?? "") ||
+    !isUuid(contractId) ||
+    !isUuid(proposalId) ||
+    !file ||
+    !/^[A-Za-z0-9_.-]{1,80}\.pdf$/.test(file.name ?? "") ||
     file.mimeType !== "application/pdf" ||
     !(file.buffer instanceof Uint8Array) ||
-    file.buffer.byteLength < 16 || file.buffer.byteLength > 1048576 ||
+    file.buffer.byteLength < 16 ||
+    file.buffer.byteLength > 1048576 ||
     typeof startDate !== "string" ||
     !/^20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(startDate) ||
-    !book.created().some((entry) => entry.id === proposalId &&
-      entry.organizationId === organizationId &&
-      book.summary().requests.some((q) => q.requestId === entry.requestId &&
-        q.producerOrder === 9 && q.action === "proposta" &&
-        q.outcome === "confirmed"))
-  ) fail("F3_V108_VERSION_PRECONDITION");
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === proposalId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 9 &&
+                q.action === "proposta" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V108_VERSION_PRECONDITION");
   await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
     waitUntil: "networkidle",
   });
@@ -5208,7 +5313,9 @@ export async function f3S3CreateProposalVersion({
   await fence.drain();
   fence.assertSafe();
   const requestId = mutationFence.arm({
-    producerOrder: 9, kind: "prerequisito", action: "versao",
+    producerOrder: 9,
+    kind: "prerequisito",
+    action: "versao",
     bodies: [
       edge,
       { path: pathSlot },
@@ -5224,43 +5331,50 @@ export async function f3S3CreateProposalVersion({
     ],
   });
   try {
-    const read = (url) => page.waitForResponse((r) =>
-      r.request().method() === "POST" &&
-      r.url() === API_ORIGIN + url,
-      { timeout: F3_S1_UI.timeout });
+    const read = (url) =>
+      page.waitForResponse((r) => r.request().method() === "POST" && r.url() === API_ORIGIN + url, {
+        timeout: F3_S1_UI.timeout,
+      });
     const edgeResp = read("/functions/v1/storage-sign-upload");
-    const storageResp = page.waitForResponse((r) =>
-      r.request().method() === "PUT" &&
-      r.url().startsWith(API_ORIGIN +
-        "/storage/v1/object/upload/sign/contaos-documentos/"),
-      { timeout: F3_S1_UI.timeout });
+    const storageResp = page.waitForResponse(
+      (r) =>
+        r.request().method() === "PUT" &&
+        r.url().startsWith(API_ORIGIN + "/storage/v1/object/upload/sign/contaos-documentos/"),
+      { timeout: F3_S1_UI.timeout },
+    );
     const confirmResp = read("/rest/v1/rpc/confirmar_upload_arquivo");
     await dialog.getByRole("button", { name: "Enviar arquivo", exact: true }).click();
     const [authorization, stored, confirmed] = await Promise.all([
-      edgeResp, storageResp, confirmResp,
+      edgeResp,
+      storageResp,
+      confirmResp,
     ]);
     if (
       authorization.status() !== 200 ||
       ![200, 201].includes(stored.status()) ||
       confirmed.status() !== 200
-    ) fail("F3_V108_BASE_UPLOAD_HTTP");
+    )
+      fail("F3_V108_BASE_UPLOAD_HTTP");
     const grant = await authorization.json();
     const fileId = await confirmed.json();
     if (
-      grant?.ok !== true || grant.bucket !== "contaos-documentos" ||
+      grant?.ok !== true ||
+      grant.bucket !== "contaos-documentos" ||
       grant.usar_upload_resumivel === true ||
       typeof grant.path !== "string" ||
       !grant.path.startsWith(organizationId + "/uploads/") ||
       !stored.url().includes("/contaos-documentos/" + grant.path + "?") ||
       !isUuid(fileId)
-    ) fail("F3_V108_BASE_UPLOAD_READBACK");
+    )
+      fail("F3_V108_BASE_UPLOAD_READBACK");
     const confirmArgs = confirmed.request().postDataJSON();
     if (
       confirmArgs?.p_id_organizacao !== organizationId ||
       confirmArgs.p_id_contrato !== contractId ||
       confirmArgs.p_path !== grant.path ||
       confirmArgs.p_sha256 !== sha256(file.buffer)
-    ) fail("F3_V108_BASE_UPLOAD_READBACK");
+    )
+      fail("F3_V108_BASE_UPLOAD_READBACK");
     await dialog.getByLabel("Documento-base").selectOption(fileId);
     const send = read("/rest/v1/rpc/registrar_versao_proposta_v108");
     await dialog.getByRole("button", { name: "Registrar versão", exact: true }).click();
@@ -5272,69 +5386,108 @@ export async function f3S3CreateProposalVersion({
       args.p_id_organizacao !== organizationId ||
       args.p_id_arquivo_origem !== fileId ||
       args.p_vigencia_inicio !== startDate
-    ) fail("F3_V108_VERSION_COMMAND");
+    )
+      fail("F3_V108_VERSION_COMMAND");
     const settled = mutationFence.settle();
     if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
       fail("F3_V108_VERSION_UNCERTAIN");
     }
-    const listed = page.waitForResponse((r) => {
-      if (r.request().method() !== "GET") return false;
-      const url = new URL(r.url());
-      return url.origin === API_ORIGIN &&
-        url.pathname === "/rest/v1/versoes_proposta" &&
-        url.searchParams.get("id_proposta") === "eq." + proposalId;
-    }, { timeout: F3_S1_UI.timeout });
+    const listed = page.waitForResponse(
+      (r) => {
+        if (r.request().method() !== "GET") return false;
+        const url = new URL(r.url());
+        return (
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/versoes_proposta" &&
+          url.searchParams.get("id_proposta") === "eq." + proposalId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
     await page.reload({ waitUntil: "networkidle" });
     const listResponse = await listed;
     if (listResponse.status() !== 200) fail("F3_V108_VERSION_READBACK");
     const rows = await listResponse.json();
-    const matched = Array.isArray(rows) ? rows.filter((row) =>
-      isUuid(row?.id) &&
-      row.id_proposta === proposalId &&
-      row.id_arquivo_origem === fileId &&
-      row.vigencia_inicio === startDate &&
-      row.situacao === "rascunho" &&
-      Number.isSafeInteger(row.numero_versao) &&
-      row.numero_versao > 0,
-    ) : [];
+    const matched = Array.isArray(rows)
+      ? rows.filter(
+          (row) =>
+            isUuid(row?.id) &&
+            row.id_proposta === proposalId &&
+            row.id_arquivo_origem === fileId &&
+            row.vigencia_inicio === startDate &&
+            row.situacao === "rascunho" &&
+            Number.isSafeInteger(row.numero_versao) &&
+            row.numero_versao > 0,
+        )
+      : [];
     if (matched.length !== 1) fail("F3_V108_VERSION_READBACK");
     await fence.drain();
     fence.assertSafe();
     book.confirm(requestId, { entityId: matched[0].id, organizationId });
     book.assertIsolation();
     return Object.freeze({
-      state: "UI_OBSERVED_NOT_CERTIFIED", requestId,
-      versionId: matched[0].id, versionNumber: matched[0].numero_versao,
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId,
+      versionId: matched[0].id,
+      versionNumber: matched[0].numero_versao,
       fileId,
     });
   } catch (error) {
-    try { if (book.state(requestId) === "sealed") book.uncertain(requestId); } catch {}
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {}
     throw error;
   }
 }
 
 /** V108: rubrica material para a versão do livro, com leitura independente posterior. */
 export async function f3S3CreateProposalRubric({
-  page, fence, mutationFence, book, organizationId, contractId,
-  versionId, versionNumber,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  versionId,
+  versionNumber,
 }) {
   if (
-    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
     book.organizationF3() !== organizationId ||
-    !isUuid(contractId) || !isUuid(versionId) ||
-    !Number.isSafeInteger(versionNumber) || versionNumber < 1 ||
-    !book.created().some((entry) => entry.id === versionId &&
-      entry.organizationId === organizationId &&
-      book.summary().requests.some((q) => q.requestId === entry.requestId &&
-        q.producerOrder === 9 && q.action === "versao" &&
-        q.outcome === "confirmed"))
-  ) fail("F3_V108_RUBRIC_PRECONDITION");
+    !isUuid(contractId) ||
+    !isUuid(versionId) ||
+    !Number.isSafeInteger(versionNumber) ||
+    versionNumber < 1 ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === versionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 9 &&
+                q.action === "versao" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V108_RUBRIC_PRECONDITION");
   await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
     waitUntil: "networkidle",
   });
-  await page.getByRole("button", {
-    name: "Ver rubricas da versão " + versionNumber, exact: true,
-  }).click();
+  await page
+    .getByRole("button", {
+      name: "Ver rubricas da versão " + versionNumber,
+      exact: true,
+    })
+    .click();
   await page.getByRole("button", { name: "Nova rubrica", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Nova rubrica" });
   const group = "F3-" + book.provenance().workflowRunId;
@@ -5345,59 +5498,78 @@ export async function f3S3CreateProposalRubric({
   await fence.drain();
   fence.assertSafe();
   const requestId = mutationFence.arm({
-    producerOrder: 9, kind: "prerequisito", action: "rubrica",
-    bodies: [{
-      p_id_organizacao: organizationId,
-      p_id_versao_proposta: versionId,
-      p_id_linha: null,
-      p_codigo: null,
-      p_grupo: group,
-      p_rubrica: rubric,
-      p_subrubrica: null,
-      p_descricao: null,
-      p_valor_mensal: 100,
-      p_valor_anual: null,
-      p_permite_remanejamento: false,
-      p_limite_remanejamento_percentual: null,
-      p_observacoes: null,
-      p_versao_esperada: null,
-      p_chave_idempotencia: f3Slot("uuid", "v108_rubric"),
-    }],
+    producerOrder: 9,
+    kind: "prerequisito",
+    action: "rubrica",
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_versao_proposta: versionId,
+        p_id_linha: null,
+        p_codigo: null,
+        p_grupo: group,
+        p_rubrica: rubric,
+        p_subrubrica: null,
+        p_descricao: null,
+        p_valor_mensal: 100,
+        p_valor_anual: null,
+        p_permite_remanejamento: false,
+        p_limite_remanejamento_percentual: null,
+        p_observacoes: null,
+        p_versao_esperada: null,
+        p_chave_idempotencia: f3Slot("uuid", "v108_rubric"),
+      },
+    ],
   });
   try {
-    const sent = page.waitForResponse((r) =>
-      r.request().method() === "POST" &&
-      r.url() === API_ORIGIN + "/rest/v1/rpc/salvar_linha_orcamentaria_v108",
-      { timeout: F3_S1_UI.timeout });
+    const sent = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/salvar_linha_orcamentaria_v108",
+      { timeout: F3_S1_UI.timeout },
+    );
     await dialog.getByRole("button", { name: "Salvar rubrica", exact: true }).click();
     const response = await sent;
     if (response.status() !== 200) fail("F3_V108_RUBRIC_HTTP");
     const sentArgs = response.request().postDataJSON();
-    if (sentArgs?.p_id_versao_proposta !== versionId ||
-        sentArgs.p_id_organizacao !== organizationId ||
-        sentArgs.p_grupo !== group || sentArgs.p_rubrica !== rubric) {
+    if (
+      sentArgs?.p_id_versao_proposta !== versionId ||
+      sentArgs.p_id_organizacao !== organizationId ||
+      sentArgs.p_grupo !== group ||
+      sentArgs.p_rubrica !== rubric
+    ) {
       fail("F3_V108_RUBRIC_COMMAND");
     }
     const settled = mutationFence.settle();
     if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
       fail("F3_V108_RUBRIC_UNCERTAIN");
     }
-    const listed = page.waitForResponse((r) => {
-      if (r.request().method() !== "GET") return false;
-      const url = new URL(r.url());
-      return url.origin === API_ORIGIN &&
-        url.pathname === "/rest/v1/linhas_orcamentarias" &&
-        url.searchParams.get("id_versao_proposta") === "eq." + versionId;
-    }, { timeout: F3_S1_UI.timeout });
+    const listed = page.waitForResponse(
+      (r) => {
+        if (r.request().method() !== "GET") return false;
+        const url = new URL(r.url());
+        return (
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/linhas_orcamentarias" &&
+          url.searchParams.get("id_versao_proposta") === "eq." + versionId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
     await page.reload({ waitUntil: "networkidle" });
     const snapshot = await listed;
     if (snapshot.status() !== 200) fail("F3_V108_RUBRIC_READBACK");
     const rows = await snapshot.json();
-    const matches = Array.isArray(rows) ? rows.filter((row) =>
-      isUuid(row?.id) && row.id_versao_proposta === versionId &&
-      row.grupo === group && row.rubrica === rubric &&
-      row.valor_mensal_previsto === 100,
-    ) : [];
+    const matches = Array.isArray(rows)
+      ? rows.filter(
+          (row) =>
+            isUuid(row?.id) &&
+            row.id_versao_proposta === versionId &&
+            row.grupo === group &&
+            row.rubrica === rubric &&
+            row.valor_mensal_previsto === 100,
+        )
+      : [];
     if (matches.length !== 1) fail("F3_V108_RUBRIC_READBACK");
     await fence.drain();
     fence.assertSafe();
@@ -5405,10 +5577,13 @@ export async function f3S3CreateProposalRubric({
     book.assertIsolation();
     return Object.freeze({
       state: "UI_OBSERVED_NOT_CERTIFIED",
-      requestId, rubricId: matches[0].id,
+      requestId,
+      rubricId: matches[0].id,
     });
   } catch (error) {
-    try { if (book.state(requestId) === "sealed") book.uncertain(requestId); } catch {}
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {}
     throw error;
   }
 }
@@ -5442,45 +5617,57 @@ export async function f3S3PublishProposal({
     before.situacao !== "rascunho" ||
     !SHA64.test(before.hash ?? "") ||
     before.arquivo_origem?.status_seguranca !== "aprovado" ||
-    !book.created().some((entry) =>
-      entry.id === versionId &&
-      entry.organizationId === organizationId &&
-      book.summary().requests.some((request) =>
-        request.requestId === entry.requestId &&
-        request.producerOrder === 9 &&
-        request.kind === "prerequisito" &&
-        request.action === "versao" &&
-        request.outcome === "confirmed",
-      ),
-    )
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === versionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (request) =>
+                request.requestId === entry.requestId &&
+                request.producerOrder === 9 &&
+                request.kind === "prerequisito" &&
+                request.action === "versao" &&
+                request.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_V108_PUBLISH_PRECONDITION");
   }
   await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
     waitUntil: "networkidle",
   });
-  await page.getByRole("button", {
-    name: "Ver rubricas da versão " + before.numero_versao,
-    exact: true,
-  }).click();
+  await page
+    .getByRole("button", {
+      name: "Ver rubricas da versão " + before.numero_versao,
+      exact: true,
+    })
+    .click();
   await page.getByRole("button", { name: "Publicar versão", exact: true }).click();
   const dialog = page.getByRole("dialog");
   const fundamento = "Publicação F3 isolada com versão e documento-base aprovados";
   await dialog.getByLabel("Fundamento da publicação").fill(fundamento);
-  await dialog.getByRole("checkbox", {
-    name: "Confirmo que revisei a versão e desejo publicá-la.",
-  }).check();
+  await dialog
+    .getByRole("checkbox", {
+      name: "Confirmo que revisei a versão e desejo publicá-la.",
+    })
+    .check();
   await fence.drain();
   fence.assertSafe();
   const requestId = mutationFence.arm({
     producerOrder: 9,
-    bodies: [{
-      p_id_organizacao: organizationId,
-      p_id_versao: versionId,
-      p_hash_esperado: before.hash,
-      p_fundamento: fundamento,
-      p_chave_idempotencia: f3Slot("uuid", "v108_publicar"),
-    }],
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_versao: versionId,
+        p_hash_esperado: before.hash,
+        p_fundamento: fundamento,
+        p_chave_idempotencia: f3Slot("uuid", "v108_publicar"),
+      },
+    ],
   });
   try {
     const sent = page.waitForResponse(
@@ -5518,15 +5705,18 @@ export async function f3S3PublishProposal({
       matchingGet("linhas_orcamentarias", "id_versao_proposta", versionId),
       { timeout: F3_S1_UI.timeout },
     );
-    const arquivoPending = page.waitForResponse((response) => {
-      if (response.request().method() !== "GET") return false;
-      const url = new URL(response.url());
-      return (
-        url.origin === API_ORIGIN &&
-        url.pathname === "/rest/v1/arquivos" &&
-        (url.searchParams.get("id") ?? "").includes(before.id_arquivo_origem)
-      );
-    }, { timeout: F3_S1_UI.timeout });
+    const arquivoPending = page.waitForResponse(
+      (response) => {
+        if (response.request().method() !== "GET") return false;
+        const url = new URL(response.url());
+        return (
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/arquivos" &&
+          (url.searchParams.get("id") ?? "").includes(before.id_arquivo_origem)
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
     await page.reload({ waitUntil: "networkidle" });
     const observed = await Promise.all([
       propostaPending,
@@ -5542,25 +5732,25 @@ export async function f3S3PublishProposal({
     );
     if (
       ![propostas, versoes, rubricas, arquivos].every(Array.isArray) ||
-      propostas.filter((row) =>
-        row?.id === before.id_proposta &&
-        row.id_contrato === contractId &&
-        row.id_organizacao === organizationId,
+      propostas.filter(
+        (row) =>
+          row?.id === before.id_proposta &&
+          row.id_contrato === contractId &&
+          row.id_organizacao === organizationId,
       ).length !== 1
     ) {
       fail("F3_V108_PUBLISH_READBACK");
     }
-    const matchingVersions = versoes.filter((row) =>
-      row?.id === versionId &&
-      row.id_proposta === before.id_proposta &&
-      row.id_arquivo_origem === before.id_arquivo_origem,
+    const matchingVersions = versoes.filter(
+      (row) =>
+        row?.id === versionId &&
+        row.id_proposta === before.id_proposta &&
+        row.id_arquivo_origem === before.id_arquivo_origem,
     );
     // A projeção real COLUNAS_ARQUIVO não contém id_organizacao/id_contrato.
     // A origem do arquivo é vinculada pela versão da proposta, cuja organização
     // e contrato foram comprovados no readback da proposta acima.
-    const matchingFiles = arquivos.filter((row) =>
-      row?.id === before.id_arquivo_origem,
-    );
+    const matchingFiles = arquivos.filter((row) => row?.id === before.id_arquivo_origem);
     if (matchingVersions.length !== 1 || matchingFiles.length !== 1 || rubricas.length < 1) {
       fail("F3_V108_PUBLISH_READBACK");
     }
@@ -5667,20 +5857,29 @@ export async function f3RunSignedDocumentUpload({
     !business ||
     typeof business !== "object" ||
     Array.isArray(business) ||
-    !book.created().some((entity) =>
-      entity.id === contractId && entity.organizationId === organizationId &&
-      book.summary().requests.some(
-        (r) => r.requestId === entity.requestId &&
-          r.producerOrder === 7 && r.outcome === "confirmed",
-      ),
-    )
+    !book
+      .created()
+      .some(
+        (entity) =>
+          entity.id === contractId &&
+          entity.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (r) =>
+                r.requestId === entity.requestId &&
+                r.producerOrder === 7 &&
+                r.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_UPLOAD_PRECONDITION");
   }
   const actualFlow = F3_MUTATION_FLOWS[order];
   const steps = kind === "prerequisito" ? actualFlow.prerequisito[action] : actualFlow.principal;
   if (
-    !steps || steps.length !== 4 ||
+    !steps ||
+    steps.length !== 4 ||
     steps[3].name !== expectedBusiness[order] ||
     Object.keys(business).some((k) => k.startsWith("p_") && !k.match(/^p_[a-z_]+$/))
   ) {
@@ -5719,18 +5918,17 @@ export async function f3RunSignedDocumentUpload({
   });
   const responseFor = (url, method) =>
     page.waitForResponse(
-      (response) =>
-        response.url() === API_ORIGIN + url &&
-        response.request().method() === method,
+      (response) => response.url() === API_ORIGIN + url && response.request().method() === method,
       { timeout: F3_S1_UI.timeout },
     );
   try {
     const edgePromise = responseFor("/functions/v1/storage-sign-upload", "POST");
     const uploadPromise = page.waitForResponse(
-      (response) => response.request().method() === "PUT" &&
-        response.url().startsWith(
-          API_ORIGIN + "/storage/v1/object/upload/sign/contaos-documentos/",
-        ),
+      (response) =>
+        response.request().method() === "PUT" &&
+        response
+          .url()
+          .startsWith(API_ORIGIN + "/storage/v1/object/upload/sign/contaos-documentos/"),
       { timeout: F3_S1_UI.timeout },
     );
     const confirmationPromise = responseFor("/rest/v1/rpc/confirmar_upload_arquivo", "POST");
@@ -5739,7 +5937,10 @@ export async function f3RunSignedDocumentUpload({
     fence.assertSafe();
     await submit();
     const [auth, upload, confirmationResponse, businessResponse] = await Promise.all([
-      edgePromise, uploadPromise, confirmationPromise, businessPromise,
+      edgePromise,
+      uploadPromise,
+      confirmationPromise,
+      businessPromise,
     ]);
     if (
       auth.status() !== 200 ||
@@ -5786,16 +5987,13 @@ export async function f3RunSignedDocumentUpload({
     if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
       fail("F3_UPLOAD_FENCE_UNCERTAIN");
     }
-    if (await verifyReadback({ businessResult, fileId }) !== true) {
+    if ((await verifyReadback({ businessResult, fileId })) !== true) {
       fail("F3_UPLOAD_READBACK");
     }
     await fence.drain();
     fence.assertSafe();
-    const entityId = order === 15
-      ? businessResult.id_versao
-      : order === 20
-        ? fileId
-        : businessResult.id_documento;
+    const entityId =
+      order === 15 ? businessResult.id_versao : order === 20 ? fileId : businessResult.id_documento;
     book.confirm(requestId, { entityId, organizationId });
     book.assertIsolation();
     return Object.freeze({
@@ -5818,11 +6016,21 @@ export async function f3RunSignedDocumentUpload({
 
 /** V110: upload da UI e readback independente de documento, versão e arquivo. */
 export async function f3S3CreateContractDocument({
-  page, fence, mutationFence, book, organizationId, contractId, file,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  file,
 }) {
   if (
-    !page || !fence || !mutationFence || !BOOKS.has(book) ||
-    book.organizationF3() !== organizationId || !isUuid(contractId)
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId)
   ) {
     fail("F3_V110_PRECONDITION");
   }
@@ -5850,7 +6058,9 @@ export async function f3S3CreateContractDocument({
     const fileRead = getResponse("arquivos");
     await page.reload({ waitUntil: "networkidle" });
     const [docResponse, versionResponse, fileResponse] = await Promise.all([
-      documentRead, versionRead, fileRead,
+      documentRead,
+      versionRead,
+      fileRead,
     ]);
     if (
       [docResponse, versionResponse, fileResponse].some((response) => response.status() !== 200)
@@ -5861,15 +6071,17 @@ export async function f3S3CreateContractDocument({
       [docResponse, versionResponse, fileResponse].map((response) => response.json()),
     );
     if (![docs, versions, files].every(Array.isArray)) fail("F3_V110_READBACK");
-    const document = docs.filter((row) =>
-      row?.id === businessResult.id_documento &&
-      row.id_contrato === contractId &&
-      row.titulo === title,
+    const document = docs.filter(
+      (row) =>
+        row?.id === businessResult.id_documento &&
+        row.id_contrato === contractId &&
+        row.titulo === title,
     );
-    const version = versions.filter((row) =>
-      row?.id === businessResult.id_versao &&
-      row.id_documento_contrato === businessResult.id_documento &&
-      row.id_arquivo === fileId,
+    const version = versions.filter(
+      (row) =>
+        row?.id === businessResult.id_versao &&
+        row.id_documento_contrato === businessResult.id_documento &&
+        row.id_arquivo === fileId,
     );
     const metadata = files.filter((row) => row?.id === fileId);
     if (document.length !== 1 || version.length !== 1 || metadata.length !== 1) {
@@ -5882,13 +6094,20 @@ export async function f3S3CreateContractDocument({
         id_arquivo: version[0].id_arquivo,
         status_seguranca: metadata[0].status_seguranca,
       },
-      contractId, fileId,
+      contractId,
+      fileId,
     });
     return true;
   };
   return f3RunSignedDocumentUpload({
-    page, fence, mutationFence, book, organizationId, contractId,
-    order: 12, file,
+    page,
+    fence,
+    mutationFence,
+    book,
+    organizationId,
+    contractId,
+    order: 12,
+    file,
     business: {
       p_id_contrato: contractId,
       p_tipo: "outro",
@@ -5906,23 +6125,46 @@ export async function f3S3CreateContractDocument({
 
 /** V111: nova versão via UI, sem substituição da anterior. */
 export async function f3S3AddContractDocumentVersion({
-  page, fence, mutationFence, book, organizationId, contractId,
-  documentId, title, before, file,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  documentId,
+  title,
+  before,
+  file,
 }) {
   if (
-    !page || !fence || !mutationFence || !BOOKS.has(book) ||
-    book.organizationF3() !== organizationId || !isUuid(contractId) ||
-    !isUuid(documentId) || typeof title !== "string" || !title ||
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(documentId) ||
+    typeof title !== "string" ||
+    !title ||
     before?.id !== documentId ||
-    !Number.isSafeInteger(before.numero_versao) || before.numero_versao < 1 ||
+    !Number.isSafeInteger(before.numero_versao) ||
+    before.numero_versao < 1 ||
     !isUuid(before.id_arquivo) ||
-    !book.created().some((entry) =>
-      entry.id === documentId && entry.organizationId === organizationId &&
-      book.summary().requests.some((request) =>
-        request.requestId === entry.requestId &&
-        request.producerOrder === 12 && request.outcome === "confirmed",
-      ),
-    )
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === documentId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (request) =>
+                request.requestId === entry.requestId &&
+                request.producerOrder === 12 &&
+                request.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_V111_PRECONDITION");
   }
@@ -5948,7 +6190,9 @@ export async function f3S3AddContractDocumentVersion({
     const fileRead = getResponse("arquivos");
     await page.reload({ waitUntil: "networkidle" });
     const [docResponse, versionResponse, fileResponse] = await Promise.all([
-      documentRead, versionRead, fileRead,
+      documentRead,
+      versionRead,
+      fileRead,
     ]);
     if ([docResponse, versionResponse, fileResponse].some((r) => r.status() !== 200)) {
       fail("F3_V111_READBACK");
@@ -5957,17 +6201,22 @@ export async function f3S3AddContractDocumentVersion({
       [docResponse, versionResponse, fileResponse].map((r) => r.json()),
     );
     if (![docs, versions, files].every(Array.isArray)) fail("F3_V111_READBACK");
-    const doc = docs.filter((row) =>
-      row?.id === documentId && row.id_contrato === contractId && row.titulo === title,
+    const doc = docs.filter(
+      (row) => row?.id === documentId && row.id_contrato === contractId && row.titulo === title,
     );
-    const version = versions.filter((row) =>
-      row?.id === businessResult.id_versao &&
-      row.id_documento_contrato === documentId &&
-      row.id_arquivo === fileId,
+    const version = versions.filter(
+      (row) =>
+        row?.id === businessResult.id_versao &&
+        row.id_documento_contrato === documentId &&
+        row.id_arquivo === fileId,
     );
     const meta = files.filter((row) => row?.id === fileId);
-    if (doc.length !== 1 || version.length !== 1 || meta.length !== 1 ||
-        businessResult.id_documento !== documentId) {
+    if (
+      doc.length !== 1 ||
+      version.length !== 1 ||
+      meta.length !== 1 ||
+      businessResult.id_documento !== documentId
+    ) {
       fail("F3_V111_READBACK");
     }
     assertF3V111DocumentVersionReadback({
@@ -5978,13 +6227,20 @@ export async function f3S3AddContractDocumentVersion({
         id_arquivo: version[0].id_arquivo,
         status_seguranca: meta[0].status_seguranca,
       },
-      documentId, fileId,
+      documentId,
+      fileId,
     });
     return true;
   };
   return f3RunSignedDocumentUpload({
-    page, fence, mutationFence, book, organizationId, contractId,
-    order: 13, file,
+    page,
+    fence,
+    mutationFence,
+    book,
+    organizationId,
+    contractId,
+    order: 13,
+    file,
     business: { p_id_documento: documentId, p_motivo: motive },
     submit: async () =>
       dialog.getByRole("button", { name: "Enviar nova versão", exact: true }).click(),
@@ -5994,21 +6250,43 @@ export async function f3S3AddContractDocumentVersion({
 
 /** V115: documento de competência e vínculo ao requisito pela UI nativa. */
 export async function f3S4CreateCompetenceDocument({
-  page, fence, mutationFence, book, organizationId, contractId,
-  competenceId, requirementId, type, file,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  competenceId,
+  requirementId,
+  type,
+  file,
 }) {
   if (
-    !page || !fence || !mutationFence || !BOOKS.has(book) ||
-    book.organizationF3() !== organizationId || !isUuid(contractId) ||
-    !isUuid(competenceId) || !isUuid(requirementId) ||
-    typeof type !== "string" || !/^[a-z_]{2,40}$/.test(type) ||
-    !book.created().some((entity) =>
-      entity.id === competenceId && entity.organizationId === organizationId &&
-      book.summary().requests.some((r) =>
-        r.requestId === entity.requestId &&
-        r.producerOrder === 14 && r.outcome === "confirmed",
-      ),
-    )
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(competenceId) ||
+    !isUuid(requirementId) ||
+    typeof type !== "string" ||
+    !/^[a-z_]{2,40}$/.test(type) ||
+    !book
+      .created()
+      .some(
+        (entity) =>
+          entity.id === competenceId &&
+          entity.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (r) =>
+                r.requestId === entity.requestId &&
+                r.producerOrder === 14 &&
+                r.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_V115_PRECONDITION");
   }
@@ -6023,7 +6301,8 @@ export async function f3S4CreateCompetenceDocument({
   await page.locator("#v115-cat").fill("hml");
   const verifyReadback = async ({ businessResult, fileId }) => {
     const observed = page.waitForResponse(
-      (response) => response.request().method() === "POST" &&
+      (response) =>
+        response.request().method() === "POST" &&
         response.url() === API_ORIGIN + "/rest/v1/rpc/obter_documentos_competencia_v115",
       { timeout: F3_S1_UI.timeout },
     );
@@ -6041,12 +6320,13 @@ export async function f3S4CreateCompetenceDocument({
     ) {
       fail("F3_V115_READBACK");
     }
-    const matched = snapshot.documentos.filter((d) =>
-      d?.id === businessResult.id_documento &&
-      d.titulo === title &&
-      d.requisito?.id === requirementId &&
-      d.versao?.id_arquivo === fileId &&
-      d.arquivo?.id === fileId,
+    const matched = snapshot.documentos.filter(
+      (d) =>
+        d?.id === businessResult.id_documento &&
+        d.titulo === title &&
+        d.requisito?.id === requirementId &&
+        d.versao?.id_arquivo === fileId &&
+        d.arquivo?.id === fileId,
     );
     if (matched.length !== 1) fail("F3_V115_READBACK");
     assertF3V115CompetenceDocumentReadback({
@@ -6057,13 +6337,21 @@ export async function f3S4CreateCompetenceDocument({
         id_arquivo: fileId,
         status_seguranca: matched[0].arquivo.status_seguranca,
       },
-      competenceId, requirementId, fileId,
+      competenceId,
+      requirementId,
+      fileId,
     });
     return true;
   };
   return f3RunSignedDocumentUpload({
-    page, fence, mutationFence, book, organizationId, contractId,
-    order: 15, file,
+    page,
+    fence,
+    mutationFence,
+    book,
+    organizationId,
+    contractId,
+    order: 15,
+    file,
     business: {
       p_id_competencia: competenceId,
       p_tipo: type,
@@ -6071,19 +6359,29 @@ export async function f3S4CreateCompetenceDocument({
       p_categoria: "hml",
       p_id_requisito: requirementId,
     },
-    submit: async () =>
-      page.getByRole("button", { name: "Enviar", exact: true }).click(),
+    submit: async () => page.getByRole("button", { name: "Enviar", exact: true }).click(),
     verifyReadback,
   });
 }
 
 /** V122: primeiro só se comprova upload histórico, nunca aprovação automática. */
 export async function f3S5UploadHistoricalReport({
-  page, fence, mutationFence, book, organizationId, contractId, file, competence,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  file,
+  competence,
 }) {
   if (
-    !page || !fence || !mutationFence || !BOOKS.has(book) ||
-    book.organizationF3() !== organizationId || !isUuid(contractId) ||
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
     typeof competence !== "string" ||
     !/^20\d{2}-(0[1-9]|1[0-2])$/.test(competence)
   ) {
@@ -6098,17 +6396,20 @@ export async function f3S5UploadHistoricalReport({
   await article.locator('input[type="month"]').fill(competence);
   await article.getByLabel("Tipo de relatório").selectOption("relatorio_contratante");
   const verifyReadback = async ({ businessResult, fileId }) => {
-    const get = (table) => page.waitForResponse(
-      (response) => {
-        if (response.request().method() !== "GET") return false;
-        const url = new URL(response.url());
-        return url.origin === API_ORIGIN &&
-          url.pathname === "/rest/v1/" + table &&
-          url.searchParams.get("id_organizacao") === "eq." + organizationId &&
-          url.searchParams.get("id_contrato") === "eq." + contractId;
-      },
-      { timeout: F3_S1_UI.timeout },
-    );
+    const get = (table) =>
+      page.waitForResponse(
+        (response) => {
+          if (response.request().method() !== "GET") return false;
+          const url = new URL(response.url());
+          return (
+            url.origin === API_ORIGIN &&
+            url.pathname === "/rest/v1/" + table &&
+            url.searchParams.get("id_organizacao") === "eq." + organizationId &&
+            url.searchParams.get("id_contrato") === "eq." + contractId
+          );
+        },
+        { timeout: F3_S1_UI.timeout },
+      );
     const fileResponse = get("arquivos");
     const versionResponse = get("versoes_documento");
     await article.getByRole("button", { name: "Verificar processamento", exact: true }).click();
@@ -6116,7 +6417,8 @@ export async function f3S5UploadHistoricalReport({
     if (f.status() !== 200 || v.status() !== 200) fail("F3_V122_UPLOAD_READBACK");
     const [fileRow, versionRow] = await Promise.all([f.json(), v.json()]);
     if (
-      fileRow?.id !== fileId || fileRow.id_organizacao !== organizationId ||
+      fileRow?.id !== fileId ||
+      fileRow.id_organizacao !== organizationId ||
       fileRow.id_contrato !== contractId ||
       versionRow?.id !== businessResult.id_versao ||
       versionRow.id_arquivo !== fileId ||
@@ -6128,8 +6430,16 @@ export async function f3S5UploadHistoricalReport({
     return true;
   };
   const result = await f3RunSignedDocumentUpload({
-    page, fence, mutationFence, book, organizationId, contractId,
-    order: 20, kind: "prerequisito", action: "documento", file,
+    page,
+    fence,
+    mutationFence,
+    book,
+    organizationId,
+    contractId,
+    order: 20,
+    kind: "prerequisito",
+    action: "documento",
+    file,
     business: {
       p_id_contrato: contractId,
       p_tipo: "outro",
@@ -6148,16 +6458,29 @@ export async function f3S5UploadHistoricalReport({
 
 /** V122: correlaciona dois RPCs executados pela UI com o relatório lido no consumidor. */
 export function assertF3S5HistoricalEnqueueReadback({
-  row, organizationId, contractId, reportId, fileId, executionId,
-  registeredId, enqueuedId, versionId,
+  row,
+  organizationId,
+  contractId,
+  reportId,
+  fileId,
+  executionId,
+  registeredId,
+  enqueuedId,
+  versionId,
 }) {
   if (
-    !isUuid(organizationId) || !isUuid(contractId) ||
-    !isUuid(reportId) || !isUuid(fileId) ||
-    !isUuid(executionId) || !isUuid(versionId) ||
-    registeredId !== reportId || enqueuedId !== executionId ||
-    row?.id !== reportId || row.id_organizacao !== organizationId ||
-    row.id_contrato !== contractId || row.id_arquivo !== fileId
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(reportId) ||
+    !isUuid(fileId) ||
+    !isUuid(executionId) ||
+    !isUuid(versionId) ||
+    registeredId !== reportId ||
+    enqueuedId !== executionId ||
+    row?.id !== reportId ||
+    row.id_organizacao !== organizationId ||
+    row.id_contrato !== contractId ||
+    row.id_arquivo !== fileId
   ) {
     fail("F3_V122_ENQUEUE_READBACK");
   }
@@ -6165,23 +6488,43 @@ export function assertF3S5HistoricalEnqueueReadback({
 }
 
 export async function f3S5EnqueueHistoricalReport({
-  page, fence, mutationFence, book, organizationId, contractId, prior,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  prior,
 }) {
   if (
-    !page || !fence || !mutationFence || !BOOKS.has(book) ||
-    book.organizationF3() !== organizationId || !isUuid(contractId) ||
-    !isUuid(prior?.fileId) || !isUuid(prior.versionId) ||
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(prior?.fileId) ||
+    !isUuid(prior.versionId) ||
     typeof prior.competence !== "string" ||
     !/^20\d{2}-(0[1-9]|1[0-2])$/.test(prior.competence) ||
-    !book.created().some((entry) =>
-      entry.id === prior.fileId && entry.organizationId === organizationId &&
-      book.summary().requests.some(
-        (request) => request.requestId === entry.requestId &&
-          request.producerOrder === 20 && request.action === "documento" &&
-          request.outcome === "confirmed",
-      ),
-    )
-  ) fail("F3_V122_ENQUEUE_PRECONDITION");
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === prior.fileId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (request) =>
+                request.requestId === entry.requestId &&
+                request.producerOrder === 20 &&
+                request.action === "documento" &&
+                request.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V122_ENQUEUE_PRECONDITION");
   const article = page.getByRole("article").filter({
     hasText: prior.fileName ?? "",
   });
@@ -6229,10 +6572,12 @@ export async function f3S5EnqueueHistoricalReport({
     const executionId = await e.json();
     const sent = e.request().postDataJSON();
     if (
-      !isUuid(reportId) || !isUuid(executionId) ||
+      !isUuid(reportId) ||
+      !isUuid(executionId) ||
       sent?.p_id_relatorio !== reportId ||
       sent.p_id_versao_documento !== prior.versionId
-    ) fail("F3_V122_QUEUE_CORRELATION");
+    )
+      fail("F3_V122_QUEUE_CORRELATION");
     const settled = mutationFence.settle();
     if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
       fail("F3_V122_QUEUE_UNCERTAIN");
@@ -6241,10 +6586,12 @@ export async function f3S5EnqueueHistoricalReport({
       (response) => {
         if (response.request().method() !== "GET") return false;
         const url = new URL(response.url());
-        return url.origin === API_ORIGIN &&
+        return (
+          url.origin === API_ORIGIN &&
           url.pathname === "/rest/v1/relatorios_historicos_contratante" &&
           url.searchParams.get("id_contrato") === "eq." + contractId &&
-          url.searchParams.get("id_organizacao") === "eq." + organizationId;
+          url.searchParams.get("id_organizacao") === "eq." + organizationId
+        );
       },
       { timeout: F3_S1_UI.timeout },
     );
@@ -6254,14 +6601,20 @@ export async function f3S5EnqueueHistoricalReport({
     const response = await reportRead;
     if (response.status() !== 200) fail("F3_V122_QUEUE_READBACK");
     const rows = await response.json();
-    const matching = Array.isArray(rows) ? rows.filter((row) =>
-      row?.id === reportId && row.id_arquivo === prior.fileId,
-    ) : [];
+    const matching = Array.isArray(rows)
+      ? rows.filter((row) => row?.id === reportId && row.id_arquivo === prior.fileId)
+      : [];
     if (matching.length !== 1) fail("F3_V122_QUEUE_READBACK");
     assertF3S5HistoricalEnqueueReadback({
-      row: matching[0], organizationId, contractId, reportId,
-      fileId: prior.fileId, executionId,
-      registeredId: reportId, enqueuedId: executionId, versionId: prior.versionId,
+      row: matching[0],
+      organizationId,
+      contractId,
+      reportId,
+      fileId: prior.fileId,
+      executionId,
+      registeredId: reportId,
+      enqueuedId: executionId,
+      versionId: prior.versionId,
     });
     await fence.drain();
     fence.assertSafe();
@@ -6269,7 +6622,9 @@ export async function f3S5EnqueueHistoricalReport({
     book.assertIsolation();
     return Object.freeze({
       state: "UI_OBSERVED_NOT_CERTIFIED",
-      requestId, reportId, executionId,
+      requestId,
+      reportId,
+      executionId,
     });
   } catch (error) {
     try {
@@ -6346,14 +6701,21 @@ export async function f3S3CreateList({
     !isUuid(contractId) ||
     typeof name !== "string" ||
     name !== "ContaOS HML F3 " + book.provenance().workflowRunId + " Lista" ||
-    !book.created().some((item) =>
-      item.id === contractId &&
-      item.organizationId === organizationId &&
-      book.summary().requests.some(
-        (r) => r.requestId === item.requestId && r.producerOrder === 7 &&
-          r.outcome === "confirmed",
-      ),
-    )
+    !book
+      .created()
+      .some(
+        (item) =>
+          item.id === contractId &&
+          item.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (r) =>
+                r.requestId === item.requestId &&
+                r.producerOrder === 7 &&
+                r.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_V109_CREATE_PRECONDITION");
   }
@@ -6371,34 +6733,38 @@ export async function f3S3CreateList({
   fence.assertSafe();
   const intent = mutationFence.arm({
     producerOrder: 11,
-    bodies: [{
-      p_id_organizacao: organizationId,
-      p_id_contrato: contractId,
-      p_id_lista: null,
-      p_versao_esperada: null,
-      p_acao: "criar_lista",
-      p_payload: { nome: name, descricao: null, vigencia_inicio: null, vigencia_fim: null },
-      p_motivo: motive,
-      p_request_id: f3Slot("uuid", "v109_criar"),
-    }],
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_contrato: contractId,
+        p_id_lista: null,
+        p_versao_esperada: null,
+        p_acao: "criar_lista",
+        p_payload: { nome: name, descricao: null, vigencia_inicio: null, vigencia_fim: null },
+        p_motivo: motive,
+        p_request_id: f3Slot("uuid", "v109_criar"),
+      },
+    ],
   });
   try {
     const posted = page.waitForResponse(
-      (response) => response.url() === API_ORIGIN +
-        "/rest/v1/rpc/executar_comando_lista_v1" &&
+      (response) =>
+        response.url() === API_ORIGIN + "/rest/v1/rpc/executar_comando_lista_v1" &&
         response.request().method() === "POST",
       { timeout: F3_S1_UI.timeout },
     );
     const readback = page.waitForResponse(
-      (response) => response.url() === API_ORIGIN +
-        "/rest/v1/rpc/obter_lista_operacional_v1" &&
+      (response) =>
+        response.url() === API_ORIGIN + "/rest/v1/rpc/obter_lista_operacional_v1" &&
         response.request().method() === "POST" &&
         (() => {
           try {
             const args = response.request().postDataJSON();
-            return args.p_id_organizacao === organizationId &&
+            return (
+              args.p_id_organizacao === organizationId &&
               args.p_id_contrato === contractId &&
-              isUuid(args.p_id_lista);
+              isUuid(args.p_id_lista)
+            );
           } catch {
             return false;
           }
@@ -6428,7 +6794,11 @@ export async function f3S3CreateList({
     if (observed.status() !== 200) fail("F3_V109_CREATE_READBACK");
     const snapshot = await observed.json();
     const result = assertF3S3ListCreationReadback({
-      receipt, snapshot, organizationId, contractId, name,
+      receipt,
+      snapshot,
+      organizationId,
+      contractId,
+      name,
     });
     await fence.drain();
     fence.assertSafe();
@@ -6445,39 +6815,52 @@ export async function f3S3CreateList({
   }
 }
 
-
 /** V109: snapshot da RPC real para a lista da organização/contrato selecionados. */
 export function assertF3S3ListSnapshot(dto, { organizationId, contractId, listId, versionId }) {
   if (
-    !isUuid(organizationId) || !isUuid(contractId) || !isUuid(listId) || !isUuid(versionId) ||
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(listId) ||
+    !isUuid(versionId) ||
     dto?.schema_versao !== "crud-lista-v1" ||
     dto.id_organizacao !== organizationId ||
     dto.id_contrato !== contractId ||
     dto.lista?.id !== listId ||
     dto.lista.id_organizacao !== organizationId ||
     dto.lista.id_contrato !== contractId ||
-    !Number.isSafeInteger(dto.lista.versao_registro) || dto.lista.versao_registro < 1 ||
+    !Number.isSafeInteger(dto.lista.versao_registro) ||
+    dto.lista.versao_registro < 1 ||
     dto.versao?.id !== versionId ||
     dto.versao.id_lista !== listId ||
     dto.versao.id_organizacao !== organizationId ||
     dto.versao.id_contrato !== contractId ||
     !Array.isArray(dto.itens)
-  ) fail("F3_V109_SNAPSHOT");
+  )
+    fail("F3_V109_SNAPSHOT");
   return dto;
 }
 
 async function f3S3ReadListNative({
-  page, mutationFence, organizationId, contractId, listId, versionId,
+  page,
+  mutationFence,
+  organizationId,
+  contractId,
+  listId,
+  versionId,
 }) {
   const requestMatches = (response) => {
     if (
       response.request().method() !== "POST" ||
       response.url() !== API_ORIGIN + "/rest/v1/rpc/obter_lista_operacional_v1"
-    ) return false;
+    )
+      return false;
     try {
       const args = response.request().postDataJSON();
-      return args.p_id_organizacao === organizationId &&
-        args.p_id_contrato === contractId && args.p_id_lista === listId;
+      return (
+        args.p_id_organizacao === organizationId &&
+        args.p_id_contrato === contractId &&
+        args.p_id_lista === listId
+      );
     } catch {
       return false;
     }
@@ -6487,7 +6870,10 @@ async function f3S3ReadListNative({
   const response = await read;
   if (response.status() !== 200) fail("F3_V109_SNAPSHOT");
   const dto = assertF3S3ListSnapshot(await response.json(), {
-    organizationId, contractId, listId, versionId,
+    organizationId,
+    contractId,
+    listId,
+    versionId,
   });
   if ((await mutationFence.observeVersion(response)) !== true) {
     fail("F3_V109_VERSION_NOT_OBSERVED");
@@ -6496,16 +6882,24 @@ async function f3S3ReadListNative({
 }
 
 export function assertF3S3ListItemReadback({
-  before, after, organizationId, contractId, listId, versionId, sourceVersionId, code,
+  before,
+  after,
+  organizationId,
+  contractId,
+  listId,
+  versionId,
+  sourceVersionId,
+  code,
 }) {
   assertF3S3ListSnapshot(before, { organizationId, contractId, listId, versionId });
   assertF3S3ListSnapshot(after, { organizationId, contractId, listId, versionId });
-  const matched = after.itens.filter((row) =>
-    row?.codigo === code &&
-    row.id_fonte_versao === sourceVersionId &&
-    row.obrigatorio === true &&
-    row.aplicavel === true &&
-    row.regra_validacao?.documento?.obrigatorio === true,
+  const matched = after.itens.filter(
+    (row) =>
+      row?.codigo === code &&
+      row.id_fonte_versao === sourceVersionId &&
+      row.obrigatorio === true &&
+      row.aplicavel === true &&
+      row.regra_validacao?.documento?.obrigatorio === true,
   );
   if (
     !isUuid(sourceVersionId) ||
@@ -6513,32 +6907,70 @@ export function assertF3S3ListItemReadback({
     matched.length !== 1 ||
     !isUuid(matched[0].id) ||
     before.itens.some((row) => row?.id === matched[0].id)
-  ) fail("F3_V109_ITEM_READBACK");
+  )
+    fail("F3_V109_ITEM_READBACK");
   return matched[0].id;
 }
 
 /** V109: salvar_item pela UI e releitura do mesmo requisito, não apenas status HTTP. */
 export async function f3S3SaveListItem({
-  page, fence, mutationFence, book, organizationId, contractId,
-  listId, versionId, sourceVersionId, code,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  listId,
+  versionId,
+  sourceVersionId,
+  code,
 }) {
   if (
-    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
     book.organizationF3() !== organizationId ||
-    !isUuid(contractId) || !isUuid(listId) || !isUuid(versionId) ||
+    !isUuid(contractId) ||
+    !isUuid(listId) ||
+    !isUuid(versionId) ||
     !isUuid(sourceVersionId) ||
-    typeof code !== "string" || !/^F3-[A-Z0-9-]{2,32}$/.test(code) ||
-    !book.created().some((entry) =>
-      entry.id === listId && entry.organizationId === organizationId &&
-      book.summary().requests.some((q) => q.requestId === entry.requestId &&
-        q.producerOrder === 11 && q.kind === "principal" && q.outcome === "confirmed"),
-    ) ||
-    !book.created().some((entry) =>
-      entry.id === sourceVersionId && entry.organizationId === organizationId &&
-      book.summary().requests.some((q) => q.requestId === entry.requestId &&
-        q.producerOrder === 10 && q.action === "versao" && q.outcome === "confirmed"),
-    )
-  ) fail("F3_V109_ITEM_PRECONDITION");
+    typeof code !== "string" ||
+    !/^F3-[A-Z0-9-]{2,32}$/.test(code) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === listId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 11 &&
+                q.kind === "principal" &&
+                q.outcome === "confirmed",
+            ),
+      ) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === sourceVersionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 10 &&
+                q.action === "versao" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V109_ITEM_PRECONDITION");
   await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/regras", {
     waitUntil: "networkidle",
   });
@@ -6546,7 +6978,12 @@ export async function f3S3SaveListItem({
   const panel = page.getByRole("region", { name: "Gestão de listas" });
   await panel.getByLabel("Lista selecionada").selectOption(listId);
   const before = await f3S3ReadListNative({
-    page, mutationFence, organizationId, contractId, listId, versionId,
+    page,
+    mutationFence,
+    organizationId,
+    contractId,
+    listId,
+    versionId,
   });
   if (before.versao.situacao !== "rascunho") fail("F3_V109_ITEM_PRECONDITION");
   await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
@@ -6555,9 +6992,9 @@ export async function f3S3SaveListItem({
   await panel.getByLabel("Código").fill(code);
   await panel.getByLabel("Descrição do item").fill("Evidência documental obrigatória F3");
   await panel.getByLabel("Identificador da versão da fonte formal").fill(sourceVersionId);
-  await panel.getByLabel("Regra de validação e condição (JSON)").fill(
-    JSON.stringify({ documento: { obrigatorio: true } }),
-  );
+  await panel
+    .getByLabel("Regra de validação e condição (JSON)")
+    .fill(JSON.stringify({ documento: { obrigatorio: true } }));
   const motive = "Vincular requisito e fonte normativa aprovada F3";
   await panel.getByLabel("Motivo").fill(motive);
   await panel.getByRole("button", { name: "Revisar operação", exact: true }).click();
@@ -6578,21 +7015,26 @@ export async function f3S3SaveListItem({
   await fence.drain();
   fence.assertSafe();
   const requestId = mutationFence.arm({
-    producerOrder: 11, kind: "prerequisito", action: "item",
-    bodies: [{
-      p_id_organizacao: organizationId,
-      p_id_contrato: contractId,
-      p_id_lista: listId,
-      p_versao_esperada: before.lista.versao_registro,
-      p_acao: "salvar_item",
-      p_payload: payload,
-      p_motivo: motive,
-      p_request_id: f3Slot("uuid", "v109_item"),
-    }],
+    producerOrder: 11,
+    kind: "prerequisito",
+    action: "item",
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_contrato: contractId,
+        p_id_lista: listId,
+        p_versao_esperada: before.lista.versao_registro,
+        p_acao: "salvar_item",
+        p_payload: payload,
+        p_motivo: motive,
+        p_request_id: f3Slot("uuid", "v109_item"),
+      },
+    ],
   });
   try {
     const sent = page.waitForResponse(
-      (r) => r.request().method() === "POST" &&
+      (r) =>
+        r.request().method() === "POST" &&
         r.url() === API_ORIGIN + "/rest/v1/rpc/executar_comando_lista_v1",
       { timeout: F3_S1_UI.timeout },
     );
@@ -6604,8 +7046,12 @@ export async function f3S3SaveListItem({
       fail("F3_V109_ITEM_COMMAND");
     }
     const result = await response.json();
-    if (result?.acao !== "salvar_item" || result.id_organizacao !== organizationId ||
-        result.id_contrato !== contractId || result.lista?.id !== listId) {
+    if (
+      result?.acao !== "salvar_item" ||
+      result.id_organizacao !== organizationId ||
+      result.id_contrato !== contractId ||
+      result.lista?.id !== listId
+    ) {
       fail("F3_V109_ITEM_RECEIPT");
     }
     const settled = mutationFence.settle();
@@ -6615,11 +7061,22 @@ export async function f3S3SaveListItem({
     await fence.drain();
     fence.assertSafe();
     const after = await f3S3ReadListNative({
-      page, mutationFence, organizationId, contractId, listId, versionId,
+      page,
+      mutationFence,
+      organizationId,
+      contractId,
+      listId,
+      versionId,
     });
     const itemId = assertF3S3ListItemReadback({
-      before, after, organizationId, contractId, listId, versionId,
-      sourceVersionId, code,
+      before,
+      after,
+      organizationId,
+      contractId,
+      listId,
+      versionId,
+      sourceVersionId,
+      code,
     });
     book.confirm(requestId, { entityId: itemId, organizationId });
     book.assertIsolation();
@@ -6627,13 +7084,20 @@ export async function f3S3SaveListItem({
   } catch (error) {
     try {
       if (book.state(requestId) === "sealed") book.uncertain(requestId);
-    } catch { /* sem reenvio automático em incerteza */ }
+    } catch {
+      /* sem reenvio automático em incerteza */
+    }
     throw error;
   }
 }
 
 export function assertF3S3ListPublicationReadback({
-  before, after, organizationId, contractId, listId, versionId,
+  before,
+  after,
+  organizationId,
+  contractId,
+  listId,
+  versionId,
 }) {
   assertF3S3ListSnapshot(before, { organizationId, contractId, listId, versionId });
   assertF3S3ListSnapshot(after, { organizationId, contractId, listId, versionId });
@@ -6641,25 +7105,53 @@ export function assertF3S3ListPublicationReadback({
     before.versao.situacao !== "rascunho" ||
     !["publicada", "vigente"].includes(after.versao.situacao) ||
     after.lista.versao_registro <= before.lista.versao_registro ||
-    !after.itens.some((item) => item?.obrigatorio === true && item.aplicavel === true &&
-      item.regra_validacao?.documento?.obrigatorio === true)
-  ) fail("F3_V109_PUBLICATION_READBACK");
+    !after.itens.some(
+      (item) =>
+        item?.obrigatorio === true &&
+        item.aplicavel === true &&
+        item.regra_validacao?.documento?.obrigatorio === true,
+    )
+  )
+    fail("F3_V109_PUBLICATION_READBACK");
   return versionId;
 }
 
 export async function f3S3PublishListVersion({
-  page, fence, mutationFence, book, organizationId, contractId, listId, versionId,
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  listId,
+  versionId,
 }) {
   if (
-    !page || !fence || !mutationFence || !BOOKS.has(book) ||
-    book.organizationF3() !== organizationId || !isUuid(contractId) ||
-    !isUuid(listId) || !isUuid(versionId) ||
-    !book.created().some((entry) =>
-      entry.organizationId === organizationId &&
-      book.summary().requests.some((q) => q.requestId === entry.requestId &&
-        q.producerOrder === 11 && q.action === "item" && q.outcome === "confirmed"),
-    )
-  ) fail("F3_V109_PUBLICATION_PRECONDITION");
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(listId) ||
+    !isUuid(versionId) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 11 &&
+                q.action === "item" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V109_PUBLICATION_PRECONDITION");
   await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/regras", {
     waitUntil: "networkidle",
   });
@@ -6667,7 +7159,12 @@ export async function f3S3PublishListVersion({
   const panel = page.getByRole("region", { name: "Gestão de listas" });
   await panel.getByLabel("Lista selecionada").selectOption(listId);
   const before = await f3S3ReadListNative({
-    page, mutationFence, organizationId, contractId, listId, versionId,
+    page,
+    mutationFence,
+    organizationId,
+    contractId,
+    listId,
+    versionId,
   });
   if (before.versao.situacao !== "rascunho") fail("F3_V109_PUBLICATION_PRECONDITION");
   await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
@@ -6679,21 +7176,26 @@ export async function f3S3PublishListVersion({
   await fence.drain();
   fence.assertSafe();
   const requestId = mutationFence.arm({
-    producerOrder: 11, kind: "prerequisito", action: "publicacao",
-    bodies: [{
-      p_id_organizacao: organizationId,
-      p_id_contrato: contractId,
-      p_id_lista: listId,
-      p_versao_esperada: before.lista.versao_registro,
-      p_acao: "publicar_versao",
-      p_payload: { id_versao: versionId },
-      p_motivo: motive,
-      p_request_id: f3Slot("uuid", "v109_publish"),
-    }],
+    producerOrder: 11,
+    kind: "prerequisito",
+    action: "publicacao",
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_contrato: contractId,
+        p_id_lista: listId,
+        p_versao_esperada: before.lista.versao_registro,
+        p_acao: "publicar_versao",
+        p_payload: { id_versao: versionId },
+        p_motivo: motive,
+        p_request_id: f3Slot("uuid", "v109_publish"),
+      },
+    ],
   });
   try {
     const posted = page.waitForResponse(
-      (r) => r.request().method() === "POST" &&
+      (r) =>
+        r.request().method() === "POST" &&
         r.url() === API_ORIGIN + "/rest/v1/rpc/executar_comando_lista_v1",
       { timeout: F3_S1_UI.timeout },
     );
@@ -6702,8 +7204,12 @@ export async function f3S3PublishListVersion({
     if (response.status() !== 200) fail("F3_V109_PUBLICATION_HTTP");
     const args = response.request().postDataJSON();
     const receipt = await response.json();
-    if (args?.p_acao !== "publicar_versao" || args.p_id_lista !== listId ||
-        receipt?.acao !== "publicar_versao" || receipt.lista?.id !== listId) {
+    if (
+      args?.p_acao !== "publicar_versao" ||
+      args.p_id_lista !== listId ||
+      receipt?.acao !== "publicar_versao" ||
+      receipt.lista?.id !== listId
+    ) {
       fail("F3_V109_PUBLICATION_RECEIPT");
     }
     const settled = mutationFence.settle();
@@ -6713,10 +7219,20 @@ export async function f3S3PublishListVersion({
     await fence.drain();
     fence.assertSafe();
     const after = await f3S3ReadListNative({
-      page, mutationFence, organizationId, contractId, listId, versionId,
+      page,
+      mutationFence,
+      organizationId,
+      contractId,
+      listId,
+      versionId,
     });
     assertF3S3ListPublicationReadback({
-      before, after, organizationId, contractId, listId, versionId,
+      before,
+      after,
+      organizationId,
+      contractId,
+      listId,
+      versionId,
     });
     book.confirm(requestId, { entityId: versionId, organizationId });
     book.assertIsolation();
@@ -6724,7 +7240,9 @@ export async function f3S3PublishListVersion({
   } catch (error) {
     try {
       if (book.state(requestId) === "sealed") book.uncertain(requestId);
-    } catch { /* sem repetição com chave nova */ }
+    } catch {
+      /* sem repetição com chave nova */
+    }
     throw error;
   }
 }
@@ -6859,26 +7377,36 @@ export async function f3S4ReviewRequirement({
     !documentName.trim() ||
     !Number.isSafeInteger(documentVersionNumber) ||
     documentVersionNumber < 1 ||
-    !book.created().some((entry) =>
-      entry.id === competenceId &&
-      entry.organizationId === organizationId &&
-      book.summary().requests.some(
-        (request) =>
-          request.requestId === entry.requestId &&
-          request.producerOrder === 14 &&
-          request.outcome === "confirmed",
-      ),
-    ) ||
-    !book.created().some((entry) =>
-      entry.id === documentVersionId &&
-      entry.organizationId === organizationId &&
-      book.summary().requests.some(
-        (request) =>
-          request.requestId === entry.requestId &&
-          request.producerOrder === 15 &&
-          request.outcome === "confirmed",
-      ),
-    )
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === competenceId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (request) =>
+                request.requestId === entry.requestId &&
+                request.producerOrder === 14 &&
+                request.outcome === "confirmed",
+            ),
+      ) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === documentVersionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (request) =>
+                request.requestId === entry.requestId &&
+                request.producerOrder === 15 &&
+                request.outcome === "confirmed",
+            ),
+      )
   ) {
     fail("F3_V117_UI_PRECONDITION");
   }
@@ -6902,10 +7430,12 @@ export async function f3S4ReviewRequirement({
   ) {
     fail("F3_V117_UI_PRECONDITION");
   }
-  await page.getByRole("button", {
-    name: "Abrir requisito " + requirementCode,
-    exact: true,
-  }).click();
+  await page
+    .getByRole("button", {
+      name: "Abrir requisito " + requirementCode,
+      exact: true,
+    })
+    .click();
   const editor = page.getByRole("region", { name: "Revisão humana do requisito" });
   const contextRead = page.waitForResponse(
     (response) =>
@@ -6940,10 +7470,12 @@ export async function f3S4ReviewRequirement({
   const fundamento = "Validação de integração F3 CODE";
   await editor.getByLabel("Justificativa da revisão").fill(justificativa);
   await editor.getByLabel("Fundamento da revisão").fill(fundamento);
-  await editor.getByRole("checkbox", {
-    name: "Selecionar " + documentName + " versão " + documentVersionNumber,
-    exact: true,
-  }).check();
+  await editor
+    .getByRole("checkbox", {
+      name: "Selecionar " + documentName + " versão " + documentVersionNumber,
+      exact: true,
+    })
+    .check();
   await editor.getByRole("button", { name: "Revisar e confirmar", exact: true }).click();
   await fence.drain();
   fence.assertSafe();
@@ -7040,10 +7572,12 @@ export const F3_NATIVE_UI_PRODUCERS = Object.freeze({
   9: async (ctx) => {
     const proposal = await f3S3CreateProposal(ctx);
     const version = await f3S3CreateProposalVersion({
-      ...ctx, proposalId: proposal.proposalId,
+      ...ctx,
+      proposalId: proposal.proposalId,
     });
     await f3S3CreateProposalRubric({
-      ...ctx, versionId: version.versionId,
+      ...ctx,
+      versionId: version.versionId,
       versionNumber: version.versionNumber,
     });
     // A segurança do arquivo-base é autoritativa e deve ser relida antes de W1.
@@ -7057,17 +7591,23 @@ export const F3_NATIVE_UI_PRODUCERS = Object.freeze({
       fail("F3_V108_WAIT_VERIFICADOR");
     }
     return f3S3PublishProposal({
-      ...ctx, versionId: version.versionId, before,
+      ...ctx,
+      versionId: version.versionId,
+      before,
     });
   },
   10: async (ctx) => f3S3SetApplicability(ctx),
   11: async (ctx) => {
     const list = await f3S3CreateList(ctx);
     await f3S3SaveListItem({
-      ...ctx, listId: list.listId, versionId: list.versionId,
+      ...ctx,
+      listId: list.listId,
+      versionId: list.versionId,
     });
     return f3S3PublishListVersion({
-      ...ctx, listId: list.listId, versionId: list.versionId,
+      ...ctx,
+      listId: list.listId,
+      versionId: list.versionId,
     });
   },
   12: async (ctx) => f3S3CreateContractDocument(ctx),
@@ -7102,11 +7642,15 @@ export function createF3CodeCaseRuntime({
     !Array.isArray(catalogue.cases) ||
     catalogue.cases.length !== 138 ||
     coverage?.cases?.length !== 138 ||
-    !producerDrivers || typeof producerDrivers !== "object" ||
-    !consumerDrivers || typeof consumerDrivers !== "object" ||
-    !negativeDrivers || typeof negativeDrivers !== "object" ||
+    !producerDrivers ||
+    typeof producerDrivers !== "object" ||
+    !consumerDrivers ||
+    typeof consumerDrivers !== "object" ||
+    !negativeDrivers ||
+    typeof negativeDrivers !== "object" ||
     typeof independentVerifier !== "function"
-  ) fail("F3_CODE_RUNTIME_INPUT");
+  )
+    fail("F3_CODE_RUNTIME_INPUT");
   const all = new Set();
   for (let i = 0; i < 138; i++) {
     const c = catalogue.cases[i];
@@ -7118,9 +7662,11 @@ export function createF3CodeCaseRuntime({
       m.producerOrder !== c.producerOrder ||
       m.producer !== c.producer ||
       m.consumer !== c.consumer ||
-      !Array.isArray(m.sourceHints) || m.sourceHints.length !== 2 ||
+      !Array.isArray(m.sourceHints) ||
+      m.sourceHints.length !== 2 ||
       !/^src\/[A-Za-z0-9_./-]+\.(ts|tsx):[1-9]\d*$/.test(m.sourceHints[1])
-    ) fail("F3_CODE_RUNTIME_CATALOGUE");
+    )
+      fail("F3_CODE_RUNTIME_CATALOGUE");
     all.add(c.caseId);
   }
   const producerRuns = new Map();
@@ -7147,15 +7693,19 @@ export function createF3CodeCaseRuntime({
       !value.network ||
       typeof value.network !== "object" ||
       !["GET", "POST"].includes(value.network.method) ||
-      value.network.status !== 200 && value.network.status !== 403 && value.network.status !== 404 ||
+      (value.network.status !== 200 &&
+        value.network.status !== 403 &&
+        value.network.status !== 404) ||
       value.producerEntityId === null ||
       !isUuid(value.producerEntityId) ||
       !isUuid(value.organizationId) ||
-      !value.readback || typeof value.readback !== "object" ||
+      !value.readback ||
+      typeof value.readback !== "object" ||
       (kind === "positive" && (value.network.status !== 200 || value.readback.matched !== true)) ||
       (kind === "negative" &&
         !["DENY", "NOT_FOUND", "NO_FOREIGN_DATA"].includes(value.readback.outcome))
-    ) fail("F3_CODE_OBSERVATION");
+    )
+      fail("F3_CODE_OBSERVATION");
     assertJsonTree(value, "F3_CODE_OBSERVATION");
     return Object.freeze(structuredClone(value));
   };
@@ -7164,15 +7714,9 @@ export function createF3CodeCaseRuntime({
     const sourcePath = coverage.cases[i].sourceHints[1].split(":")[0];
     caseDrivers[fixed.caseId] = async (c) => {
       if (canonicalJson(c) !== canonicalJson(fixed)) fail("F3_CODE_CASE_MISMATCH");
-      const producer = requireDriver(
-        producerDrivers, c.producerOrder, "F3_DRIVER_PENDING",
-      );
-      const positive = requireDriver(
-        consumerDrivers, c.consumer, "F3_CONSUMER_PENDING",
-      );
-      const negative = requireDriver(
-        negativeDrivers, c.consumer, "F3_NEGATIVE_PENDING",
-      );
+      const producer = requireDriver(producerDrivers, c.producerOrder, "F3_DRIVER_PENDING");
+      const positive = requireDriver(consumerDrivers, c.consumer, "F3_CONSUMER_PENDING");
+      const negative = requireDriver(negativeDrivers, c.consumer, "F3_NEGATIVE_PENDING");
       if (!producerRuns.has(c.producerOrder)) {
         producerRuns.set(
           c.producerOrder,
@@ -7182,26 +7726,37 @@ export function createF3CodeCaseRuntime({
       // A falha do produtor fica memorizada: nunca repetir mutação com nova chave.
       const written = await producerRuns.get(c.producerOrder);
       if (
-        !written || typeof written !== "object" ||
+        !written ||
+        typeof written !== "object" ||
         written.state !== "UI_OBSERVED_NOT_CERTIFIED" ||
         !isUuid(written.producerEntityId) ||
         !isUuid(written.organizationId)
-      ) fail("F3_PRODUCER_EVIDENCE");
-      const pos = assertObservation(c, "positive", await positive({
-        case: Object.freeze(structuredClone(c)),
-        producer: Object.freeze(structuredClone(written)),
-      }));
-      const neg = assertObservation(c, "negative", await negative({
-        case: Object.freeze(structuredClone(c)),
-        producer: Object.freeze(structuredClone(written)),
-      }));
+      )
+        fail("F3_PRODUCER_EVIDENCE");
+      const pos = assertObservation(
+        c,
+        "positive",
+        await positive({
+          case: Object.freeze(structuredClone(c)),
+          producer: Object.freeze(structuredClone(written)),
+        }),
+      );
+      const neg = assertObservation(
+        c,
+        "negative",
+        await negative({
+          case: Object.freeze(structuredClone(c)),
+          producer: Object.freeze(structuredClone(written)),
+        }),
+      );
       if (
         pos.producerEntityId !== written.producerEntityId ||
         neg.producerEntityId !== written.producerEntityId ||
         pos.organizationId !== written.organizationId ||
         neg.organizationId !== written.organizationId ||
         pos.testId === neg.testId
-      ) fail("F3_CODE_CROSS_PROOF");
+      )
+        fail("F3_CODE_CROSS_PROOF");
       // Evidência derivada do evento observado pelo navegador/fixture, jamais
       // do texto ou dos hints da matriz. Hash de payload redigido, sem tokens.
       const entries = [pos, neg].map((value) => ({
@@ -7212,29 +7767,41 @@ export function createF3CodeCaseRuntime({
         sourcePath,
         outputSha256: sha256(canonicalJson(value)),
       }));
-      observations.set(c.caseId, Object.freeze({
-        producer: Object.freeze(structuredClone(written)),
-        positive: pos, negative: neg,
-      }));
+      observations.set(
+        c.caseId,
+        Object.freeze({
+          producer: Object.freeze(structuredClone(written)),
+          positive: pos,
+          negative: neg,
+        }),
+      );
       return Object.freeze({ applicability: "APPLICABLE", tests: entries });
     };
     caseVerifiers[fixed.caseId] = async (c, tests) => {
       if (canonicalJson(c) !== canonicalJson(fixed)) return false;
       const observed = observations.get(c.caseId);
       if (
-        !observed || !Array.isArray(tests) || tests.length !== 2 ||
-        tests[0]?.caseId !== c.caseId || tests[1]?.caseId !== c.caseId ||
-        tests[0].kind !== "positive" || tests[1].kind !== "negative" ||
-        tests[0].sourcePath !== sourcePath || tests[1].sourcePath !== sourcePath ||
+        !observed ||
+        !Array.isArray(tests) ||
+        tests.length !== 2 ||
+        tests[0]?.caseId !== c.caseId ||
+        tests[1]?.caseId !== c.caseId ||
+        tests[0].kind !== "positive" ||
+        tests[1].kind !== "negative" ||
+        tests[0].sourcePath !== sourcePath ||
+        tests[1].sourcePath !== sourcePath ||
         tests[0].outputSha256 !== sha256(canonicalJson(observed.positive)) ||
         tests[1].outputSha256 !== sha256(canonicalJson(observed.negative))
-      ) return false;
+      )
+        return false;
       // Não delega aprovação ao produtor: verificador distinto deve confrontar
       // as duas observações e o vínculo da versão no consumidor.
-      return (await independentVerifier(
-        Object.freeze(structuredClone(c)),
-        Object.freeze(structuredClone(observed)),
-      )) === true;
+      return (
+        (await independentVerifier(
+          Object.freeze(structuredClone(c)),
+          Object.freeze(structuredClone(observed)),
+        )) === true
+      );
     };
   }
   return Object.freeze({
@@ -7289,13 +7856,17 @@ export function bindF3CodeCaseDrivers({ catalogue, caseDrivers, caseVerifiers })
       assertCase(c);
       const verify = Object.getOwnPropertyDescriptor(caseVerifiers, c.caseId)?.value;
       if (typeof verify !== "function") return false;
-      return (await verify(Object.freeze(structuredClone(c)), Object.freeze(structuredClone(tests)))) === true;
+      return (
+        (await verify(Object.freeze(structuredClone(c)), Object.freeze(structuredClone(tests)))) ===
+        true
+      );
     },
     registeredCaseIds: Object.freeze(
       catalogue.cases
-        .filter((c) =>
-          typeof Object.getOwnPropertyDescriptor(caseDrivers, c.caseId)?.value === "function" &&
-          typeof Object.getOwnPropertyDescriptor(caseVerifiers, c.caseId)?.value === "function",
+        .filter(
+          (c) =>
+            typeof Object.getOwnPropertyDescriptor(caseDrivers, c.caseId)?.value === "function" &&
+            typeof Object.getOwnPropertyDescriptor(caseVerifiers, c.caseId)?.value === "function",
         )
         .map((c) => c.caseId),
     ),
