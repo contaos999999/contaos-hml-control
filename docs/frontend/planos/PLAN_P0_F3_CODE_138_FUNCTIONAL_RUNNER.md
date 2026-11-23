@@ -13,6 +13,7 @@ Implementar um workflow GitHub Actions de execução **CODE** de cada uma das 13
 - `scripts/hml/integracao-v1-fase3-functional-138.test.mjs`
 - `.github/workflows/contaos-f3-code-138-functional.yml`
 - `scripts/hml/f3-code-functional-drivers.mjs` (registro de drivers reais)
+- `src/test/f3-code-case-0036.test.ts` (piloto de integração SYS01 → SYS04, positivo e negativo na lógica real do frontend)
 
 ## Garantias
 
@@ -34,4 +35,4 @@ Implementar um workflow GitHub Actions de execução **CODE** de cada uma das 13
 
 ## Estado inicial e lacuna conhecida
 
-No HEAD base `479d01b`, o CI estava 6/6 verde, mas o ledger CODE tinha `0` provas, `138` `NOT_RUN`. O módulo `createF3CodeCaseRuntime` já contém o despachante com registro funcional a fornecer. A execução deste PLAN deve produzir diagnósticos reais dos drivers ausentes; não é permitido marcar casos como PASS por antecipação.
+No HEAD base `479d01b`, o CI estava 6/6 verde, mas o ledger CODE tinha `0` provas, `138` `NOT_RUN`. O módulo `createF3CodeCaseRuntime` já contém o despachante com registro funcional a fornecer. A integração inicial de C0036 verifica a chamada da RPC real pelo frontend sob fixture local; sua prova CODE permanece SUBMITTED_UNVERIFIED e não prova RLS de HML/PROD. A execução deste PLAN deve produzir diagnósticos reais dos drivers ausentes; não é permitido marcar casos como PASS por antecipação.
