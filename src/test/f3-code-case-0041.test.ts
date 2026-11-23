@@ -14,10 +14,7 @@ import {
   definirPreferenciaOrganizacao,
   obterPreferenciaOrganizacao,
 } from "@/lib/organizacao/preferenciaOrganizacao";
-import {
-  consultarPermissoesEfetivas,
-  temPermissao,
-} from "@/lib/administracao/rbacRpc";
+import { consultarPermissoesEfetivas, temPermissao } from "@/lib/administracao/rbacRpc";
 
 const CASE_ID = "IFV1-F3-C0041";
 const CONSUMER = "consultar_permissoes_efetivas";
@@ -66,7 +63,11 @@ describe("F3 CODE C0041: preferência SYS04 → autorização ADM01", () => {
       organizationId: ORG,
       producerEntityId: ORG,
       network: { method: "POST", status: 200, rpc: CONSUMER, fixture: true },
-      readback: { matched: true, role: "administrador_master", effectivePermission: "usuarios/administrar" },
+      readback: {
+        matched: true,
+        role: "administrador_master",
+        effectivePermission: "usuarios/administrar",
+      },
     });
   });
 
