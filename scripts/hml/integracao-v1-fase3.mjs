@@ -7031,6 +7031,58 @@ export function assertF3V122HistoricalReadback({ before, after, reportId, fileId
 }
 
 /**
+ * Onze cadeias de UI com dependências reais. Os argumentos são observações
+ * obtidas nas telas/na sessão, jamais credenciais ou UUID de outra organização.
+ * Não existe PASS de caseId nesta camada: apenas resultado UI_OBSERVED_NOT_CERTIFIED.
+ */
+export const F3_NATIVE_UI_PRODUCERS = Object.freeze({
+  3: async (ctx) => f3S1SelectPreference(ctx),
+  9: async (ctx) => {
+    const proposal = await f3S3CreateProposal(ctx);
+    const version = await f3S3CreateProposalVersion({
+      ...ctx, proposalId: proposal.proposalId,
+    });
+    await f3S3CreateProposalRubric({
+      ...ctx, versionId: version.versionId,
+      versionNumber: version.versionNumber,
+    });
+    // A segurança do arquivo-base é autoritativa e deve ser relida antes de W1.
+    if (typeof ctx.readReadyVersion !== "function") fail("F3_V108_READBACK_PENDING");
+    const before = await ctx.readReadyVersion({
+      proposalId: proposal.proposalId,
+      versionId: version.versionId,
+      fileId: version.fileId,
+    });
+    if (!before || before.arquivo_origem?.status_seguranca !== "aprovado") {
+      fail("F3_V108_WAIT_VERIFICADOR");
+    }
+    return f3S3PublishProposal({
+      ...ctx, versionId: version.versionId, before,
+    });
+  },
+  10: async (ctx) => f3S3SetApplicability(ctx),
+  11: async (ctx) => {
+    const list = await f3S3CreateList(ctx);
+    await f3S3SaveListItem({
+      ...ctx, listId: list.listId, versionId: list.versionId,
+    });
+    return f3S3PublishListVersion({
+      ...ctx, listId: list.listId, versionId: list.versionId,
+    });
+  },
+  12: async (ctx) => f3S3CreateContractDocument(ctx),
+  13: async (ctx) => f3S3AddContractDocumentVersion(ctx),
+  15: async (ctx) => f3S4CreateCompetenceDocument(ctx),
+  17: async (ctx) => f3S4ReviewRequirement(ctx),
+  18: async (ctx) => f3S5ApproveOpinion(ctx),
+  19: async (ctx) => f3S5RegisterPresentation(ctx),
+  20: async (ctx) => {
+    const upload = await f3S5UploadHistoricalReport(ctx);
+    return f3S5EnqueueHistoricalReport({ ...ctx, prior: upload });
+  },
+});
+
+/**
  * Liga o coletor CODE aos contratos exatos de cada caseId, sem atalhos por produtor.
  * Ausência de driver falha; verificador ausente jamais aprova um recibo.
  * Somente drivers reais geram provas. A coleta continua UNREVIEWED_NOT_CERTIFIED.
