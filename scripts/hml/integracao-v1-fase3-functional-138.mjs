@@ -9,7 +9,7 @@
 import { createHash } from "node:crypto";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { resolve, dirname, join } from "node:path";
+import { resolve, join } from "node:path";
 import {
   createF3CodeCaseRuntime,
   collectF3CodeCaseEvidence,
