@@ -6058,6 +6058,286 @@ export async function f3S3CreateList({
   }
 }
 
+
+/** V109: snapshot da RPC real para a lista da organização/contrato selecionados. */
+export function assertF3S3ListSnapshot(dto, { organizationId, contractId, listId, versionId }) {
+  if (
+    !isUuid(organizationId) || !isUuid(contractId) || !isUuid(listId) || !isUuid(versionId) ||
+    dto?.schema_versao !== "crud-lista-v1" ||
+    dto.id_organizacao !== organizationId ||
+    dto.id_contrato !== contractId ||
+    dto.lista?.id !== listId ||
+    dto.lista.id_organizacao !== organizationId ||
+    dto.lista.id_contrato !== contractId ||
+    !Number.isSafeInteger(dto.lista.versao_registro) || dto.lista.versao_registro < 1 ||
+    dto.versao?.id !== versionId ||
+    dto.versao.id_lista !== listId ||
+    dto.versao.id_organizacao !== organizationId ||
+    dto.versao.id_contrato !== contractId ||
+    !Array.isArray(dto.itens)
+  ) fail("F3_V109_SNAPSHOT");
+  return dto;
+}
+
+async function f3S3ReadListNative({
+  page, mutationFence, organizationId, contractId, listId, versionId,
+}) {
+  const requestMatches = (response) => {
+    if (
+      response.request().method() !== "POST" ||
+      response.url() !== API_ORIGIN + "/rest/v1/rpc/obter_lista_operacional_v1"
+    ) return false;
+    try {
+      const args = response.request().postDataJSON();
+      return args.p_id_organizacao === organizationId &&
+        args.p_id_contrato === contractId && args.p_id_lista === listId;
+    } catch {
+      return false;
+    }
+  };
+  const read = page.waitForResponse(requestMatches, { timeout: F3_S1_UI.timeout });
+  await page.reload({ waitUntil: "networkidle" });
+  const response = await read;
+  if (response.status() !== 200) fail("F3_V109_SNAPSHOT");
+  const dto = assertF3S3ListSnapshot(await response.json(), {
+    organizationId, contractId, listId, versionId,
+  });
+  if ((await mutationFence.observeVersion(response)) !== true) {
+    fail("F3_V109_VERSION_NOT_OBSERVED");
+  }
+  return dto;
+}
+
+export function assertF3S3ListItemReadback({
+  before, after, organizationId, contractId, listId, versionId, sourceVersionId, code,
+}) {
+  assertF3S3ListSnapshot(before, { organizationId, contractId, listId, versionId });
+  assertF3S3ListSnapshot(after, { organizationId, contractId, listId, versionId });
+  const matched = after.itens.filter((row) =>
+    row?.codigo === code &&
+    row.id_fonte_versao === sourceVersionId &&
+    row.obrigatorio === true &&
+    row.aplicavel === true &&
+    row.regra_validacao?.documento?.obrigatorio === true,
+  );
+  if (
+    !isUuid(sourceVersionId) ||
+    after.lista.versao_registro <= before.lista.versao_registro ||
+    matched.length !== 1 ||
+    !isUuid(matched[0].id) ||
+    before.itens.some((row) => row?.id === matched[0].id)
+  ) fail("F3_V109_ITEM_READBACK");
+  return matched[0].id;
+}
+
+/** V109: salvar_item pela UI e releitura do mesmo requisito, não apenas status HTTP. */
+export async function f3S3SaveListItem({
+  page, fence, mutationFence, book, organizationId, contractId,
+  listId, versionId, sourceVersionId, code,
+}) {
+  if (
+    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) || !isUuid(listId) || !isUuid(versionId) ||
+    !isUuid(sourceVersionId) ||
+    typeof code !== "string" || !/^F3-[A-Z0-9-]{2,32}$/.test(code) ||
+    !book.created().some((entry) =>
+      entry.id === listId && entry.organizationId === organizationId &&
+      book.summary().requests.some((q) => q.requestId === entry.requestId &&
+        q.producerOrder === 11 && q.kind === "principal" && q.outcome === "confirmed"),
+    ) ||
+    !book.created().some((entry) =>
+      entry.id === sourceVersionId && entry.organizationId === organizationId &&
+      book.summary().requests.some((q) => q.requestId === entry.requestId &&
+        q.producerOrder === 10 && q.action === "versao" && q.outcome === "confirmed"),
+    )
+  ) fail("F3_V109_ITEM_PRECONDITION");
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/regras", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Gestão de listas" });
+  await panel.getByLabel("Lista selecionada").selectOption(listId);
+  const before = await f3S3ReadListNative({
+    page, mutationFence, organizationId, contractId, listId, versionId,
+  });
+  if (before.versao.situacao !== "rascunho") fail("F3_V109_ITEM_PRECONDITION");
+  await panel.getByRole("button", { name: "Adicionar item", exact: true }).click();
+  await panel.getByLabel("Código").fill(code);
+  await panel.getByLabel("Descrição do item").fill("Evidência documental obrigatória F3");
+  await panel.getByLabel("Identificador da versão da fonte formal").fill(sourceVersionId);
+  await panel.getByLabel("Regra de validação e condição (JSON)").fill(
+    JSON.stringify({ documento: { obrigatorio: true } }),
+  );
+  const motive = "Vincular requisito e fonte normativa aprovada F3";
+  await panel.getByLabel("Motivo").fill(motive);
+  await panel.getByRole("button", { name: "Revisar operação", exact: true }).click();
+  const payload = {
+    id_versao: versionId,
+    id_item: null,
+    codigo: code,
+    descricao: "Evidência documental obrigatória F3",
+    categoria: null,
+    obrigatorio: true,
+    aplicavel: true,
+    impeditivo: false,
+    criticidade: "media",
+    id_fonte_versao: sourceVersionId,
+    regra_validacao: { documento: { obrigatorio: true } },
+    ordem: 0,
+  };
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 11, kind: "prerequisito", action: "item",
+    bodies: [{
+      p_id_organizacao: organizationId,
+      p_id_contrato: contractId,
+      p_id_lista: listId,
+      p_versao_esperada: before.lista.versao_registro,
+      p_acao: "salvar_item",
+      p_payload: payload,
+      p_motivo: motive,
+      p_request_id: f3Slot("uuid", "v109_item"),
+    }],
+  });
+  try {
+    const sent = page.waitForResponse(
+      (r) => r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/executar_comando_lista_v1",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await panel.getByRole("button", { name: "Confirmar operação", exact: true }).click();
+    const response = await sent;
+    if (response.status() !== 200) fail("F3_V109_ITEM_HTTP");
+    const args = response.request().postDataJSON();
+    if (args?.p_acao !== "salvar_item" || args.p_id_lista !== listId) {
+      fail("F3_V109_ITEM_COMMAND");
+    }
+    const result = await response.json();
+    if (result?.acao !== "salvar_item" || result.id_organizacao !== organizationId ||
+        result.id_contrato !== contractId || result.lista?.id !== listId) {
+      fail("F3_V109_ITEM_RECEIPT");
+    }
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V109_ITEM_UNCERTAIN");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    const after = await f3S3ReadListNative({
+      page, mutationFence, organizationId, contractId, listId, versionId,
+    });
+    const itemId = assertF3S3ListItemReadback({
+      before, after, organizationId, contractId, listId, versionId,
+      sourceVersionId, code,
+    });
+    book.confirm(requestId, { entityId: itemId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({ state: "UI_OBSERVED_NOT_CERTIFIED", itemId, requestId });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch { /* sem reenvio automático em incerteza */ }
+    throw error;
+  }
+}
+
+export function assertF3S3ListPublicationReadback({
+  before, after, organizationId, contractId, listId, versionId,
+}) {
+  assertF3S3ListSnapshot(before, { organizationId, contractId, listId, versionId });
+  assertF3S3ListSnapshot(after, { organizationId, contractId, listId, versionId });
+  if (
+    before.versao.situacao !== "rascunho" ||
+    !["publicada", "vigente"].includes(after.versao.situacao) ||
+    after.lista.versao_registro <= before.lista.versao_registro ||
+    !after.itens.some((item) => item?.obrigatorio === true && item.aplicavel === true &&
+      item.regra_validacao?.documento?.obrigatorio === true)
+  ) fail("F3_V109_PUBLICATION_READBACK");
+  return versionId;
+}
+
+export async function f3S3PublishListVersion({
+  page, fence, mutationFence, book, organizationId, contractId, listId, versionId,
+}) {
+  if (
+    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId || !isUuid(contractId) ||
+    !isUuid(listId) || !isUuid(versionId) ||
+    !book.created().some((entry) =>
+      entry.organizationId === organizationId &&
+      book.summary().requests.some((q) => q.requestId === entry.requestId &&
+        q.producerOrder === 11 && q.action === "item" && q.outcome === "confirmed"),
+    )
+  ) fail("F3_V109_PUBLICATION_PRECONDITION");
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/regras", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Gestão de listas" });
+  await panel.getByLabel("Lista selecionada").selectOption(listId);
+  const before = await f3S3ReadListNative({
+    page, mutationFence, organizationId, contractId, listId, versionId,
+  });
+  if (before.versao.situacao !== "rascunho") fail("F3_V109_PUBLICATION_PRECONDITION");
+  await panel.getByRole("button", { name: "Publicar versão", exact: true }).click();
+  const motive = "Publicação F3 após validação de item documental";
+  await panel.getByLabel("Motivo").fill(motive);
+  await panel.getByRole("button", { name: "Revisar operação", exact: true }).click();
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 11, kind: "prerequisito", action: "publicacao",
+    bodies: [{
+      p_id_organizacao: organizationId,
+      p_id_contrato: contractId,
+      p_id_lista: listId,
+      p_versao_esperada: before.lista.versao_registro,
+      p_acao: "publicar_versao",
+      p_payload: { id_versao: versionId },
+      p_motivo: motive,
+      p_request_id: f3Slot("uuid", "v109_publish"),
+    }],
+  });
+  try {
+    const posted = page.waitForResponse(
+      (r) => r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/executar_comando_lista_v1",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await panel.getByRole("button", { name: "Confirmar operação", exact: true }).click();
+    const response = await posted;
+    if (response.status() !== 200) fail("F3_V109_PUBLICATION_HTTP");
+    const args = response.request().postDataJSON();
+    const receipt = await response.json();
+    if (args?.p_acao !== "publicar_versao" || args.p_id_lista !== listId ||
+        receipt?.acao !== "publicar_versao" || receipt.lista?.id !== listId) {
+      fail("F3_V109_PUBLICATION_RECEIPT");
+    }
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V109_PUBLICATION_UNCERTAIN");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    const after = await f3S3ReadListNative({
+      page, mutationFence, organizationId, contractId, listId, versionId,
+    });
+    assertF3S3ListPublicationReadback({
+      before, after, organizationId, contractId, listId, versionId,
+    });
+    book.confirm(requestId, { entityId: versionId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({ state: "UI_OBSERVED_NOT_CERTIFIED", versionId, requestId });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch { /* sem repetição com chave nova */ }
+    throw error;
+  }
+}
+
 /** V110 — arquivo confirmado não é prova de documento até leitura da nova versão. */
 export function assertF3V110DocumentReadback({ after, contractId, fileId }) {
   if (
