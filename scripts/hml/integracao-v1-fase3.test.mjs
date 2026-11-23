@@ -1458,7 +1458,11 @@ const seal = (book, n, producerOrder, extra = {}) => {
   if (book.summary().requests.some((q) => q.requestId === requestId))
     return book.seal({ ...args, ...extra });
   // Verifica a intenção antes de preparar vínculos sintéticos, como a cerca real.
-  book.check({ op: "seal", ...args, ...extra });
+  book.check({
+    op: "seal", requestId, producerOrder,
+    kind: extra.kind ?? "principal", duplicateOf: extra.duplicateOf ?? null,
+    ...(extra.action !== undefined ? { action: extra.action } : {}),
+  });
   const binds = bindsFor(book, producerOrder, extra.kind ?? "principal", extra.action);
   book.seal({
     requestId,
