@@ -5795,7 +5795,7 @@ export async function f3S5UploadHistoricalReport({
       article.getByRole("button", { name: "Enviar documento", exact: true }).click(),
     verifyReadback,
   });
-  return Object.freeze({ ...result, competence });
+  return Object.freeze({ ...result, competence, fileName: file.name });
 }
 
 /** V122: correlaciona dois RPCs executados pela UI com o relatório lido no consumidor. */
@@ -6201,6 +6201,8 @@ export async function f3S3SaveListItem({
     page, mutationFence, organizationId, contractId, listId, versionId,
   });
   if (before.versao.situacao !== "rascunho") fail("F3_V109_ITEM_PRECONDITION");
+  await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
+  await panel.getByLabel("Lista selecionada").selectOption(listId);
   await panel.getByRole("button", { name: "Adicionar item", exact: true }).click();
   await panel.getByLabel("Código").fill(code);
   await panel.getByLabel("Descrição do item").fill("Evidência documental obrigatória F3");
@@ -6320,6 +6322,8 @@ export async function f3S3PublishListVersion({
     page, mutationFence, organizationId, contractId, listId, versionId,
   });
   if (before.versao.situacao !== "rascunho") fail("F3_V109_PUBLICATION_PRECONDITION");
+  await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
+  await panel.getByLabel("Lista selecionada").selectOption(listId);
   await panel.getByRole("button", { name: "Publicar versão", exact: true }).click();
   const motive = "Publicação F3 após validação de item documental";
   await panel.getByLabel("Motivo").fill(motive);
