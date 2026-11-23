@@ -146,13 +146,14 @@ async function runCase0041() {
           parsed[1]?.caseId !== CASE_0041 ||
           parsed[0].kind !== "positive" ||
           parsed[1].kind !== "negative" ||
-          parsed.some((event) =>
-            event.consumer !== CONSUMER_0041 ||
-            event.producerOrder !== 3 ||
-            event.organizationId !== ORG_0041 ||
-            event.producerEntityId !== ORG_0041 ||
-            event.state !== "EXECUTED" ||
-            event.assertion !== "PASS",
+          parsed.some(
+            (event) =>
+              event.consumer !== CONSUMER_0041 ||
+              event.producerOrder !== 3 ||
+              event.organizationId !== ORG_0041 ||
+              event.producerEntityId !== ORG_0041 ||
+              event.state !== "EXECUTED" ||
+              event.assertion !== "PASS",
           )
         ) {
           throw Object.assign(new Error("F3_C0041_BAD_TEST_OUTPUT"), {
@@ -192,13 +193,14 @@ async function runCase0043() {
           parsed[1]?.caseId !== CASE_0043 ||
           parsed[0].kind !== "positive" ||
           parsed[1].kind !== "negative" ||
-          parsed.some((event) =>
-            event.consumer !== CONSUMER_0037 ||
-            event.producerOrder !== 3 ||
-            event.organizationId !== ORG_0041 ||
-            event.producerEntityId !== ORG_0041 ||
-            event.state !== "EXECUTED" ||
-            event.assertion !== "PASS",
+          parsed.some(
+            (event) =>
+              event.consumer !== CONSUMER_0037 ||
+              event.producerOrder !== 3 ||
+              event.organizationId !== ORG_0041 ||
+              event.producerEntityId !== ORG_0041 ||
+              event.state !== "EXECUTED" ||
+              event.assertion !== "PASS",
           )
         ) {
           throw Object.assign(new Error("F3_C0043_BAD_TEST_OUTPUT"), {
