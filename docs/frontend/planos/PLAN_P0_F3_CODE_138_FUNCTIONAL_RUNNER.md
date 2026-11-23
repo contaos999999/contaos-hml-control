@@ -16,6 +16,7 @@ Implementar um workflow GitHub Actions de execução **CODE** de cada uma das 13
 - `src/test/f3-code-case-0036.test.ts` (piloto de integração SYS01 → SYS04, positivo e negativo na lógica real do frontend)
 - `src/test/f3-code-case-0037.test.tsx` (piloto de integração SYS01 → SYS05, RPC de dashboard e isolamento da preferência)
 - `src/test/f3-code-case-0041.test.ts` (SYS04 preferência → ADM01 RPC permissões efetivas, allow e deny)
+- `src/test/f3-code-case-0043.test.tsx` (SYS04 preferência → SYS05, resposta do dashboard e negativa de escopo)
 
 ## Garantias
 
