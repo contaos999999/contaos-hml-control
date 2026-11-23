@@ -14,6 +14,7 @@ Implementar um workflow GitHub Actions de execução **CODE** de cada uma das 13
 - `.github/workflows/contaos-f3-code-138-functional.yml`
 - `scripts/hml/f3-code-functional-drivers.mjs` (registro de drivers reais)
 - `src/test/f3-code-case-0036.test.ts` (piloto de integração SYS01 → SYS04, positivo e negativo na lógica real do frontend)
+- `src/test/f3-code-case-0037.test.tsx` (piloto de integração SYS01 → SYS05, RPC de dashboard e isolamento da preferência)
 
 ## Garantias
 
