@@ -131,7 +131,7 @@ describe("F3 CODE C0043: dashboard recebe contexto organizacional do SYS04", () 
     observations.push({
       caseId: CASE_ID,
       consumer: CONSUMER,
-      producerOrder: 1,
+      producerOrder: 3,
       kind: "negative",
       testId: "src/test/f3-code-case-0043.test.tsx:negative",
       state: "EXECUTED",
