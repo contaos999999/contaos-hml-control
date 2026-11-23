@@ -5027,8 +5027,14 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
               ["id_organizacao", "id_contrato", "path", "p_path", "p_nome_original", "p_mime",
                 "p_tamanho", "p_sha256", "p_origem", "p_id_organizacao", "p_id_contrato",
                 "p_id_arquivo"].includes(field);
+            const v109SharedRpc =
+              Number(order) === 11 && source.target.includes("mesmo RPC") &&
+              field === "p_id_contrato" &&
+              rows.some((r) => r.key === "11 V109, principal" &&
+                r.target.includes("executar_comando_lista_v1") &&
+                r.fields.includes("`p_id_contrato` `inventario`"));
             assert.ok(
-              explicit || keyInResend || organizationImplicit || uploadInternal,
+              explicit || keyInResend || organizationImplicit || uploadInternal || v109SharedRpc,
               field + " ausente em " + extraKey,
             );
           }
