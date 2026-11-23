@@ -6356,3 +6356,122 @@ test("F3 V109: snapshots, item e publicação cruzam lista, versão e fonte, com
     }));
   }
 });
+
+test("F3 CODE: despacho das 138 relações usa 20 produtores uma vez e 276 leituras com contraditório", async () => {
+  // Estes são doubles de CODE para testar o mecanismo. Nunca são evidências HML LIVE.
+  const coverage = JSON.parse(await readFile(
+    new URL("../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json",
+      import.meta.url),
+    "utf8",
+  ));
+  const cases = published.cases;
+  const producerDrivers = Object.create(null);
+  const consumerDrivers = Object.create(null);
+  const negativeDrivers = Object.create(null);
+  const producers = new Map();
+  const interactions = { positive: 0, negative: 0, independent: 0 };
+  for (const c of cases) {
+    producerDrivers[c.producerOrder] ??= async () => {
+      producers.set(c.producerOrder, (producers.get(c.producerOrder) ?? 0) + 1);
+      return {
+        state: "UI_OBSERVED_NOT_CERTIFIED",
+        producerEntityId: uuid(950000 + c.producerOrder),
+        organizationId: F3,
+      };
+    };
+    consumerDrivers[c.consumer] ??= async ({ case: current, producer }) => {
+      interactions.positive++;
+      return {
+        state: "EXECUTED", assertion: "PASS", caseId: current.caseId,
+        consumer: current.consumer, producerOrder: current.producerOrder,
+        kind: "positive", testId: "CODE:" + current.caseId + ":positive",
+        producerEntityId: producer.producerEntityId, organizationId: F3,
+        network: { method: "POST", status: 200 },
+        readback: { matched: true },
+      };
+    };
+    negativeDrivers[c.consumer] ??= async ({ case: current, producer }) => {
+      interactions.negative++;
+      return {
+        state: "EXECUTED", assertion: "PASS", caseId: current.caseId,
+        consumer: current.consumer, producerOrder: current.producerOrder,
+        kind: "negative", testId: "CODE:" + current.caseId + ":negative",
+        producerEntityId: producer.producerEntityId, organizationId: F3,
+        network: { method: "POST", status: 403 },
+        readback: { outcome: "DENY" },
+      };
+    };
+  }
+  const registry = sut.createF3CodeCaseRuntime({
+    catalogue: published,
+    coverage,
+    producerDrivers,
+    consumerDrivers,
+    negativeDrivers,
+    independentVerifier: async (c, data) => {
+      interactions.independent++;
+      return data.positive.caseId === c.caseId &&
+        data.negative.caseId === c.caseId &&
+        data.positive.producerEntityId === data.negative.producerEntityId;
+    },
+  });
+  assert.equal(registry.coveredCaseIds.length, 138);
+  assert.equal(new Set(registry.coveredCaseIds).size, 138);
+  assert.equal(Object.keys(registry.caseDrivers).length, 138);
+  assert.equal(Object.keys(registry.caseVerifiers).length, 138);
+  const raw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
+  const report = await sut.collectF3CodeCaseEvidence({
+    catalogue: published,
+    catalogueRaw: raw,
+    provenance: {
+      frontendSha: "a".repeat(40),
+      backendSha: sut.F3_BACKEND_SHA,
+      workflowRunId: "124500",
+      jobId: "124501",
+    },
+    caseDrivers: registry.caseDrivers,
+    caseVerifiers: registry.caseVerifiers,
+    collector: realCollector,
+  });
+  assert.deepEqual([...producers.values()].sort(), Array(20).fill(1));
+  assert.deepEqual(interactions, {
+    positive: 138, negative: 138, independent: 138,
+  });
+  assert.deepEqual(report.counts, {
+    submittedUnverified: 138, blocked: 0, failed: 0,
+  });
+  assert.equal(report.state, "UNREVIEWED_NOT_CERTIFIED");
+  assert.ok(report.entries.every((e) => e.status === "SUBMITTED_UNVERIFIED"));
+  assert.ok(report.entries.every((e) => e.tests?.length === 2));
+});
+
+test("F3 CODE: nenhum consumidor ausente ou observação adulterada pode receber recibo", async () => {
+  const coverage = JSON.parse(await readFile(
+    new URL("../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json",
+      import.meta.url),
+    "utf8",
+  ));
+  const case0 = published.cases[0];
+  const key = case0.consumer;
+  const registry = sut.createF3CodeCaseRuntime({
+    catalogue: published, coverage,
+    producerDrivers: { [case0.producerOrder]: async () => ({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      producerEntityId: uuid(950999),
+      organizationId: F3,
+    }) },
+    consumerDrivers: {
+      [key]: async () => ({ caseId: "IFV1-F3-C9999", state: "EXECUTED" }),
+    },
+    negativeDrivers: { [key]: async () => ({ state: "EXECUTED" }) },
+    independentVerifier: async () => true,
+  });
+  await assert.rejects(registry.caseDrivers[case0.caseId](case0), {
+    code: "F3_CODE_OBSERVATION",
+  });
+  const altered = { ...case0, consumer: "alheio" };
+  await assert.rejects(registry.caseDrivers[case0.caseId](altered), {
+    code: "F3_CODE_CASE_MISMATCH",
+  });
+  await assert.equal(await registry.caseVerifiers[case0.caseId](case0, []), false);
+});
