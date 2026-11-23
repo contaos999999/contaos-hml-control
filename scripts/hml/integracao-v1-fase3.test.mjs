@@ -6027,7 +6027,7 @@ test("F3 V119: apresentação exige pré-aprovação V119 confirmada, não parec
   }
 });
 
-test("F3 V108: mutações armadas apenas para quatro RPCs do produto e versão prévia", () => {
+test("F3 V108: proposta, UP completo, rubrica e publicação têm cadeias distintas", () => {
   const flow = sut.F3_MUTATION_FLOWS[9];
   assert.deepEqual(
     flow.principal.map((step) => step.name),
@@ -6041,7 +6041,7 @@ test("F3 V108: mutações armadas apenas para quatro RPCs do produto e versão p
     Object.values(flow.prerequisito).map((steps) => steps[0].name),
     [
       "salvar_proposta_orcamentaria_v108",
-      "registrar_versao_proposta_v108",
+      "storage-sign-upload",
       "salvar_linha_orcamentaria_v108",
     ],
   );
@@ -6050,9 +6050,18 @@ test("F3 V108: mutações armadas apenas para quatro RPCs do produto e versão p
     action: "versao",
   });
   assert.deepEqual(
-    flow.prerequisito.versao[0].inventory.p_id_proposta,
+    flow.prerequisito.versao[3].inventory.p_id_proposta,
     { producerOrder: 9, action: "proposta" },
   );
+  assert.deepEqual(flow.prerequisito.versao.map((step) => step.name), [
+    "storage-sign-upload", "contaos-documentos",
+    "confirmar_upload_arquivo", "registrar_versao_proposta_v108",
+  ]);
+  assert.deepEqual(flow.prerequisito.versao.map((step) => step.target), [
+    "edge", "storage", "rpc", "rpc",
+  ]);
+  assert.deepEqual(flow.prerequisito.versao[1].pathFields, ["path"]);
+  assert.deepEqual(flow.prerequisito.versao[2].pathFields, ["p_path"]);
 });
 
 test("F3 V109: três transições declaradas e vinculadas ao contrato e à lista criada", () => {
@@ -6285,4 +6294,61 @@ test("F3 UP: um path de outra organização nunca atravessa a cerca", (t) => {
   });
   assert.equal(f.fence.policy(foreign), false);
   assert.equal(f.book.frozen(), true);
+});
+
+test("F3 V109: snapshots, item e publicação cruzam lista, versão e fonte, com negativos", () => {
+  const org = uuid(931101), contract = uuid(931102), list = uuid(931103);
+  const version = uuid(931104), source = uuid(931105), item = uuid(931106);
+  const code = "F3-001";
+  const before = {
+    schema_versao: "crud-lista-v1",
+    id_organizacao: org, id_contrato: contract,
+    lista: { id: list, id_organizacao: org, id_contrato: contract, versao_registro: 1 },
+    versao: {
+      id: version, id_lista: list, id_organizacao: org,
+      id_contrato: contract, situacao: "rascunho",
+    },
+    itens: [],
+  };
+  const afterItem = {
+    ...before,
+    lista: { ...before.lista, versao_registro: 2 },
+    itens: [{
+      id: item, codigo: code, id_fonte_versao: source,
+      obrigatorio: true, aplicavel: true,
+      regra_validacao: { documento: { obrigatorio: true } },
+    }],
+  };
+  const context = { organizationId: org, contractId: contract, listId: list, versionId: version };
+  assert.equal(sut.assertF3S3ListItemReadback({
+    before, after: afterItem, ...context, sourceVersionId: source, code,
+  }), item);
+  for (const changed of [
+    { after: { ...afterItem, itens: [] } },
+    { after: { ...afterItem, itens: [{ ...afterItem.itens[0], id_fonte_versao: uuid(931107) }] } },
+    { after: { ...afterItem, lista: before.lista } },
+    { after: { ...afterItem, itens: [{ ...afterItem.itens[0], aplicavel: false }] } },
+    { listId: uuid(931108) },
+  ]) {
+    assert.throws(() => sut.assertF3S3ListItemReadback({
+      before, after: afterItem, ...context, sourceVersionId: source, code, ...changed,
+    }));
+  }
+  const published = {
+    ...afterItem,
+    lista: { ...afterItem.lista, versao_registro: 3 },
+    versao: { ...afterItem.versao, situacao: "publicada" },
+  };
+  assert.equal(sut.assertF3S3ListPublicationReadback({
+    before: afterItem, after: published, ...context,
+  }), version);
+  for (const changed of [
+    { after: { ...published, versao: before.versao } },
+    { after: { ...published, itens: [] } },
+    { before: published },
+  ]) {
+    assert.throws(() => sut.assertF3S3ListPublicationReadback({
+      before: afterItem, after: published, ...context, ...changed,
+    }));
+  }
 });
