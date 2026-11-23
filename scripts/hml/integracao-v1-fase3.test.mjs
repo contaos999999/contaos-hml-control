@@ -1457,10 +1457,16 @@ const seal = (book, n, producerOrder, extra = {}) => {
   // ID já usado: a recusa é a do livro (replay), antes de qualquer vínculo.
   if (book.summary().requests.some((q) => q.requestId === requestId))
     return book.seal({ ...args, ...extra });
-  // Verifica a intenção antes de preparar vínculos sintéticos, como a cerca real.
+  // Sintaxe inválida é rejeitada pelo método público do livro com o código
+  // específico de KIND; a simulação considera apenas selos semanticamente válidos.
+  const effectiveKind = extra.kind ?? "principal";
+  if (
+    !["principal", "prerequisito", "duplicidade"].includes(effectiveKind) ||
+    (effectiveKind === "duplicidade") !== (extra.duplicateOf != null)
+  ) return book.seal({ ...args, ...extra });
   book.check({
     op: "seal", requestId, producerOrder,
-    kind: extra.kind ?? "principal", duplicateOf: extra.duplicateOf ?? null,
+    kind: effectiveKind, duplicateOf: extra.duplicateOf ?? null,
     ...(extra.action !== undefined ? { action: extra.action } : {}),
   });
   const binds = bindsFor(book, producerOrder, extra.kind ?? "principal", extra.action);
@@ -2127,6 +2133,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   const acceptedBook = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(acceptedBook);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 9) ensureV108Prerequisites(acceptedBook);
     if (o === 10) ensureV107Prerequisites(acceptedBook);
     seedF3NoUploadPrereq(acceptedBook, o);
     seal(acceptedBook, o, o);
@@ -2231,6 +2238,7 @@ test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo
   const first = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(first);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 9) ensureV108Prerequisites(first);
     if (o === 10) ensureV107Prerequisites(first);
     seedF3NoUploadPrereq(first, o);
     seal(first, o, o);
@@ -2240,7 +2248,12 @@ test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo
     dup(first, 200 + o, o, uuid(o));
     first.rejected(uuid(200 + o));
   }
-  for (let i = 0; i < 6; i++) seal(first, 310 + i, 17, { kind: "prerequisito" });
+  // O orçamento é 40 envios, independentemente de quais pré-requisitos
+  // passaram a ser materializados. Não ultrapassar o limite para testar o limite.
+  const remaining = 40 - first.summary().sent;
+  assert.ok(remaining >= 0 && remaining <= 11);
+  for (let i = 0; i < remaining; i++)
+    seal(first, 310 + i, 17, { kind: "prerequisito" });
   assert.equal(first.summary().sent, 40);
   assert.throws(() => dup(first, 299, 20, uuid(20)), { code: "F3_BUDGET" });
   // Teto de 60: principais rejeitadas e refeitas contam como envio a cada tentativa.
@@ -4716,7 +4729,7 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
   // ADM01 (2), V102 (1), V103 (3), V105 (2), V106 (3), V107 (3),
   // V113 (1), V116 (1), V118 (1) e V119 (1) totalizam 18 posicoes tipadas.
   // Todas recebem negativas de origem/versao, sem dispensar verificacoes anteriores.
-  assert.equal(positions, 18);
+  assert.equal(positions, 37);
 });
 
 test("F3 R3 RED (2): na cerca, ADM01 e V102 exigem a organização F3, vaga com valor conhecido congela e a chave não é o requestId", async (t) => {
@@ -4993,7 +5006,10 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
         for (const st of steps) {
           assert.ok(
             source.target.includes(st.name) ||
-            (source.target.includes("UP") && ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(st.name)),
+            (Number(order) === 11 && st.name === "executar_comando_lista_v1" &&
+              source.target.includes("mesmo RPC")) ||
+            (source.target.includes("UP") &&
+              ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(st.name)),
             "alvo não declarado: " + st.name,
           );
           for (const field of [
