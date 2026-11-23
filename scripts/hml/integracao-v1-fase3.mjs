@@ -7083,6 +7083,168 @@ export const F3_NATIVE_UI_PRODUCERS = Object.freeze({
 });
 
 /**
+ * 138 contratos CODE: cada ID usa produtor uma única vez (sem replicar mutações)
+ * e consulta o consumidor exato, em ambos os cenários positivo e negativo.
+ * Não constrói comprovantes a partir da matriz; exige observação real entregue
+ * pelo adaptador do produto e contraditório independente. No CODE, as
+ * observações são de testes com fixtures; HML LIVE somente após V5.
+ */
+export function createF3CodeCaseRuntime({
+  catalogue,
+  coverage,
+  producerDrivers,
+  consumerDrivers,
+  negativeDrivers,
+  independentVerifier,
+}) {
+  if (
+    catalogue?.count !== 138 ||
+    !Array.isArray(catalogue.cases) ||
+    catalogue.cases.length !== 138 ||
+    coverage?.cases?.length !== 138 ||
+    !producerDrivers || typeof producerDrivers !== "object" ||
+    !consumerDrivers || typeof consumerDrivers !== "object" ||
+    !negativeDrivers || typeof negativeDrivers !== "object" ||
+    typeof independentVerifier !== "function"
+  ) fail("F3_CODE_RUNTIME_INPUT");
+  const all = new Set();
+  for (let i = 0; i < 138; i++) {
+    const c = catalogue.cases[i];
+    const m = coverage.cases[i];
+    if (
+      !/^IFV1-F3-C[0-9]{4}$/.test(c?.caseId ?? "") ||
+      all.has(c.caseId) ||
+      m?.caseId !== c.caseId ||
+      m.producerOrder !== c.producerOrder ||
+      m.producer !== c.producer ||
+      m.consumer !== c.consumer ||
+      !Array.isArray(m.sourceHints) || m.sourceHints.length !== 2 ||
+      !/^src\/[A-Za-z0-9_./-]+\.(ts|tsx):[1-9]\d*$/.test(m.sourceHints[1])
+    ) fail("F3_CODE_RUNTIME_CATALOGUE");
+    all.add(c.caseId);
+  }
+  const producerRuns = new Map();
+  const observations = new Map();
+  const caseDrivers = Object.create(null);
+  const caseVerifiers = Object.create(null);
+  const requireDriver = (obj, key, code) => {
+    const driver = Object.getOwnPropertyDescriptor(obj, String(key))?.value;
+    if (typeof driver !== "function") fail(code);
+    return driver;
+  };
+  const assertObservation = (c, kind, value) => {
+    if (
+      !value ||
+      Object.getPrototypeOf(value) !== Object.prototype ||
+      value.caseId !== c.caseId ||
+      value.consumer !== c.consumer ||
+      value.producerOrder !== c.producerOrder ||
+      value.kind !== kind ||
+      typeof value.testId !== "string" ||
+      !/^[A-Za-z0-9_.:/#-]{3,240}$/.test(value.testId) ||
+      value.state !== "EXECUTED" ||
+      value.assertion !== "PASS" ||
+      !value.network ||
+      typeof value.network !== "object" ||
+      !["GET", "POST"].includes(value.network.method) ||
+      value.network.status !== 200 && value.network.status !== 403 && value.network.status !== 404 ||
+      value.producerEntityId === null ||
+      !isUuid(value.producerEntityId) ||
+      !isUuid(value.organizationId) ||
+      !value.readback || typeof value.readback !== "object" ||
+      (kind === "positive" && (value.network.status !== 200 || value.readback.matched !== true)) ||
+      (kind === "negative" &&
+        !["DENY", "NOT_FOUND", "NO_FOREIGN_DATA"].includes(value.readback.outcome))
+    ) fail("F3_CODE_OBSERVATION");
+    assertJsonTree(value, "F3_CODE_OBSERVATION");
+    return Object.freeze(structuredClone(value));
+  };
+  for (let i = 0; i < 138; i++) {
+    const fixed = catalogue.cases[i];
+    const sourcePath = coverage.cases[i].sourceHints[1].split(":")[0];
+    caseDrivers[fixed.caseId] = async (c) => {
+      if (canonicalJson(c) !== canonicalJson(fixed)) fail("F3_CODE_CASE_MISMATCH");
+      const producer = requireDriver(
+        producerDrivers, c.producerOrder, "F3_DRIVER_PENDING",
+      );
+      const positive = requireDriver(
+        consumerDrivers, c.consumer, "F3_CONSUMER_PENDING",
+      );
+      const negative = requireDriver(
+        negativeDrivers, c.consumer, "F3_NEGATIVE_PENDING",
+      );
+      if (!producerRuns.has(c.producerOrder)) {
+        producerRuns.set(
+          c.producerOrder,
+          Promise.resolve().then(() => producer(Object.freeze(structuredClone(c)))),
+        );
+      }
+      // A falha do produtor fica memorizada: nunca repetir mutação com nova chave.
+      const written = await producerRuns.get(c.producerOrder);
+      if (
+        !written || typeof written !== "object" ||
+        written.state !== "UI_OBSERVED_NOT_CERTIFIED" ||
+        !isUuid(written.producerEntityId) ||
+        !isUuid(written.organizationId)
+      ) fail("F3_PRODUCER_EVIDENCE");
+      const pos = assertObservation(c, "positive", await positive({
+        case: Object.freeze(structuredClone(c)),
+        producer: Object.freeze(structuredClone(written)),
+      }));
+      const neg = assertObservation(c, "negative", await negative({
+        case: Object.freeze(structuredClone(c)),
+        producer: Object.freeze(structuredClone(written)),
+      }));
+      if (
+        pos.producerEntityId !== written.producerEntityId ||
+        neg.producerEntityId !== written.producerEntityId ||
+        pos.organizationId !== written.organizationId ||
+        neg.organizationId !== written.organizationId ||
+        pos.testId === neg.testId
+      ) fail("F3_CODE_CROSS_PROOF");
+      // Evidência derivada do evento observado pelo navegador/fixture, jamais
+      // do texto ou dos hints da matriz. Hash de payload redigido, sem tokens.
+      const entries = [pos, neg].map((value) => ({
+        caseId: c.caseId,
+        kind: value.kind,
+        testId: value.testId,
+        outcome: "PASS",
+        sourcePath,
+        outputSha256: sha256(canonicalJson(value)),
+      }));
+      observations.set(c.caseId, Object.freeze({
+        producer: Object.freeze(structuredClone(written)),
+        positive: pos, negative: neg,
+      }));
+      return Object.freeze({ applicability: "APPLICABLE", tests: entries });
+    };
+    caseVerifiers[fixed.caseId] = async (c, tests) => {
+      if (canonicalJson(c) !== canonicalJson(fixed)) return false;
+      const observed = observations.get(c.caseId);
+      if (
+        !observed || !Array.isArray(tests) || tests.length !== 2 ||
+        tests[0]?.caseId !== c.caseId || tests[1]?.caseId !== c.caseId ||
+        tests[0].kind !== "positive" || tests[1].kind !== "negative" ||
+        tests[0].sourcePath !== sourcePath || tests[1].sourcePath !== sourcePath ||
+        tests[0].outputSha256 !== sha256(canonicalJson(observed.positive)) ||
+        tests[1].outputSha256 !== sha256(canonicalJson(observed.negative))
+      ) return false;
+      // Não delega aprovação ao produtor: verificador distinto deve confrontar
+      // as duas observações e o vínculo da versão no consumidor.
+      return (await independentVerifier(
+        Object.freeze(structuredClone(c)),
+        Object.freeze(structuredClone(observed)),
+      )) === true;
+    };
+  }
+  return Object.freeze({
+    caseDrivers: Object.freeze(caseDrivers),
+    caseVerifiers: Object.freeze(caseVerifiers),
+    coveredCaseIds: Object.freeze([...all]),
+  });
+}
+
+/**
  * Liga o coletor CODE aos contratos exatos de cada caseId, sem atalhos por produtor.
  * Ausência de driver falha; verificador ausente jamais aprova um recibo.
  * Somente drivers reais geram provas. A coleta continua UNREVIEWED_NOT_CERTIFIED.
