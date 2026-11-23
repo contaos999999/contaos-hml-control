@@ -35,11 +35,13 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Instalacao congelada do Bun e dependencias
+      - name: Verificar e instalar Bun congelado
         run: |
           node --test scripts/ci/install-pinned-bun.test.mjs
           node scripts/ci/install-pinned-bun.mjs
-          bun install --frozen-lockfile
+
+      - name: Instalar dependencias congeladas na etapa seguinte
+        run: bun install --frozen-lockfile
 
       - name: Sintaxe e formato dos novos arquivos
         run: |
