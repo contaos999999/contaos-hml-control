@@ -93,13 +93,14 @@ async function runCase0037() {
           parsed[1]?.caseId !== CASE_0037 ||
           parsed[0].kind !== "positive" ||
           parsed[1].kind !== "negative" ||
-          parsed.some((event) =>
-            event.consumer !== CONSUMER_0037 ||
-            event.producerOrder !== 1 ||
-            event.organizationId !== ORG_0036 ||
-            event.producerEntityId !== ORG_0036 ||
-            event.state !== "EXECUTED" ||
-            event.assertion !== "PASS",
+          parsed.some(
+            (event) =>
+              event.consumer !== CONSUMER_0037 ||
+              event.producerOrder !== 1 ||
+              event.organizationId !== ORG_0036 ||
+              event.producerEntityId !== ORG_0036 ||
+              event.state !== "EXECUTED" ||
+              event.assertion !== "PASS",
           )
         ) {
           throw Object.assign(new Error("F3_C0037_BAD_TEST_OUTPUT"), {
