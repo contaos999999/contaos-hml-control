@@ -32,7 +32,10 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 import { Dashboard, MENSAGENS_SYS05 } from "@/components/dashboard/Dashboard";
-import { definirPreferenciaOrganizacao, obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
+import {
+  definirPreferenciaOrganizacao,
+  obterPreferenciaOrganizacao,
+} from "@/lib/organizacao/preferenciaOrganizacao";
 
 const CASE_ID = "IFV1-F3-C0043";
 const CONSUMER = "obter_resumo_dashboard";
@@ -104,7 +107,12 @@ describe("F3 CODE C0043: dashboard recebe contexto organizacional do SYS04", () 
       organizationId: ORG,
       producerEntityId: ORG,
       network: { method: "POST", status: 200, rpc: CONSUMER, fixture: true },
-      readback: { matched: true, organizationId: ORG, contractsVisible: 3, preferenceMatched: true },
+      readback: {
+        matched: true,
+        organizationId: ORG,
+        contractsVisible: 3,
+        preferenceMatched: true,
+      },
     });
   });
 
@@ -131,7 +139,12 @@ describe("F3 CODE C0043: dashboard recebe contexto organizacional do SYS04", () 
       organizationId: ORG,
       producerEntityId: ORG,
       network: { method: "POST", status: 403, rpc: CONSUMER, fixture: true },
-      readback: { outcome: "DENY", protected: true, noPrivateData: true, preferenceNotAuthorization: true },
+      readback: {
+        outcome: "DENY",
+        protected: true,
+        noPrivateData: true,
+        preferenceNotAuthorization: true,
+      },
     });
   });
 
