@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feat/f3-code-functional-138-execution
+  pull_request:
+    branches:
+      - feat/f3-code-eleven-producer-drivers
   workflow_dispatch:
 
 permissions:
