@@ -1863,6 +1863,18 @@ const ORIGIN_CODES = Object.freeze(["F3_FOREIGN_ORG", "F3_VALUE_ORIGIN"]);
  * policy() vai para installNativeFence. settle() devolve o que saiu e as vagas capturadas; o
  * desfecho (confirm, rejected, uncertain) é do driver, pela UI e pela releitura.
  */
+function isolatedBookList(book, id, organizationId, contractId) {
+  if (!isUuid(id) || !isUuid(organizationId) || !isUuid(contractId)) return false;
+  if (organizationId !== book.organizationF3()) return false;
+  return book.created().some((entry) =>
+    entry.id === id && entry.organizationId === organizationId &&
+    book.summary().requests.some((q) =>
+      q.requestId === entry.requestId && q.producerOrder === 11 &&
+      q.kind === "principal" && q.outcome === "confirmed",
+    ),
+  );
+}
+
 export function createF3MutationFence(options = {}) {
   if (Object.keys(options).some((k) => k !== "book")) fail("F3_FENCE_OPTIONS");
   const book = options.book;
@@ -1874,6 +1886,8 @@ export function createF3MutationFence(options = {}) {
   control.fenced = true;
   let active = null;
   const observedVersions = new Map();
+  // UUID secundário emitido com a lista, vinculado por RPC ao ID primário do livro.
+  const observedListVersions = new Map();
   const tickets = new Map();
   const ticketOf = (r) =>
     typeof r.sessionId === "string" && typeof r.interceptionId === "string"
@@ -2047,6 +2061,24 @@ export function createF3MutationFence(options = {}) {
         return false;
       const reference = order + ":" + id;
       if ((observedVersions.get(reference) ?? 0) > row.versao_registro) return false;
+      if (order === 11) {
+        const args = parseJsonBody(request.postData());
+        if (
+          data.versao?.id_lista !== id ||
+          data.versao.id_organizacao !== org ||
+          data.versao.id_contrato !== args.p_id_contrato ||
+          !isUuid(data.versao.id) ||
+          !book.created().some((entry) => entry.id === id &&
+            entry.organizationId === org &&
+            book.summary().requests.some((q) => q.requestId === entry.requestId &&
+              q.producerOrder === 11 && q.kind === "principal" && q.outcome === "confirmed"))
+        ) return false;
+        observedListVersions.set(id, Object.freeze({
+          versionId: data.versao.id,
+          organizationId: org,
+          contractId: args.p_id_contrato,
+        }));
+      }
       observedVersions.set(reference, row.versao_registro);
       return true;
     },
@@ -2103,6 +2135,13 @@ export function createF3MutationFence(options = {}) {
           .created()
           .filter((c) => ISOLATED_KINDS.includes(c.kind))
           .map((c) => c.id),
+        // A versão filha de uma lista é conhecida apenas por readback assinado da
+        // RPC do produto, vinculada ao registro-pai já confirmado no mesmo livro.
+        ...[...observedListVersions.entries()]
+          .filter(([id, observed]) =>
+            isolatedBookList(book, id, observed.organizationId, observed.contractId),
+          )
+          .map(([, observed]) => observed.versionId),
       ]);
       // Origem por posição, por um verificador único: a forma do corpo armado, a versão
       // observada e, pela regra do próprio livro (simulação do selo e dos vínculos), o
