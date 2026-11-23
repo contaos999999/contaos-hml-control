@@ -57,17 +57,21 @@ test("F3 CODE 138: proveniência do GitHub exige jobId real", () => {
     { ...env, F3_JOB_ID: "fake" },
     { ...env, GITHUB_SHA: "not-a-sha" },
     { ...env, GITHUB_RUN_ID: "0" },
-  ]) assert.throws(() => f3CodeProvenance(bad), {
-    code: "F3_CODE_REAL_PROVENANCE_REQUIRED",
-  });
+  ])
+    assert.throws(() => f3CodeProvenance(bad), {
+      code: "F3_CODE_REAL_PROVENANCE_REQUIRED",
+    });
 });
 
 test("F3 CODE 138: relatório adulterado é recusado sem promovê-lo", async () => {
   const { report } = await executeF3Functional138({ provenance, drivers: noDrivers });
-  const raw = await readFile(new URL(
-    "../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json",
-    import.meta.url,
-  ), "utf8");
+  const raw = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json",
+      import.meta.url,
+    ),
+    "utf8",
+  );
   const catalogue = JSON.parse(raw);
   const altered = structuredClone(report);
   altered.entries.pop();
@@ -95,7 +99,10 @@ test("F3 CODE 138: artefato de diagnóstico rastreia 138 casos e SHA256", async 
     assert.equal(summary.cases, 138);
     assert.equal(summary.observedTests, 0);
     const results = await readFile(join(dir, "F3_CODE_CASE_RESULTS.jsonl"), "utf8");
-    const parsed = results.trim().split("\n").map((line) => JSON.parse(line));
+    const parsed = results
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
     assert.equal(parsed.length, 138);
     assert.equal(parsed.filter((x) => x.status === "FAIL").length, 138);
     const checksums = await readFile(join(dir, "SHA256SUMS"), "utf8");
