@@ -13,6 +13,9 @@ import { fileURLToPath } from "node:url";
 const exec = promisify(execFile);
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const CASE_0036 = "IFV1-F3-C0036";
+const CASE_0037 = "IFV1-F3-C0037";
+const CONSUMER_0037 = "obter_resumo_dashboard";
+let c0037Run = null;
 const ORG_0036 = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const CONSUMER_0036 = "listar_organizacoes_disponiveis";
 let c0036Run = null;
@@ -66,9 +69,55 @@ async function runCase0036() {
   return c0036Run;
 }
 
+async function runCase0037() {
+  if (!c0037Run) {
+    c0037Run = (async () => {
+      const dir = await mkdtemp(join(tmpdir(), "contaos-f3-c0037-"));
+      const evidenceFile = join(dir, "observations.json");
+      try {
+        await exec(
+          "bunx",
+          ["vitest", "run", "src/test/f3-code-case-0037.test.tsx", "--reporter=dot"],
+          {
+            cwd: ROOT,
+            env: { ...process.env, F3_CODE_C0037_OBSERVATIONS: evidenceFile },
+            timeout: 60000,
+            maxBuffer: 1024 * 1024,
+          },
+        );
+        const parsed = JSON.parse(await readFile(evidenceFile, "utf8"));
+        if (
+          !Array.isArray(parsed) ||
+          parsed.length !== 2 ||
+          parsed[0]?.caseId !== CASE_0037 ||
+          parsed[1]?.caseId !== CASE_0037 ||
+          parsed[0].kind !== "positive" ||
+          parsed[1].kind !== "negative" ||
+          parsed.some((event) =>
+            event.consumer !== CONSUMER_0037 ||
+            event.producerOrder !== 1 ||
+            event.organizationId !== ORG_0036 ||
+            event.producerEntityId !== ORG_0036 ||
+            event.state !== "EXECUTED" ||
+            event.assertion !== "PASS",
+          )
+        ) {
+          throw Object.assign(new Error("F3_C0037_BAD_TEST_OUTPUT"), {
+            code: "F3_C0037_BAD_TEST_OUTPUT",
+          });
+        }
+        return Object.freeze(parsed.map((event) => Object.freeze(event)));
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+    })();
+  }
+  return c0037Run;
+}
+
 export const producerDrivers = Object.freeze({
   1: async (c) => {
-    if (c.caseId !== CASE_0036) {
+    if (![CASE_0036, CASE_0037].includes(c.caseId)) {
       throw Object.assign(new Error("F3_DRIVER_CASE_NOT_IMPLEMENTED"), {
         code: "F3_DRIVER_CASE_NOT_IMPLEMENTED",
       });
@@ -92,6 +141,15 @@ export const consumerDrivers = Object.freeze({
     const [positive] = await runCase0036();
     return structuredClone(positive);
   },
+  [CONSUMER_0037]: async ({ case: c }) => {
+    if (c.caseId !== CASE_0037) {
+      throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"), {
+        code: "F3_CONSUMER_CASE_NOT_IMPLEMENTED",
+      });
+    }
+    const [positive] = await runCase0037();
+    return structuredClone(positive);
+  },
 });
 
 export const negativeDrivers = Object.freeze({
@@ -104,10 +162,42 @@ export const negativeDrivers = Object.freeze({
     const [, negative] = await runCase0036();
     return structuredClone(negative);
   },
+  [CONSUMER_0037]: async ({ case: c }) => {
+    if (c.caseId !== CASE_0037) {
+      throw Object.assign(new Error("F3_NEGATIVE_CASE_NOT_IMPLEMENTED"), {
+        code: "F3_NEGATIVE_CASE_NOT_IMPLEMENTED",
+      });
+    }
+    const [, negative] = await runCase0037();
+    return structuredClone(negative);
+  },
 });
 
 /** Contraditório estrutural interno. Não constitui auditoria independente final. */
 export async function independentVerifier(c, observed) {
+  if (c.caseId === CASE_0037) {
+    const { producer, positive, negative } = observed;
+    return (
+      c.origin === "SYS01" &&
+      c.destination === "SYS05" &&
+      c.consumer === CONSUMER_0037 &&
+      c.expected?.master === "ALLOW" &&
+      c.expected?.leitor === "ALLOW" &&
+      producer?.producerEntityId === ORG_0036 &&
+      producer.organizationId === ORG_0036 &&
+      positive.testId === "src/test/f3-code-case-0037.test.tsx:positive" &&
+      negative.testId === "src/test/f3-code-case-0037.test.tsx:negative" &&
+      positive.network?.rpc === CONSUMER_0037 &&
+      negative.network?.rpc === CONSUMER_0037 &&
+      positive.network?.fixture === true &&
+      negative.network?.fixture === true &&
+      positive.readback?.organizationId === ORG_0036 &&
+      positive.readback?.contractsVisible === 3 &&
+      negative.network?.status === 403 &&
+      negative.readback?.outcome === "DENY" &&
+      negative.readback?.noPrivateData === true
+    );
+  }
   if (
     c.caseId !== CASE_0036 ||
     c.origin !== "SYS01" ||
