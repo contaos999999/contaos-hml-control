@@ -43,14 +43,14 @@ jobs:
       - name: Instalar dependencias congeladas na etapa seguinte
         run: bun install --frozen-lockfile
 
-      - name: Sintaxe, formato temporario e patch de C0041
+      - name: Sintaxe, formato temporario e patch de C0043
         run: |
           node --check scripts/hml/integracao-v1-fase3-functional-138.mjs
           node --check scripts/hml/integracao-v1-fase3-functional-138.test.mjs
           node --check scripts/hml/f3-code-functional-drivers.mjs
-          bunx prettier --write scripts/hml/f3-code-functional-drivers.mjs src/test/f3-code-case-0041.test.ts
-          bunx prettier --check scripts/hml/integracao-v1-fase3-functional-138.mjs scripts/hml/integracao-v1-fase3-functional-138.test.mjs scripts/hml/f3-code-functional-drivers.mjs src/test/f3-code-case-0036.test.ts src/test/f3-code-case-0037.test.tsx src/test/f3-code-case-0041.test.ts .github/workflows/contaos-f3-code-138-functional.yml
-          node --input-type=module -e 'import{readFileSync}from"node:fs";for(const p of ["scripts/hml/f3-code-functional-drivers.mjs","src/test/f3-code-case-0041.test.ts"]){const b=readFileSync(p).toString("base64");console.log("F3_FORMAT_START "+p);for(const chunk of b.match(/.{1,2048}/g))console.log("F3_FORMAT_DATA "+chunk);console.log("F3_FORMAT_END "+p)}'
+          bunx prettier --write scripts/hml/f3-code-functional-drivers.mjs src/test/f3-code-case-0043.test.tsx
+          bunx prettier --check scripts/hml/integracao-v1-fase3-functional-138.mjs scripts/hml/integracao-v1-fase3-functional-138.test.mjs scripts/hml/f3-code-functional-drivers.mjs src/test/f3-code-case-0036.test.ts src/test/f3-code-case-0037.test.tsx src/test/f3-code-case-0041.test.ts src/test/f3-code-case-0043.test.tsx .github/workflows/contaos-f3-code-138-functional.yml
+          node --input-type=module -e 'import{readFileSync}from"node:fs";for(const p of ["scripts/hml/f3-code-functional-drivers.mjs","src/test/f3-code-case-0043.test.tsx"]){const b=readFileSync(p).toString("base64");console.log("F3_FORMAT_START "+p);for(const chunk of b.match(/.{1,2048}/g))console.log("F3_FORMAT_DATA "+chunk);console.log("F3_FORMAT_END "+p)}'
 
       - name: Autotestes do executor, incluindo negativas contra PASS ficticio
         run: node --test scripts/hml/integracao-v1-fase3-functional-138.test.mjs
