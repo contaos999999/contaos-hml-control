@@ -1513,6 +1513,19 @@ export const F3_MUTATION_FLOWS = Object.freeze({
         }),
       ],
       versao: [
+        step("edge", "storage-sign-upload", {
+          inventory: { id_organizacao: 2, id_contrato: 7 },
+          source: "src/lib/contratos/baseNormativaDados.ts:173-184",
+        }),
+        step("storage", "contaos-documentos", {
+          free: ["path"], pathFields: ["path"],
+          source: "src/lib/contratos/baseNormativaDados.ts:181-184",
+        }),
+        step("rpc", "confirmar_upload_arquivo", {
+          free: ["p_path"], pathFields: ["p_path"],
+          inventory: { p_id_organizacao: 2, p_id_contrato: 7 },
+          source: "src/lib/contratos/baseNormativaDados.ts:187-219",
+        }),
         step("rpc", "registrar_versao_proposta_v108", {
           free: ["p_id_arquivo_origem", "p_chave_idempotencia"],
           inventory: { p_id_proposta: { producerOrder: 9, action: "proposta" } },
