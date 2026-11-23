@@ -90,7 +90,7 @@ describe("F3 CODE C0037: dashboard recebe contexto organizacional do SYS01", () 
     expect(m.rpc).toHaveBeenCalledTimes(1);
     expect(m.rpc).toHaveBeenCalledWith(CONSUMER, { p_id_organizacao: ORG });
     expect(screen.getByText("3")).toBeTruthy();
-    expect(screen.getByText("Organização F3")).toBeTruthy();
+    expect(screen.getByText("Atualizado em 23/11/2026 05:00")).toBeTruthy();
     observations.push({
       caseId: CASE_ID,
       consumer: CONSUMER,
@@ -115,7 +115,7 @@ describe("F3 CODE C0037: dashboard recebe contexto organizacional do SYS01", () 
     mountDashboard();
     expect(await screen.findByText(MENSAGENS_SYS05.negado)).toBeTruthy();
     expect(m.rpc).toHaveBeenCalledWith(CONSUMER, { p_id_organizacao: ORG });
-    expect(screen.queryByText("Organização F3")).toBeNull();
+    expect(screen.queryByRole("region", { name: "Indicadores de resumo" })).toBeNull();
     expect(screen.queryByText("3")).toBeNull();
     observations.push({
       caseId: CASE_ID,
