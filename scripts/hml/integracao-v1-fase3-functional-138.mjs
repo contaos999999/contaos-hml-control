@@ -59,36 +59,43 @@ export function f3CodeProvenance(env) {
 }
 
 export function validateF3FunctionalReport(report, catalogue) {
-  assert(validObject(report) && report.schema === "contaos.ifv1.f3.code-execution.v1",
-    "F3_CODE_REPORT_SCHEMA");
-  assert(report.state === "UNREVIEWED_NOT_CERTIFIED" &&
-    Array.isArray(report.entries) &&
-    report.entries.length === REQUIRED &&
-    catalogue?.cases?.length === REQUIRED, "F3_CODE_REPORT_ENTRIES");
+  assert(
+    validObject(report) && report.schema === "contaos.ifv1.f3.code-execution.v1",
+    "F3_CODE_REPORT_SCHEMA",
+  );
+  assert(
+    report.state === "UNREVIEWED_NOT_CERTIFIED" &&
+      Array.isArray(report.entries) &&
+      report.entries.length === REQUIRED &&
+      catalogue?.cases?.length === REQUIRED,
+    "F3_CODE_REPORT_ENTRIES",
+  );
   const ids = new Set();
   for (let i = 0; i < REQUIRED; i++) {
     const e = report.entries[i];
     const c = catalogue.cases[i];
-    assert(e.caseId === c.caseId && !ids.has(e.caseId) &&
-      e.classification === c.classification, "F3_CODE_REPORT_MISMATCH");
-    ids.add(e.caseId);
     assert(
-      ["FAIL", "BLOCKED", "SUBMITTED_UNVERIFIED"].includes(e.status),
-      "F3_CODE_REPORT_STATUS",
+      e.caseId === c.caseId && !ids.has(e.caseId) && e.classification === c.classification,
+      "F3_CODE_REPORT_MISMATCH",
     );
+    ids.add(e.caseId);
+    assert(["FAIL", "BLOCKED", "SUBMITTED_UNVERIFIED"].includes(e.status), "F3_CODE_REPORT_STATUS");
     if (e.status === "SUBMITTED_UNVERIFIED") {
-      assert(e.reason === null && e.tests?.length === 2,
-        "F3_CODE_REPORT_UNVERIFIED");
+      assert(e.reason === null && e.tests?.length === 2, "F3_CODE_REPORT_UNVERIFIED");
       assert(
         e.tests[0].kind === "positive" &&
-        e.tests[1].kind === "negative" &&
-        e.tests[0].testId !== e.tests[1].testId,
+          e.tests[1].kind === "negative" &&
+          e.tests[0].testId !== e.tests[1].testId,
         "F3_CODE_REPORT_TWO_TESTS",
       );
     } else {
-      assert(typeof e.reason === "string" && e.reason.startsWith("F3_") &&
-        Array.isArray(e.tests) && e.tests.length === 0,
-        "F3_CODE_REPORT_FAIL_CLOSED");
+      assert(
+        typeof e.reason === "string" &&
+          e.reason.startsWith("F3_") &&
+          Array.isArray(e.tests) &&
+          e.tests.length === 0,
+        "F3_CODE_REPORT_FAIL_CLOSED",
+      );
     }
   }
   const submitted = report.entries.filter((e) => e.status === "SUBMITTED_UNVERIFIED").length;
@@ -96,9 +103,9 @@ export function validateF3FunctionalReport(report, catalogue) {
   const failed = report.entries.filter((e) => e.status === "FAIL").length;
   assert(
     report.counts?.submittedUnverified === submitted &&
-    report.counts?.blocked === blocked &&
-    report.counts?.failed === failed &&
-    submitted + blocked + failed === REQUIRED,
+      report.counts?.blocked === blocked &&
+      report.counts?.failed === failed &&
+      submitted + blocked + failed === REQUIRED,
     "F3_CODE_REPORT_COUNTS",
   );
   return Object.freeze({
@@ -120,15 +127,16 @@ export async function executeF3Functional138({
 } = {}) {
   assert(validObject(provenance), "F3_CODE_REAL_PROVENANCE_REQUIRED");
   const [raw, coverageRaw] = await Promise.all([
-    load("F3_CASES.json"), load("F3_CODE_COVERAGE_MATRIX.json"),
+    load("F3_CASES.json"),
+    load("F3_CODE_COVERAGE_MATRIX.json"),
   ]);
   const catalogue = JSON.parse(raw);
   const coverage = JSON.parse(coverageRaw);
   assert(
     coverage.count === REQUIRED &&
-    coverage.certification === "NOT_CERTIFIED" &&
-    coverage.cases?.length === REQUIRED &&
-    coverage.cases.every((c) => c.proofState === "NOT_RUN"),
+      coverage.certification === "NOT_CERTIFIED" &&
+      coverage.cases?.length === REQUIRED &&
+      coverage.cases.every((c) => c.proofState === "NOT_RUN"),
     "F3_CODE_COVERAGE_DRIFT",
   );
   const runtime = createF3CodeCaseRuntime({
@@ -139,8 +147,7 @@ export async function executeF3Functional138({
     negativeDrivers: drivers.negativeDrivers,
     independentVerifier: drivers.independentVerifier,
   });
-  assert(runtime.coveredCaseIds.length === REQUIRED,
-    "F3_CODE_DISPATCH_INCOMPLETE");
+  assert(runtime.coveredCaseIds.length === REQUIRED, "F3_CODE_DISPATCH_INCOMPLETE");
   const report = await collectF3CodeCaseEvidence({
     catalogue,
     catalogueRaw: raw,
@@ -156,8 +163,7 @@ export async function executeF3Functional138({
 }
 
 export async function persistF3Diagnostic({ report, tally }, outputDir) {
-  assert(typeof outputDir === "string" && outputDir.length > 0,
-    "F3_CODE_OUTPUT_PATH");
+  assert(typeof outputDir === "string" && outputDir.length > 0, "F3_CODE_OUTPUT_PATH");
   const out = resolve(outputDir);
   await mkdir(out, { recursive: true });
   const canonical = JSON.stringify(report, null, 2) + "\n";
@@ -181,8 +187,11 @@ export async function persistF3Diagnostic({ report, tally }, outputDir) {
     [HASH(manifest), "F3_CODE_CASE_RESULTS.jsonl"],
     [HASH(summaryJson), "F3_CODE_FUNCTIONAL_SUMMARY.json"],
   ];
-  await writeFile(join(out, "SHA256SUMS"), hashes.map(([hash, name]) =>
-    hash + "  " + name).join("\n") + "\n", { flag: "wx" });
+  await writeFile(
+    join(out, "SHA256SUMS"),
+    hashes.map(([hash, name]) => hash + "  " + name).join("\n") + "\n",
+    { flag: "wx" },
+  );
   return Object.freeze(summary);
 }
 
@@ -207,17 +216,19 @@ export async function runF3FunctionalCli(env = process.env) {
   if (env.GITHUB_STEP_SUMMARY) {
     await writeFile(env.GITHUB_STEP_SUMMARY, message, { flag: "a" });
   }
-  console.log(JSON.stringify({
-    phase: "F3_CODE_FUNCTIONAL_138",
-    status: summary.status,
-    cases: summary.cases,
-    observedTests: summary.observedTests,
-    requiredTests: summary.requiredTests,
-    blocked: summary.blocked,
-    failed: summary.failed,
-    submittedUnverified: summary.submittedUnverified,
-    reportSha256: summary.reportSha256,
-  }));
+  console.log(
+    JSON.stringify({
+      phase: "F3_CODE_FUNCTIONAL_138",
+      status: summary.status,
+      cases: summary.cases,
+      observedTests: summary.observedTests,
+      requiredTests: summary.requiredTests,
+      blocked: summary.blocked,
+      failed: summary.failed,
+      submittedUnverified: summary.submittedUnverified,
+      reportSha256: summary.reportSha256,
+    }),
+  );
   return summary.status === "SUBMITTED_UNVERIFIED";
 }
 
@@ -228,9 +239,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (!complete) process.exitCode = 1;
   } catch (cause) {
     // No tokens, payloads or raw fixture values in logs.
-    console.error("F3_CODE_FUNCTIONAL_ERROR " +
-      (typeof cause?.code === "string" && /^F3_/.test(cause.code) ?
-        cause.code : "F3_CODE_EXECUTION_FAILURE"));
+    console.error(
+      "F3_CODE_FUNCTIONAL_ERROR " +
+        (typeof cause?.code === "string" && /^F3_/.test(cause.code)
+          ? cause.code
+          : "F3_CODE_EXECUTION_FAILURE"),
+    );
     process.exitCode = 1;
   }
 }
