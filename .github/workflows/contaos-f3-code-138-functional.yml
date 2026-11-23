@@ -1,0 +1,88 @@
+name: ContaOS F3 CODE - 138 execucoes funcionais individuais
+
+on:
+  push:
+    branches:
+      - feat/f3-code-functional-138-execution
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: f3-code-functional-138-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  functional-138:
+    name: F3 CODE 138 - executor e evidencias
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    env:
+      F3_CODE_OUTPUT_DIR: artifacts/f3-code-functional-138
+    steps:
+      - name: Checkout exato do HEAD
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Instalacao congelada do Bun e dependencias
+        run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
+          bun install --frozen-lockfile
+
+      - name: Sintaxe e formato dos novos arquivos
+        run: |
+          node --check scripts/hml/integracao-v1-fase3-functional-138.mjs
+          node --check scripts/hml/integracao-v1-fase3-functional-138.test.mjs
+          node --check scripts/hml/f3-code-functional-drivers.mjs
+          bunx prettier --check scripts/hml/integracao-v1-fase3-functional-138.mjs scripts/hml/integracao-v1-fase3-functional-138.test.mjs scripts/hml/f3-code-functional-drivers.mjs .github/workflows/contaos-f3-code-138-functional.yml
+
+      - name: Autotestes do executor, incluindo negativas contra PASS ficticio
+        run: node --test scripts/hml/integracao-v1-fase3-functional-138.test.mjs
+
+      - name: Capturar jobId real da API GitHub Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          job_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" --jq '.jobs[] | select(.name=="F3 CODE 138 - executor e evidencias") | .id' | head -n 1)"
+          if ! [[ "$job_id" =~ ^[1-9][0-9]*$ ]]; then
+            echo "F3_JOB_ID nao obtido da API Actions" >&2
+            exit 1
+          fi
+          echo "F3_JOB_ID=$job_id" >> "$GITHUB_ENV"
+
+      - name: Executar 138 contratos reais; diagnosticar ausencias sem PASS
+        id: functional
+        continue-on-error: true
+        run: node scripts/hml/integracao-v1-fase3-functional-138.mjs --run
+
+      - name: Verificar hashes e integridade de 138 resultados
+        if: always()
+        run: |
+          set -euo pipefail
+          cd "$F3_CODE_OUTPUT_DIR"
+          sha256sum -c SHA256SUMS
+          node -e 'const fs=require("node:fs");const s=JSON.parse(fs.readFileSync("F3_CODE_FUNCTIONAL_SUMMARY.json","utf8"));const l=fs.readFileSync("F3_CODE_CASE_RESULTS.jsonl","utf8").trim().split("\n").map(JSON.parse);if(s.cases!==138||l.length!==138||new Set(l.map(x=>x.caseId)).size!==138)process.exit(1)'
+
+      - name: Publicar artefato auditavel do HEAD
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f3-code-functional-138-${{ github.sha }}
+          path: artifacts/f3-code-functional-138/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Gate de provas individuais, sem certificacao automatica
+        if: always()
+        run: |
+          node -e 'const fs=require("node:fs");const p="artifacts/f3-code-functional-138/F3_CODE_FUNCTIONAL_SUMMARY.json";if(!fs.existsSync(p)){console.error("F3_CODE_REPORT_MISSING");process.exit(1)}const s=JSON.parse(fs.readFileSync(p,"utf8"));if(s.status!=="SUBMITTED_UNVERIFIED"||s.cases!==138||s.observedTests!==276||s.blocked!==0||s.failed!==0){console.error("F3_CODE_INCOMPLETE: ",JSON.stringify({cases:s.cases,observedTests:s.observedTests,blocked:s.blocked,failed:s.failed}));process.exit(1)}'
