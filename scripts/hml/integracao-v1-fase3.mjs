@@ -5078,6 +5078,341 @@ export function assertF3V108ProposalReadback({ before, after, contractId, versio
   return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 9, versionId });
 }
 
+/** V108: proposta inicial via formulário real, com ID capturado pela consulta do produto. */
+export async function f3S3CreateProposal({
+  page, fence, mutationFence, book, organizationId, contractId,
+}) {
+  if (
+    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId || !isUuid(contractId) ||
+    !book.created().some((entry) => entry.id === contractId &&
+      entry.organizationId === organizationId &&
+      book.summary().requests.some((q) => q.requestId === entry.requestId &&
+        q.producerOrder === 7 && q.outcome === "confirmed"))
+  ) fail("F3_V108_PROPOSAL_PRECONDITION");
+  const title = "ContaOS HML F3 " + book.provenance().workflowRunId + " Proposta";
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Criar proposta", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Criar proposta" });
+  await dialog.getByLabel("Título da proposta").fill(title);
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 9, kind: "prerequisito", action: "proposta",
+    bodies: [{
+      p_id_organizacao: organizationId,
+      p_id_contrato: contractId,
+      p_id_proposta: null,
+      p_titulo: title,
+      p_versao_esperada: null,
+      p_chave_idempotencia: f3Slot("uuid", "v108_proposal"),
+    }],
+  });
+  try {
+    const posted = page.waitForResponse(
+      (r) => r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/salvar_proposta_orcamentaria_v108",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Salvar proposta", exact: true }).click();
+    const response = await posted;
+    if (response.status() !== 200) fail("F3_V108_PROPOSAL_HTTP");
+    const args = response.request().postDataJSON();
+    if (args?.p_id_organizacao !== organizationId || args.p_id_contrato !== contractId ||
+        args.p_titulo !== title || args.p_id_proposta !== null) {
+      fail("F3_V108_PROPOSAL_COMMAND");
+    }
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V108_PROPOSAL_UNCERTAIN");
+    }
+    const read = page.waitForResponse((r) => {
+      if (r.request().method() !== "GET") return false;
+      const url = new URL(r.url());
+      return url.origin === API_ORIGIN &&
+        url.pathname === "/rest/v1/propostas_orcamentarias" &&
+        url.searchParams.get("id_contrato") === "eq." + contractId;
+    }, { timeout: F3_S1_UI.timeout });
+    await page.reload({ waitUntil: "networkidle" });
+    const snapshot = await read;
+    if (snapshot.status() !== 200) fail("F3_V108_PROPOSAL_READBACK");
+    const rows = await snapshot.json();
+    const matches = Array.isArray(rows) ? rows.filter((row) =>
+      isUuid(row?.id) && row.id_organizacao === organizationId &&
+      row.id_contrato === contractId && row.titulo === title &&
+      row.situacao === "rascunho",
+    ) : [];
+    if (matches.length !== 1) fail("F3_V108_PROPOSAL_READBACK");
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: matches[0].id, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId, proposalId: matches[0].id,
+    });
+  } catch (error) {
+    try { if (book.state(requestId) === "sealed") book.uncertain(requestId); } catch {}
+    throw error;
+  }
+}
+
+/** V108: upload simples no formulário de versão; só registra após arquivo capturado. */
+export async function f3S3CreateProposalVersion({
+  page, fence, mutationFence, book, organizationId, contractId,
+  proposalId, file, startDate,
+}) {
+  if (
+    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) || !isUuid(proposalId) ||
+    !file || !/^[A-Za-z0-9_.-]{1,80}\.pdf$/.test(file.name ?? "") ||
+    file.mimeType !== "application/pdf" ||
+    !(file.buffer instanceof Uint8Array) ||
+    file.buffer.byteLength < 16 || file.buffer.byteLength > 1048576 ||
+    typeof startDate !== "string" ||
+    !/^20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(startDate) ||
+    !book.created().some((entry) => entry.id === proposalId &&
+      entry.organizationId === organizationId &&
+      book.summary().requests.some((q) => q.requestId === entry.requestId &&
+        q.producerOrder === 9 && q.action === "proposta" &&
+        q.outcome === "confirmed"))
+  ) fail("F3_V108_VERSION_PRECONDITION");
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Nova versão", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Nova versão" });
+  await dialog.getByLabel("Enviar novo documento-base").setInputFiles(file);
+  await dialog.getByLabel("Início da vigência").fill(startDate);
+  const pathSlot = f3Slot("path", "v108_base_signed_path");
+  const edge = {
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    nome_arquivo: file.name,
+    mime: file.mimeType,
+    tamanho: file.buffer.byteLength,
+  };
+  const confirmation = {
+    p_id_organizacao: organizationId,
+    p_id_contrato: contractId,
+    p_path: pathSlot,
+    p_nome_original: file.name,
+    p_mime: file.mimeType,
+    p_tamanho: file.buffer.byteLength,
+    p_sha256: sha256(file.buffer),
+    p_origem: "upload_usuario",
+  };
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 9, kind: "prerequisito", action: "versao",
+    bodies: [
+      edge,
+      { path: pathSlot },
+      confirmation,
+      {
+        p_id_organizacao: organizationId,
+        p_id_proposta: proposalId,
+        p_vigencia_inicio: startDate,
+        p_vigencia_fim: null,
+        p_id_arquivo_origem: f3Slot("uuid", "v108_base_file"),
+        p_chave_idempotencia: f3Slot("uuid", "v108_proposal_version"),
+      },
+    ],
+  });
+  try {
+    const read = (url) => page.waitForResponse((r) =>
+      r.request().method() === "POST" &&
+      r.url() === API_ORIGIN + url,
+      { timeout: F3_S1_UI.timeout });
+    const edgeResp = read("/functions/v1/storage-sign-upload");
+    const storageResp = page.waitForResponse((r) =>
+      r.request().method() === "PUT" &&
+      r.url().startsWith(API_ORIGIN +
+        "/storage/v1/object/upload/sign/contaos-documentos/"),
+      { timeout: F3_S1_UI.timeout });
+    const confirmResp = read("/rest/v1/rpc/confirmar_upload_arquivo");
+    await dialog.getByRole("button", { name: "Enviar arquivo", exact: true }).click();
+    const [authorization, stored, confirmed] = await Promise.all([
+      edgeResp, storageResp, confirmResp,
+    ]);
+    if (
+      authorization.status() !== 200 ||
+      ![200, 201].includes(stored.status()) ||
+      confirmed.status() !== 200
+    ) fail("F3_V108_BASE_UPLOAD_HTTP");
+    const grant = await authorization.json();
+    const fileId = await confirmed.json();
+    if (
+      grant?.ok !== true || grant.bucket !== "contaos-documentos" ||
+      grant.usar_upload_resumivel === true ||
+      typeof grant.path !== "string" ||
+      !grant.path.startsWith(organizationId + "/uploads/") ||
+      !stored.url().includes("/contaos-documentos/" + grant.path + "?") ||
+      !isUuid(fileId)
+    ) fail("F3_V108_BASE_UPLOAD_READBACK");
+    const confirmArgs = confirmed.request().postDataJSON();
+    if (
+      confirmArgs?.p_id_organizacao !== organizationId ||
+      confirmArgs.p_id_contrato !== contractId ||
+      confirmArgs.p_path !== grant.path ||
+      confirmArgs.p_sha256 !== sha256(file.buffer)
+    ) fail("F3_V108_BASE_UPLOAD_READBACK");
+    await dialog.getByLabel("Documento-base").selectOption(fileId);
+    const send = read("/rest/v1/rpc/registrar_versao_proposta_v108");
+    await dialog.getByRole("button", { name: "Registrar versão", exact: true }).click();
+    const versionResponse = await send;
+    if (versionResponse.status() !== 200) fail("F3_V108_VERSION_HTTP");
+    const args = versionResponse.request().postDataJSON();
+    if (
+      args?.p_id_proposta !== proposalId ||
+      args.p_id_organizacao !== organizationId ||
+      args.p_id_arquivo_origem !== fileId ||
+      args.p_vigencia_inicio !== startDate
+    ) fail("F3_V108_VERSION_COMMAND");
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V108_VERSION_UNCERTAIN");
+    }
+    const listed = page.waitForResponse((r) => {
+      if (r.request().method() !== "GET") return false;
+      const url = new URL(r.url());
+      return url.origin === API_ORIGIN &&
+        url.pathname === "/rest/v1/versoes_proposta" &&
+        url.searchParams.get("id_proposta") === "eq." + proposalId;
+    }, { timeout: F3_S1_UI.timeout });
+    await page.reload({ waitUntil: "networkidle" });
+    const listResponse = await listed;
+    if (listResponse.status() !== 200) fail("F3_V108_VERSION_READBACK");
+    const rows = await listResponse.json();
+    const matched = Array.isArray(rows) ? rows.filter((row) =>
+      isUuid(row?.id) &&
+      row.id_proposta === proposalId &&
+      row.id_arquivo_origem === fileId &&
+      row.vigencia_inicio === startDate &&
+      row.situacao === "rascunho" &&
+      Number.isSafeInteger(row.numero_versao) &&
+      row.numero_versao > 0,
+    ) : [];
+    if (matched.length !== 1) fail("F3_V108_VERSION_READBACK");
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: matched[0].id, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED", requestId,
+      versionId: matched[0].id, versionNumber: matched[0].numero_versao,
+      fileId,
+    });
+  } catch (error) {
+    try { if (book.state(requestId) === "sealed") book.uncertain(requestId); } catch {}
+    throw error;
+  }
+}
+
+/** V108: rubrica material para a versão do livro, com leitura independente posterior. */
+export async function f3S3CreateProposalRubric({
+  page, fence, mutationFence, book, organizationId, contractId,
+  versionId, versionNumber,
+}) {
+  if (
+    !page || !fence || !mutationFence || !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) || !isUuid(versionId) ||
+    !Number.isSafeInteger(versionNumber) || versionNumber < 1 ||
+    !book.created().some((entry) => entry.id === versionId &&
+      entry.organizationId === organizationId &&
+      book.summary().requests.some((q) => q.requestId === entry.requestId &&
+        q.producerOrder === 9 && q.action === "versao" &&
+        q.outcome === "confirmed"))
+  ) fail("F3_V108_RUBRIC_PRECONDITION");
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", {
+    name: "Ver rubricas da versão " + versionNumber, exact: true,
+  }).click();
+  await page.getByRole("button", { name: "Nova rubrica", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Nova rubrica" });
+  const group = "F3-" + book.provenance().workflowRunId;
+  const rubric = "Evidência documental obrigatória";
+  await dialog.getByLabel("Grupo").fill(group);
+  await dialog.getByLabel("Rubrica", { exact: true }).fill(rubric);
+  await dialog.getByLabel("Valor mensal previsto (R$)").fill("100,00");
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 9, kind: "prerequisito", action: "rubrica",
+    bodies: [{
+      p_id_organizacao: organizationId,
+      p_id_versao_proposta: versionId,
+      p_id_linha: null,
+      p_codigo: null,
+      p_grupo: group,
+      p_rubrica: rubric,
+      p_subrubrica: null,
+      p_descricao: null,
+      p_valor_mensal: 100,
+      p_valor_anual: null,
+      p_permite_remanejamento: false,
+      p_limite_remanejamento_percentual: null,
+      p_observacoes: null,
+      p_versao_esperada: null,
+      p_chave_idempotencia: f3Slot("uuid", "v108_rubric"),
+    }],
+  });
+  try {
+    const sent = page.waitForResponse((r) =>
+      r.request().method() === "POST" &&
+      r.url() === API_ORIGIN + "/rest/v1/rpc/salvar_linha_orcamentaria_v108",
+      { timeout: F3_S1_UI.timeout });
+    await dialog.getByRole("button", { name: "Salvar rubrica", exact: true }).click();
+    const response = await sent;
+    if (response.status() !== 200) fail("F3_V108_RUBRIC_HTTP");
+    const sentArgs = response.request().postDataJSON();
+    if (sentArgs?.p_id_versao_proposta !== versionId ||
+        sentArgs.p_id_organizacao !== organizationId ||
+        sentArgs.p_grupo !== group || sentArgs.p_rubrica !== rubric) {
+      fail("F3_V108_RUBRIC_COMMAND");
+    }
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V108_RUBRIC_UNCERTAIN");
+    }
+    const listed = page.waitForResponse((r) => {
+      if (r.request().method() !== "GET") return false;
+      const url = new URL(r.url());
+      return url.origin === API_ORIGIN &&
+        url.pathname === "/rest/v1/linhas_orcamentarias" &&
+        url.searchParams.get("id_versao_proposta") === "eq." + versionId;
+    }, { timeout: F3_S1_UI.timeout });
+    await page.reload({ waitUntil: "networkidle" });
+    const snapshot = await listed;
+    if (snapshot.status() !== 200) fail("F3_V108_RUBRIC_READBACK");
+    const rows = await snapshot.json();
+    const matches = Array.isArray(rows) ? rows.filter((row) =>
+      isUuid(row?.id) && row.id_versao_proposta === versionId &&
+      row.grupo === group && row.rubrica === rubric &&
+      row.valor_mensal_previsto === 100,
+    ) : [];
+    if (matches.length !== 1) fail("F3_V108_RUBRIC_READBACK");
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: matches[0].id, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId, rubricId: matches[0].id,
+    });
+  } catch (error) {
+    try { if (book.state(requestId) === "sealed") book.uncertain(requestId); } catch {}
+    throw error;
+  }
+}
+
 /** V108: publicação pela interface com mutação cercada e três readbacks autoritativos. */
 export async function f3S3PublishProposal({
   page,
