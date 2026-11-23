@@ -1463,10 +1463,14 @@ const seal = (book, n, producerOrder, extra = {}) => {
   if (
     !["principal", "prerequisito", "duplicidade"].includes(effectiveKind) ||
     (effectiveKind === "duplicidade") !== (extra.duplicateOf != null)
-  ) return book.seal({ ...args, ...extra });
+  )
+    return book.seal({ ...args, ...extra });
   book.check({
-    op: "seal", requestId, producerOrder,
-    kind: effectiveKind, duplicateOf: extra.duplicateOf ?? null,
+    op: "seal",
+    requestId,
+    producerOrder,
+    kind: effectiveKind,
+    duplicateOf: extra.duplicateOf ?? null,
     ...(extra.action !== undefined ? { action: extra.action } : {}),
   });
   const binds = bindsFor(book, producerOrder, extra.kind ?? "principal", extra.action);
@@ -1510,7 +1514,9 @@ const ensureV108Prerequisites = (book) => {
     { action: "rubrica", id: uuid(89012), requestId: uuid(89112) },
   ]) {
     seal(book, 0, 9, {
-      requestId: stage.requestId, kind: "prerequisito", action: stage.action,
+      requestId: stage.requestId,
+      kind: "prerequisito",
+      action: stage.action,
     });
     book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
   }
@@ -2252,8 +2258,7 @@ test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo
   // passaram a ser materializados. Não ultrapassar o limite para testar o limite.
   const remaining = 40 - first.summary().sent;
   assert.ok(remaining >= 0 && remaining <= 11);
-  for (let i = 0; i < remaining; i++)
-    seal(first, 310 + i, 17, { kind: "prerequisito" });
+  for (let i = 0; i < remaining; i++) seal(first, 310 + i, 17, { kind: "prerequisito" });
   assert.equal(first.summary().sent, 40);
   assert.throws(() => dup(first, 299, 20, uuid(20)), { code: "F3_BUDGET" });
   // Teto de 60: principais rejeitadas e refeitas contam como envio a cada tentativa.
@@ -4265,17 +4270,25 @@ test("F3 B2b2a: fluxos só de produtores mutantes, com fonte que existe no códi
       assert.ok(m, s.source);
       const lines = (await readFile(new URL("../../" + m[1], import.meta.url), "utf8")).split("\n");
       const excerpt = lines.slice(Number(m[2]) - 1, Number(m[3])).join("\n");
-      const signedBucket = s.target === "storage" &&
-        s.name === "contaos-documentos" && excerpt.includes("uploadToSignedUrl");
+      const signedBucket =
+        s.target === "storage" &&
+        s.name === "contaos-documentos" &&
+        excerpt.includes("uploadToSignedUrl");
       assert.ok(excerpt.includes(s.name) || signedBucket, s.name + " em " + s.source);
       for (const k of s.free) {
         const symbol = new RegExp("\\b" + k + "\\b");
         // Os uploads têm o contrato dividido em 3 adaptadores; o símbolo deve
         // existir no arquivo real do produto e a âncora deve cobrir a chamada.
-        const adapterSymbol = ["storage-sign-upload", "contaos-documentos",
-          "confirmar_upload_arquivo", "criar_documento_contrato_completo",
-          "adicionar_versao_documento_contrato", "criar_documento_competencia_v115",
-          "executar_comando_lista_v1"].includes(s.name) && symbol.test(lines.join("\n"));
+        const adapterSymbol =
+          [
+            "storage-sign-upload",
+            "contaos-documentos",
+            "confirmar_upload_arquivo",
+            "criar_documento_contrato_completo",
+            "adicionar_versao_documento_contrato",
+            "criar_documento_competencia_v115",
+            "executar_comando_lista_v1",
+          ].includes(s.name) && symbol.test(lines.join("\n"));
         assert.ok(symbol.test(excerpt) || adapterSymbol || (signedBucket && k === "path"), k);
       }
       assert.ok(Object.isFrozen(s) && Object.isFrozen(s.free));
@@ -5006,10 +5019,13 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
         for (const st of steps) {
           assert.ok(
             source.target.includes(st.name) ||
-            (Number(order) === 11 && st.name === "executar_comando_lista_v1" &&
-              source.target.includes("mesmo RPC")) ||
-            (source.target.includes("UP") &&
-              ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(st.name)),
+              (Number(order) === 11 &&
+                st.name === "executar_comando_lista_v1" &&
+                source.target.includes("mesmo RPC")) ||
+              (source.target.includes("UP") &&
+                ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(
+                  st.name,
+                )),
             "alvo não declarado: " + st.name,
           );
           for (const field of [
@@ -5024,15 +5040,30 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
               field === "p_id_organizacao" && source.target.includes("rpc");
             const uploadInternal =
               source.target.includes("UP") &&
-              ["id_organizacao", "id_contrato", "path", "p_path", "p_nome_original", "p_mime",
-                "p_tamanho", "p_sha256", "p_origem", "p_id_organizacao", "p_id_contrato",
-                "p_id_arquivo"].includes(field);
+              [
+                "id_organizacao",
+                "id_contrato",
+                "path",
+                "p_path",
+                "p_nome_original",
+                "p_mime",
+                "p_tamanho",
+                "p_sha256",
+                "p_origem",
+                "p_id_organizacao",
+                "p_id_contrato",
+                "p_id_arquivo",
+              ].includes(field);
             const v109SharedRpc =
-              Number(order) === 11 && source.target.includes("mesmo RPC") &&
+              Number(order) === 11 &&
+              source.target.includes("mesmo RPC") &&
               field === "p_id_contrato" &&
-              rows.some((r) => r.key === "11 V109, principal" &&
-                r.target.includes("executar_comando_lista_v1") &&
-                r.fields.includes("`p_id_contrato` `inventario`"));
+              rows.some(
+                (r) =>
+                  r.key === "11 V109, principal" &&
+                  r.target.includes("executar_comando_lista_v1") &&
+                  r.fields.includes("`p_id_contrato` `inventario`"),
+              );
             assert.ok(
               explicit || keyInResend || organizationImplicit || uploadInternal || v109SharedRpc,
               field + " ausente em " + extraKey,
@@ -5049,27 +5080,42 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     for (const st of f.principal) {
       assert.ok(
         row.target.includes(st.name) ||
-        (Number(order) === 11 && st.name === "executar_comando_lista_v1" &&
-          row.target.includes("mesmo RPC")) ||
-        (row.target.includes("UP") && ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(st.name)),
+          (Number(order) === 11 &&
+            st.name === "executar_comando_lista_v1" &&
+            row.target.includes("mesmo RPC")) ||
+          (row.target.includes("UP") &&
+            ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(
+              st.name,
+            )),
         st.name + " na linha " + key,
       );
       for (const field of [...st.free, ...Object.keys(st.inventory), ...Object.keys(st.derived)])
         assert.ok(
           row.fields.includes("`" + field + "`") ||
-          (field === "p_chave_idempotencia" &&
-            /chave|gerado_ui|vinculado/.test(row.resend)) ||
-          (row.target.includes("UP") &&
-            ["id_organizacao", "id_contrato", "path", "p_path", "p_nome_original",
-             "p_mime", "p_tamanho", "p_sha256", "p_origem", "p_id_organizacao",
-             "p_id_contrato"].includes(field)),
+            (field === "p_chave_idempotencia" && /chave|gerado_ui|vinculado/.test(row.resend)) ||
+            (row.target.includes("UP") &&
+              [
+                "id_organizacao",
+                "id_contrato",
+                "path",
+                "p_path",
+                "p_nome_original",
+                "p_mime",
+                "p_tamanho",
+                "p_sha256",
+                "p_origem",
+                "p_id_organizacao",
+                "p_id_contrato",
+              ].includes(field)),
           field + " na linha " + key,
         );
       for (const field of Object.keys(st.inventory))
         assert.ok(
           new RegExp("`" + field + "`[^;.]*`inventario`").test(row.fields) ||
-          (row.target.includes("UP") &&
-            ["id_organizacao", "id_contrato", "p_id_organizacao", "p_id_contrato"].includes(field)),
+            (row.target.includes("UP") &&
+              ["id_organizacao", "id_contrato", "p_id_organizacao", "p_id_contrato"].includes(
+                field,
+              )),
           field + " inventario em " + key,
         );
       for (const field of Object.keys(st.derived))
@@ -5081,9 +5127,7 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     declared.push(key);
   }
   // Linhas ainda sem fluxo: lista fechada, por linha, do 2b-2b (variante) e do 2b-2c em diante.
-  const PENDING = [
-    "4 ADM01, variante sem convite",
-  ];
+  const PENDING = ["4 ADM01, variante sem convite"];
   assert.deepEqual(
     rows.map((r) => r.key).filter((k) => !declared.includes(k)),
     PENDING,
@@ -6059,33 +6103,32 @@ test("F3 V108: proposta, UP completo, rubrica e publicação têm cadeias distin
     flow.principal.map((step) => step.name),
     ["publicar_versao_proposta_v108"],
   );
-  assert.deepEqual(
-    Object.keys(flow.prerequisito),
-    ["proposta", "versao", "rubrica"],
-  );
+  assert.deepEqual(Object.keys(flow.prerequisito), ["proposta", "versao", "rubrica"]);
   assert.deepEqual(
     Object.values(flow.prerequisito).map((steps) => steps[0].name),
-    [
-      "salvar_proposta_orcamentaria_v108",
-      "storage-sign-upload",
-      "salvar_linha_orcamentaria_v108",
-    ],
+    ["salvar_proposta_orcamentaria_v108", "storage-sign-upload", "salvar_linha_orcamentaria_v108"],
   );
   assert.deepEqual(flow.principal[0].inventory.p_id_versao, {
     producerOrder: 9,
     action: "versao",
   });
+  assert.deepEqual(flow.prerequisito.versao[3].inventory.p_id_proposta, {
+    producerOrder: 9,
+    action: "proposta",
+  });
   assert.deepEqual(
-    flow.prerequisito.versao[3].inventory.p_id_proposta,
-    { producerOrder: 9, action: "proposta" },
+    flow.prerequisito.versao.map((step) => step.name),
+    [
+      "storage-sign-upload",
+      "contaos-documentos",
+      "confirmar_upload_arquivo",
+      "registrar_versao_proposta_v108",
+    ],
   );
-  assert.deepEqual(flow.prerequisito.versao.map((step) => step.name), [
-    "storage-sign-upload", "contaos-documentos",
-    "confirmar_upload_arquivo", "registrar_versao_proposta_v108",
-  ]);
-  assert.deepEqual(flow.prerequisito.versao.map((step) => step.target), [
-    "edge", "storage", "rpc", "rpc",
-  ]);
+  assert.deepEqual(
+    flow.prerequisito.versao.map((step) => step.target),
+    ["edge", "storage", "rpc", "rpc"],
+  );
   assert.deepEqual(flow.prerequisito.versao[1].pathFields, ["path"]);
   assert.deepEqual(flow.prerequisito.versao[2].pathFields, ["p_path"]);
 });
@@ -6106,9 +6149,10 @@ test("F3 V109: três transições declaradas e vinculadas ao contrato e à lista
 
 test("F3 V117: revisão funcional só arma RPC da competência vinculada à F3", () => {
   const flow = sut.F3_MUTATION_FLOWS[17];
-  assert.deepEqual(flow.principal.map((s) => s.name), [
-    "registrar_revisao_requisito_v117",
-  ]);
+  assert.deepEqual(
+    flow.principal.map((s) => s.name),
+    ["registrar_revisao_requisito_v117"],
+  );
   assert.equal(flow.principal[0].target, "rpc");
   assert.equal(flow.principal[0].inventory.p_id_competencia, 14);
   assert.deepEqual(flow.principal[0].free, ["p_request_id"]);
@@ -6131,11 +6175,12 @@ test("F3 CODE: coletor acionado por caseId e ausência de driver nunca vira PASS
     code: "F3_CODE_CASE_MISMATCH",
   });
   assert.throws(
-    () => sut.bindF3CodeCaseDrivers({
-      catalogue: published,
-      caseDrivers: { "IFV1-F3-C9999": async () => null },
-      caseVerifiers: {},
-    }),
+    () =>
+      sut.bindF3CodeCaseDrivers({
+        catalogue: published,
+        caseDrivers: { "IFV1-F3-C9999": async () => null },
+        caseVerifiers: {},
+      }),
     { code: "F3_CODE_DRIVER_REGISTRY" },
   );
   const report = await sut.collectF3CodeCaseEvidence({
@@ -6171,8 +6216,10 @@ test("F3 V109: criação por RPC e leitura V109 devem apontar para lista e vers�
     id_contrato: contractId,
     request_id: uuid(924105),
     lista: {
-      id: listId, id_organizacao: organizationId,
-      id_contrato: contractId, nome: name,
+      id: listId,
+      id_organizacao: organizationId,
+      id_contrato: contractId,
+      nome: name,
     },
     id_versao: versionId,
   };
@@ -6182,7 +6229,9 @@ test("F3 V109: criação por RPC e leitura V109 devem apontar para lista e vers�
     id_contrato: contractId,
     lista: receipt.lista,
     versao: {
-      id: versionId, id_lista: listId, id_organizacao: organizationId,
+      id: versionId,
+      id_lista: listId,
+      id_organizacao: organizationId,
       id_contrato: contractId,
     },
     total_versoes: 1,
@@ -6217,63 +6266,78 @@ test("F3 UP: V110 V111 V115 V122 exigem quatro passos e bucket homologado", () =
   ]) {
     const flow = sut.F3_MUTATION_FLOWS[order];
     const steps = action ? flow.prerequisito[action] : flow.principal;
-    assert.deepEqual(steps.map((s) => s.name), [
-      "storage-sign-upload", "contaos-documentos",
-      "confirmar_upload_arquivo", rpc,
-    ]);
-    assert.deepEqual(steps.map((s) => s.target), [
-      "edge", "storage", "rpc", "rpc",
-    ]);
+    assert.deepEqual(
+      steps.map((s) => s.name),
+      ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo", rpc],
+    );
+    assert.deepEqual(
+      steps.map((s) => s.target),
+      ["edge", "storage", "rpc", "rpc"],
+    );
     assert.deepEqual(steps[1].pathFields, ["path"]);
     assert.deepEqual(steps[2].pathFields, ["p_path"]);
     assert.ok(steps[3].free.includes("p_id_arquivo"));
   }
-  assert.deepEqual(sut.F3_MUTATION_FLOWS[20].principal.map((s) => s.name), [
-    "registrar_relatorio_historico_hml",
-    "enfileirar_ingestao_historica_hml",
-  ]);
+  assert.deepEqual(
+    sut.F3_MUTATION_FLOWS[20].principal.map((s) => s.name),
+    ["registrar_relatorio_historico_hml", "enfileirar_ingestao_historica_hml"],
+  );
 });
 
 test("F3 UP: sequência Edge→PUT org F3→confirmar→V110 e leitura do slot de path", (t) => {
   const f = fenceWith(t, withContract);
   const path = F3 + "/uploads/" + uuid(974110) + "/evidencia.pdf";
   const sign = {
-    id_organizacao: F3, id_contrato: uuid(107),
-    nome_arquivo: "evidencia.pdf", mime: "application/pdf", tamanho: 12,
+    id_organizacao: F3,
+    id_contrato: uuid(107),
+    nome_arquivo: "evidencia.pdf",
+    mime: "application/pdf",
+    tamanho: 12,
   };
   const confirmation = {
-    p_id_organizacao: F3, p_id_contrato: uuid(107),
+    p_id_organizacao: F3,
+    p_id_contrato: uuid(107),
     p_path: sut.f3Slot("path", "f3_upload_path"),
-    p_nome_original: "evidencia.pdf", p_mime: "application/pdf", p_tamanho: 12,
-    p_sha256: "a".repeat(64), p_origem: "upload_usuario",
+    p_nome_original: "evidencia.pdf",
+    p_mime: "application/pdf",
+    p_tamanho: 12,
+    p_sha256: "a".repeat(64),
+    p_origem: "upload_usuario",
   };
   const business = {
-    p_id_contrato: uuid(107), p_tipo: "outro", p_titulo: "Evidencia F3",
-    p_categoria: "hml", p_vigencia_inicio: null, p_vigencia_fim: null,
-    p_observacoes: null, p_id_arquivo: sut.f3Slot("uuid", "f3_file"),
+    p_id_contrato: uuid(107),
+    p_tipo: "outro",
+    p_titulo: "Evidencia F3",
+    p_categoria: "hml",
+    p_vigencia_inicio: null,
+    p_vigencia_fim: null,
+    p_observacoes: null,
+    p_id_arquivo: sut.f3Slot("uuid", "f3_file"),
     p_chave_idempotencia: sut.f3Slot("uuid", "f3_document_key"),
   };
   const intent = f.fence.arm({
     producerOrder: 12,
-    bodies: [
-      sign,
-      { path: sut.f3Slot("path", "f3_upload_path") },
-      confirmation,
-      business,
-    ],
+    bodies: [sign, { path: sut.f3Slot("path", "f3_upload_path") }, confirmation, business],
   });
   const requests = [
     req({ url: API + "/functions/v1/storage-sign-upload", postData: JSON.stringify(sign) }),
     req({
       url: API + "/storage/v1/object/upload/sign/contaos-documentos/" + path + "?token=test",
-      method: "PUT", postData: "%PDF test",
+      method: "PUT",
+      postData: "%PDF test",
     }),
-    req({ url: RPC("confirmar_upload_arquivo"),
-      postData: JSON.stringify({ ...confirmation, p_path: path }) }),
-    req({ url: RPC("criar_documento_contrato_completo"),
+    req({
+      url: RPC("confirmar_upload_arquivo"),
+      postData: JSON.stringify({ ...confirmation, p_path: path }),
+    }),
+    req({
+      url: RPC("criar_documento_contrato_completo"),
       postData: JSON.stringify({
-        ...business, p_id_arquivo: uuid(974111), p_chave_idempotencia: uuid(974112),
-      }) }),
+        ...business,
+        p_id_arquivo: uuid(974111),
+        p_chave_idempotencia: uuid(974112),
+      }),
+    }),
   ];
   for (const request of requests) {
     assert.equal(f.fence.policy(request), true, request.url);
@@ -6290,65 +6354,109 @@ test("F3 UP: sequência Edge→PUT org F3→confirmar→V110 e leitura do slot d
 test("F3 UP: um path de outra organização nunca atravessa a cerca", (t) => {
   const f = fenceWith(t, withContract);
   const sign = {
-    id_organizacao: F3, id_contrato: uuid(107),
-    nome_arquivo: "evidencia.pdf", mime: "application/pdf", tamanho: 12,
+    id_organizacao: F3,
+    id_contrato: uuid(107),
+    nome_arquivo: "evidencia.pdf",
+    mime: "application/pdf",
+    tamanho: 12,
   };
   const business = {
-    p_id_contrato: uuid(107), p_tipo: "outro", p_titulo: "Evidencia F3",
-    p_categoria: "hml", p_vigencia_inicio: null, p_vigencia_fim: null,
-    p_observacoes: null, p_id_arquivo: sut.f3Slot("uuid", "negative_file"),
+    p_id_contrato: uuid(107),
+    p_tipo: "outro",
+    p_titulo: "Evidencia F3",
+    p_categoria: "hml",
+    p_vigencia_inicio: null,
+    p_vigencia_fim: null,
+    p_observacoes: null,
+    p_id_arquivo: sut.f3Slot("uuid", "negative_file"),
     p_chave_idempotencia: sut.f3Slot("uuid", "negative_key"),
   };
   f.fence.arm({
     producerOrder: 12,
-    bodies: [sign, { path: sut.f3Slot("path", "negative_path") }, {
-      p_id_organizacao: F3, p_id_contrato: uuid(107),
-      p_path: sut.f3Slot("path", "negative_path"), p_nome_original: "evidencia.pdf",
-      p_mime: "application/pdf", p_tamanho: 12, p_sha256: "a".repeat(64),
-      p_origem: "upload_usuario",
-    }, business],
+    bodies: [
+      sign,
+      { path: sut.f3Slot("path", "negative_path") },
+      {
+        p_id_organizacao: F3,
+        p_id_contrato: uuid(107),
+        p_path: sut.f3Slot("path", "negative_path"),
+        p_nome_original: "evidencia.pdf",
+        p_mime: "application/pdf",
+        p_tamanho: 12,
+        p_sha256: "a".repeat(64),
+        p_origem: "upload_usuario",
+      },
+      business,
+    ],
   });
   const signed = req({
-    url: API + "/functions/v1/storage-sign-upload", postData: JSON.stringify(sign),
+    url: API + "/functions/v1/storage-sign-upload",
+    postData: JSON.stringify(sign),
   });
   assert.equal(f.fence.policy(signed), true);
   assert.equal(f.fence.policy(respond(signed)), true);
   const foreign = req({
-    method: "PUT", postData: "%PDF test",
-    url: API + "/storage/v1/object/upload/sign/contaos-documentos/" +
-      uuid(999998) + "/uploads/" + uuid(974111) + "/evidencia.pdf?token=test",
+    method: "PUT",
+    postData: "%PDF test",
+    url:
+      API +
+      "/storage/v1/object/upload/sign/contaos-documentos/" +
+      uuid(999998) +
+      "/uploads/" +
+      uuid(974111) +
+      "/evidencia.pdf?token=test",
   });
   assert.equal(f.fence.policy(foreign), false);
   assert.equal(f.book.frozen(), true);
 });
 
 test("F3 V109: snapshots, item e publicação cruzam lista, versão e fonte, com negativos", () => {
-  const org = uuid(931101), contract = uuid(931102), list = uuid(931103);
-  const version = uuid(931104), source = uuid(931105), item = uuid(931106);
+  const org = uuid(931101),
+    contract = uuid(931102),
+    list = uuid(931103);
+  const version = uuid(931104),
+    source = uuid(931105),
+    item = uuid(931106);
   const code = "F3-001";
   const before = {
     schema_versao: "crud-lista-v1",
-    id_organizacao: org, id_contrato: contract,
+    id_organizacao: org,
+    id_contrato: contract,
     lista: { id: list, id_organizacao: org, id_contrato: contract, versao_registro: 1 },
     versao: {
-      id: version, id_lista: list, id_organizacao: org,
-      id_contrato: contract, situacao: "rascunho",
+      id: version,
+      id_lista: list,
+      id_organizacao: org,
+      id_contrato: contract,
+      situacao: "rascunho",
     },
     itens: [],
   };
   const afterItem = {
     ...before,
     lista: { ...before.lista, versao_registro: 2 },
-    itens: [{
-      id: item, codigo: code, id_fonte_versao: source,
-      obrigatorio: true, aplicavel: true,
-      regra_validacao: { documento: { obrigatorio: true } },
-    }],
+    itens: [
+      {
+        id: item,
+        codigo: code,
+        id_fonte_versao: source,
+        obrigatorio: true,
+        aplicavel: true,
+        regra_validacao: { documento: { obrigatorio: true } },
+      },
+    ],
   };
   const context = { organizationId: org, contractId: contract, listId: list, versionId: version };
-  assert.equal(sut.assertF3S3ListItemReadback({
-    before, after: afterItem, ...context, sourceVersionId: source, code,
-  }), item);
+  assert.equal(
+    sut.assertF3S3ListItemReadback({
+      before,
+      after: afterItem,
+      ...context,
+      sourceVersionId: source,
+      code,
+    }),
+    item,
+  );
   for (const changed of [
     { after: { ...afterItem, itens: [] } },
     { after: { ...afterItem, itens: [{ ...afterItem.itens[0], id_fonte_versao: uuid(931107) }] } },
@@ -6356,36 +6464,57 @@ test("F3 V109: snapshots, item e publicação cruzam lista, versão e fonte, com
     { after: { ...afterItem, itens: [{ ...afterItem.itens[0], aplicavel: false }] } },
     { listId: uuid(931108) },
   ]) {
-    assert.throws(() => sut.assertF3S3ListItemReadback({
-      before, after: afterItem, ...context, sourceVersionId: source, code, ...changed,
-    }));
+    assert.throws(() =>
+      sut.assertF3S3ListItemReadback({
+        before,
+        after: afterItem,
+        ...context,
+        sourceVersionId: source,
+        code,
+        ...changed,
+      }),
+    );
   }
   const published = {
     ...afterItem,
     lista: { ...afterItem.lista, versao_registro: 3 },
     versao: { ...afterItem.versao, situacao: "publicada" },
   };
-  assert.equal(sut.assertF3S3ListPublicationReadback({
-    before: afterItem, after: published, ...context,
-  }), version);
+  assert.equal(
+    sut.assertF3S3ListPublicationReadback({
+      before: afterItem,
+      after: published,
+      ...context,
+    }),
+    version,
+  );
   for (const changed of [
     { after: { ...published, versao: before.versao } },
     { after: { ...published, itens: [] } },
     { before: published },
   ]) {
-    assert.throws(() => sut.assertF3S3ListPublicationReadback({
-      before: afterItem, after: published, ...context, ...changed,
-    }));
+    assert.throws(() =>
+      sut.assertF3S3ListPublicationReadback({
+        before: afterItem,
+        after: published,
+        ...context,
+        ...changed,
+      }),
+    );
   }
 });
 
 test("F3 CODE: despacho das 138 relações usa 20 produtores uma vez e 276 leituras com contraditório", async () => {
   // Estes são doubles de CODE para testar o mecanismo. Nunca são evidências HML LIVE.
-  const coverage = JSON.parse(await readFile(
-    new URL("../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json",
-      import.meta.url),
-    "utf8",
-  ));
+  const coverage = JSON.parse(
+    await readFile(
+      new URL(
+        "../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   const cases = published.cases;
   const producerDrivers = Object.create(null);
   const consumerDrivers = Object.create(null);
@@ -6404,10 +6533,15 @@ test("F3 CODE: despacho das 138 relações usa 20 produtores uma vez e 276 leitu
     consumerDrivers[c.consumer] ??= async ({ case: current, producer }) => {
       interactions.positive++;
       return {
-        state: "EXECUTED", assertion: "PASS", caseId: current.caseId,
-        consumer: current.consumer, producerOrder: current.producerOrder,
-        kind: "positive", testId: "CODE:" + current.caseId + ":positive",
-        producerEntityId: producer.producerEntityId, organizationId: F3,
+        state: "EXECUTED",
+        assertion: "PASS",
+        caseId: current.caseId,
+        consumer: current.consumer,
+        producerOrder: current.producerOrder,
+        kind: "positive",
+        testId: "CODE:" + current.caseId + ":positive",
+        producerEntityId: producer.producerEntityId,
+        organizationId: F3,
         network: { method: "POST", status: 200 },
         readback: { matched: true },
       };
@@ -6415,10 +6549,15 @@ test("F3 CODE: despacho das 138 relações usa 20 produtores uma vez e 276 leitu
     negativeDrivers[c.consumer] ??= async ({ case: current, producer }) => {
       interactions.negative++;
       return {
-        state: "EXECUTED", assertion: "PASS", caseId: current.caseId,
-        consumer: current.consumer, producerOrder: current.producerOrder,
-        kind: "negative", testId: "CODE:" + current.caseId + ":negative",
-        producerEntityId: producer.producerEntityId, organizationId: F3,
+        state: "EXECUTED",
+        assertion: "PASS",
+        caseId: current.caseId,
+        consumer: current.consumer,
+        producerOrder: current.producerOrder,
+        kind: "negative",
+        testId: "CODE:" + current.caseId + ":negative",
+        producerEntityId: producer.producerEntityId,
+        organizationId: F3,
         network: { method: "POST", status: 403 },
         readback: { outcome: "DENY" },
       };
@@ -6432,9 +6571,11 @@ test("F3 CODE: despacho das 138 relações usa 20 produtores uma vez e 276 leitu
     negativeDrivers,
     independentVerifier: async (c, data) => {
       interactions.independent++;
-      return data.positive.caseId === c.caseId &&
+      return (
+        data.positive.caseId === c.caseId &&
         data.negative.caseId === c.caseId &&
-        data.positive.producerEntityId === data.negative.producerEntityId;
+        data.positive.producerEntityId === data.negative.producerEntityId
+      );
     },
   });
   assert.equal(registry.coveredCaseIds.length, 138);
@@ -6457,10 +6598,14 @@ test("F3 CODE: despacho das 138 relações usa 20 produtores uma vez e 276 leitu
   });
   assert.deepEqual([...producers.values()].sort(), Array(20).fill(1));
   assert.deepEqual(interactions, {
-    positive: 138, negative: 138, independent: 138,
+    positive: 138,
+    negative: 138,
+    independent: 138,
   });
   assert.deepEqual(report.counts, {
-    submittedUnverified: 138, blocked: 0, failed: 0,
+    submittedUnverified: 138,
+    blocked: 0,
+    failed: 0,
   });
   assert.equal(report.state, "UNREVIEWED_NOT_CERTIFIED");
   assert.ok(report.entries.every((e) => e.status === "SUBMITTED_UNVERIFIED"));
@@ -6468,20 +6613,27 @@ test("F3 CODE: despacho das 138 relações usa 20 produtores uma vez e 276 leitu
 });
 
 test("F3 CODE: nenhum consumidor ausente ou observação adulterada pode receber recibo", async () => {
-  const coverage = JSON.parse(await readFile(
-    new URL("../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json",
-      import.meta.url),
-    "utf8",
-  ));
+  const coverage = JSON.parse(
+    await readFile(
+      new URL(
+        "../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   const case0 = published.cases[0];
   const key = case0.consumer;
   const registry = sut.createF3CodeCaseRuntime({
-    catalogue: published, coverage,
-    producerDrivers: { [case0.producerOrder]: async () => ({
-      state: "UI_OBSERVED_NOT_CERTIFIED",
-      producerEntityId: uuid(950999),
-      organizationId: F3,
-    }) },
+    catalogue: published,
+    coverage,
+    producerDrivers: {
+      [case0.producerOrder]: async () => ({
+        state: "UI_OBSERVED_NOT_CERTIFIED",
+        producerEntityId: uuid(950999),
+        organizationId: F3,
+      }),
+    },
     consumerDrivers: {
       [key]: async () => ({ caseId: "IFV1-F3-C9999", state: "EXECUTED" }),
     },
