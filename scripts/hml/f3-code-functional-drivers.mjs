@@ -15,6 +15,8 @@ const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const CASE_0036 = "IFV1-F3-C0036";
 const CASE_0037 = "IFV1-F3-C0037";
 const CASE_0041 = "IFV1-F3-C0041";
+const CASE_0043 = "IFV1-F3-C0043";
+let c0043Run = null;
 const ORG_0041 = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const CONSUMER_0041 = "consultar_permissoes_efetivas";
 let c0041Run = null;
@@ -166,6 +168,52 @@ async function runCase0041() {
   return c0041Run;
 }
 
+async function runCase0043() {
+  if (!c0043Run) {
+    c0043Run = (async () => {
+      const dir = await mkdtemp(join(tmpdir(), "contaos-f3-c0043-"));
+      const evidenceFile = join(dir, "observations.json");
+      try {
+        await exec(
+          "bunx",
+          ["vitest", "run", "src/test/f3-code-case-0043.test.tsx", "--reporter=dot"],
+          {
+            cwd: ROOT,
+            env: { ...process.env, F3_CODE_C0043_OBSERVATIONS: evidenceFile },
+            timeout: 60000,
+            maxBuffer: 1024 * 1024,
+          },
+        );
+        const parsed = JSON.parse(await readFile(evidenceFile, "utf8"));
+        if (
+          !Array.isArray(parsed) ||
+          parsed.length !== 2 ||
+          parsed[0]?.caseId !== CASE_0043 ||
+          parsed[1]?.caseId !== CASE_0043 ||
+          parsed[0].kind !== "positive" ||
+          parsed[1].kind !== "negative" ||
+          parsed.some((event) =>
+            event.consumer !== CONSUMER_0037 ||
+            event.producerOrder !== 3 ||
+            event.organizationId !== ORG_0041 ||
+            event.producerEntityId !== ORG_0041 ||
+            event.state !== "EXECUTED" ||
+            event.assertion !== "PASS",
+          )
+        ) {
+          throw Object.assign(new Error("F3_C0043_BAD_TEST_OUTPUT"), {
+            code: "F3_C0043_BAD_TEST_OUTPUT",
+          });
+        }
+        return Object.freeze(parsed.map((event) => Object.freeze(event)));
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+    })();
+  }
+  return c0043Run;
+}
+
 export const producerDrivers = Object.freeze({
   1: async (c) => {
     if (![CASE_0036, CASE_0037].includes(c.caseId)) {
@@ -181,7 +229,7 @@ export const producerDrivers = Object.freeze({
     });
   },
   3: async (c) => {
-    if (c.caseId !== CASE_0041) {
+    if (![CASE_0041, CASE_0043].includes(c.caseId)) {
       throw Object.assign(new Error("F3_DRIVER_CASE_NOT_IMPLEMENTED"), {
         code: "F3_DRIVER_CASE_NOT_IMPLEMENTED",
       });
@@ -206,12 +254,12 @@ export const consumerDrivers = Object.freeze({
     return structuredClone(positive);
   },
   [CONSUMER_0037]: async ({ case: c }) => {
-    if (c.caseId !== CASE_0037) {
+    if (![CASE_0037, CASE_0043].includes(c.caseId)) {
       throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"), {
         code: "F3_CONSUMER_CASE_NOT_IMPLEMENTED",
       });
     }
-    const [positive] = await runCase0037();
+    const [positive] = c.caseId === CASE_0043 ? await runCase0043() : await runCase0037();
     return structuredClone(positive);
   },
   [CONSUMER_0041]: async ({ case: c }) => {
@@ -236,12 +284,12 @@ export const negativeDrivers = Object.freeze({
     return structuredClone(negative);
   },
   [CONSUMER_0037]: async ({ case: c }) => {
-    if (c.caseId !== CASE_0037) {
+    if (![CASE_0037, CASE_0043].includes(c.caseId)) {
       throw Object.assign(new Error("F3_NEGATIVE_CASE_NOT_IMPLEMENTED"), {
         code: "F3_NEGATIVE_CASE_NOT_IMPLEMENTED",
       });
     }
-    const [, negative] = await runCase0037();
+    const [, negative] = c.caseId === CASE_0043 ? await runCase0043() : await runCase0037();
     return structuredClone(negative);
   },
   [CONSUMER_0041]: async ({ case: c }) => {
@@ -257,6 +305,31 @@ export const negativeDrivers = Object.freeze({
 
 /** Contraditório estrutural interno. Não constitui auditoria independente final. */
 export async function independentVerifier(c, observed) {
+  if (c.caseId === CASE_0043) {
+    const { producer, positive, negative } = observed;
+    return (
+      c.origin === "SYS04" &&
+      c.destination === "SYS05" &&
+      c.consumer === CONSUMER_0037 &&
+      c.expected?.master === "ALLOW" &&
+      c.expected?.leitor === "ALLOW" &&
+      producer?.producerEntityId === ORG_0041 &&
+      producer.organizationId === ORG_0041 &&
+      positive.testId === "src/test/f3-code-case-0043.test.tsx:positive" &&
+      negative.testId === "src/test/f3-code-case-0043.test.tsx:negative" &&
+      positive.network?.rpc === CONSUMER_0037 &&
+      negative.network?.rpc === CONSUMER_0037 &&
+      positive.network?.fixture === true &&
+      negative.network?.fixture === true &&
+      positive.readback?.organizationId === ORG_0041 &&
+      positive.readback?.preferenceMatched === true &&
+      positive.readback?.contractsVisible === 3 &&
+      negative.network?.status === 403 &&
+      negative.readback?.outcome === "DENY" &&
+      negative.readback?.preferenceNotAuthorization === true &&
+      negative.readback?.noPrivateData === true
+    );
+  }
   if (c.caseId === CASE_0041) {
     const { producer, positive, negative } = observed;
     return (
