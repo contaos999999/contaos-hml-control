@@ -499,7 +499,7 @@ const ACCESS = Object.freeze(["ALLOW", "DENY"]);
 const OBSERVED = Object.freeze(["ALLOW", "DENY", "ERROR", null]);
 const POSITIVE = Object.freeze(["PASS", "FAIL", "NOT_RUN"]);
 const NEGATIVE = Object.freeze(["NEGADO", "VAZAMENTO", "SEM_ENTIDADE", "NOT_RUN"]);
-const DUPLICATE = Object.freeze(["REJECTED", "DUPLICATE_NOT_DEFINED", "ACCEPTED", "NOT_RUN"]);
+const DUPLICATE = Object.freeze(["REJECTED", "DUPLICATE_NOT_DEFINED", "IDEMPOTENT_REPLAY", "ACCEPTED", "NOT_RUN"]);
 const APPLICABILITY = Object.freeze(["APLICAVEL", "N_A_JUSTIFICADO"]);
 const PROVENANCE_KEYS = Object.freeze([
   "frontendSha",
@@ -544,7 +544,7 @@ export function validateF3DuplicatePolicy(policy) {
     }
     if (v === null) continue;
     strictPlain(v, ["result", "source"], code);
-    if (!["REJECTED", "DUPLICATE_NOT_DEFINED"].includes(v.result)) fail(code);
+    if (!["REJECTED", "DUPLICATE_NOT_DEFINED", "IDEMPOTENT_REPLAY"].includes(v.result)) fail(code);
     if (typeof v.source !== "string" || !/^src\/[A-Za-z0-9_./-]+:[0-9]+-[0-9]+$/.test(v.source))
       fail(code);
   }
@@ -2425,7 +2425,8 @@ function crossCheck(report, requests, created) {
     if (of.length !== duplicates.length) fail(code);
     const accepted = of.some((d) => d.outcome === "confirmed"),
       rejected = of.some((d) => d.outcome === "rejected");
-    const expected = accepted ? "ACCEPTED" : rejected ? "REJECTED" : of.length ? "NOT_RUN" : null;
+    const replay = of.some((d) => d.outcome === "replayed");
+    const expected = accepted ? "ACCEPTED" : replay ? "IDEMPOTENT_REPLAY" : rejected ? "REJECTED" : of.length ? "NOT_RUN" : null;
     if (expected === null) {
       if (!["NOT_RUN", "DUPLICATE_NOT_DEFINED"].includes(head.duplicate)) fail(code);
     } else if (head.duplicate !== expected) fail(code);
