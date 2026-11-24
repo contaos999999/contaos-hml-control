@@ -2971,7 +2971,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) ===
         inventory,worklist,sentenceInventory:sentences,reverseCoverage:reverse});
       const dossier=assembleSemanticContradictionDossier(triage);
       const manifest=writeSemanticDossierJsonl(dossier,dest,{
-        head:git("rev-parse","HEAD"),base});
+        head:(()=>{const checkout=git("rev-parse","HEAD");const declared=process.env.INPUT_PREAUDIT_HEAD;if(!declared)return checkout;if(!validSha(declared))throw Error("SEMANTIC_DOSSIER_DECLARED_HEAD_INVALID");if(checkout!==declared){const parents=git("rev-list","--parents","-n","1",checkout).split(/\\s+/);if(parents.length!==3||parents[2]!==declared)throw Error("SEMANTIC_DOSSIER_HEAD_CHECKOUT_MISMATCH");}return declared;})(),base});
       console.log(JSON.stringify(manifest));
       // Export succeeded as worklist, NOT semantic certification.
     }catch(e){console.error("SEMANTIC_DOSSIER_EXPORT_FAIL: "+e.message);
