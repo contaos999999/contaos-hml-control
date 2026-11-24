@@ -432,9 +432,9 @@ export const F3_E87_COUNTER_SCREENS = Object.freeze(["V101", "V104", "V112", "V1
 // Equivalências de harness revisadas para preservar PASS do ledger (plano mestre 16.3). Cada
 // item {from, to, reviewId} entra só por PR revisada. Vazio: só o mesmo harness preserva.
 export const F3_HARNESS_EQUIVALENCES = Object.freeze([]);
-// Política de duplicidade por produtor (PLAN 4.3). null = ainda sem fonte no código: nenhum caso
-// do produtor fecha PASS. O BUILD-2b-2 preenche cada produtor mutante com REJECTED ou
-// DUPLICATE_NOT_DEFINED e a fonte no código do produto, por PR revisada.
+// Política de duplicidade por produtor (PLAN 4.3). null = sem prova de contrato:
+// nenhum caso fecha PASS. IDEMPOTENT_REPLAY exige ledger com evento replay e binds
+// iguais à intenção original; ACCEPTED continua sendo falha. Fontes são do frontend.
 const NO_MUTATION_POLICY = Object.freeze({
   result: "DUPLICATE_NOT_DEFINED",
   source: "PLAN 7.2: produtor sem mutação",
@@ -464,7 +464,29 @@ export const F3_DUPLICATE_POLICY = Object.freeze(
                     ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/competencias/competenciaAnaliseDados.ts:188-200" })
                     : p.order === 18
                       ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/competencias/parecerInternoDados.ts:150-166" })
-                      : null
+                      : p.order === 4
+                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/administracao/admUsuariosRpc.ts:183-230" })
+                  : p.order === 8
+                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/cadastros/cadastroOperacionalDados.ts:195-232" })
+                  : p.order === 9
+                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/components/contratos/OrcamentoContrato.tsx:1500-1513" })
+                  : p.order === 10
+                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/components/contratos/BaseNormativaContrato.tsx:1465-1472" })
+                  : p.order === 11
+                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/contratos/listaOperacionalDados.ts:276-317" })
+                  : p.order === 12
+                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/contratos/documentosDados.ts:755-774" })
+                  : p.order === 13
+                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/contratos/documentosDados.ts:776-791" })
+                  : p.order === 15
+                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/competencias/competenciaDocumentosDados.ts:299-317" })
+                  : p.order === 17
+                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/competencias/revisaoRequisitoDados.ts:112-177" })
+                  : p.order === 19
+                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/competencias/apresentacaoDados.ts:88-104" })
+                  : p.order === 20
+                    ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/contratos/ingestaoHistoricoDados.ts:72-90" })
+                  : null
         : NO_MUTATION_POLICY,
     ]),
   ),
