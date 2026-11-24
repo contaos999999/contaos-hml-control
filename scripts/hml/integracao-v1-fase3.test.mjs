@@ -2120,7 +2120,11 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   assert.equal(sut.F3_DUPLICATE_POLICY["2"].source, "src/lib/organizacao/criarOrganizacaoDados.ts:25-65");
   assert.equal(sut.F3_DUPLICATE_POLICY["6"].result, "DUPLICATE_NOT_DEFINED");
   assert.equal(sut.F3_DUPLICATE_POLICY["6"].source, "src/lib/contratantes/editarContratanteDados.ts:93-125");
-  assert.ok(MUT.filter((o) => o !== 2 && o !== 6).every((o) => sut.F3_DUPLICATE_POLICY[String(o)] === null));
+  for (const [order, source] of [[5, "src/lib/contratantes/novoContratanteDados.ts:127-148"], [7, "src/lib/contratos/novoContratoDados.ts:107-129"], [14, "src/lib/contratos/novaCompetenciaDados.ts:65-75"]]) {
+    assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].result, "DUPLICATE_NOT_DEFINED");
+    assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].source, source);
+  }
+  assert.ok(MUT.filter((o) => ![2, 5, 6, 7, 14].includes(o)).every((o) => sut.F3_DUPLICATE_POLICY[String(o)] === null));
   rejects(completeReport((r) => forProducer(r, 15, (c) => (c.duplicate = "REJECTED"))));
   rejects(
     completeReport((r) => (r.cases.find((c) => c.producerOrder === 5).duplicate = "NOT_RUN")),
