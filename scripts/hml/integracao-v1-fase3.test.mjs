@@ -2117,14 +2117,27 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   assert.equal(sut.validateF3Report(pendingPolicy, catalogue, NP), true);
   assert.equal(sut.f3Gate(pendingPolicy, catalogue, NP), "FAIL");
   assert.equal(sut.F3_DUPLICATE_POLICY["2"].result, "DUPLICATE_NOT_DEFINED");
-  assert.equal(sut.F3_DUPLICATE_POLICY["2"].source, "src/lib/organizacao/criarOrganizacaoDados.ts:25-65");
+  assert.equal(
+    sut.F3_DUPLICATE_POLICY["2"].source,
+    "src/lib/organizacao/criarOrganizacaoDados.ts:25-65",
+  );
   assert.equal(sut.F3_DUPLICATE_POLICY["6"].result, "DUPLICATE_NOT_DEFINED");
-  assert.equal(sut.F3_DUPLICATE_POLICY["6"].source, "src/lib/contratantes/editarContratanteDados.ts:93-125");
-  for (const [order, source] of [[5, "src/lib/contratantes/novoContratanteDados.ts:127-148"], [7, "src/lib/contratos/novoContratoDados.ts:107-129"], [14, "src/lib/contratos/novaCompetenciaDados.ts:65-75"]]) {
+  assert.equal(
+    sut.F3_DUPLICATE_POLICY["6"].source,
+    "src/lib/contratantes/editarContratanteDados.ts:93-125",
+  );
+  for (const [order, source] of [
+    [5, "src/lib/contratantes/novoContratanteDados.ts:127-148"],
+    [7, "src/lib/contratos/novoContratoDados.ts:107-129"],
+    [14, "src/lib/contratos/novaCompetenciaDados.ts:65-75"],
+  ]) {
     assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].result, "DUPLICATE_NOT_DEFINED");
     assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].source, source);
   }
-  for (const [order, source] of [[16, "src/lib/competencias/competenciaAnaliseDados.ts:188-200"], [18, "src/lib/competencias/parecerInternoDados.ts:150-166"]]) {
+  for (const [order, source] of [
+    [16, "src/lib/competencias/competenciaAnaliseDados.ts:188-200"],
+    [18, "src/lib/competencias/parecerInternoDados.ts:150-166"],
+  ]) {
     assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].result, "DUPLICATE_NOT_DEFINED");
     assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].source, source);
   }
@@ -6662,29 +6675,60 @@ test("F3 CODE: nenhum consumidor ausente ou observação adulterada pode receber
   await assert.equal(await registry.caseVerifiers[case0.caseId](case0, []), false);
 });
 
-
 test("F3 replay: política reconhece resposta idempotente sem classificá-la como nova mutação", () => {
-  const policy = { ...sut.F3_DUPLICATE_POLICY, "19": { result: "IDEMPOTENT_REPLAY", source: "src/lib/competencias/apresentacaoDados.ts:1-20" } };
+  const policy = {
+    ...sut.F3_DUPLICATE_POLICY,
+    "19": {
+      result: "IDEMPOTENT_REPLAY",
+      source: "src/lib/competencias/apresentacaoDados.ts:1-20",
+    },
+  };
   assert.equal(sut.validateF3DuplicatePolicy(policy), true);
-  assert.throws(() => sut.validateF3DuplicatePolicy({ ...policy, "19": { result: "ACCEPTED", source: "src/lib/competencias/apresentacaoDados.ts:1-20" } }), { code: "F3_DUPLICATE_POLICY" });
+  assert.throws(
+    () =>
+      sut.validateF3DuplicatePolicy({
+        ...policy,
+        "19": {
+          result: "ACCEPTED",
+          source: "src/lib/competencias/apresentacaoDados.ts:1-20",
+        },
+      }),
+    { code: "F3_DUPLICATE_POLICY" },
+  );
 });
-
 
 test("F3 replay: executor exige igualdade integral de binds e não materializa segunda entidade", async () => {
   const source = await readFile(new URL("./integracao-v1-fase3.mjs", import.meta.url), "utf8");
   assert.match(source, /JSON\.stringify\(i\.binds\) !== JSON\.stringify\(original\.binds\)/);
   assert.match(source, /fail\("F3_INTENT_REPLAY_BIND"\)/);
-  const replayBranch = source.slice(source.indexOf('else if (e.op === "replay")'), source.indexOf('else if (e.op === "absent")'));
+  const replayBranch = source.slice(
+    source.indexOf('else if (e.op === "replay")'),
+    source.indexOf('else if (e.op === "absent")'),
+  );
   assert.ok(replayBranch.includes('i.state = "replayed"'));
   assert.ok(!replayBranch.includes("recordEntity("));
 });
 
-
 test("F3: os onze produtores têm política explícita, fonte e replay distinto de ACCEPTED", () => {
-  const sources = new Map([[4,"src/lib/administracao/admUsuariosRpc.ts:183-230"],[8,"src/lib/cadastros/cadastroOperacionalDados.ts:195-232"],[9,"src/components/contratos/OrcamentoContrato.tsx:1500-1513"],[10,"src/components/contratos/BaseNormativaContrato.tsx:1465-1472"],[11,"src/lib/contratos/listaOperacionalDados.ts:276-317"],[12,"src/lib/contratos/documentosDados.ts:755-774"],[13,"src/lib/contratos/documentosDados.ts:776-791"],[15,"src/lib/competencias/competenciaDocumentosDados.ts:299-317"],[17,"src/lib/competencias/revisaoRequisitoDados.ts:112-177"],[19,"src/lib/competencias/apresentacaoDados.ts:88-104"],[20,"src/lib/contratos/ingestaoHistoricoDados.ts:72-90"]]);
+  const sources = new Map([
+    [4, "src/lib/administracao/admUsuariosRpc.ts:183-230"],
+    [8, "src/lib/cadastros/cadastroOperacionalDados.ts:195-232"],
+    [9, "src/components/contratos/OrcamentoContrato.tsx:1500-1513"],
+    [10, "src/components/contratos/BaseNormativaContrato.tsx:1465-1472"],
+    [11, "src/lib/contratos/listaOperacionalDados.ts:276-317"],
+    [12, "src/lib/contratos/documentosDados.ts:755-774"],
+    [13, "src/lib/contratos/documentosDados.ts:776-791"],
+    [15, "src/lib/competencias/competenciaDocumentosDados.ts:299-317"],
+    [17, "src/lib/competencias/revisaoRequisitoDados.ts:112-177"],
+    [19, "src/lib/competencias/apresentacaoDados.ts:88-104"],
+    [20, "src/lib/contratos/ingestaoHistoricoDados.ts:72-90"],
+  ]);
   for (const [order, source] of sources) {
     assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].source, source);
-    assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].result, order === 20 ? "DUPLICATE_NOT_DEFINED" : "IDEMPOTENT_REPLAY");
+    assert.equal(
+      sut.F3_DUPLICATE_POLICY[String(order)].result,
+      order === 20 ? "DUPLICATE_NOT_DEFINED" : "IDEMPOTENT_REPLAY",
+    );
   }
   assert.equal(sut.validateF3DuplicatePolicy(sut.F3_DUPLICATE_POLICY), true);
 });
