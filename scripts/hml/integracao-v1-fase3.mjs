@@ -553,7 +553,13 @@ const ACCESS = Object.freeze(["ALLOW", "DENY"]);
 const OBSERVED = Object.freeze(["ALLOW", "DENY", "ERROR", null]);
 const POSITIVE = Object.freeze(["PASS", "FAIL", "NOT_RUN"]);
 const NEGATIVE = Object.freeze(["NEGADO", "VAZAMENTO", "SEM_ENTIDADE", "NOT_RUN"]);
-const DUPLICATE = Object.freeze(["REJECTED", "DUPLICATE_NOT_DEFINED", "IDEMPOTENT_REPLAY", "ACCEPTED", "NOT_RUN"]);
+const DUPLICATE = Object.freeze([
+  "REJECTED",
+  "DUPLICATE_NOT_DEFINED",
+  "IDEMPOTENT_REPLAY",
+  "ACCEPTED",
+  "NOT_RUN",
+]);
 const APPLICABILITY = Object.freeze(["APLICAVEL", "N_A_JUSTIFICADO"]);
 const PROVENANCE_KEYS = Object.freeze([
   "frontendSha",
@@ -1103,11 +1109,14 @@ function applyEvent(st, run, e) {
     if (original?.state !== "confirmed" || !original.entityId) fail("F3_INTENT_REPLAY");
     // A prova de replay exige o mesmo corpo, chave e referências da intenção original.
     // Uma resposta bem-sucedida com payload distinto não é repetição idempotente.
-    if (!i.binds.length || i.binds.length !== original.binds.length ||
-        JSON.stringify(i.binds) !== JSON.stringify(original.binds)) fail("F3_INTENT_REPLAY_BIND");
+    if (
+      !i.binds.length ||
+      i.binds.length !== original.binds.length ||
+      JSON.stringify(i.binds) !== JSON.stringify(original.binds)
+    )
+      fail("F3_INTENT_REPLAY_BIND");
     i.state = "replayed";
-  }
-  else if (e.op === "absent") i.state = i.state === "abandoned" ? "abandoned" : "absent";
+  } else if (e.op === "absent") i.state = i.state === "abandoned" ? "abandoned" : "absent";
   else i.state = { reject: "rejected", uncertain: "uncertain", abandon: "abandoned" }[e.op];
 }
 
@@ -2492,7 +2501,15 @@ function crossCheck(report, requests, created) {
     const accepted = of.some((d) => d.outcome === "confirmed"),
       rejected = of.some((d) => d.outcome === "rejected");
     const replay = of.some((d) => d.outcome === "replayed");
-    const expected = accepted ? "ACCEPTED" : replay ? "IDEMPOTENT_REPLAY" : rejected ? "REJECTED" : of.length ? "NOT_RUN" : null;
+    const expected = accepted
+      ? "ACCEPTED"
+      : replay
+        ? "IDEMPOTENT_REPLAY"
+        : rejected
+          ? "REJECTED"
+          : of.length
+            ? "NOT_RUN"
+            : null;
     if (expected === null) {
       if (!["NOT_RUN", "DUPLICATE_NOT_DEFINED"].includes(head.duplicate)) fail(code);
     } else if (head.duplicate !== expected) fail(code);
