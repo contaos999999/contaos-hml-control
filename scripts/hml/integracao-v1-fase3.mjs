@@ -449,7 +449,12 @@ export const F3_DUPLICATE_POLICY = Object.freeze(
               result: "DUPLICATE_NOT_DEFINED",
               source: "src/lib/organizacao/criarOrganizacaoDados.ts:25-65",
             })
-          : null
+          : p.order === 6
+            ? Object.freeze({
+                result: "DUPLICATE_NOT_DEFINED",
+                source: "src/lib/contratantes/editarContratanteDados.ts:93-125",
+              })
+            : null
         : NO_MUTATION_POLICY,
     ]),
   ),
