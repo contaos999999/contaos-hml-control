@@ -1047,6 +1047,10 @@ function applyEvent(st, run, e) {
     if (i.kind !== "duplicidade") fail("F3_INTENT_REPLAY");
     const original = st.intents.get(i.duplicateOf);
     if (original?.state !== "confirmed" || !original.entityId) fail("F3_INTENT_REPLAY");
+    // A prova de replay exige o mesmo corpo, chave e referências da intenção original.
+    // Uma resposta bem-sucedida com payload distinto não é repetição idempotente.
+    if (!i.binds.length || i.binds.length !== original.binds.length ||
+        JSON.stringify(i.binds) !== JSON.stringify(original.binds)) fail("F3_INTENT_REPLAY_BIND");
     i.state = "replayed";
   }
   else if (e.op === "absent") i.state = i.state === "abandoned" ? "abandoned" : "absent";
