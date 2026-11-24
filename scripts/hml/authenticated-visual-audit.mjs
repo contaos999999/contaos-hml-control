@@ -7498,7 +7498,7 @@ export async function navigationNativeGuard({
       ],
       {
         env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
-        timeout: 270000,
+        timeout: 120000,
         maxBuffer: 1048576,
       },
     );
