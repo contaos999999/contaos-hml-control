@@ -2425,8 +2425,8 @@ function crossCheck(report, requests, created) {
     if (of.length !== duplicates.length) fail(code);
     const accepted = of.some((d) => d.outcome === "confirmed"),
       rejected = of.some((d) => d.outcome === "rejected");
-    const replay = of.some((d) => d.outcome === "replayed");
-    const expected = accepted ? "ACCEPTED" : replay ? "IDEMPOTENT_REPLAY" : rejected ? "REJECTED" : of.length ? "NOT_RUN" : null;
+    // O ledger atual não possui transição de replay comprovado. Não inferir replay de confirm.
+    const expected = accepted ? "ACCEPTED" : rejected ? "REJECTED" : of.length ? "NOT_RUN" : null;
     if (expected === null) {
       if (!["NOT_RUN", "DUPLICATE_NOT_DEFINED"].includes(head.duplicate)) fail(code);
     } else if (head.duplicate !== expected) fail(code);
