@@ -460,7 +460,11 @@ export const F3_DUPLICATE_POLICY = Object.freeze(
                 ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/contratos/novoContratoDados.ts:107-129" })
                 : p.order === 14
                   ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/contratos/novaCompetenciaDados.ts:65-75" })
-                  : null
+                  : p.order === 16
+                    ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/competencias/competenciaAnaliseDados.ts:188-200" })
+                    : p.order === 18
+                      ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/competencias/parecerInternoDados.ts:150-166" })
+                      : null
         : NO_MUTATION_POLICY,
     ]),
   ),
