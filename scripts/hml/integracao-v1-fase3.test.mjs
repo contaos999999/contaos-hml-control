@@ -2128,7 +2128,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
     assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].result, "DUPLICATE_NOT_DEFINED");
     assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].source, source);
   }
-  assert.ok(MUT.filter((o) => ![2, 5, 6, 7, 14, 16, 18].includes(o)).every((o) => sut.F3_DUPLICATE_POLICY[String(o)] === null));
+  assert.ok(MUT.every((o) => sut.F3_DUPLICATE_POLICY[String(o)] !== null));
   rejects(completeReport((r) => forProducer(r, 15, (c) => (c.duplicate = "REJECTED"))));
   rejects(
     completeReport((r) => (r.cases.find((c) => c.producerOrder === 5).duplicate = "NOT_RUN")),
@@ -6677,4 +6677,14 @@ test("F3 replay: executor exige igualdade integral de binds e não materializa s
   const replayBranch = source.slice(source.indexOf('else if (e.op === "replay")'), source.indexOf('else if (e.op === "absent")'));
   assert.ok(replayBranch.includes('i.state = "replayed"'));
   assert.ok(!replayBranch.includes("recordEntity("));
+});
+
+
+test("F3: os onze produtores têm política explícita, fonte e replay distinto de ACCEPTED", () => {
+  const sources = new Map([[4,"src/lib/administracao/admUsuariosRpc.ts:183-230"],[8,"src/lib/cadastros/cadastroOperacionalDados.ts:195-232"],[9,"src/components/contratos/OrcamentoContrato.tsx:1500-1513"],[10,"src/components/contratos/BaseNormativaContrato.tsx:1465-1472"],[11,"src/lib/contratos/listaOperacionalDados.ts:276-317"],[12,"src/lib/contratos/documentosDados.ts:755-774"],[13,"src/lib/contratos/documentosDados.ts:776-791"],[15,"src/lib/competencias/competenciaDocumentosDados.ts:299-317"],[17,"src/lib/competencias/revisaoRequisitoDados.ts:112-177"],[19,"src/lib/competencias/apresentacaoDados.ts:88-104"],[20,"src/lib/contratos/ingestaoHistoricoDados.ts:72-90"]]);
+  for (const [order, source] of sources) {
+    assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].source, source);
+    assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].result, order === 20 ? "DUPLICATE_NOT_DEFINED" : "IDEMPOTENT_REPLAY");
+  }
+  assert.equal(sut.validateF3DuplicatePolicy(sut.F3_DUPLICATE_POLICY), true);
 });
