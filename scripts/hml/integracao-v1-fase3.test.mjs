@@ -2118,7 +2118,9 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   assert.equal(sut.f3Gate(pendingPolicy, catalogue, NP), "FAIL");
   assert.equal(sut.F3_DUPLICATE_POLICY["2"].result, "DUPLICATE_NOT_DEFINED");
   assert.equal(sut.F3_DUPLICATE_POLICY["2"].source, "src/lib/organizacao/criarOrganizacaoDados.ts:25-65");
-  assert.ok(MUT.filter((o) => o !== 2).every((o) => sut.F3_DUPLICATE_POLICY[String(o)] === null));
+  assert.equal(sut.F3_DUPLICATE_POLICY["6"].result, "DUPLICATE_NOT_DEFINED");
+  assert.equal(sut.F3_DUPLICATE_POLICY["6"].source, "src/lib/contratantes/editarContratanteDados.ts:93-125");
+  assert.ok(MUT.filter((o) => o !== 2 && o !== 6).every((o) => sut.F3_DUPLICATE_POLICY[String(o)] === null));
   rejects(completeReport((r) => forProducer(r, 15, (c) => (c.duplicate = "REJECTED"))));
   rejects(
     completeReport((r) => (r.cases.find((c) => c.producerOrder === 5).duplicate = "NOT_RUN")),
