@@ -443,7 +443,14 @@ export const F3_DUPLICATE_POLICY = Object.freeze(
   Object.fromEntries(
     F3_PRODUCERS.map((p) => [
       String(p.order),
-      F3_MUTATING_ORDERS.includes(p.order) ? null : NO_MUTATION_POLICY,
+      F3_MUTATING_ORDERS.includes(p.order)
+        ? p.order === 2
+          ? Object.freeze({
+              result: "DUPLICATE_NOT_DEFINED",
+              source: "src/lib/organizacao/criarOrganizacaoDados.ts:25-65",
+            })
+          : null
+        : NO_MUTATION_POLICY,
     ]),
   ),
 );
