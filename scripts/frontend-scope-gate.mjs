@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 /**
  * ADR-DEV-002. CI posterior ao push; não substitui branch protection.
@@ -152,6 +153,60 @@ if (EVENT === "pull_request" && sourcePaths.length) {
   }
 }
 if (sourcePaths.length) {
+  // A restrição pertence à base resolvida do diff, mesmo se o PLAN
+  // pré-BUILD ou HEAD remover/trocar o mapa ou ampliar a allowlist.
+  let restrictions = {};
+  let prNumber = null;
+  let governancePlan = null;
+  try {
+    restrictions = git("ls-tree", "--name-only", base, "--", PLAN)
+      ? JSON.parse(git("show", base + ":" + PLAN)).arquivos_restritos_por_pr
+      : undefined;
+    if (restrictions === undefined) restrictions = {};
+  } catch {
+    restrictions = null;
+  }
+  try {
+    if (EVENT === "pull_request") {
+      prNumber = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"))?.pull_request
+        ?.number;
+    } else if (EVENT === "push") {
+      const parents = git("rev-list", "--parents", "-n", "1", diffHead).split(/\s+/).slice(1);
+      const match = /^Merge pull request #([1-9]\d*) from [^\r\n]+(?:\r?\n|$)/.exec(
+        git("log", "-1", "--format=%B", diffHead),
+      );
+      if (
+        BASE &&
+        !/^0+$/.test(BASE) &&
+        parents.length === 2 &&
+        parents[0] === git("rev-parse", base) &&
+        match
+      )
+        prNumber = Number(match[1]);
+    }
+    if (Number.isSafeInteger(prNumber) && prNumber > 0)
+      governancePlan = JSON.parse(
+        git("show", "origin/main:docs/frontend/planos/P0_GOV_PLAN_" + prNumber + ".json"),
+      );
+  } catch {
+    // Falha de identidade/GOV nunca concede a alternativa restrita.
+  }
+  const mapValid =
+    restrictions !== null &&
+    typeof restrictions === "object" &&
+    !Array.isArray(restrictions) &&
+    Object.entries(restrictions).every(
+      ([path, number]) =>
+        (/^(?:src|public)\//.test(path) ||
+          ["package.json", "bun.lock", "vite.config.ts", "tsconfig.json", "index.html"].includes(
+            path,
+          )) &&
+        !path.includes("..") &&
+        !path.startsWith("src/integrations/supabase/") &&
+        Number.isSafeInteger(number) &&
+        number > 0,
+    );
+  if (!mapValid) errors.push("Mapa restritivo por PR inválido no PLAN protegido.");
   let plan;
   try {
     plan = JSON.parse(git("show", planRef + ":" + PLAN));
@@ -306,6 +361,19 @@ if (sourcePaths.length) {
       errors.push("Impacto visual N/A exige justificativa específica.");
     }
     for (const path of sourcePaths) {
+      if (mapValid && Object.hasOwn(restrictions, path)) {
+        const owner = restrictions[path];
+        if (
+          !Number.isSafeInteger(prNumber) ||
+          prNumber !== owner ||
+          governancePlan?.approved !== true ||
+          governancePlan.pr_number !== owner ||
+          !Array.isArray(governancePlan.files) ||
+          !governancePlan.files.includes(path)
+        )
+          errors.push("ARQUIVO RESTRITO POR PR SEM AUTORIZAÇÃO PROTEGIDA: " + path);
+        continue;
+      }
       // GOV-020: a arvore e derivada exclusivamente das rotas aprovadas.
       // A excecao e restrita ao artefato gerado, nunca a arquivos de codigo livres.
       const arvoreGeradaAutorizada =

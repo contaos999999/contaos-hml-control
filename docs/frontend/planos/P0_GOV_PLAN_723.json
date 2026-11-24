@@ -1,0 +1,25 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 723,
+  "approved": true,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs"
+  ],
+  "purpose": "BUILD-2b-2b F3: observar RBAC MASTER/leitor via resposta real RPC da UI antes/depois de SYS04/ADM01",
+  "authorization": "Titular determinou continuidade e BUILD-2b-2b; alterar somente executor F3 e testes para checagem de permissão e contra deriva.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Zero credenciais no código",
+    "Manter cerca de mutação, isolamento e nonce",
+    "Não preencher ledger sem run",
+    "F4 bloqueada até certificado",
+    "GATE PROD LIVE distinto"
+  ],
+  "normative_code_gate_parent": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba",
+    "note": "BUILD-2b-2b dos drivers; nenhum teste LIVE é condição da certificação de código V1–V5. Contraprovas LIVE no GATE PROD."
+  }
+}

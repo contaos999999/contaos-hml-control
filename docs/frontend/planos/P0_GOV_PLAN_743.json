@@ -1,0 +1,26 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 743,
+  "approved": true,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD_V117_CONSUMERS_FANOUT.md"
+  ],
+  "purpose": "Verificar em CODE os quatro readbacks consumidores V114/V118/V119/V123 após V117 append-only, com evidência de bloqueio de portões, substituição de parecer e trilha de auditoria, sem confundir testes unitários com 138 provas integradas.",
+  "authorization": "Usuário solicitou fechar F3 rapidamente com CI CODE e ratificou LIVE HML somente após V5. Uma causa raiz: fanout da revisão humana V117.",
+  "production": "NO-GO",
+  "certification": "F3_NOT_CERTIFIED",
+  "constraints": [
+    "Não modificar frontend real, backend ou autenticação HML",
+    "Matriz e ledgers F3 intocáveis",
+    "Sem simular papéis autenticados ou declarar PASS por mocks",
+    "Exatamente 3 arquivos fechados",
+    "CI íntegra e parecer independente da implementação no HEAD antes de merge",
+    "NÃO alterar F3_DRIVER_PENDING até completar provas dos 138 caseIds"
+  ],
+  "normative_plan": {
+    "pr": 722,
+    "merge_sha": "6372690eb2002ad01c991dc79ed0e80e0e6cecba"
+  }
+}

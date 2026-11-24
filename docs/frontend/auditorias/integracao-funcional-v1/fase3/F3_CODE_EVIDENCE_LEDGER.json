@@ -1,0 +1,9 @@
+{
+  "schema": "contaos.ifv1.f3.code-evidence-ledger.v1",
+  "scope": "INTEGRACAO_V1_FASE3_CODE",
+  "sourceCatalogueSha256": "bce15980d31ce22c8836e26621b267951296e905139b9833c8db4a7400c9ecbb",
+  "state": "NOT_CERTIFIED",
+  "runs": [],
+  "entries": [],
+  "note": "Nenhuma evidência de execução de caso de código foi certificada. Não importar recibos LIVE nem emitir PASS com teste de catálogo."
+}

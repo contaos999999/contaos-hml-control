@@ -763,7 +763,7 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
     await waitFor(() => expect(leituras()).toHaveLength(2));
     await waitFor(() => expect(screen.getByLabelText("Tipo do documento")).toHaveValue(""));
     expect(screen.getByLabelText("Requisito documental (opcional)")).toHaveValue("");
-    expect(screen.queryByText(/Não foi possível concluir o envio/)).toBeNull();
+    await waitFor(() => expect(screen.queryByText(/Não foi possível concluir o envio/)).toBeNull());
     fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
     await screen.findByText("Selecione o tipo do documento.");
     expect(

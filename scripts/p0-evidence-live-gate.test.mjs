@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { verifyEvidenceLive } from "./p0-evidence-live-gate.mjs";
+import { verifyEvidenceLive, validateProdReadiness } from "./p0-evidence-live-gate.mjs";
 
 const M = "a".repeat(40);
 const H = "b".repeat(40);
@@ -119,7 +119,8 @@ const fixture = () => {
     },
   };
   const remoteFiles = new Map(files);
-  const run = () => verifyEvidenceLive(manifest, {
+  const run = (gate = "GATE_PROD") => verifyEvidenceLive(manifest, {
+    gate,
     apiGet: async (p) => {
       if (p.startsWith("/contents/")) {
         const match = /^\/contents\/(.+)\?ref=[a-f0-9]{40}$/.exec(p);
@@ -341,4 +342,46 @@ test("P0 LIVE — alteração em script após teste HML impede reutilizar prova"
   const x=fixture();x.responses["/compare/"+H+"..."+H].files=
     [{filename:"scripts/frontend-zero-drift.mjs"}];
   await assertFail(x,/SHA\/contrato estáveis/);
+});
+
+
+test("P0 separation — CODE_CERTIFICATION accepts verified CI without authenticated HML LIVE", async () => {
+  const x = fixture();
+  delete x.finalReceipt.hml_e2e;
+  const result = await x.run("CODE_CERTIFICATION");
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.checked, 1);
+});
+test("P0 separation — GATE_PROD fails closed until all five versions and integrations PASS", async () => {
+  const x = fixture();
+  const errors = validateProdReadiness(x.manifest);
+  assert.match(errors.join(" "), /GATE PROD bloqueado: certificado de código V2/);
+});
+test("P0 separation — unknown gate fails closed", async () => {
+  const result = await fixture().run("UNAUTHORIZED");
+  assert.match(result.errors.join(" "), /gate desconhecido/);
+});
+test("P0 separation — CODE_CERTIFICATION still rejects failing CI", async () => {
+  const x = fixture();
+  x.responses["/actions/runs/789"].conclusion = "failure";
+  await assertFail({run:()=>x.run("CODE_CERTIFICATION")}, /não está SUCCESS/);
+});
+
+test("P0 separation — GATE_PROD refuses zero certified items", async () => {
+  const x = fixture();
+  x.manifest.controle.integracao_por_versao = {};
+  const errors = validateProdReadiness(x.manifest);
+  assert.notEqual(errors.length, 0);
+});
+
+test("P0 separation — complete five-version readiness alone is not LIVE PASS", async () => {
+  const x = fixture();
+  for (let i = 1; i <= 5; i++) {
+    const v = "V" + i;
+    x.manifest.controle.certificados_por_versao[v] = {status:"PASS"};
+    x.manifest.controle.integracao_por_versao[v] = {interna:{status:"PASS"},...(i > 1 ? {cumulativa:{status:"PASS"}} : {})};
+  }
+  assert.deepEqual(validateProdReadiness(x.manifest), []);
+  const result = await x.run("GATE_PROD");
+  assert.notEqual(result.errors.length, 0);
 });

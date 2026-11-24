@@ -1,0 +1,32 @@
+name: ContaOS F3 CODE - Coletor offline (nao certificador)
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  f3-code-collector:
+    name: F3 CODE - autotestes do coletor
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout do HEAD do evento
+        uses: actions/checkout@v4
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validar sintaxe do coletor e teste
+        run: |
+          node --check scripts/hml/integracao-v1-fase3-code-executor.mjs
+          node --check scripts/hml/integracao-v1-fase3-code-executor.test.mjs
+      - name: Executar autotestes da coleta sem afirmar PASS funcional
+        run: node --test scripts/hml/integracao-v1-fase3-code-executor.test.mjs
+      - name: Verificar integridade do ledger CODE ainda nao certificado
+        run: |
+          node -e 'const fs=require("node:fs");const p="docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_EVIDENCE_LEDGER.json";const l=JSON.parse(fs.readFileSync(p,"utf8"));if(l.state!=="NOT_CERTIFIED"||l.entries.length||l.runs.length)process.exit(1)'

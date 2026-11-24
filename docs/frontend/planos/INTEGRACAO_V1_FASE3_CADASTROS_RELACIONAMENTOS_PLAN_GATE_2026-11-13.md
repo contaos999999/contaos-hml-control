@@ -347,3 +347,7 @@ Esta emenda não muda nada do seguinte:
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
 
 Esta fase altera só o instrumento de auditoria e a documentação. A marca ContaOS Brand v1.0, o Design System e os assets ficam preservados, e o impacto visual é N/A. O agente Lovable não é usado.
+
+## 13. Proposta de emenda posterior: certificação de código e GATE PROD (22/11/2026)
+
+A separação de certificação de código V1–V5 e contraprovas LIVE exclusivas de GATE PROD está detalhada em `docs/frontend/planos/IFV1_F3_CODE_VS_GATE_PROD_LIVE_EMENDA_2026-11-22.md`. Essa emenda só produz efeitos normativos após PR protegida, CI e revisão independente. Até então, os requisitos HML e a regra quantitativa da seção 5 continuam vigentes. A emenda não autoriza preencher artificialmente o ledger, dispensar qualquer um dos 138 casos, ou liberar F4 sem certificado CODE próprio.
