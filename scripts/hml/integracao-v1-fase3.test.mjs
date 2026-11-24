@@ -6661,3 +6661,10 @@ test("F3 CODE: nenhum consumidor ausente ou observação adulterada pode receber
   });
   await assert.equal(await registry.caseVerifiers[case0.caseId](case0, []), false);
 });
+
+
+test("F3 replay: política reconhece resposta idempotente sem classificá-la como nova mutação", () => {
+  const policy = { ...sut.F3_DUPLICATE_POLICY, "19": { result: "IDEMPOTENT_REPLAY", source: "src/lib/competencias/apresentacaoDados.ts:1-20" } };
+  assert.equal(sut.validateF3DuplicatePolicy(policy), true);
+  assert.throws(() => sut.validateF3DuplicatePolicy({ ...policy, "19": { result: "ACCEPTED", source: "src/lib/competencias/apresentacaoDados.ts:1-20" } }), { code: "F3_DUPLICATE_POLICY" });
+});
