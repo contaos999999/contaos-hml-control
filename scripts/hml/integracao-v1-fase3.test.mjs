@@ -6668,3 +6668,13 @@ test("F3 replay: política reconhece resposta idempotente sem classificá-la com
   assert.equal(sut.validateF3DuplicatePolicy(policy), true);
   assert.throws(() => sut.validateF3DuplicatePolicy({ ...policy, "19": { result: "ACCEPTED", source: "src/lib/competencias/apresentacaoDados.ts:1-20" } }), { code: "F3_DUPLICATE_POLICY" });
 });
+
+
+test("F3 replay: executor exige igualdade integral de binds e não materializa segunda entidade", async () => {
+  const source = await readFile(new URL("./integracao-v1-fase3.mjs", import.meta.url), "utf8");
+  assert.match(source, /JSON\.stringify\(i\.binds\) !== JSON\.stringify\(original\.binds\)/);
+  assert.match(source, /fail\("F3_INTENT_REPLAY_BIND"\)/);
+  const replayBranch = source.slice(source.indexOf('else if (e.op === "replay")'), source.indexOf('else if (e.op === "absent")'));
+  assert.ok(replayBranch.includes('i.state = "replayed"'));
+  assert.ok(!replayBranch.includes("recordEntity("));
+});
