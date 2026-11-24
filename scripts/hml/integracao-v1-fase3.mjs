@@ -752,6 +752,7 @@ const EVENT_OPS = Object.freeze([
   "absent",
   "resend",
   "abandon",
+  "replay",
 ]);
 const INTENT_KEYS = Object.freeze([
   "requestId",
@@ -1005,6 +1006,7 @@ function applyEvent(st, run, e) {
   const from = {
     confirm: ["sealed"],
     reject: ["sealed"],
+    replay: ["sealed"],
     uncertain: ["sealed"],
     found: ["uncertain", "abandoned"],
     absent: ["uncertain", "abandoned"],
@@ -1014,7 +1016,7 @@ function applyEvent(st, run, e) {
   if (!from.includes(i.state)) fail(e.op === "resend" ? "F3_UNCERTAIN_RESEND" : "F3_INTENT_STATE");
   // Desfecho do envio corrente só com vínculo: sem ele, o evento bind seria removível sem
   // rastro. Confirmação só com todos os passos do fluxo declarado.
-  if (["confirm", "reject", "uncertain"].includes(e.op)) {
+  if (["confirm", "reject", "uncertain", "replay"].includes(e.op)) {
     const steps = stepsOf(i);
     if (!i.sendBinds || (e.op === "confirm" && steps && i.sendBinds !== steps.length))
       fail("F3_INTENT_BIND");
@@ -1041,6 +1043,12 @@ function applyEvent(st, run, e) {
     i.sendBinds = 0;
     i.state = "sealed";
   } else if (e.op === "confirm" || e.op === "found") recordEntity(st, e, i);
+  else if (e.op === "replay") {
+    if (i.kind !== "duplicidade") fail("F3_INTENT_REPLAY");
+    const original = st.intents.get(i.duplicateOf);
+    if (original?.state !== "confirmed" || !original.entityId) fail("F3_INTENT_REPLAY");
+    i.state = "replayed";
+  }
   else if (e.op === "absent") i.state = i.state === "abandoned" ? "abandoned" : "absent";
   else i.state = { reject: "rejected", uncertain: "uncertain", abandon: "abandoned" }[e.op];
 }
@@ -2425,8 +2433,8 @@ function crossCheck(report, requests, created) {
     if (of.length !== duplicates.length) fail(code);
     const accepted = of.some((d) => d.outcome === "confirmed"),
       rejected = of.some((d) => d.outcome === "rejected");
-    // O ledger atual não possui transição de replay comprovado. Não inferir replay de confirm.
-    const expected = accepted ? "ACCEPTED" : rejected ? "REJECTED" : of.length ? "NOT_RUN" : null;
+    const replay = of.some((d) => d.outcome === "replayed");
+    const expected = accepted ? "ACCEPTED" : replay ? "IDEMPOTENT_REPLAY" : rejected ? "REJECTED" : of.length ? "NOT_RUN" : null;
     if (expected === null) {
       if (!["NOT_RUN", "DUPLICATE_NOT_DEFINED"].includes(head.duplicate)) fail(code);
     } else if (head.duplicate !== expected) fail(code);
