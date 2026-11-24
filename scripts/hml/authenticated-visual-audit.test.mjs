@@ -20627,8 +20627,9 @@ async function navigationActualTransportCounters() {
   )(sut.navigationUnavailableEvidence);
 }
 test(
+  // Two Chromium viewports plus route, permission, and transport checks can exceed 115s on hosted CI.
   "NAV R2 native readiness and transport",
-  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 115000 },
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 240000 },
   async (t) => {
     const fs = await import("node:fs/promises"),
       { join } = await import("node:path"),
