@@ -826,7 +826,7 @@ export function classifyPrecertReadiness(checkRuns,name,head){
     return {state:"TERMINAL",name,reason:"API checks indisponivel"};
   const matching=checkRuns.filter(x=>x?.name===name);
   if(matching.length===0)
-    return {state:"PENDING",name,reason:"workflow enfileirado, check ainda nao publicado"};
+    return {state:"PENDING",name,reason:"check ausente na consulta; disparo/enfileiramento do workflow nao comprovado"};
   const selected=latestPrecertCheck(checkRuns,name,head);
   if(!selected)return {state:"TERMINAL",name,reason:"origem/check publicado ambiguo"};
   if(["queued","waiting","pending","requested","in_progress"].includes(selected.status))
