@@ -6678,7 +6678,7 @@ test("F3 CODE: nenhum consumidor ausente ou observação adulterada pode receber
 test("F3 replay: política reconhece resposta idempotente sem classificá-la como nova mutação", () => {
   const policy = {
     ...sut.F3_DUPLICATE_POLICY,
-    "19": {
+    19: {
       result: "IDEMPOTENT_REPLAY",
       source: "src/lib/competencias/apresentacaoDados.ts:1-20",
     },
@@ -6688,7 +6688,7 @@ test("F3 replay: política reconhece resposta idempotente sem classificá-la com
     () =>
       sut.validateF3DuplicatePolicy({
         ...policy,
-        "19": {
+        19: {
           result: "ACCEPTED",
           source: "src/lib/competencias/apresentacaoDados.ts:1-20",
         },
