@@ -439,54 +439,86 @@ const NO_MUTATION_POLICY = Object.freeze({
   result: "DUPLICATE_NOT_DEFINED",
   source: "PLAN 7.2: produtor sem mutação",
 });
+const F3_MUTATING_DUPLICATE_RULES = Object.freeze({
+  2: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/organizacao/criarOrganizacaoDados.ts:25-65",
+  }),
+  4: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/administracao/admUsuariosRpc.ts:183-230",
+  }),
+  5: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/contratantes/novoContratanteDados.ts:127-148",
+  }),
+  6: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/contratantes/editarContratanteDados.ts:93-125",
+  }),
+  7: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/contratos/novoContratoDados.ts:107-129",
+  }),
+  8: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/cadastros/cadastroOperacionalDados.ts:195-232",
+  }),
+  9: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/components/contratos/OrcamentoContrato.tsx:1500-1513",
+  }),
+  10: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/components/contratos/BaseNormativaContrato.tsx:1465-1472",
+  }),
+  11: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/contratos/listaOperacionalDados.ts:276-317",
+  }),
+  12: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/contratos/documentosDados.ts:755-774",
+  }),
+  13: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/contratos/documentosDados.ts:776-791",
+  }),
+  14: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/contratos/novaCompetenciaDados.ts:65-75",
+  }),
+  15: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/competencias/competenciaDocumentosDados.ts:299-317",
+  }),
+  16: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/competencias/competenciaAnaliseDados.ts:188-200",
+  }),
+  17: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/competencias/revisaoRequisitoDados.ts:112-177",
+  }),
+  18: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/competencias/parecerInternoDados.ts:150-166",
+  }),
+  19: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/competencias/apresentacaoDados.ts:88-104",
+  }),
+  20: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/contratos/ingestaoHistoricoDados.ts:72-90",
+  }),
+});
 export const F3_DUPLICATE_POLICY = Object.freeze(
   Object.fromEntries(
     F3_PRODUCERS.map((p) => [
       String(p.order),
       F3_MUTATING_ORDERS.includes(p.order)
-        ? p.order === 2
-          ? Object.freeze({
-              result: "DUPLICATE_NOT_DEFINED",
-              source: "src/lib/organizacao/criarOrganizacaoDados.ts:25-65",
-            })
-          : p.order === 6
-            ? Object.freeze({
-                result: "DUPLICATE_NOT_DEFINED",
-                source: "src/lib/contratantes/editarContratanteDados.ts:93-125",
-              })
-            : p.order === 5
-              ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/contratantes/novoContratanteDados.ts:127-148" })
-              : p.order === 7
-                ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/contratos/novoContratoDados.ts:107-129" })
-                : p.order === 14
-                  ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/contratos/novaCompetenciaDados.ts:65-75" })
-                  : p.order === 16
-                    ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/competencias/competenciaAnaliseDados.ts:188-200" })
-                    : p.order === 18
-                      ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/competencias/parecerInternoDados.ts:150-166" })
-                      : p.order === 4
-                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/administracao/admUsuariosRpc.ts:183-230" })
-                  : p.order === 8
-                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/cadastros/cadastroOperacionalDados.ts:195-232" })
-                  : p.order === 9
-                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/components/contratos/OrcamentoContrato.tsx:1500-1513" })
-                  : p.order === 10
-                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/components/contratos/BaseNormativaContrato.tsx:1465-1472" })
-                  : p.order === 11
-                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/contratos/listaOperacionalDados.ts:276-317" })
-                  : p.order === 12
-                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/contratos/documentosDados.ts:755-774" })
-                  : p.order === 13
-                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/contratos/documentosDados.ts:776-791" })
-                  : p.order === 15
-                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/competencias/competenciaDocumentosDados.ts:299-317" })
-                  : p.order === 17
-                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/competencias/revisaoRequisitoDados.ts:112-177" })
-                  : p.order === 19
-                    ? Object.freeze({ result: "IDEMPOTENT_REPLAY", source: "src/lib/competencias/apresentacaoDados.ts:88-104" })
-                  : p.order === 20
-                    ? Object.freeze({ result: "DUPLICATE_NOT_DEFINED", source: "src/lib/contratos/ingestaoHistoricoDados.ts:72-90" })
-                  : null
+        ? (F3_MUTATING_DUPLICATE_RULES[p.order] ?? null)
         : NO_MUTATION_POLICY,
     ]),
   ),
