@@ -295,28 +295,28 @@ beforeEach(() => {
   fixture.from.mockReset();
   fixture.rpc.mockImplementation(async (name: string, args: Record<string, unknown> = {}) => {
     if (name === "salvar_vinculo_usuario_adm") {
-      if (actor !== "master" || args.p_id_organizacao !== ORG || args.p_id_usuario !== USER) return fail("42501", 403);
-      const key = String(args.p_chave_idempotencia);
+      if (actor !== "master" || args["p_id_organizacao"] !== ORG || args["p_id_usuario"] !== USER) return fail("42501", 403);
+      const key = String(args["p_chave_idempotencia"]);
       const request = JSON.stringify(args);
       const old = replay.get(key);
       if (old) return old.payload === request ? ok(old.response) : fail("PT409", 409);
-      if (args.p_versao_esperada !== binding.versao_registro) return fail("PT409", 409);
-      binding = { ...binding, ativo: args.p_ativo === true, versao_registro: binding.versao_registro + 1 };
+      if (args["p_versao_esperada"] !== binding.versao_registro) return fail("PT409", 409);
+      binding = { ...binding, ativo: args["p_ativo"] === true, versao_registro: binding.versao_registro + 1 };
       const response = { schema_versao: "adm01-v2", correlation_id: key, id_usuario: USER, vinculo: structuredClone(binding) };
       replay.set(key, { payload: request, response });
       events.push({ id: key, criado_em: "2026-01-01T00:00:00Z", evento: "salvar_vinculo_usuario_adm", entidade: "vinculos_usuarios", origem: "rpc", id_usuario: USER, id_entidade: LINK, correlation_id: key });
       return ok(response);
     }
     if (name === "listar_usuarios_vinculos_adm") {
-      if (actor !== "master" || args.p_id_organizacao !== ORG) return fail("42501", 403);
-      const items = args.p_ativo === null || args.p_ativo === binding.ativo ? [{ id_usuario: USER, vinculo: binding }] : [];
+      if (actor !== "master" || args["p_id_organizacao"] !== ORG) return fail("42501", 403);
+      const items = args["p_ativo"] === null || args["p_ativo"] === binding.ativo ? [{ id_usuario: USER, vinculo: binding }] : [];
       return ok({ schema_versao: "adm01-v2", pagina: 1, tamanho_pagina: 25, total: items.length, total_paginas: 1, itens: items, perfis_disponiveis: [] });
     }
     if (name === "listar_organizacoes_disponiveis") {
       return ok(actor === "leitor" && !binding.ativo ? [] : [{ id: ORG, razao_social: "Organização sintética", nome_fantasia: null, cnpj: null, situacao: "ativa", perfil: actor === "master" ? "administrador_master" : "leitor" }]);
     }
     if (name === RPC) {
-      if (args.p_id_organizacao !== ORG || (args.p_id_contrato !== null && args.p_id_contrato !== CONTRACT) || (actor === "leitor" && !binding.ativo)) return fail("42501", 403);
+      if (args["p_id_organizacao"] !== ORG || (args["p_id_contrato"] !== null && args["p_id_contrato"] !== CONTRACT) || (actor === "leitor" && !binding.ativo)) return fail("42501", 403);
       return ok({ schema_versao: "rbac-v1", versao: 6, master: actor === "master", permissoes: READ });
     }
     throw new Error("unexpected RPC " + name);
@@ -326,11 +326,11 @@ beforeEach(() => {
     const filters = new Map<string, unknown>();
     const q: Record<string, unknown> = {};
     for (const op of ["select", "order", "range"]) q[op] = () => q;
-    q.eq = (k: string, v: unknown) => { filters.set(k, v); return q; };
-    q.then = (resolve: (v: unknown) => unknown, reject: (v: unknown) => unknown) =>
+    q["eq"] = (k: string, v: unknown) => { filters.set(k, v); return q; };
+    q["then"] = (resolve: (v: unknown) => unknown, reject: (v: unknown) => unknown) =>
       Promise.resolve().then(() => {
         if (actor !== "master" || filters.get("id_organizacao") !== ORG) return fail("42501", 403);
-        const rows = events.filter(e => !filters.has("correlation_id") || e.correlation_id === filters.get("correlation_id"));
+        const rows = events.filter(e => !filters.has("correlation_id") || e["correlation_id"] === filters.get("correlation_id"));
         return { ...ok(rows), count: rows.length };
       }).then(resolve, reject);
     return q;
@@ -429,7 +429,7 @@ describe("F4.1 ADM01 — material synchronization", () => {
   });
 });
 afterAll(() => {
-  const path = process.env.F4_CODE_ADM01_OBSERVATIONS;
+  const path = process.env["F4_CODE_ADM01_OBSERVATIONS"];
   if (path) {
     expect(observations).toHaveLength((matrix.length + 2) * 2);
     writeFileSync(path, JSON.stringify(observations, null, 2) + "\n", { flag: "wx" });
