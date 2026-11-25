@@ -22,8 +22,31 @@
       "consumer": "listar_organizacoes_disponiveis",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/auth/resolverDestinoPosLogin.ts:50",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "organizacoes",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0005",
@@ -35,8 +58,31 @@
       "consumer": "obter_resumo_dashboard",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/components/dashboard/Dashboard.tsx:70",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "context",
+      "priorImplementationReference": "src/test/f4-code-context-dashboard-sync.test.tsx",
+      "seedMatrixCandidate": {
+        "resource": "dashboard",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0007",
@@ -48,8 +94,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratantes",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0009",
@@ -61,8 +130,32 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratantes",
+        "action": "criar",
+        "allowedProfiles": [
+          "administrador",
+          "gestor_contrato"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0011",
@@ -74,8 +167,32 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratantes",
+        "action": "editar",
+        "allowedProfiles": [
+          "administrador",
+          "gestor_contrato"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0012",
@@ -87,8 +204,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratos",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0014",
@@ -100,8 +240,32 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratos",
+        "action": "criar",
+        "allowedProfiles": [
+          "administrador",
+          "gestor_contrato"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0016",
@@ -113,8 +277,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratos",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0017",
@@ -126,8 +313,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "normativos",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0018",
@@ -139,8 +349,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "orcamentos",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0019",
@@ -152,8 +385,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "listas",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0020",
@@ -165,8 +421,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "documentos_contrato",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0021",
@@ -178,8 +457,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "documentos_contrato",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0022",
@@ -191,8 +493,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "competencias",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0023",
@@ -204,8 +529,32 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "competencias",
+        "action": "criar",
+        "allowedProfiles": [
+          "administrador",
+          "gestor_contrato",
+          "prestacao_contas"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "juridico_conformidade",
+          "leitor",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0024",
@@ -217,8 +566,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "competencias",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0025",
@@ -230,8 +602,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "documentos_competencia",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0026",
@@ -243,8 +638,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "analises",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0027",
@@ -256,8 +674,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "analises",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0028",
@@ -269,8 +710,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "pareceres",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0029",
@@ -282,8 +746,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "apresentacoes",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0030",
@@ -295,8 +782,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "apresentacoes",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0031",
@@ -308,8 +818,31 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "historico",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0032",
@@ -321,8 +854,32 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "historico",
+        "action": "processar",
+        "allowedProfiles": [
+          "administrador",
+          "gestor_contrato"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0033",
@@ -334,8 +891,32 @@
       "consumer": "eventos_auditoria",
       "normativeExpectation": "Ação material deve produzir evento rastreável no escopo autorizado; verificar conteúdo e correlation/request ID nas fases 3–6.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/auditoriaDados.ts:33",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "auditoria",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "juridico_conformidade"
+        ],
+        "deniedProfiles": [
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Vínculo autorizado A; leitura nova de evento correlacionado por auditor com escopo A.",
+      "negativeProposal": "Ator sem direito/escopo não lê evento ou grava efeito; ausência de payload e novo evento indevido."
     },
     {
       "caseId": "IFV1-F5-C0034",
@@ -347,8 +928,32 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "adm01",
+      "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "auditoria",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "juridico_conformidade"
+        ],
+        "deniedProfiles": [
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
     },
     {
       "caseId": "IFV1-F5-C0036",
@@ -360,8 +965,31 @@
       "consumer": "listar_organizacoes_disponiveis",
       "normativeExpectation": "Sessão autenticada e destino pós-login resolvido por organizações disponíveis.",
       "sourceReferences": "src/lib/auth/resolverDestinoPosLogin.ts:50;src/lib/auth/resolverDestinoPosLogin.ts:50",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "context",
+      "priorImplementationReference": "src/test/f4-code-context-dashboard-sync.test.tsx",
+      "seedMatrixCandidate": {
+        "resource": "organizacoes",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Identidade ativa U_A, lista e destino/consumidor de A; conferir dados e chamadas exatas.",
+      "negativeProposal": "Revogar sessão ou alternar U_A/U_B; nenhuma herança de preferência, cache ou dados A."
     },
     {
       "caseId": "IFV1-F5-C0037",
@@ -373,8 +1001,31 @@
       "consumer": "obter_resumo_dashboard",
       "normativeExpectation": "Sessão autenticada e destino pós-login resolvido por organizações disponíveis.",
       "sourceReferences": "src/lib/auth/resolverDestinoPosLogin.ts:50;src/components/dashboard/Dashboard.tsx:70",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "context",
+      "priorImplementationReference": "src/test/f4-code-context-dashboard-sync.test.tsx",
+      "seedMatrixCandidate": {
+        "resource": "dashboard",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Identidade ativa U_A, lista e destino/consumidor de A; conferir dados e chamadas exatas.",
+      "negativeProposal": "Revogar sessão ou alternar U_A/U_B; nenhuma herança de preferência, cache ou dados A."
     },
     {
       "caseId": "IFV1-F5-C0041",
@@ -386,8 +1037,32 @@
       "consumer": "consultar_permissoes_efetivas",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "actions",
+      "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "usuarios",
+        "action": "administrar",
+        "allowedProfiles": [
+          "administrador"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0043",
@@ -399,8 +1074,31 @@
       "consumer": "obter_resumo_dashboard",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/components/dashboard/Dashboard.tsx:70",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "context",
+      "priorImplementationReference": "src/test/f4-code-context-dashboard-sync.test.tsx",
+      "seedMatrixCandidate": {
+        "resource": "dashboard",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0045",
@@ -412,8 +1110,31 @@
       "consumer": "contratantes",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratantes/contratantesDados.ts:89",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "actions",
+      "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratantes",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0046",
@@ -425,8 +1146,32 @@
       "consumer": "contratantes",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratantes/novoContratanteDados.ts:148",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "actions",
+      "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratantes",
+        "action": "criar",
+        "allowedProfiles": [
+          "administrador",
+          "gestor_contrato"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0047",
@@ -438,8 +1183,32 @@
       "consumer": "contratantes",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratantes/novoContratanteDados.ts:148",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "actions",
+      "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratantes",
+        "action": "editar",
+        "allowedProfiles": [
+          "administrador",
+          "gestor_contrato"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0048",
@@ -451,8 +1220,31 @@
       "consumer": "contratos",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/contratosDados.ts:41",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "actions",
+      "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratos",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0049",
@@ -464,8 +1256,32 @@
       "consumer": "contratantes",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/novoContratoDados.ts:44",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "actions",
+      "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratos",
+        "action": "criar",
+        "allowedProfiles": [
+          "administrador",
+          "gestor_contrato"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0050",
@@ -477,8 +1293,31 @@
       "consumer": "contratos",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/contratoDetalheDados.ts:77",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "data",
+      "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "contratos",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0051",
@@ -490,8 +1329,31 @@
       "consumer": "fontes_normativas",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/baseNormativaDados.ts:58",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "data",
+      "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "normativos",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0052",
@@ -503,8 +1365,31 @@
       "consumer": "propostas_orcamentarias",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/orcamentoDados.ts:99",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "data",
+      "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "orcamentos",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0053",
@@ -516,8 +1401,31 @@
       "consumer": "listas_verificacao",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/regrasDados.ts:154",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "data",
+      "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "listas",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0054",
@@ -529,8 +1437,31 @@
       "consumer": "documentos_contrato",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/documentosDados.ts:209",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "data",
+      "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "documentos_contrato",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0055",
@@ -542,8 +1473,31 @@
       "consumer": "documentos_contrato",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/documentosDados.ts:209",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "data",
+      "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "documentos_contrato",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0056",
@@ -555,8 +1509,31 @@
       "consumer": "competencias",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/competenciasDados.ts:79",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "data",
+      "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "competencias",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0057",
@@ -568,8 +1545,32 @@
       "consumer": "criar_competencia",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/novaCompetenciaDados.ts:71",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "actions",
+      "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "competencias",
+        "action": "criar",
+        "allowedProfiles": [
+          "administrador",
+          "gestor_contrato",
+          "prestacao_contas"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "juridico_conformidade",
+          "leitor",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0058",
@@ -581,8 +1582,31 @@
       "consumer": "obter_visao_geral_competencia",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/competenciaVisaoGeralDados.ts:19",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "competence",
+      "priorImplementationReference": "src/test/f4-code-sys04-competence-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "competencias",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0059",
@@ -594,8 +1618,31 @@
       "consumer": "obter_documentos_competencia_v115",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/competenciaDocumentosDados.ts:116",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "competence",
+      "priorImplementationReference": "src/test/f4-code-sys04-competence-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "documentos_competencia",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0060",
@@ -607,8 +1654,31 @@
       "consumer": "obter_analise_competencia_v116",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/competenciaAnaliseDados.ts:158",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "competence",
+      "priorImplementationReference": "src/test/f4-code-sys04-competence-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "analises",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0061",
@@ -620,8 +1690,31 @@
       "consumer": "obter_detalhe_requisito_v117",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/requisitoDetalheDados.ts:45",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "competence",
+      "priorImplementationReference": "src/test/f4-code-sys04-competence-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "analises",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0062",
@@ -633,8 +1726,31 @@
       "consumer": "pareceres_internos",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/parecerInternoDados.ts:113",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "data",
+      "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "pareceres",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0063",
@@ -646,8 +1762,31 @@
       "consumer": "obter_visao_geral_competencia",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/competenciaVisaoGeralDados.ts:19",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "competence",
+      "priorImplementationReference": "src/test/f4-code-sys04-competence-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "apresentacoes",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0064",
@@ -659,8 +1798,31 @@
       "consumer": "apresentacoes_contratante",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/protocoloDados.ts:92",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "data",
+      "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "apresentacoes",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0065",
@@ -672,8 +1834,31 @@
       "consumer": "relatorios_historicos_contratante",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/historicoContratoDados.ts:160",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "data",
+      "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "historico",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "deniedProfiles": [],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0066",
@@ -685,8 +1870,32 @@
       "consumer": "relatorios_historicos_contratante",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/historicoContratoDados.ts:160",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "actions",
+      "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "historico",
+        "action": "processar",
+        "allowedProfiles": [
+          "administrador",
+          "gestor_contrato"
+        ],
+        "deniedProfiles": [
+          "auditor",
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "juridico_conformidade",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
     },
     {
       "caseId": "IFV1-F5-C0067",
@@ -698,8 +1907,32 @@
       "consumer": "eventos_auditoria",
       "normativeExpectation": "Ação material deve produzir evento rastreável no escopo autorizado; verificar conteúdo e correlation/request ID nas fases 3–6.",
       "sourceReferences": "src/lib/organizacao/criarOrganizacaoDados.ts:35;src/lib/administracao/auditoriaDados.ts:33",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "actions",
+      "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "auditoria",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "juridico_conformidade"
+        ],
+        "deniedProfiles": [
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Criar organização por identidade com competência confirmada e reler evento correlacionado por auditor autorizado.",
+      "negativeProposal": "Ator sem direito/escopo não lê evento ou grava efeito; ausência de payload e novo evento indevido."
     },
     {
       "caseId": "IFV1-F5-C0068",
@@ -711,8 +1944,60 @@
       "consumer": "eventos_auditoria",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/administracao/auditoriaDados.ts:33",
-      "oracleStatus": "PENDING_NORMATIVE_RECONCILIATION",
-      "proofState": "NOT_RUN"
+      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "proofState": "NOT_RUN",
+      "batch": "actions",
+      "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "seedMatrixCandidate": {
+        "resource": "auditoria",
+        "action": "consultar",
+        "allowedProfiles": [
+          "administrador",
+          "auditor",
+          "juridico_conformidade"
+        ],
+        "deniedProfiles": [
+          "contabilidade",
+          "direcao_aprovador",
+          "financeiro",
+          "gestor_contrato",
+          "leitor",
+          "prestacao_contas",
+          "rh_dp"
+        ],
+        "sourceBlob": "6daec893315e8eb8cf51619e8181a854234e788f",
+        "notEffectiveRuntime": true
+      },
+      "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+    }
+  ],
+  "normativeSource": {
+    "path": "docs/backend/P0_V1_RBAC_BUILD_COBERTURA_2026-11-06.json",
+    "blob": "6daec893315e8eb8cf51619e8181a854234e788f",
+    "ref": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+    "limit": "Catálogo inicial, não é estado efetivo em runtime. Confirmar política, contratos especializados, migrações posteriores e aplicabilidade antes de BUILD."
+  },
+  "batchCounts": [
+    {
+      "name": "adm01",
+      "cases": 25
+    },
+    {
+      "name": "context",
+      "cases": 4
+    },
+    {
+      "name": "competence",
+      "cases": 5
+    },
+    {
+      "name": "data",
+      "cases": 10
+    },
+    {
+      "name": "actions",
+      "cases": 10
     }
   ]
 }
