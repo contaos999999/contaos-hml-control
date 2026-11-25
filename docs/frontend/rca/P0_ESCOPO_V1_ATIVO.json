@@ -3,72 +3,187 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "b160a55d721078b4de34b4a7073633a2f564f2b1",
-    "backend_sha": "69cd66d5ef24d16eea6f7d15c6289f8d7c5e991e"
+    "frontend_sha": "0e85c23cb256c28914cc17b159258ab77f0edd75",
+    "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/competenciaDocumentos.test.tsx",
+      "arquivo": "src/test/f3-code-adm01-dashboard.test.tsx",
       "versao": "V1",
-      "justificativa": "Correção somente da sincronização de asserção no teste V1-15/V1-10; nenhum componente de produção alterado."
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-adm01-rbac-integration.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0036.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0037.test.tsx",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0041.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0043.test.tsx",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0045.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0048.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0050.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0051.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0052.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0053.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0054.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0055.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0056.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0062.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0064.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-case-0065.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-sys04-competence-rpc.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-sys04-preference-guard-actions.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-v102-v103-contracting-party.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-v105-v106-contract-actions.test.tsx",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-v110-v111-v115-document-actions.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-v113-created-competence.test.tsx",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-v116-v117-analysis-review.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
+    },
+    {
+      "arquivo": "src/test/f3-code-v118-v119-material-actions.test.ts",
+      "versao": "V1",
+      "justificativa": "Reaplicação de teste CODE individual da PR #748, autorizada no PLAN #753; sem alteração de produto."
     }
   ],
   "itens": [
     {
-      "id": "RCA-679-R5-REACT",
+      "id": "RCA-F3-752",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
-        "sintoma": "CI9c encontra alerta anterior após paginação já sem opção selecionada.",
-        "esperado": "Aguardar conclusão do efeito que reinicia envio antes de afirmar remoção do erro.",
-        "observado": "Query síncrona ainda encontra alerta do envio anterior;1265 PASS/1FAIL.",
-        "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43637544739"
+        "sintoma": "Baseline sem executor funcional individual e registro de produtores/consumidores.",
+        "esperado": "138 IDs canônicos, 20 produtores, consumidor e contraprova registrados; provas individuais verificáveis.",
+        "observado": "ERR_MODULE_NOT_FOUND no teste nominal F3 CODE RED-GREEN no Zero-Drift.",
+        "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45527094754"
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "Select sem opção visível já retorna vazio antes de o useEffect/reiniciarEnvio concluir atualização do alerta. O teste confunde esse estado intermediário com conclusão do efeito.",
+        "descricao": "O executor e testes existentes na PR #748 ainda não integram a main. A reaplicação depende do PLAN prospectivo #753.",
         "evidencias": [
-          "CI43637544739 no ancestral9c, competenciaDocumentos.test.tsx:766; logs autenticados conferidos.",
-          "UploadDropzone reinicia vínculo/tipo/tentativa no efeito; teste aguardava somente select vazio."
+          "https://github.com/contaos999999/contaos-hml-control/actions/runs/45527094754",
+          "PR #748 CI 45521644438 PASS_CODE (276 provas CODE)",
+          "CI 45527777125 job 138915282703: Node24 isolation=none selects relative argv[1] and RCA guard CLI URL throws ERR_INVALID_FILE_URL_HOST before its self-test can execute; test logic passes in full suite. GREEN now executes same registry assertion in functional suite, without importing guard."
         ],
         "hipoteses_descartadas": [
-          "Não há prova de defeito no componente ou backend; alteração limitada a waitFor.",
-          "Não é autorização para remover assert de erro, contagem de RPC/upload ou chave nova."
-        ]
-      },
-      "solucao": {
-        "descricao": "Aguardar remoção do alerta anterior com waitFor existente; preservar vínculo/tipo/tentativa e todas as asserções.",
-        "rollback": "PR de revert do único waitFor com testes e revisão; sem alteração de dados.",
-        "arquivos": [
-          "src/test/competenciaDocumentos.test.tsx"
+          "Não há exigência de execução LIVE antes da V5.",
+          "Não se trata de autorização para modificar produto, backend ou guard."
         ]
       },
       "impacto": {
         "dependencias": [
-          "Teste V1-15 paginação/requisito",
-          "Uploader V1-10 compartilhado",
-          "Efeito reiniciarEnvio"
+          "27 suítes CODE V1",
+          "Executor funcional por caseId",
+          "Gate automático de integridade"
         ],
         "versoes_afetadas": [
           "V1"
         ],
         "riscos": [
           {
-            "risco": "Mascarar repetição de upload ou reaproveitar vínculo/chave anterior.",
+            "risco": "Falso PASS sem prova ou proveniência válida",
             "teste_preventivo": {
-              "id": "GREEN-V115-PAGINACAO",
-              "runner": "vitest",
-              "arquivo": "src/test/competenciaDocumentos.test.tsx",
-              "caso": "V1-15 envio reutiliza uploader V1-10 paginação remove requisito selecionado: reseta vínculo, tipo e tentativa antes de enviar"
-            }
-          },
-          {
-            "risco": "Permitir upload inválido ou quebrar retry idempotente.",
-            "teste_preventivo": {
-              "id": "NEG-V115-UPLOAD",
-              "runner": "vitest",
-              "arquivo": "src/test/competenciaDocumentos.test.tsx",
-              "caso": "V1-15 envio reutiliza uploader V1-10 arquivo inválido usa validação V1-10 e não chama Edge"
+              "id": "NEG-F3-PROOF",
+              "runner": "node",
+              "arquivo": "scripts/hml/integracao-v1-fase3-functional-138.test.mjs",
+              "caso": "F3 automated gate rejects missing proofs, provenance and tampered summaries"
             }
           }
         ]
@@ -76,37 +191,70 @@
       "testes": {
         "red": [
           {
-            "id": "RED-V115-CI",
-            "runner": "vitest",
-            "arquivo": "src/test/competenciaDocumentos.test.tsx",
-            "caso": "paginação remove requisito selecionado: reseta vínculo, tipo e tentativa antes de enviar",
-            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43637544739",
-            "run_sha": "9c0ed0f0ddfc0fc91512dff2e290e0a8d6826c71"
+            "id": "RED-F3-REGISTRY",
+            "runner": "node",
+            "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+            "caso": "F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 producers",
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45527094754",
+            "run_sha": "308e9cd0952b9cc40b981d46bbc144f38677da9a"
           }
         ],
         "green": [
           {
-            "id": "GREEN-V115-PAGINACAO",
-            "runner": "vitest",
-            "arquivo": "src/test/competenciaDocumentos.test.tsx",
-            "caso": "V1-15 envio reutiliza uploader V1-10 paginação remove requisito selecionado: reseta vínculo, tipo e tentativa antes de enviar"
+            "id": "GREEN-F3-REGISTRY",
+            "runner": "node",
+            "arquivo": "scripts/hml/integracao-v1-fase3-functional-138.test.mjs",
+            "caso": "F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 producers"
           }
         ],
         "negativos": [
           {
-            "id": "NEG-V115-UPLOAD",
-            "runner": "vitest",
-            "arquivo": "src/test/competenciaDocumentos.test.tsx",
-            "caso": "V1-15 envio reutiliza uploader V1-10 arquivo inválido usa validação V1-10 e não chama Edge"
+            "id": "NEG-F3-PROOF",
+            "runner": "node",
+            "arquivo": "scripts/hml/integracao-v1-fase3-functional-138.test.mjs",
+            "caso": "F3 automated gate rejects missing proofs, provenance and tampered summaries"
           }
         ],
         "regressao": [
           {
-            "id": "REG-V115-RETRY",
-            "runner": "vitest",
-            "arquivo": "src/test/competenciaDocumentos.test.tsx",
-            "caso": "V1-15 envio reutiliza uploader V1-10 erro na criação: retry manual reutiliza a mesma chave e não reenvia bytes"
+            "id": "REG-F3-138",
+            "runner": "node",
+            "arquivo": "scripts/hml/integracao-v1-fase3-functional-138.test.mjs",
+            "caso": "F3 CODE 138: despachante chama todos os IDs e marca driver ausente como FAIL"
           }
+        ]
+      },
+      "solucao": {
+        "descricao": "Reaplicar os testes e executor do HEAD comprovado da #748, ajustar formatação versionada e validar no novo CI. Preservar RED e pré-instalação, reexecutar GREEN nominal na suíte funcional que importa o executor e não o CLI do guard; nenhum guard alterado.",
+        "rollback": "Reverter BUILD em PR protegida, sem alteração de dados ou backend.",
+        "arquivos": [
+          "src/test/f3-code-adm01-dashboard.test.tsx",
+          "src/test/f3-code-adm01-rbac-integration.test.ts",
+          "src/test/f3-code-case-0036.test.ts",
+          "src/test/f3-code-case-0037.test.tsx",
+          "src/test/f3-code-case-0041.test.ts",
+          "src/test/f3-code-case-0043.test.tsx",
+          "src/test/f3-code-case-0045.test.ts",
+          "src/test/f3-code-case-0048.test.ts",
+          "src/test/f3-code-case-0050.test.ts",
+          "src/test/f3-code-case-0051.test.ts",
+          "src/test/f3-code-case-0052.test.ts",
+          "src/test/f3-code-case-0053.test.ts",
+          "src/test/f3-code-case-0054.test.ts",
+          "src/test/f3-code-case-0055.test.ts",
+          "src/test/f3-code-case-0056.test.ts",
+          "src/test/f3-code-case-0062.test.ts",
+          "src/test/f3-code-case-0064.test.ts",
+          "src/test/f3-code-case-0065.test.ts",
+          "src/test/f3-code-sys04-competence-rpc.test.ts",
+          "src/test/f3-code-sys04-preference-guard-actions.test.ts",
+          "src/test/f3-code-v102-v103-contracting-party.test.ts",
+          "src/test/f3-code-v105-v106-contract-actions.test.tsx",
+          "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts",
+          "src/test/f3-code-v110-v111-v115-document-actions.test.ts",
+          "src/test/f3-code-v113-created-competence.test.tsx",
+          "src/test/f3-code-v116-v117-analysis-review.test.ts",
+          "src/test/f3-code-v118-v119-material-actions.test.ts"
         ]
       }
     }

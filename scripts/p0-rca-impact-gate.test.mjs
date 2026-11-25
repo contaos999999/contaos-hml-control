@@ -701,3 +701,26 @@ test("P0 RCA NR003: nome legitimo parecido com arquivo exige teste real sem zero
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+
+test("F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 producers", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const catalogue = JSON.parse(await readFile(new URL("../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json", import.meta.url), "utf8"));
+  assert.equal(catalogue.cases.length, 138);
+  assert.equal(new Set(catalogue.cases.map(c => c.caseId)).size, 138);
+  const executorPath = fileURLToPath(new URL("./hml/integracao-v1-fase3-functional-138.mjs", import.meta.url));
+  // This pre-install step must not import TypeScript-dependent product code.
+  // Existence, syntax and actual exports are verified here; the functional CI
+  // and RCA operational tests execute the module after frozen dependencies.
+  const executor = await readFile(executorPath, "utf8");
+  assert.equal(spawnSync(process.execPath, ["--check", executorPath]).status, 0);
+  const drivers = await import("./hml/f3-code-functional-drivers.mjs");
+  assert.match(executor, /export async function executeF3Functional138\(/);
+  assert.match(executor, /export function validateF3AutomaticGate\(/);
+  assert.equal(Object.keys(drivers.producerDrivers).length, 20);
+  for (const c of catalogue.cases) {
+    assert.equal(typeof drivers.producerDrivers[c.producerOrder], "function", c.caseId);
+    assert.equal(typeof drivers.consumerDrivers[c.consumer], "function", c.caseId);
+    assert.equal(typeof drivers.negativeDrivers[c.consumer], "function", c.caseId);
+  }
+});

@@ -1,0 +1,106 @@
+name: ContaOS F3 CODE - 138 execucoes funcionais individuais
+
+on:
+  push:
+    branches:
+      - build/f3-code-138-certificacao-reaplicacao
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: f3-code-functional-138-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  functional-138:
+    name: F3 CODE 138 - executor e evidencias
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    env:
+      F3_CODE_OUTPUT_DIR: artifacts/f3-code-functional-138
+    steps:
+      - name: Checkout exato do HEAD
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Verificar e instalar Bun congelado
+        run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
+
+      - name: Instalar dependencias congeladas na etapa seguinte
+        run: bun install --frozen-lockfile
+
+      - name: Sintaxe e formato versionado
+        run: |
+          node --check scripts/hml/integracao-v1-fase3-functional-138.mjs
+          node --check scripts/hml/integracao-v1-fase3-functional-138.test.mjs
+          node --check scripts/hml/f3-code-functional-drivers.mjs
+          bunx prettier --check scripts/hml/integracao-v1-fase3-functional-138.mjs scripts/hml/integracao-v1-fase3-functional-138.test.mjs scripts/hml/f3-code-functional-drivers.mjs src/test/f3-code-case-0036.test.ts src/test/f3-code-case-0037.test.tsx src/test/f3-code-case-0041.test.ts src/test/f3-code-case-0043.test.tsx src/test/f3-code-case-0045.test.ts src/test/f3-code-case-0048.test.ts .github/workflows/contaos-f3-code-138-functional.yml src/test/f3-code-case-0051.test.ts src/test/f3-code-case-0052.test.ts src/test/f3-code-case-0053.test.ts src/test/f3-code-case-0056.test.ts src/test/f3-code-adm01-rbac-integration.test.ts src/test/f3-code-case-0054.test.ts src/test/f3-code-case-0062.test.ts src/test/f3-code-case-0064.test.ts src/test/f3-code-case-0065.test.ts src/test/f3-code-sys04-competence-rpc.test.ts src/test/f3-code-case-0050.test.ts src/test/f3-code-case-0055.test.ts src/test/f3-code-v113-created-competence.test.tsx src/test/f3-code-v118-v119-material-actions.test.ts src/test/f3-code-v102-v103-contracting-party.test.ts src/test/f3-code-v105-v106-contract-actions.test.tsx src/test/f3-code-v116-v117-analysis-review.test.ts src/test/f3-code-v110-v111-v115-document-actions.test.ts src/test/f3-code-sys04-preference-guard-actions.test.ts src/test/f3-code-v107-v108-v109-v122-material-source.test.ts src/test/f3-code-adm01-dashboard.test.tsx
+          git diff --exit-code
+
+      - name: Verificar GREEN nominal pelo validador RCA
+        run: |
+          node --input-type=module <<'JS'
+          import { runCase } from "./scripts/p0-rca-impact-gate.mjs";
+          const caso = "F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 producers";
+          const arquivo = "scripts/hml/integracao-v1-fase3-functional-138.test.mjs";
+          if (!runCase({runner:"node",arquivo,caso})) process.exit(1);
+          console.log("RCA_NAMED_CASE_VERIFIED=true");
+          JS
+
+      - name: Autotestes do executor, incluindo negativas contra PASS ficticio
+        run: node --test scripts/hml/integracao-v1-fase3-functional-138.test.mjs
+
+      - name: Diagnosticar suites CODE do produto
+        run: bunx vitest run src/test/f3-code-case-0043.test.tsx src/test/f3-code-case-0048.test.ts src/test/f3-code-adm01-rbac-integration.test.ts src/test/f3-code-sys04-competence-rpc.test.ts src/test/f3-code-v113-created-competence.test.tsx src/test/f3-code-v118-v119-material-actions.test.ts src/test/f3-code-v102-v103-contracting-party.test.ts src/test/f3-code-v105-v106-contract-actions.test.tsx src/test/f3-code-v116-v117-analysis-review.test.ts src/test/f3-code-v110-v111-v115-document-actions.test.ts src/test/f3-code-sys04-preference-guard-actions.test.ts src/test/f3-code-v107-v108-v109-v122-material-source.test.ts src/test/f3-code-adm01-dashboard.test.tsx --reporter=verbose
+
+      - name: Capturar jobId real da API GitHub Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          job_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" --jq '.jobs[] | select(.name=="F3 CODE 138 - executor e evidencias") | .id' | head -n 1)"
+          if ! [[ "$job_id" =~ ^[1-9][0-9]*$ ]]; then
+            echo "F3_JOB_ID nao obtido da API Actions" >&2
+            exit 1
+          fi
+          echo "F3_JOB_ID=$job_id" >> "$GITHUB_ENV"
+
+      - name: Executar 138 contratos reais; diagnosticar ausencias sem PASS
+        id: functional
+        continue-on-error: true
+        run: node scripts/hml/integracao-v1-fase3-functional-138.mjs --run
+
+      - name: Verificar hashes e integridade de 138 resultados
+        if: always()
+        run: |
+          set -euo pipefail
+          cd "$F3_CODE_OUTPUT_DIR"
+          sha256sum -c SHA256SUMS
+          node -e 'const fs=require("node:fs");const s=JSON.parse(fs.readFileSync("F3_CODE_FUNCTIONAL_SUMMARY.json","utf8"));const l=fs.readFileSync("F3_CODE_CASE_RESULTS.jsonl","utf8").trim().split("\n").map(JSON.parse);if(s.cases!==138||l.length!==138||new Set(l.map(x=>x.caseId)).size!==138)process.exit(1)'
+
+      - name: Publicar artefato auditavel do HEAD
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f3-code-functional-138-${{ github.sha }}
+          path: artifacts/f3-code-functional-138/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Gate automatizado CODE - 138 casos e 276 provas verificadas
+        if: always()
+        run: node scripts/hml/integracao-v1-fase3-functional-138.mjs --gate
