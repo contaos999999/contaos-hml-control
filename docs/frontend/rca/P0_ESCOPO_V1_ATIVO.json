@@ -3,19 +3,24 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "c6ae15143e874de3e36a1c3c9bfcbed0c3df9893",
+    "frontend_sha": "adc20a762878ea4e3131e38a7d099a1fc6bf8b90",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f4-code-v110-v111-v115-document-sync.test.ts",
+      "arquivo": "src/test/f4-code-v113-competence-sync.test.tsx",
       "versao": "V1",
-      "justificativa": "F4.4 e V115: reancoragem final após #768 integrada, sob PLAN #772; preflight aprovado."
+      "justificativa": "F4.5: reancoragem final após #769 integrada sob PLAN #772, preflight corrigido aprovado."
+    },
+    {
+      "arquivo": "src/test/f4-code-v116-v117-analysis-sync.test.ts",
+      "versao": "V1",
+      "justificativa": "F4.5: reancoragem final após #769 integrada sob PLAN #772, preflight corrigido aprovado."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F4-769-IDENTITY-DOCUMENTS",
+      "id": "RCA-F4-770-IDENTITY-ANALYSIS",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -33,8 +38,9 @@
           "Correção do coletor integrada em #760, c8fd1011983664e21a6de2ca9335c42df0987feb, gate RCA e CI 7/7 PASS; PLAN específico #764 integrado. RED anterior preservado como ancestral, não reclassificado como falha da tela.",
           "Extensão do coletor corrigido #760, #763 integrado cca8c4bf24a6b6eb6e9a0e16bdd2f0e34ee1e97f, PLAN #766 integrado e0d128829af55d2993a63b66444c56ceb6702c8f; RED ancestral do coletor, não falha de produto.",
           "PLAN #772 MERGED 556725a3734a3ec34204961f585328ada1c37a71, F4.1 #765 MERGED 4e3cb2d4452ce934113f2ae397bcbf032e4b0263; contratos backend 20261102163433_v103_editar_contratante_concorrencia_auditoria.sql e 20261106230839_p0_crud_organizacoes_contratos.sql conferidos para versionamento e eventos de auditoria.",
-          "Extensão da correção do coletor já integrada; preflight paralelo sem promoção de evidências, sujeito à reancoragem e execução cumulativa após #768.",
-          "F4.3 #768 MERGED c6ae15143e874de3e36a1c3c9bfcbed0c3df9893, CI 7/7; preflight #769 run 45586666655 job 139109905060, 14 IDs/28 provas PASS, artifact 15008124502."
+          "Extensão da correção do coletor já integrada; preflight paralelo sem promoção de evidências, sujeito à reancoragem e execução cumulativa após #769.",
+          "RED preflight V113 45586768251 job 139110248626, 9 negativas falharam por tipo erro vs ambiguo, relatório ZIP 15008079017 baixado, digest sha256:16ac1c2be7d06c8aa07167eeba7c49286e90acdf9c644db60027fd4d26f708a4. Código real criarCompetencia lança ambiguo em catch e oferece verificarCompetenciaExistente; corrigidos dois oráculos mantendo readback, duplicidade e negativa. Reancoragem provisória após #768 para executar GREEN, não merge antecipado.",
+          "F4.4/V115 #769 MERGED adc20a762878ea4e3131e38a7d099a1fc6bf8b90, CI 7/7; GREEN preflight V113 run 45587387831 job 139112359142, 9 IDs/18 provas PASS, artifact 15009077012. Análise/revisão PASS."
         ],
         "hipoteses_descartadas": [
           "Não foi demonstrada falha do produto ou de RLS remota.",
@@ -43,9 +49,9 @@
       },
       "impacto": {
         "dependencias": [
-          "V110/V111/V115 adaptadores reais",
+          "V113/V116/V117 adaptadores reais",
           "CI material comum",
-          "Versões, replay e readback"
+          "Readback, fila e revisão"
         ],
         "versoes_afetadas": [
           "V1"
@@ -61,12 +67,21 @@
             }
           },
           {
-            "risco": "Arquivo bloqueado ou replay divergente altera versão",
+            "risco": "Perda de consistência material competence",
             "teste_preventivo": {
-              "id": "NEG-769",
+              "id": "NEG-770-competence",
               "runner": "vitest",
-              "arquivo": "src/test/f4-code-v110-v111-v115-document-sync.test.ts",
-              "caso": "V110/V111/V115 document writes and consumers IFV1-F4-C0288 negative: blocked file, transport and changed replay do not change published material"
+              "arquivo": "src/test/f4-code-v113-competence-sync.test.tsx",
+              "caso": "V113 -> consumers of newly created competence IFV1-F4-C0352 negative: before-write failure and lost receipt reconcile without duplicate competence"
+            }
+          },
+          {
+            "risco": "Perda de consistência material analysis",
+            "teste_preventivo": {
+              "id": "NEG-770-analysis",
+              "runner": "vitest",
+              "arquivo": "src/test/f4-code-v116-v117-analysis-sync.test.ts",
+              "caso": "V116/V117 stateful material commands IFV1-F4-C0433 negative: precommit outage, concurrent queue or stale revision and denial preserve result"
             }
           }
         ]
@@ -90,10 +105,16 @@
             "caso": "F4 CODE material verifier rejects noncanonical case IDs"
           },
           {
-            "id": "GREEN-769",
+            "id": "GREEN-770-competence",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-v110-v111-v115-document-sync.test.ts",
-            "caso": "V110/V111/V115 document writes and consumers IFV1-F4-C0288 positive: material version, independent readback, exact replay and historical evidence"
+            "arquivo": "src/test/f4-code-v113-competence-sync.test.tsx",
+            "caso": "V113 -> consumers of newly created competence IFV1-F4-C0352 positive: create once, independent readback and fresh consumers after remount"
+          },
+          {
+            "id": "GREEN-770-analysis",
+            "runner": "vitest",
+            "arquivo": "src/test/f4-code-v116-v117-analysis-sync.test.ts",
+            "caso": "V116/V117 stateful material commands IFV1-F4-C0433 positive: independently reconcile queued or revised execution and fresh consumer"
           }
         ],
         "negativos": [
@@ -110,10 +131,16 @@
             "caso": "F4 CODE material verifier rejects a nonexecuted proof"
           },
           {
-            "id": "NEG-769",
+            "id": "NEG-770-competence",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-v110-v111-v115-document-sync.test.ts",
-            "caso": "V110/V111/V115 document writes and consumers IFV1-F4-C0288 negative: blocked file, transport and changed replay do not change published material"
+            "arquivo": "src/test/f4-code-v113-competence-sync.test.tsx",
+            "caso": "V113 -> consumers of newly created competence IFV1-F4-C0352 negative: before-write failure and lost receipt reconcile without duplicate competence"
+          },
+          {
+            "id": "NEG-770-analysis",
+            "runner": "vitest",
+            "arquivo": "src/test/f4-code-v116-v117-analysis-sync.test.ts",
+            "caso": "V116/V117 stateful material commands IFV1-F4-C0433 negative: precommit outage, concurrent queue or stale revision and denial preserve result"
           }
         ],
         "regressao": [
@@ -124,18 +151,25 @@
             "caso": "F4 CODE material verifier accepts exact canonical ID pairs"
           },
           {
-            "id": "REG-769",
+            "id": "REG-770-competence",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-v110-v111-v115-document-sync.test.ts",
-            "caso": "V110/V111/V115 document writes and consumers IFV1-F4-C0420 positive: material version, independent readback, exact replay and historical evidence"
+            "arquivo": "src/test/f4-code-v113-competence-sync.test.tsx",
+            "caso": "V113 -> consumers of newly created competence IFV1-F4-C0376 positive: create once, independent readback and fresh consumers after remount"
+          },
+          {
+            "id": "REG-770-analysis",
+            "runner": "vitest",
+            "arquivo": "src/test/f4-code-v116-v117-analysis-sync.test.ts",
+            "caso": "V116/V117 stateful material commands IFV1-F4-C0465 positive: independently reconcile queued or revised execution and fresh consumer"
           }
         ]
       },
       "solucao": {
-        "descricao": "Integrar extensão canônica de 14 IDs, nova execução de nove lotes cumulativos (109 casos/218 provas), preservar as contraprovas e recibos.",
+        "descricao": "Integrar extensão canônica de 19 IDs, nova execução de onze lotes cumulativos (128 casos/256 provas); preservar negativas e recibos.",
         "rollback": "Reverter a entrega em PR protegida; não alterar dados, produto ou backend.",
         "arquivos": [
-          "src/test/f4-code-v110-v111-v115-document-sync.test.ts"
+          "src/test/f4-code-v113-competence-sync.test.tsx",
+          "src/test/f4-code-v116-v117-analysis-sync.test.ts"
         ]
       }
     }
