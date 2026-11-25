@@ -1,0 +1,97 @@
+name: ContaOS F5 CODE - provas materiais parciais
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/test/f5-code-*.test.*"
+      - "scripts/hml/f5-code-material-evidence*"
+      - ".github/workflows/contaos-f5-code-material.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  material:
+    name: F5 CODE ${{ matrix.batch }} - material e isolamento
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - batch: context
+            test: src/test/f5-code-context-session-isolation.test.tsx
+          - batch: competence
+            test: src/test/f5-code-sys04-competence-isolation.test.ts
+          - batch: data
+            test: src/test/f5-code-sys04-data-isolation.test.ts
+          - batch: actions
+            test: src/test/f5-code-sys04-actions-isolation.test.ts
+          - batch: adm01
+            test: src/test/f5-code-adm01-rbac-isolation.test.tsx
+    env:
+      F5_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      F5_JOB_NAME: F5 CODE ${{ matrix.batch }} - material e isolamento
+      F5_BATCH: ${{ matrix.batch }}
+      F5_TEST_FILE: ${{ matrix.test }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ env.F5_EXPECTED_HEAD }}
+          persist-credentials: false
+      - name: Vincular commit, execução e job
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          head_sha="$(git rev-parse HEAD)"
+          test "$head_sha" = "$F5_EXPECTED_HEAD"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .head_sha)" = "$head_sha"
+          endpoint="repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100"
+          for delay in 0 2 4 8 16; do
+            sleep "$delay"
+            jobs="$(gh api "$endpoint")"
+            job_id="$(jq -r --arg job_name "$F5_JOB_NAME" --arg head "$head_sha" \
+              --argjson run "$GITHUB_RUN_ID" --argjson attempt "$GITHUB_RUN_ATTEMPT" '
+              if .total_count != (.jobs | length) then error("lista de jobs incompleta")
+              else [.jobs[] | select(.name == $job_name and .head_sha == $head
+                  and .run_id == $run and .run_attempt == $attempt) | .id]
+                | if length > 1 then error("job F5 ambíguo")
+                  elif length == 1 then .[0] else empty end
+              end
+              ' <<< "$jobs")"
+            [[ -z "$job_id" ]] || break
+          done
+          [[ "$job_id" =~ ^[1-9][0-9]*$ ]] || { echo "GitHub não publicou a identidade do job F5"; exit 1; }
+          printf 'F5_FRONTEND_SHA=%s\nF5_HARNESS_SHA=%s\nJOB_ID=%s\n' \
+            "$head_sha" "$(git hash-object scripts/hml/f5-code-material-evidence.mjs)" "$job_id" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+      - name: Instalar Bun fixado
+        run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
+      - run: bun install --frozen-lockfile
+      - name: Autotestes e provas materiais do lote
+        env:
+          F5_OBSERVATIONS: artifacts/f5-code/observations.json
+        run: |
+          set -euo pipefail
+          node --test scripts/hml/f5-code-material-evidence.test.mjs
+          mkdir -p artifacts/f5-code
+          bunx vitest run "$F5_TEST_FILE" --reporter=json --outputFile=artifacts/f5-code/vitest.json
+      - name: Validar material parcial e proveniência
+        run: |
+          set -euo pipefail
+          node scripts/hml/f5-code-material-evidence.mjs --batch "$F5_BATCH"
+          cd artifacts/f5-code
+          sha256sum observations.json vitest.json receipt.json > SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: f5-code-${{ matrix.batch }}-${{ env.F5_EXPECTED_HEAD }}-r${{ github.run_attempt }}
+          path: artifacts/f5-code/
+          if-no-files-found: warn
+          retention-days: 30

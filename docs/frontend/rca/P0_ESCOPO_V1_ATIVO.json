@@ -3,84 +3,92 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "e468d2d197359f221df3400f3399f3e49a251de1",
+    "frontend_sha": "cb39a0b59addadceaacf75ed5bc4dc04534dcb57",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f4-code-v118-v119-opinion-presentation-sync.test.ts",
+      "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
       "versao": "V1",
-      "justificativa": "F4.6: reancoragem final após #770 integrada sob PLAN #772, preflight aprovado."
+      "justificativa": "F5.1: provas CODE de isolamento em sessão, preferência, seletor e dashboard com identidades e organizações sintéticas."
     },
     {
-      "arquivo": "src/test/f4-code-v122-history-sync.test.ts",
+      "arquivo": "src/test/f5-code-sys04-competence-isolation.test.ts",
       "versao": "V1",
-      "justificativa": "F4.6: reancoragem final após #770 integrada sob PLAN #772, preflight aprovado."
+      "justificativa": "SYS04: adaptadores e contratos de competência sob identidade e organização sintéticas."
+    },
+    {
+      "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
+      "versao": "V1",
+      "justificativa": "SYS04: consultas reais de documentos, dados e histórico com escopo sintético."
+    },
+    {
+      "arquivo": "src/test/f5-code-sys04-actions-isolation.test.ts",
+      "versao": "V1",
+      "justificativa": "Operações de escrita, leitura e auditoria pela fronteira material de SYS04."
+    },
+    {
+      "arquivo": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+      "versao": "V1",
+      "justificativa": "25 casos de vínculo ADM01, permissão por rota e trilha de auditoria por correlação."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F4-771-IDENTITY-OPINION-HISTORY",
+      "id": "RCA-F5-778-IDENTIDADE-MATERIAL",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
-        "sintoma": "Coletor material aceitava 25 IDs estranhos com cardinalidade e títulos correspondentes.",
-        "esperado": "Somente 25 IDs canônicos autorizados, cada par positivo/negativo único e executado.",
-        "observado": "RED nominal: not ok 1 - F4 CODE material verifier rejects noncanonical case IDs; original collector accepted all 25 foreign IDs.",
+        "sintoma": "O coletor original da Fase 4 aceitou um conjunto não canônico de IDs com cardinalidade preservada.",
+        "esperado": "Um par de provas executadas para cada ID canônico do lote, com decisão, identidade e contexto compatíveis.",
+        "observado": "RED ancestral do coletor: not ok 1 - F4 CODE material verifier rejects noncanonical case IDs.",
         "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45546975968"
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "Verificador inline original não comparava o conjunto exato dos IDs; RED histórico comprovado em #760. Incremento do mecanismo corrigido para os dois conjuntos F4.2, sem afirmar defeito novo do produto ou novo RED.",
+        "descricao": "O coletor original verificava a quantidade de pares sem comparar o conjunto exato de IDs. O BUILD F5.1 aplica a prevenção ao coletor separado da Fase 5. A omissão da ficha RCA no escopo originalmente autorizado foi uma falha documental distinta, tratada pela emenda #780.",
         "evidencias": [
-          "Zero-Drift run 45546975968 job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2; teste nominal falhou por aceitar os 25 IDs estrangeiros.",
-          "PLAN prospectivo #764 integrado 9af3c2216c0b06527abd714aa288a72f6f81151e; autorização escopo restrito #762.",
-          "Correção do coletor integrada em #760, c8fd1011983664e21a6de2ca9335c42df0987feb, gate RCA e CI 7/7 PASS; PLAN específico #764 integrado. RED anterior preservado como ancestral, não reclassificado como falha da tela.",
-          "Extensão do coletor corrigido #760, #763 integrado cca8c4bf24a6b6eb6e9a0e16bdd2f0e34ee1e97f, PLAN #766 integrado e0d128829af55d2993a63b66444c56ceb6702c8f; RED ancestral do coletor, não falha de produto.",
-          "PLAN #772 MERGED 556725a3734a3ec34204961f585328ada1c37a71, F4.1 #765 MERGED 4e3cb2d4452ce934113f2ae397bcbf032e4b0263; contratos backend 20261102163433_v103_editar_contratante_concorrencia_auditoria.sql e 20261106230839_p0_crud_organizacoes_contratos.sql conferidos para versionamento e eventos de auditoria.",
-          "Extensão da correção do coletor já integrada; preflight paralelo sem promoção de evidências, sujeito à reancoragem e execução cumulativa após #770.",
-          "F4.5 #770 MERGED e468d2d197359f221df3400f3399f3e49a251de1, CI 7/7; preflight F4.6 run 45586875466 opinion-presentation job 139110601555 (6/12) artifact 15009655777, history job 139110601589 (4/8) artifact 15009046578, ambos PASS."
+          "Run ancestral 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2. Falha do coletor F4 preservada no histórico da PR #760.",
+          "Zero-Drift da #778, run 45600835643, job 139159136439, HEAD a91fe529ca15b1ea410b0434504c4457f6b88b94, rejeitou o diff por ausência da ficha RCA.",
+          "PLAN #779 e emenda #780 integrados. Readback P0_GOV_PLAN_778.json na main e0823b6f4b398c13cca430cb0130f4f5dd95f521, blob e9e1eb21988b528510d831243b981aa48555bbf1.",
+          "Ficha e evidências históricas da Fase 4 preservadas no commit e0823b6f4b398c13cca430cb0130f4f5dd95f521.",
+          "Readback do artefato parcial 15040075703, run 45649961252 job 139331458010. SHA256SUMS verificado. O recibo usava o SHA do merge sintético 1d8a91f452153d6fe995ea1c2d3c75cef2ed5a65 no lugar do HEAD da PR d92b89c3446f93587a1b3a1b67855ea43e821ea2. O workflow passa a vincular checkout, HEAD vivo do run, tentativa e job antes de executar as provas.",
+          "Emenda de revisão assistida #781 integrada em cb39a0b59addadceaacf75ed5bc4dc04534dcb57, revisão 6060955228. Reancoragem após conferência da main viva.",
+          "Workflow F5 run 45653518068, job 139343985505, HEAD 63984071a29805c8279be65d5d15418e369f8eda. O jq do runner recusou label como nome de variável e falhou antes das provas. O filtro com job_name foi validado localmente para identidade exata, duplicidade e SHA divergente. O RED está no log do runner que rejeitou a sintaxe.",
+          "Run 45653897667, HEAD 593677112fac6a46481cf0a542223f09bd24d548: quatro jobs não localizaram o estado in_progress no início; competência job 139345303807 completou com as provas. Reconsulta do endpoint da tentativa 1 retornou cinco identidades exatas. A vinculação usa nome, run, tentativa e HEAD, com espera limitada pela publicação do registro; a conclusão SUCCESS é conferida na validação externa do artefato."
         ],
         "hipoteses_descartadas": [
-          "Não foi demonstrada falha do produto ou de RLS remota.",
-          "Não é defeito de cardinalidade: o probe tinha 25 IDs e 50 pares de observações/títulos."
+          "A mesma cardinalidade pode conter IDs indevidos. A contagem por si só não demonstra a identidade das provas.",
+          "O RED ancestral demonstra falha histórica do coletor. O RED da #778 demonstra ausência documental. Os dois registros são distintos de falha nova no produto ou prova RLS remota."
         ]
       },
       "impacto": {
         "dependencias": [
-          "V118/V119/V122 adaptadores reais",
-          "CI material comum",
-          "Portão, replay e histórico"
+          "Coletor de provas F5 CODE_FIXTURE",
+          "Inventário F5.1 aprovado no PLAN #777",
+          "Seletor de organização, preferência por identidade e consumidor real do dashboard",
+          "Oráculos de competência e dados, com consultas reais ao transporte sintético.",
+          "Vínculo ADM01 e chaves de correlação da trilha de auditoria",
+          "Comandos de SYS04 e validação de associação contratual"
         ],
-        "versoes_afetadas": [
-          "V1"
-        ],
+        "versoes_afetadas": ["V1"],
         "riscos": [
           {
-            "risco": "Falso PASS por caso não executado",
+            "risco": "Aceitação de falhas de transporte como negação de acesso",
             "teste_preventivo": {
-              "id": "NEG-F4-PENDING",
+              "id": "NEG-F5-TRANSPORT",
               "runner": "node",
-              "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
-              "caso": "F4 CODE material verifier rejects a nonexecuted proof"
+              "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
+              "caso": "F5 reject transport failure"
             }
           },
           {
-            "risco": "Perda de consistência material opinion-presentation",
+            "risco": "Renderização de resultados do contexto anterior após a troca de organização",
             "teste_preventivo": {
-              "id": "NEG-771-opinion-presentation",
+              "id": "NEG-F5-1-C0043",
               "runner": "vitest",
-              "arquivo": "src/test/f4-code-v118-v119-opinion-presentation-sync.test.ts",
-              "caso": "V118/V119 material commands and consumers IFV1-F4-C0477 negative: failed write, blocked gate and revoked access preserve material and audit"
-            }
-          },
-          {
-            "risco": "Perda de consistência material history",
-            "teste_preventivo": {
-              "id": "NEG-771-history",
-              "runner": "vitest",
-              "arquivo": "src/test/f4-code-v122-history-sync.test.ts",
-              "caso": "material sources and governed historical context IFV1-F4-C0562 negative: blocked file, lost receipt and revoked access preserve historical and current data"
+              "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
+              "caso": "F5 context material isolation IFV1-F5-C0043 negative: delayed A data cannot render after B switch"
             }
           }
         ]
@@ -98,77 +106,122 @@
         ],
         "green": [
           {
-            "id": "GREEN-F4-ID",
+            "id": "GREEN-F5-IDS",
             "runner": "node",
-            "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
-            "caso": "F4 CODE material verifier rejects noncanonical case IDs"
+            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
+            "caso": "F5 exact 54 canonical ids"
           },
           {
-            "id": "GREEN-771-opinion-presentation",
+            "id": "GREEN-F5-1-C0043",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-v118-v119-opinion-presentation-sync.test.ts",
-            "caso": "V118/V119 material commands and consumers IFV1-F4-C0477 positive: material decision or frozen package reconciled by new scoped reads"
+            "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
+            "caso": "F5 context material isolation IFV1-F5-C0043 positive: real selector switch invalidates A cache"
           },
           {
-            "id": "GREEN-771-history",
+            "id": "GREEN-F5-COMPETENCE-C0059",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-v122-history-sync.test.ts",
-            "caso": "material sources and governed historical context IFV1-F4-C0562 positive: history registration replay and independent current-analysis readback"
+            "arquivo": "src/test/f5-code-sys04-competence-isolation.test.ts",
+            "caso": "F5 SYS04 competence isolation IFV1-F5-C0059 positive: material read in the selected tenant"
+          },
+          {
+            "id": "GREEN-F5-DATA-C0055",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
+            "caso": "F5 SYS04 data isolation IFV1-F5-C0055 positive: scoped query returns only the selected tenant material"
+          },
+          {
+            "id": "GREEN-F5-C0033",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+            "caso": "F5 ADM01 authorization and isolation IFV1-F5-C0033 positive: persisted binding is reflected in its authorized consumer"
+          },
+          {
+            "id": "GREEN-F5-C0067",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-actions-isolation.test.ts",
+            "caso": "F5 SYS04 action isolation IFV1-F5-C0067 positive: authorized operation and scoped readback"
           }
         ],
         "negativos": [
           {
-            "id": "NEG-F4-DUP",
+            "id": "NEG-F5-DUP",
             "runner": "node",
-            "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
-            "caso": "F4 CODE material verifier rejects incomplete or duplicate proofs"
+            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
+            "caso": "F5 reject duplicate"
           },
           {
-            "id": "NEG-F4-PENDING",
+            "id": "NEG-F5-TRANSPORT",
             "runner": "node",
-            "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
-            "caso": "F4 CODE material verifier rejects a nonexecuted proof"
+            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
+            "caso": "F5 reject transport failure"
           },
           {
-            "id": "NEG-771-opinion-presentation",
+            "id": "NEG-F5-1-C0005",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-v118-v119-opinion-presentation-sync.test.ts",
-            "caso": "V118/V119 material commands and consumers IFV1-F4-C0477 negative: failed write, blocked gate and revoked access preserve material and audit"
+            "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
+            "caso": "F5 context material isolation IFV1-F5-C0005 negative: forged organization receives denial without dashboard"
           },
           {
-            "id": "NEG-771-history",
+            "id": "NEG-F5-1-C0043",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-v122-history-sync.test.ts",
-            "caso": "material sources and governed historical context IFV1-F4-C0562 negative: blocked file, lost receipt and revoked access preserve historical and current data"
+            "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
+            "caso": "F5 context material isolation IFV1-F5-C0043 negative: delayed A data cannot render after B switch"
+          },
+          {
+            "id": "NEGATIVOS-F5-COMPETENCE-C0061",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-competence-isolation.test.ts",
+            "caso": "F5 SYS04 competence isolation IFV1-F5-C0061 negative: stale case is denied after switching identity"
+          },
+          {
+            "id": "NEGATIVOS-F5-DATA-C0055",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
+            "caso": "F5 SYS04 data isolation IFV1-F5-C0055 negative: previous tenant data is denied without follow-on reads"
+          },
+          {
+            "id": "NEG-F5-EXEC-JOB",
+            "runner": "node",
+            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
+            "caso": "F5 reject wrong execution job"
+          },
+          {
+            "id": "NEG-F5-C0023",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+            "caso": "F5 ADM01 authorization and isolation IFV1-F5-C0023 negative: another tenant cannot grant access or consume the protected result"
+          },
+          {
+            "id": "NEG-F5-C0049",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-actions-isolation.test.ts",
+            "caso": "F5 SYS04 action isolation IFV1-F5-C0049 negative: unauthorized operation has no material effect"
           }
         ],
         "regressao": [
           {
-            "id": "REG-F4-VALID",
+            "id": "REG-F4-IDS",
             "runner": "node",
             "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
             "caso": "F4 CODE material verifier accepts exact canonical ID pairs"
           },
           {
-            "id": "REG-771-opinion-presentation",
-            "runner": "vitest",
-            "arquivo": "src/test/f4-code-v118-v119-opinion-presentation-sync.test.ts",
-            "caso": "V118/V119 material commands and consumers IFV1-F4-C0504 positive: material decision or frozen package reconciled by new scoped reads"
-          },
-          {
-            "id": "REG-771-history",
-            "runner": "vitest",
-            "arquivo": "src/test/f4-code-v122-history-sync.test.ts",
-            "caso": "material sources and governed historical context IFV1-F4-C0567 positive: history registration replay and independent current-analysis readback"
+            "id": "REG-F5-RECIBO",
+            "runner": "node",
+            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
+            "caso": "F5 context receipt remains partial"
           }
         ]
       },
       "solucao": {
-        "descricao": "Integrar extensão canônica dos últimos 10 IDs, nova execução integral de treze lotes cumulativos (138 casos/276 provas); preservar negativas, observações e recibos.",
-        "rollback": "Reverter a entrega em PR protegida; não alterar dados, produto ou backend.",
+        "descricao": "Vincular cada caso e decisão material ao runner, arquivo, título exato, SHA e job reais. Executar as provas dos lotes no HEAD da PR com recibos parciais, preservando o isolamento, as regressões e a certificação própria após as seis fatias.",
+        "rollback": "Reverter o BUILD por PR protegida, preservando a trilha histórica e os recibos integrados das fases anteriores.",
         "arquivos": [
-          "src/test/f4-code-v118-v119-opinion-presentation-sync.test.ts",
-          "src/test/f4-code-v122-history-sync.test.ts"
+          "src/test/f5-code-context-session-isolation.test.tsx",
+          "src/test/f5-code-sys04-competence-isolation.test.ts",
+          "src/test/f5-code-sys04-data-isolation.test.ts",
+          "src/test/f5-code-sys04-actions-isolation.test.ts",
+          "src/test/f5-code-adm01-rbac-isolation.test.tsx"
         ]
       }
     }
