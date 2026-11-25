@@ -257,7 +257,7 @@ function record(name: string, request: string) {
   events.push({
     id: request === REQ ? EVENT : request,
     criado_em: DATE,
-    evento: name,
+    evento: name==="contratos.insert"?name:"CadastroOperacionalAtualizado",
     entidade: "contratos",
     origem: "rpc",
     id_usuario: null,
@@ -453,7 +453,7 @@ function data(call: (typeof calls)[number], single: boolean) {
   }
   if (call.table === "eventos_auditoria") {
     if (actor !== "master" || !has("id_organizacao", ORG)) return deny();
-    const selected = events.filter((e) => has("correlation_id", String(e["correlation_id"])));
+    const selected = events.filter((e) => !call.filters.some(([k])=>k==="correlation_id")||has("correlation_id",String(e["correlation_id"])));
     return ok(selected, selected.length);
   }
   throw new Error("unexpected table " + call.table);
@@ -576,24 +576,17 @@ async function consume(c: Case, negative: boolean) {
   }
   if (c.destination === "V123") {
     expect(await podeConsultarAuditoria(ORG)).toBe(!negative);
-    const p = obterEventosAuditoria({ idOrganizacao: ORG, pagina: 0, correlationId: REQ });
+    const p = obterEventosAuditoria({ idOrganizacao: ORG, pagina: 0 });
     if (negative) {
       await expect(p).rejects.toThrow("Acesso não autorizado");
       return null;
     }
     const a = await p;
-    expect(a.total).toBe(1);
-    expect(a.eventos[0]).toMatchObject({
-      id: EVENT,
-      id_entidade: ID,
-      correlation_id: REQ,
-      evento: c.order === 7 ? "contratos.insert" : "atualizar_contrato_v1",
-    });
-    return {
-      entity: a.eventos[0]!.id_entidade,
-      eventId: a.eventos[0]!.id,
-      correlation: a.eventos[0]!.correlation_id,
-    };
+    expect(a.total).toBe(c.order===7?1:2);
+    expect(a.eventos.map(e=>e.evento)).toEqual(c.order===7?["contratos.insert"]:["CadastroOperacionalAtualizado","CadastroOperacionalAtualizado"]);
+    expect(new Set(a.eventos.map(e=>e.id)).size).toBe(a.total);
+    expect(a.eventos.every(e=>e.id_entidade===ID)).toBe(true);
+    return a;
   }
   let route: string | null = null;
   if (c.route) {
@@ -681,7 +674,10 @@ describe("F4.2 contract persistence, version evolution, replay and consumer read
       expect(list.itens[0]).toMatchObject({id:ID,id_organizacao:ORG,id_contratante:PARTY});
       const row=await detail();
       expect(row.objeto).toBe(cadastro.registro["objeto"]);
-      return {cadastro:cadastro.registro,list,row};
+      const audit=await obterEventosAuditoria({idOrganizacao:ORG,pagina:0});
+      expect(audit.total).toBe(events.length);
+      expect(new Set(audit.eventos.map(e=>e.id)).size).toBe(events.length);
+      return {cadastro:cadastro.registro,list,row,audit};
     };
     it(c.caseId+" positive: two versioned updates and fresh consumer persistence",async()=>{
       const progress=await material(c);
