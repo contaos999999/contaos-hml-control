@@ -77,7 +77,7 @@ export function buildF3Code138Preflight(catalogue, coverage, sources,
 /** Validates real per-case automated results. Source-map success is never evidence. */
 export function certifyF3Code138(catalogue, results, {frontendSha,workflowRunId}) {
   checked(catalogue?.count===138 && catalogue.cases?.length===138,"F3_CERT_CATALOGUE");
-  checked(SHA40.test(frontendSha) && /^[1-9]\\d*$/.test(String(workflowRunId)),"F3_CERT_PROVENANCE");
+  checked(SHA40.test(frontendSha) && /^[1-9]\d*$/.test(String(workflowRunId)),"F3_CERT_PROVENANCE");
   checked(Array.isArray(results) && results.length===138,"F3_CERT_RESULT_COUNT");
   const byId=new Map();
   for(const r of results){
