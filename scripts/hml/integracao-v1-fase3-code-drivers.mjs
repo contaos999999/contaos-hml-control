@@ -3,7 +3,7 @@
  * No fake PASS, no synthetic request, and no LIVE prerequisite.
  */
 import {createHash} from "node:crypto";
-import {F3_PRODUCERS} from "./integracao-v1-fase3.mjs";
+import {F3_PRODUCERS,F3_MUTATION_FLOWS} from "./integracao-v1-fase3.mjs";
 import {certifyF3Code138} from "./integracao-v1-fase3-code-138-runner.mjs";
 
 const sha256=value=>createHash("sha256").update(value).digest("hex");
@@ -70,4 +70,32 @@ export async function runF3CodeDrivers(catalogue,implementations,context) {
     throw error("F3_DRIVER_COVERAGE");
   const certificate=certifyF3Code138(catalogue,results,context);
   return Object.freeze({results,sha256:sha256(JSON.stringify(results)),certificate});
+}
+
+/**
+ * Binds the product's canonical mutation contracts to the code adapters.
+ * The supplied executor must perform actual RPC/Edge/Storage operations and
+ * positive/negative assertions; absent executor never passes.
+ */
+export function connectF3ProductFlows(executor) {
+  if(typeof executor!=="function")throw error("F3_PRODUCT_EXECUTOR_REQUIRED");
+  const bindings=Object.fromEntries(F3_PRODUCERS.map(p=>[
+    p.producer,async(cases,context)=>{
+      const contract=F3_MUTATION_FLOWS[p.order]??null;
+      if(!contract&&p.order!==1&&p.order!==3&&p.order!==5&&p.order!==7)
+        throw error("F3_PRODUCT_FLOW_UNDECLARED");
+      const evidence=[];
+      for(const c of cases){
+        const result=await executor(Object.freeze({
+          producerOrder:p.order,producer:p.producer,caseId:c.caseId,
+          contract,context
+        }));
+        if(!result||result.caseId!==c.caseId)
+          throw error("F3_PRODUCT_EXECUTION_MISSING");
+        evidence.push(result);
+      }
+      return evidence;
+    }
+  ]));
+  return Object.freeze(bindings);
 }
