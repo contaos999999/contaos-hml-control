@@ -79,11 +79,14 @@ export function verifyEntries(candidate, catalogue) {
     candidate.counts.failed===0 && candidate.counts.blocked===0, "SUMMARY");
   return true;
 }
-export function verifyBytes(versioned, downloaded, reproduced, zip) {
-  assert(sha(zip)===SOURCE.artifactDigest, "ZIP");
+export function verifyCandidateBytes(versioned, downloaded, reproduced) {
   assert(sha(versioned)===SOURCE.candidateDigest && versioned.equals(downloaded) &&
     versioned.equals(reproduced), "BYTES");
   return true;
+}
+export function verifyBytes(versioned, downloaded, reproduced, zip) {
+  assert(sha(zip)===SOURCE.artifactDigest, "ZIP");
+  return verifyCandidateBytes(versioned, downloaded, reproduced);
 }
 export function liveMetadata() {
   return {
