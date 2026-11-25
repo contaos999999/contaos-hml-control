@@ -563,6 +563,63 @@ async function rbacEvidence(c,kind) {
   return structuredClone(value);
 }
 
+
+const COMP_RPC_SOURCE="src/test/f3-code-sys04-competence-rpc.test.ts";
+const COMP_RPC_ID="a9999999-9999-4999-8999-999999999999";
+const competenceRpcCases=Object.freeze({
+  "IFV1-F3-C0058": {
+    "destination": "V114",
+    "rpc": "obter_visao_geral_competencia"
+  },
+  "IFV1-F3-C0059": {
+    "destination": "V115",
+    "rpc": "obter_documentos_competencia_v115"
+  },
+  "IFV1-F3-C0060": {
+    "destination": "V116",
+    "rpc": "obter_analise_competencia_v116"
+  },
+  "IFV1-F3-C0061": {
+    "destination": "V117",
+    "rpc": "obter_detalhe_requisito_v117"
+  },
+  "IFV1-F3-C0063": {
+    "destination": "V119",
+    "rpc": "obter_visao_geral_competencia"
+  }
+});
+let competenceRpcRun;
+async function competenceRpcEvidence(c,kind){
+  const config=competenceRpcCases[c.caseId];
+  if(!config || c.producerOrder!==3 || c.destination!==config.destination || c.consumer!==config.rpc)
+    throw Object.assign(new Error("F3_COMP_RPC_CASE_NOT_IMPLEMENTED"),{code:"F3_COMP_RPC_CASE_NOT_IMPLEMENTED"});
+  if(!competenceRpcRun){
+    competenceRpcRun=(async()=>{
+      const dir=await mkdtemp(join(tmpdir(),"contaos-f3-comp-rpc-"));
+      const evidenceFile=join(dir,"observations.json");
+      try{
+        await exec("bunx",["vitest","run",COMP_RPC_SOURCE,"--reporter=dot"],{cwd:ROOT,env:{...process.env,F3_CODE_SYS04_COMPETENCE_RPC_OBSERVATIONS:evidenceFile},timeout:60000,maxBuffer:1024*1024});
+        const parsed=JSON.parse(await readFile(evidenceFile,"utf8"));
+        const map=new Map();
+        if(!Array.isArray(parsed)||parsed.length!==Object.keys(competenceRpcCases).length*2)
+          throw Object.assign(new Error("F3_COMP_RPC_COUNT"),{code:"F3_COMP_RPC_COUNT"});
+        for(const e of parsed){
+          const spec=competenceRpcCases[e.caseId],key=e.caseId+":"+e.kind;
+          if(!spec||map.has(key)||!["positive","negative"].includes(e.kind)||e.testId!==COMP_RPC_SOURCE+":"+key||e.consumer!==spec.rpc||
+          e.producerOrder!==3||e.organizationId!==ORG_0041||e.producerEntityId!==ORG_0041||e.state!=="EXECUTED"||e.assertion!=="PASS")
+            throw Object.assign(new Error("F3_COMP_RPC_OUTPUT"),{code:"F3_COMP_RPC_OUTPUT"});
+          map.set(key,Object.freeze(e));
+        }
+        return map;
+      }finally{await rm(dir,{recursive:true,force:true});}
+    })();
+  }
+  const value=(await competenceRpcRun).get(c.caseId+":"+kind);
+  if(!value)throw Object.assign(new Error("F3_COMP_RPC_MISSING"),{code:"F3_COMP_RPC_MISSING"});
+  return structuredClone(value);
+}
+const competenceRpcConsumers=kind=>Object.fromEntries(Object.values(competenceRpcCases).map(spec=>[spec.rpc,async({case:c})=>competenceRpcEvidence(c,kind)]));
+
 export const producerDrivers = Object.freeze({
   4: async () => {
     // Producer is shared by all ADM01 relations, even if the first consumer
@@ -586,7 +643,7 @@ export const producerDrivers = Object.freeze({
     });
   },
   3: async (c) => {
-    if (![CASE_0041, CASE_0043, CASE_0045, CASE_0048].includes(c.caseId) && !Object.hasOwn(additionalCases,c.caseId)) {
+    if (![CASE_0041, CASE_0043, CASE_0045, CASE_0048].includes(c.caseId) && !Object.hasOwn(additionalCases,c.caseId) && !Object.hasOwn(competenceRpcCases,c.caseId)) {
       throw Object.assign(new Error("F3_DRIVER_CASE_NOT_IMPLEMENTED"), {
         code: "F3_DRIVER_CASE_NOT_IMPLEMENTED",
       });
@@ -602,6 +659,7 @@ export const producerDrivers = Object.freeze({
 
 export const consumerDrivers = Object.freeze({
   ...additionalConsumers("positive"),
+  ...competenceRpcConsumers("positive"),
   [RBAC_SHARED]: async ({case:c}) => rbacEvidence(c,"positive"),
   [CONSUMER_0036]: async ({ case: c }) => {
     if (c.caseId !== CASE_0036) {
@@ -652,6 +710,7 @@ export const consumerDrivers = Object.freeze({
 
 export const negativeDrivers = Object.freeze({
   ...additionalConsumers("negative"),
+  ...competenceRpcConsumers("negative"),
   [RBAC_SHARED]: async ({case:c}) => rbacEvidence(c,"negative"),
   [CONSUMER_0036]: async ({ case: c }) => {
     if (c.caseId !== CASE_0036) {
@@ -702,6 +761,21 @@ export const negativeDrivers = Object.freeze({
 
 /** Contraditório estrutural interno. Não constitui auditoria independente final. */
 export async function independentVerifier(c, observed) {
+  if(Object.hasOwn(competenceRpcCases,c.caseId)){
+    const spec=competenceRpcCases[c.caseId],{producer,positive,negative}=observed;
+    return c.origin==="SYS04" && c.destination===spec.destination && c.consumer===spec.rpc &&
+      c.expected?.master==="ALLOW" && c.expected?.leitor==="ALLOW" &&
+      producer?.organizationId===ORG_0041 && producer.producerEntityId===ORG_0041 &&
+      positive.testId===COMP_RPC_SOURCE+":"+c.caseId+":positive" && negative.testId===COMP_RPC_SOURCE+":"+c.caseId+":negative" &&
+      positive.network?.rpc===spec.rpc && negative.network?.rpc===spec.rpc &&
+      positive.network?.fixture===true && negative.network?.fixture===true &&
+      positive.network?.status===200 && negative.network?.status===403 &&
+      positive.readback?.destination===spec.destination && negative.readback?.destination===spec.destination &&
+      positive.readback?.contractId===CONTRACT_EXTRA && negative.readback?.contractId===CONTRACT_EXTRA &&
+      positive.readback?.competenceId===COMP_RPC_ID && negative.readback?.competenceId===COMP_RPC_ID &&
+      positive.readback?.authorizedLocalIdentities===2 &&
+      negative.readback?.outcome==="DENY" && negative.readback?.preferenceNotAuthorization===true;
+  }
   if (Object.hasOwn(rbacCases,c.caseId)) {
     const config=rbacCases[c.caseId];
     const {producer,positive,negative}=observed;
