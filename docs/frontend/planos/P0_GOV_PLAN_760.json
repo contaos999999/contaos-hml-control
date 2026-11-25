@@ -1,0 +1,28 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 760,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Primeiro lote de testes materiais F4.1 sobre atualização de vínculo, releitura, conflitos, replay e consumidores de permissão; somente fixture CODE, sem alterar produto.",
+  "files": [
+    "src/test/f4-code-adm01-version-sync.test.ts",
+    ".github/workflows/contaos-f4-code-material.yml"
+  ],
+  "baseline_main": "5b6a73a822f842daf349cd5624fbe29bef07e1af",
+  "plan_pr": 759,
+  "authorization": "PLAN #759 integrado; titular determinou implementar testes materiais; revisão técnica assistida F4 nos termos da seção 8 aprovada.",
+  "acceptance": [
+    "Contrato backend ADM01 de versão, idempotência e auditoria: docs/backend/ADM01_USUARIOS_VINCULOS_2026-11-02.md; não simular comportamento frontend.",
+    "Teste material de 23 consumidores RBAC, C0002 e C0033, por atualização versionada, readback separado, replay e negativa de conflito.",
+    "Preservar artefatos reais de execução, observações sanitizadas, HEAD, run/job e hashes; não atribuir PASS aos 29 casos F4.1 restantes ou a outras fatias.",
+    "CI integral e revisão no mesmo HEAD; PLAN P0 integrado antes de merge do BUILD."
+  ],
+  "constraints": [
+    "Sem backend, HML LIVE ou PROD.",
+    "Sem alteração dos testes F3 ou guard.",
+    "Nenhuma certificação antecipada.",
+    "Não chamar fixture de prova transacional remota."
+  ],
+  "certification": "F4_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
