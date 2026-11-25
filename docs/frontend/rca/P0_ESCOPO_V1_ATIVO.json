@@ -3,29 +3,24 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "e0d128829af55d2993a63b66444c56ceb6702c8f",
+    "frontend_sha": "556725a3734a3ec34204961f585328ada1c37a71",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f4-code-sys04-competence-context-sync.test.ts",
+      "arquivo": "src/test/f4-code-v102-v103-crud-sync.test.ts",
       "versao": "V1",
-      "justificativa": "Ampliação do coletor de identidade exata para consumidores reais SYS04, sob PLAN P0 765 integrado. Teste de contexto com transporte local, sem prova LIVE."
+      "justificativa": "Extensão do coletor de identidade exata para a F4.2, sob PLAN 767 integrado #772. Testes materiais de CRUD, readback, auditoria e negativas com transporte sintético."
     },
     {
-      "arquivo": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "arquivo": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
       "versao": "V1",
-      "justificativa": "Ampliação do coletor de identidade exata para consumidores reais SYS04, sob PLAN P0 765 integrado. Teste de contexto com transporte local, sem prova LIVE."
-    },
-    {
-      "arquivo": "src/test/f4-code-sys04-actions-context-sync.test.ts",
-      "versao": "V1",
-      "justificativa": "Ampliação do coletor de identidade exata para consumidores reais SYS04, sob PLAN P0 765 integrado. Teste de contexto com transporte local, sem prova LIVE."
+      "justificativa": "Extensão do coletor de identidade exata para a F4.2, sob PLAN 767 integrado #772. Testes materiais de CRUD, readback, auditoria e negativas com transporte sintético."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F4-765-IDENTITY-SYS04",
+      "id": "RCA-F4-767-IDENTITY-CRUD",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -36,12 +31,13 @@
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "Verificador inline verificava cardinalidade, unicidade e correspondência de títulos, mas não comparava conjunto exato de IDs nem exigia bijeção de assertions. Este incremento estende o uso da correção já comprovada aos 4 IDs do lote contexto, não afirma nova falha do produto nem novo RED.",
+        "descricao": "Verificador inline original não comparava o conjunto exato dos IDs; RED histórico comprovado em #760. Incremento do mecanismo corrigido para os dois conjuntos F4.2, sem afirmar defeito novo do produto ou novo RED.",
         "evidencias": [
           "Zero-Drift run 45546975968 job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2; teste nominal falhou por aceitar os 25 IDs estrangeiros.",
           "PLAN prospectivo #764 integrado 9af3c2216c0b06527abd714aa288a72f6f81151e; autorização escopo restrito #762.",
           "Correção do coletor integrada em #760, c8fd1011983664e21a6de2ca9335c42df0987feb, gate RCA e CI 7/7 PASS; PLAN específico #764 integrado. RED anterior preservado como ancestral, não reclassificado como falha da tela.",
-          "Extensão do coletor corrigido #760, #763 integrado cca8c4bf24a6b6eb6e9a0e16bdd2f0e34ee1e97f, PLAN #766 integrado e0d128829af55d2993a63b66444c56ceb6702c8f; RED ancestral do coletor, não falha de produto."
+          "Extensão do coletor corrigido #760, #763 integrado cca8c4bf24a6b6eb6e9a0e16bdd2f0e34ee1e97f, PLAN #766 integrado e0d128829af55d2993a63b66444c56ceb6702c8f; RED ancestral do coletor, não falha de produto.",
+          "PLAN #772 MERGED 556725a3734a3ec34204961f585328ada1c37a71, F4.1 #765 MERGED 4e3cb2d4452ce934113f2ae397bcbf032e4b0263; contratos backend 20261102163433_v103_editar_contratante_concorrencia_auditoria.sql e 20261106230839_p0_crud_organizacoes_contratos.sql conferidos para versionamento e eventos de auditoria."
         ],
         "hipoteses_descartadas": [
           "Não foi demonstrada falha do produto ou de RLS remota.",
@@ -50,9 +46,9 @@
       },
       "impacto": {
         "dependencias": [
-          "Adaptadores SYS04 reais, contrato de organização/competências e consultas de dados",
-          "CI material comum com cinco lotes exatos",
-          "Matriz canônica F4.1 e recibos parciais"
+          "Adaptadores reais V102–V106",
+          "Workflow material comum e identidade canônica",
+          "Histórico de auditoria e readback versionado"
         ],
         "versoes_afetadas": [
           "V1"
@@ -68,12 +64,12 @@
             }
           },
           {
-            "risco": "Leitura de contexto antigo após troca",
+            "risco": "Edição concorrente ou repetição altera material e trilha histórica",
             "teste_preventivo": {
-              "id": "NEG-765-C0058",
+              "id": "NEG-767-C0176",
               "runner": "vitest",
-              "arquivo": "src/test/f4-code-sys04-competence-context-sync.test.ts",
-              "caso": "F4 SYS04 -> competence refresh across distinct organizations IFV1-F4-C0058 negative: previous context is rejected after switch, current readback preserved"
+              "arquivo": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
+              "caso": "F4.2 contract persistence, version evolution, replay and consumer readback IFV1-F4-C0176 negative: stale request, failed transport and cross-scope rejection preserve state"
             }
           }
         ]
@@ -97,22 +93,16 @@
             "caso": "F4 CODE material verifier rejects noncanonical case IDs"
           },
           {
-            "id": "GREEN-765-C0058",
+            "id": "GREEN-767-C0116",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-sys04-competence-context-sync.test.ts",
-            "caso": "F4 SYS04 -> competence refresh across distinct organizations IFV1-F4-C0058 positive: same user switches organization and reconstructs real consumer"
+            "arquivo": "src/test/f4-code-v102-v103-crud-sync.test.ts",
+            "caso": "F4.2 V102/V103 material create, two versioned writes and consumer refresh IFV1-F4-C0116 positive: material persistence and fresh consumer after version evolution"
           },
           {
-            "id": "GREEN-765-C0050",
+            "id": "GREEN-767-C0176",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-sys04-data-context-sync.test.ts",
-            "caso": "F4.1 real consumer reload after change of organization IFV1-F4-C0050 positive: distinct identities and material fields after real preference change"
-          },
-          {
-            "id": "GREEN-765-C0047",
-            "runner": "vitest",
-            "arquivo": "src/test/f4-code-sys04-actions-context-sync.test.ts",
-            "caso": "F4.1 remaining material scopes and writes IFV1-F4-C0047 positive: edit current scope using separately read version"
+            "arquivo": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
+            "caso": "F4.2 contract persistence, version evolution, replay and consumer readback IFV1-F4-C0176 positive: two versioned updates and fresh consumer persistence"
           }
         ],
         "negativos": [
@@ -129,22 +119,16 @@
             "caso": "F4 CODE material verifier rejects a nonexecuted proof"
           },
           {
-            "id": "NEG-765-C0058",
+            "id": "NEG-767-C0116",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-sys04-competence-context-sync.test.ts",
-            "caso": "F4 SYS04 -> competence refresh across distinct organizations IFV1-F4-C0058 negative: previous context is rejected after switch, current readback preserved"
+            "arquivo": "src/test/f4-code-v102-v103-crud-sync.test.ts",
+            "caso": "F4.2 V102/V103 material create, two versioned writes and consumer refresh IFV1-F4-C0116 negative: rejected transport, stale version and unauthorized writes preserve readback"
           },
           {
-            "id": "NEG-765-C0050",
+            "id": "NEG-767-C0176",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-sys04-data-context-sync.test.ts",
-            "caso": "F4.1 real consumer reload after change of organization IFV1-F4-C0050 negative: old consumer access denied and current readback preserved"
-          },
-          {
-            "id": "NEG-765-C0047",
-            "runner": "vitest",
-            "arquivo": "src/test/f4-code-sys04-actions-context-sync.test.ts",
-            "caso": "F4.1 remaining material scopes and writes IFV1-F4-C0047 negative: edit current scope using separately read version"
+            "arquivo": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
+            "caso": "F4.2 contract persistence, version evolution, replay and consumer readback IFV1-F4-C0176 negative: stale request, failed transport and cross-scope rejection preserve state"
           }
         ],
         "regressao": [
@@ -155,20 +139,19 @@
             "caso": "F4 CODE material verifier accepts exact canonical ID pairs"
           },
           {
-            "id": "REG-765-C0068",
+            "id": "REG-767-C0146",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-sys04-actions-context-sync.test.ts",
-            "caso": "F4.1 remaining material scopes and writes IFV1-F4-C0068 positive: refresh actual audit query in new scope"
+            "arquivo": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
+            "caso": "F4.2 contract persistence, version evolution, replay and consumer readback IFV1-F4-C0146 positive: two versioned updates and fresh consumer persistence"
           }
         ]
       },
       "solucao": {
-        "descricao": "Estender verificador exato e workflow material comum a três grupos de 5/10/10 IDs, manter grupos anteriores, rodar testes de sincronização e negativas de contexto; corrigir notação de índices e env antes da execução.",
+        "descricao": "Ampliar validador e workflow para 9+15 IDs, executar readbacks de versões, replay e falhas materiais preservando a trilha histórica, além da regressão dos 54 casos anteriores.",
         "rollback": "Reverter a entrega em PR protegida; não alterar dados, produto ou backend.",
         "arquivos": [
-          "src/test/f4-code-sys04-competence-context-sync.test.ts",
-          "src/test/f4-code-sys04-data-context-sync.test.ts",
-          "src/test/f4-code-sys04-actions-context-sync.test.ts"
+          "src/test/f4-code-v102-v103-crud-sync.test.ts",
+          "src/test/f4-code-v105-v106-crud-sync.test.tsx"
         ]
       }
     }
