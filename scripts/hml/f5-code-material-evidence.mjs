@@ -18,6 +18,24 @@ export const BATCHES = Object.freeze({
   competence: ["0058", "0059", "0060", "0061", "0063"],
   data: ["0050", "0051", "0052", "0053", "0054", "0055", "0056", "0062", "0064", "0065"],
   actions: ["0041", "0045", "0046", "0047", "0048", "0049", "0057", "0066", "0067", "0068"],
+  parties: ["0093", "0096", "0098", "0100", "0107", "0111", "0113", "0115", "0116"],
+  contracts: [
+    "0132",
+    "0136",
+    "0139",
+    "0140",
+    "0146",
+    "0153",
+    "0156",
+    "0159",
+    "0162",
+    "0165",
+    "0167",
+    "0170",
+    "0172",
+    "0174",
+    "0176",
+  ],
 });
 export const A = "a1111111-1111-4111-8111-111111111111",
   B = "a2222222-2222-4222-8222-222222222222";
@@ -152,6 +170,29 @@ const admContracts = new Map(
     .filter((c) => c.batch === "adm01")
     .map((c) => [c.caseId.slice(-4), c.seedMatrixCandidate]),
 );
+const f52Inventory = JSON.parse(
+  fs.readFileSync(
+    new URL(
+      "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_2_CASE_CONTRACTS_PROPOSAL.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+const f52Cases = new Map(f52Inventory.cases.map((entry) => [entry.caseId.slice(-4), entry]));
+const downstreamReads = {
+  V107: "fontes_normativas",
+  V108: "propostas_orcamentarias",
+  V109: "listas_verificacao",
+  V110: "documentos_contrato",
+  V111: "documentos_contrato",
+  V112: "competencias",
+  V113: "consultar_permissoes_efetivas",
+  V121: "apresentacoes_contratante",
+  V122: "relatorios_historicos_contratante",
+};
+const fixtureId = (tenant, series, id) =>
+  tenant + series + "0000-0000-4000-8000-" + String(id).padStart(12, "0");
 const contextTitles = {
   "0005": [
     "authorized reader sees own dashboard",
@@ -212,7 +253,173 @@ const batchesWithEvidence = {
       ][index],
     check: checkAdm,
   },
+  parties: {
+    file: "f5-code-v102-v103-scope-isolation.test.ts",
+    suite: "F5 V102/V103 party scope isolation",
+    title: (_id, index) =>
+      [
+        "authorized party mutation reaches the scoped consumer",
+        "foreign party mutation is denied and remains hidden",
+      ][index],
+    check: checkParty,
+  },
+  contracts: {
+    file: "f5-code-v105-v106-scope-isolation.test.tsx",
+    suite: "F5 V105/V106 contract scope isolation",
+    title: (_id, index) =>
+      [
+        "authorized contract change reaches the scoped consumer",
+        "foreign contract change is denied and remains hidden",
+      ][index],
+    check: checkContract,
+  },
 };
+function checkScopeF52(o, id, producer, operation, association = false) {
+  const canonical = f52Cases.get(id);
+  const positive = o.kind === "positive";
+  const b = o.readback;
+  if (
+    !canonical ||
+    o.origin !== canonical.origin ||
+    o.destination !== canonical.destination ||
+    o.frontier !== canonical.consumer ||
+    o.operation !== operation ||
+    o.actor !== (positive ? U : V) ||
+    o.role !== (positive ? "administrador" : association ? "gestor_contrato" : "leitor") ||
+    o.tenant !== (positive ? A : B) ||
+    o.target !== A ||
+    o.decision !== (positive ? "ALLOW" : "DENY") ||
+    b.producer !== producer ||
+    b.foreignVisible !== false
+  )
+    fail("F5.2 actor/tenant/producer/consumer mismatch");
+  if (
+    !positive &&
+    (b.ownOrganizationId !== B ||
+      b.resultId !== undefined ||
+      b.status !== (association ? 409 : 403) ||
+      b.code !== (association ? "23503" : "42501") ||
+      b.mutationCount !== 0)
+  )
+    fail("F5.2 authorization denial missing or produced an effect");
+  return canonical;
+}
+function checkAuditF52(b, materialId, event, series) {
+  if (
+    b.eventEntityId !== materialId ||
+    b.event !== event ||
+    b.resultId !== fixtureId("a", series, 3) ||
+    b.correlationId !== fixtureId("a", series, 4)
+  )
+    fail("F5.2 audit event or correlation mismatch");
+}
+function checkParty(o, id) {
+  const create = ["0093", "0096", "0098", "0100"].includes(id);
+  const { destination } = checkScopeF52(
+    o,
+    id,
+    create ? "contratantes" : "rpc/atualizar_contratante",
+    create ? "create" : "update",
+  );
+  const b = o.readback;
+  const partyId = fixtureId("a", "520", 1);
+  if (o.kind === "negative") {
+    if (b.visible !== 0 || b.ownMaterialId !== fixtureId("b", "520", 1) || b.ownVersion !== 1)
+      fail("F5.2 party exposed or own record changed");
+    if (id === "0107" && (b.classifiedConflict !== "conflito" || b.classifiedTransport !== "erro"))
+      fail("F5.2 party authorization, conflict and transport were not distinguished");
+    return;
+  }
+  if (
+    b.organizationId !== A ||
+    b.partyId !== partyId ||
+    b.version !== (create ? 1 : 2) ||
+    b.visible !== 1
+  )
+    fail("F5.2 party material readback mismatch");
+  if (destination === "V123") {
+    checkAuditF52(b, partyId, create ? "ContratanteCriado" : "ContratanteAtualizado", "520");
+  } else if (destination === "V104" || destination === "V106") {
+    if (b.resultId !== fixtureId("a", "520", 2) || b.relatedPartyId !== partyId)
+      fail("F5.2 party contract reference changed");
+  } else if (b.resultId !== partyId) {
+    fail("F5.2 party consumer did not return the written record");
+  }
+}
+function checkDashboardF52(b, create) {
+  const before = b.before;
+  const after = b.summary;
+  if (
+    !record(before) ||
+    !record(after) ||
+    before.visible !== (create ? 0 : 1) ||
+    before.active !== (create ? 0 : 1) ||
+    before.group !== (create ? null : "ativo") ||
+    after.visible !== 1 ||
+    after.active !== 0 ||
+    after.group !== (create ? "rascunho" : "suspenso") ||
+    b.denialRendered !== false
+  )
+    fail("F5.2 dashboard totals or grouping mismatch");
+}
+function checkContract(o, id) {
+  const create = ["0132", "0136", "0139", "0140"].includes(id);
+  const association = id === "0136";
+  const transition = id === "0146";
+  const producer = create
+    ? "contratos"
+    : transition
+      ? "rpc/alterar_situacao_contrato_v1"
+      : "rpc/atualizar_contrato_v1";
+  const { destination } = checkScopeF52(
+    o,
+    id,
+    producer,
+    create ? "create" : transition ? "transition" : "update",
+    association,
+  );
+  const b = o.readback;
+  const contractId = fixtureId("a", "521", 1);
+  const partyId = fixtureId("a", "521", 2);
+  if (o.kind === "negative") {
+    if (
+      b.ownMaterialId !== fixtureId("b", "521", 1) ||
+      b.ownPartyId !== fixtureId("b", "521", 2) ||
+      b.attemptedOrganization !== (association ? B : A) ||
+      b.attemptedPartyId !== (association ? partyId : undefined) ||
+      (destination === "SYS05" && (b.denialRendered !== true || b.summary !== undefined))
+    )
+      fail("F5.2 negative contract effect or scope mismatch");
+    return;
+  }
+  if (
+    b.organizationId !== A ||
+    b.contractId !== contractId ||
+    b.partyId !== partyId ||
+    b.version !== (create ? 1 : 2) ||
+    b.situation !== (create ? "rascunho" : transition ? "suspenso" : "ativo") ||
+    b.requestId !== (create ? undefined : fixtureId("a", "521", 5))
+  )
+    fail("F5.2 contract identity, version or association mismatch");
+  if (destination === "SYS05") {
+    checkDashboardF52(b, create);
+  } else if (destination === "V123") {
+    checkAuditF52(
+      b,
+      contractId,
+      create ? "ContratoCriado" : "CadastroOperacionalAtualizado",
+      "521",
+    );
+  } else if (Object.hasOwn(downstreamReads, destination)) {
+    if (
+      b.downstream !== downstreamReads[destination] ||
+      b.resultId !== (destination === "V113" ? contractId : fixtureId("a", "521", 6))
+    )
+      fail("F5.2 downstream contract link mismatch");
+  } else if (b.resultId !== contractId) {
+    fail("F5.2 contract consumer did not return the written contract");
+  }
+}
 function checkAction(o, id) {
   const [frontier, operation, allowedRole] = actionContracts[id];
   const positive = o.kind === "positive";

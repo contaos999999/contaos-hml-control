@@ -95,7 +95,8 @@ function fixture() {
   };
 }
 test("F5 exact 54 canonical ids", () => {
-  const ids = Object.values(BATCHES).flat();
+  const firstSlice = ["adm01", "context", "competence", "data", "actions"];
+  const ids = firstSlice.flatMap((batch) => BATCHES[batch]);
   const { cases } = JSON.parse(
     readFileSync(
       new URL(
@@ -105,7 +106,8 @@ test("F5 exact 54 canonical ids", () => {
       "utf8",
     ),
   );
-  for (const [batch, actual] of Object.entries(BATCHES)) {
+  for (const batch of firstSlice) {
+    const actual = BATCHES[batch];
     const canonical = cases.filter((x) => x.batch === batch).map((x) => x.caseId.slice(-4));
     assert.deepEqual([...actual].sort(), canonical.sort());
   }
@@ -179,3 +181,179 @@ test("F5 reject wrong backend and missing job", () => {
   );
   assert.throws(() => validateMaterial("context", obs, report, { ...identity, job: "" }));
 });
+
+const { cases: contractCases } = JSON.parse(
+  readFileSync(
+    new URL(
+      "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_2_CASE_CONTRACTS_PROPOSAL.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+test("F5 exact 78 cumulative canonical ids", () => {
+  const all = Object.values(BATCHES).flat();
+  assert.equal(all.length, 78);
+  assert.equal(new Set(all).size, 78);
+  for (const [batch, origins] of [
+    ["parties", ["V102", "V103"]],
+    ["contracts", ["V105", "V106"]],
+  ]) {
+    assert.deepEqual(
+      BATCHES[batch],
+      contractCases.filter((c) => origins.includes(c.origin)).map((c) => c.caseId.slice(-4)),
+    );
+  }
+});
+const proofId = (side, series, index) =>
+  side + series + "0000-0000-4000-8000-" + String(index).padStart(12, "0");
+function partyFixture() {
+  const ids = BATCHES.parties;
+  const suite = "F5 V102/V103 party scope isolation";
+  const obs = ids.flatMap((id) => {
+    const c = contractCases.find((row) => row.caseId.endsWith(id));
+    const create = c.origin === "V102";
+    const producer = create ? "contratantes" : "rpc/atualizar_contratante";
+    const partyId = proofId("a", "520", 1);
+    const linksContract = ["V104", "V106"].includes(c.destination);
+    const audit = c.destination === "V123";
+    const common = {
+      ...identity,
+      caseId: c.caseId,
+      mode: "CODE_FIXTURE",
+      target: A,
+      frontier: c.consumer,
+      origin: c.origin,
+      destination: c.destination,
+      operation: create ? "create" : "update",
+    };
+    return [
+      {
+        ...common,
+        kind: "positive",
+        role: "administrador",
+        actor: U,
+        tenant: A,
+        decision: "ALLOW",
+        readback: {
+          producer,
+          foreignVisible: false,
+          partyId,
+          organizationId: A,
+          version: create ? 1 : 2,
+          visible: 1,
+          resultId: audit
+            ? proofId("a", "520", 3)
+            : linksContract
+              ? proofId("a", "520", 2)
+              : partyId,
+          ...(linksContract ? { relatedPartyId: partyId } : {}),
+          ...(audit
+            ? {
+                event: create ? "ContratanteCriado" : "ContratanteAtualizado",
+                eventEntityId: partyId,
+                correlationId: proofId("a", "520", 4),
+              }
+            : {}),
+        },
+      },
+      {
+        ...common,
+        kind: "negative",
+        role: "leitor",
+        actor: V,
+        tenant: B,
+        decision: "DENY",
+        readback: {
+          producer,
+          foreignVisible: false,
+          visible: 0,
+          ownOrganizationId: B,
+          ownVersion: 1,
+          ownMaterialId: proofId("b", "520", 1),
+          mutationCount: 0,
+          code: "42501",
+          status: 403,
+          ...(id === "0107" ? { classifiedConflict: "conflito", classifiedTransport: "erro" } : {}),
+        },
+      },
+    ];
+  });
+  const report = {
+    success: true,
+    numTotalTests: obs.length,
+    numPassedTests: obs.length,
+    numFailedTests: 0,
+    numPendingTests: 0,
+    numTodoTests: 0,
+    testResults: [
+      {
+        name: "/workspace/src/test/f5-code-v102-v103-scope-isolation.test.ts",
+        status: "passed",
+        assertionResults: obs.map((o) => ({
+          status: "passed",
+          ancestorTitles: [suite],
+          title:
+            o.caseId +
+            " " +
+            o.kind +
+            ": " +
+            (o.kind === "positive"
+              ? "authorized party mutation reaches the scoped consumer"
+              : "foreign party mutation is denied and remains hidden"),
+        })),
+      },
+    ],
+  };
+  return { obs, report };
+}
+test("F5.2 accepts scoped party pairs as a partial receipt", () => {
+  const { obs, report } = partyFixture();
+  const receipt = validateMaterial("parties", obs, report, identity);
+  assert.equal(receipt.covered, 9);
+  assert.equal(receipt.proofs, 18);
+  assert.equal(receipt.certification, "NOT_CERTIFIED");
+});
+for (const [label, id, kind, key, value, failure] of [
+  ["consumer", "0093", "positive", "destination", "V103", /producer\/consumer mismatch/],
+  [
+    "association",
+    "0111",
+    "positive",
+    "relatedPartyId",
+    proofId("b", "520", 1),
+    /contract reference changed/,
+  ],
+  [
+    "audit corruption",
+    "0100",
+    "positive",
+    "correlationId",
+    proofId("b", "520", 4),
+    /audit event or correlation mismatch/,
+  ],
+  [
+    "conflict as authorization",
+    "0107",
+    "negative",
+    "code",
+    "PT409",
+    /authorization denial missing/,
+  ],
+  [
+    "transport classification",
+    "0107",
+    "negative",
+    "classifiedTransport",
+    "negado",
+    /were not distinguished/,
+  ],
+]) {
+  test("F5.2 rejects " + label, () => {
+    const { obs, report } = partyFixture();
+    const entry = obs.find((o) => o.caseId.endsWith(id) && o.kind === kind);
+    if (key === "destination") entry[key] = value;
+    else entry.readback[key] = value;
+    assert.throws(() => validateMaterial("parties", obs, report, identity), failure);
+  });
+}

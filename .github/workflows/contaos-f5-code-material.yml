@@ -29,6 +29,10 @@ jobs:
             test: src/test/f5-code-sys04-actions-isolation.test.ts
           - batch: adm01
             test: src/test/f5-code-adm01-rbac-isolation.test.tsx
+          - batch: parties
+            test: src/test/f5-code-v102-v103-scope-isolation.test.ts
+          - batch: contracts
+            test: src/test/f5-code-v105-v106-scope-isolation.test.tsx
     env:
       F5_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
       F5_JOB_NAME: F5 CODE ${{ matrix.batch }} - material e isolamento

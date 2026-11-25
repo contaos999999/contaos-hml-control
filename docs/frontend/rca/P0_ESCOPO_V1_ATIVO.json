@@ -3,39 +3,24 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "cb39a0b59addadceaacf75ed5bc4dc04534dcb57",
+    "frontend_sha": "45afa6b3d00572b74eeb380580ba9ff2b1d97357",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
+      "arquivo": "src/test/f5-code-v102-v103-scope-isolation.test.ts",
       "versao": "V1",
-      "justificativa": "F5.1: provas CODE de isolamento em sessão, preferência, seletor e dashboard com identidades e organizações sintéticas."
+      "justificativa": "Provas CODE_FIXTURE de criação, versão, consumo e isolamento de contratantes em V102/V103."
     },
     {
-      "arquivo": "src/test/f5-code-sys04-competence-isolation.test.ts",
+      "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
       "versao": "V1",
-      "justificativa": "SYS04: adaptadores e contratos de competência sob identidade e organização sintéticas."
-    },
-    {
-      "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
-      "versao": "V1",
-      "justificativa": "SYS04: consultas reais de documentos, dados e histórico com escopo sintético."
-    },
-    {
-      "arquivo": "src/test/f5-code-sys04-actions-isolation.test.ts",
-      "versao": "V1",
-      "justificativa": "Operações de escrita, leitura e auditoria pela fronteira material de SYS04."
-    },
-    {
-      "arquivo": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
-      "versao": "V1",
-      "justificativa": "25 casos de vínculo ADM01, permissão por rota e trilha de auditoria por correlação."
+      "justificativa": "Provas CODE_FIXTURE de contratos em V105/V106 e vínculo material aos consumidores autorizados."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F5-778-IDENTIDADE-MATERIAL",
+      "id": "RCA-F5-782-IDENTIDADE-MATERIAL",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -46,49 +31,55 @@
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "O coletor original verificava a quantidade de pares sem comparar o conjunto exato de IDs. O BUILD F5.1 aplica a prevenção ao coletor separado da Fase 5. A omissão da ficha RCA no escopo originalmente autorizado foi uma falha documental distinta, tratada pela emenda #780.",
+        "descricao": "O coletor original confirmou a cardinalidade do lote sem conferir os IDs canônicos. A F5.2 estende a prevenção da F5.1 a dois lotes, vinculando também produtor, consumidor, operação e escopo material de cada conexão.",
         "evidencias": [
           "Run ancestral 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2. Falha do coletor F4 preservada no histórico da PR #760.",
-          "Zero-Drift da #778, run 45600835643, job 139159136439, HEAD a91fe529ca15b1ea410b0434504c4457f6b88b94, rejeitou o diff por ausência da ficha RCA.",
-          "PLAN #779 e emenda #780 integrados. Readback P0_GOV_PLAN_778.json na main e0823b6f4b398c13cca430cb0130f4f5dd95f521, blob e9e1eb21988b528510d831243b981aa48555bbf1.",
-          "Ficha e evidências históricas da Fase 4 preservadas no commit e0823b6f4b398c13cca430cb0130f4f5dd95f521.",
-          "Readback do artefato parcial 15040075703, run 45649961252 job 139331458010. SHA256SUMS verificado. O recibo usava o SHA do merge sintético 1d8a91f452153d6fe995ea1c2d3c75cef2ed5a65 no lugar do HEAD da PR d92b89c3446f93587a1b3a1b67855ea43e821ea2. O workflow passa a vincular checkout, HEAD vivo do run, tentativa e job antes de executar as provas.",
-          "Emenda de revisão assistida #781 integrada em cb39a0b59addadceaacf75ed5bc4dc04534dcb57, revisão 6060955228. Reancoragem após conferência da main viva.",
-          "Workflow F5 run 45653518068, job 139343985505, HEAD 63984071a29805c8279be65d5d15418e369f8eda. O jq do runner recusou label como nome de variável e falhou antes das provas. O filtro com job_name foi validado localmente para identidade exata, duplicidade e SHA divergente. O RED está no log do runner que rejeitou a sintaxe.",
-          "Run 45653897667, HEAD 593677112fac6a46481cf0a542223f09bd24d548: quatro jobs não localizaram o estado in_progress no início; competência job 139345303807 completou com as provas. Reconsulta do endpoint da tentativa 1 retornou cinco identidades exatas. A vinculação usa nome, run, tentativa e HEAD, com espera limitada pela publicação do registro; a conclusão SUCCESS é conferida na validação externa do artefato."
+          "A evidência e a correção documental da F5.1 permanecem na ficha integrada pela #778, commit 9ebf16f6b339ddf7113add52257c08c9c89b9f8e, blob fffe36808f8d4827275341db21ddaf6e354e7343.",
+          "PLAN P0 #783 integrado em 45afa6b3d00572b74eeb380580ba9ff2b1d97357, revisão assistida 6061896583, escopo P0_GOV_PLAN_782.json blob b0902f298d7ad39138fae3278818b5857b207332.",
+          "Inventário canônico F5.2 derivado do PLAN #777 e da matriz bb7ce43f9c334f2f03e9aafab405addadfe5e19a. Os quatro eventos condicionais existem no backend normativo fixado."
         ],
         "hipoteses_descartadas": [
-          "A mesma cardinalidade pode conter IDs indevidos. A contagem por si só não demonstra a identidade das provas.",
-          "O RED ancestral demonstra falha histórica do coletor. O RED da #778 demonstra ausência documental. Os dois registros são distintos de falha nova no produto ou prova RLS remota."
+          "A mesma quantidade de testes pode conter IDs de outro caso, associação de outro tenant ou auditoria com correlação divergente.",
+          "O RED ancestral pertence ao coletor histórico. A alteração atual fiscaliza código com transporte sintético e não afirma falha ou PASS de RLS remota."
         ]
       },
       "impacto": {
         "dependencias": [
-          "Coletor de provas F5 CODE_FIXTURE",
-          "Inventário F5.1 aprovado no PLAN #777",
-          "Seletor de organização, preferência por identidade e consumidor real do dashboard",
-          "Oráculos de competência e dados, com consultas reais ao transporte sintético.",
-          "Vínculo ADM01 e chaves de correlação da trilha de auditoria",
-          "Comandos de SYS04 e validação de associação contratual"
+          "Adaptadores V102/V103 e consumidores V101/V104/V105/V106/V123",
+          "Comandos V105/V106 e consumidores reais de detalhes e vínculos dos contratos",
+          "Dashboard SYS05, preferências por identidade e chave de cache",
+          "Trilha V123, associação composta de contratantes e contratos e leitores dependentes",
+          "Coletor F5 e cinco lotes integrados na F5.1"
         ],
-        "versoes_afetadas": ["V1"],
+        "versoes_afetadas": [
+          "V1"
+        ],
         "riscos": [
           {
-            "risco": "Aceitação de falhas de transporte como negação de acesso",
+            "risco": "Impedimento de transporte ou conflito classificado como negação de autorização",
             "teste_preventivo": {
-              "id": "NEG-F5-TRANSPORT",
-              "runner": "node",
-              "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-              "caso": "F5 reject transport failure"
+              "id": "NEG-F5-2-C0107",
+              "runner": "vitest",
+              "arquivo": "src/test/f5-code-v102-v103-scope-isolation.test.ts",
+              "caso": "F5 V102/V103 party scope isolation IFV1-F5-C0107 negative: foreign party mutation is denied and remains hidden"
             }
           },
           {
-            "risco": "Renderização de resultados do contexto anterior após a troca de organização",
+            "risco": "Associação de contratante de A em contrato de B sem a integridade composta",
             "teste_preventivo": {
-              "id": "NEG-F5-1-C0043",
+              "id": "NEG-F5-2-C0136",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
-              "caso": "F5 context material isolation IFV1-F5-C0043 negative: delayed A data cannot render after B switch"
+              "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
+              "caso": "F5 V105/V106 contract scope isolation IFV1-F5-C0136 negative: foreign contract change is denied and remains hidden"
+            }
+          },
+          {
+            "risco": "Evento correto com correlação adulterada aceito pelo coletor",
+            "teste_preventivo": {
+              "id": "NEG-F5-2-AUDIT",
+              "runner": "node",
+              "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
+              "caso": "F5.2 rejects audit corruption"
             }
           }
         ]
@@ -106,96 +97,60 @@
         ],
         "green": [
           {
-            "id": "GREEN-F5-IDS",
+            "id": "GREEN-F5-78-IDS",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 exact 54 canonical ids"
+            "caso": "F5 exact 78 cumulative canonical ids"
           },
           {
-            "id": "GREEN-F5-1-C0043",
+            "id": "GREEN-F5-2-C0100",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
-            "caso": "F5 context material isolation IFV1-F5-C0043 positive: real selector switch invalidates A cache"
+            "arquivo": "src/test/f5-code-v102-v103-scope-isolation.test.ts",
+            "caso": "F5 V102/V103 party scope isolation IFV1-F5-C0100 positive: authorized party mutation reaches the scoped consumer"
           },
           {
-            "id": "GREEN-F5-COMPETENCE-C0059",
+            "id": "GREEN-F5-2-C0146",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-sys04-competence-isolation.test.ts",
-            "caso": "F5 SYS04 competence isolation IFV1-F5-C0059 positive: material read in the selected tenant"
+            "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
+            "caso": "F5 V105/V106 contract scope isolation IFV1-F5-C0146 positive: authorized contract change reaches the scoped consumer"
           },
           {
-            "id": "GREEN-F5-DATA-C0055",
+            "id": "GREEN-F5-2-C0176",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
-            "caso": "F5 SYS04 data isolation IFV1-F5-C0055 positive: scoped query returns only the selected tenant material"
-          },
-          {
-            "id": "GREEN-F5-C0033",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
-            "caso": "F5 ADM01 authorization and isolation IFV1-F5-C0033 positive: persisted binding is reflected in its authorized consumer"
-          },
-          {
-            "id": "GREEN-F5-C0067",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-sys04-actions-isolation.test.ts",
-            "caso": "F5 SYS04 action isolation IFV1-F5-C0067 positive: authorized operation and scoped readback"
+            "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
+            "caso": "F5 V105/V106 contract scope isolation IFV1-F5-C0176 positive: authorized contract change reaches the scoped consumer"
           }
         ],
         "negativos": [
           {
-            "id": "NEG-F5-DUP",
+            "id": "NEG-F5-2-C0136",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
+            "caso": "F5 V105/V106 contract scope isolation IFV1-F5-C0136 negative: foreign contract change is denied and remains hidden"
+          },
+          {
+            "id": "NEG-F5-2-C0107",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-v102-v103-scope-isolation.test.ts",
+            "caso": "F5 V102/V103 party scope isolation IFV1-F5-C0107 negative: foreign party mutation is denied and remains hidden"
+          },
+          {
+            "id": "NEG-F5-2-AUDIT",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 reject duplicate"
+            "caso": "F5.2 rejects audit corruption"
           },
           {
-            "id": "NEG-F5-TRANSPORT",
+            "id": "NEG-F5-2-C0146",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
+            "caso": "F5 V105/V106 contract scope isolation IFV1-F5-C0146 negative: foreign contract change is denied and remains hidden"
+          },
+          {
+            "id": "NEG-F5-2-CONSUMER",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 reject transport failure"
-          },
-          {
-            "id": "NEG-F5-1-C0005",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
-            "caso": "F5 context material isolation IFV1-F5-C0005 negative: forged organization receives denial without dashboard"
-          },
-          {
-            "id": "NEG-F5-1-C0043",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
-            "caso": "F5 context material isolation IFV1-F5-C0043 negative: delayed A data cannot render after B switch"
-          },
-          {
-            "id": "NEGATIVOS-F5-COMPETENCE-C0061",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-sys04-competence-isolation.test.ts",
-            "caso": "F5 SYS04 competence isolation IFV1-F5-C0061 negative: stale case is denied after switching identity"
-          },
-          {
-            "id": "NEGATIVOS-F5-DATA-C0055",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
-            "caso": "F5 SYS04 data isolation IFV1-F5-C0055 negative: previous tenant data is denied without follow-on reads"
-          },
-          {
-            "id": "NEG-F5-EXEC-JOB",
-            "runner": "node",
-            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 reject wrong execution job"
-          },
-          {
-            "id": "NEG-F5-C0023",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
-            "caso": "F5 ADM01 authorization and isolation IFV1-F5-C0023 negative: another tenant cannot grant access or consume the protected result"
-          },
-          {
-            "id": "NEG-F5-C0049",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-sys04-actions-isolation.test.ts",
-            "caso": "F5 SYS04 action isolation IFV1-F5-C0049 negative: unauthorized operation has no material effect"
+            "caso": "F5.2 rejects consumer"
           }
         ],
         "regressao": [
@@ -206,6 +161,12 @@
             "caso": "F4 CODE material verifier accepts exact canonical ID pairs"
           },
           {
+            "id": "REG-F5-54-IDS",
+            "runner": "node",
+            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
+            "caso": "F5 exact 54 canonical ids"
+          },
+          {
             "id": "REG-F5-RECIBO",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
@@ -214,14 +175,11 @@
         ]
       },
       "solucao": {
-        "descricao": "Vincular cada caso e decisão material ao runner, arquivo, título exato, SHA e job reais. Executar as provas dos lotes no HEAD da PR com recibos parciais, preservando o isolamento, as regressões e a certificação própria após as seis fatias.",
-        "rollback": "Reverter o BUILD por PR protegida, preservando a trilha histórica e os recibos integrados das fases anteriores.",
+        "descricao": "Executar produtores e consumidores reais com respostas de transporte roteirizadas, pares canônicos, dois tenants e reexecução cumulativa no mesmo HEAD. O coletor rejeita respostas incorretas, associação indevida, correlação adulterada e perda de vínculos.",
+        "rollback": "Reverter a BUILD por PR protegida e preservar recibos históricos, provas da F5.1 e controles obrigatórios.",
         "arquivos": [
-          "src/test/f5-code-context-session-isolation.test.tsx",
-          "src/test/f5-code-sys04-competence-isolation.test.ts",
-          "src/test/f5-code-sys04-data-isolation.test.ts",
-          "src/test/f5-code-sys04-actions-isolation.test.ts",
-          "src/test/f5-code-adm01-rbac-isolation.test.tsx"
+          "src/test/f5-code-v102-v103-scope-isolation.test.ts",
+          "src/test/f5-code-v105-v106-scope-isolation.test.tsx"
         ]
       }
     }
