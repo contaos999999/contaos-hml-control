@@ -25,6 +25,8 @@ Implementar um workflow GitHub Actions de execução **CODE** de cada uma das 13
 - `src/test/f3-code-case-0053.test.ts` (SYS04 → V109, seleção de contrato e consulta listas_verificacao, positivas e negativas CODE)
 - `src/test/f3-code-case-0056.test.ts` (SYS04 → V112, seleção de contrato e consulta competencias, positivas e negativas CODE)
 
+- `src/test/f3-code-adm01-rbac-integration.test.ts` (23 relações ADM01 → infraestrutura RBAC, vínculo real via wrapper, releitura, permissões e navegação CODE, isolamento negativo por caso)
+
 ## Garantias
 
 1. Catálogo imutável: arquivo e hash canônicos; 120 casos obrigatórios e 18 condicionais; nenhum caso novo ou removido.

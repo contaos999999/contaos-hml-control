@@ -376,7 +376,174 @@ const additionalConsumers = kind => Object.fromEntries(Object.values(additionalC
   config.table, async ({case:c}) => structuredClone((await runAdditionalCase(c))[kind === "positive" ? 0 : 1])
 ]));
 
+
+const RBAC_SHARED = "consultar_permissoes_efetivas (infraestrutura compartilhada)";
+const RBAC_SOURCE = "src/test/f3-code-adm01-rbac-integration.test.ts";
+const RBAC_ORG = "a1111111-1111-4111-8111-111111111111";
+const RBAC_FOREIGN = "a2222222-2222-4222-8222-222222222222";
+const RBAC_LINK = "a4444444-4444-4444-8444-444444444444";
+const rbacCases = Object.freeze({
+  "IFV1-F3-C0007": {
+    "destination": "V101",
+    "permission": "contratantes/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0009": {
+    "destination": "V102",
+    "permission": "contratantes/criar",
+    "reader": false
+  },
+  "IFV1-F3-C0011": {
+    "destination": "V103",
+    "permission": "contratantes/editar",
+    "reader": false
+  },
+  "IFV1-F3-C0012": {
+    "destination": "V104",
+    "permission": "contratos/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0014": {
+    "destination": "V105",
+    "permission": "contratos/criar",
+    "reader": false
+  },
+  "IFV1-F3-C0016": {
+    "destination": "V106",
+    "permission": "contratos/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0017": {
+    "destination": "V107",
+    "permission": "normativos/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0018": {
+    "destination": "V108",
+    "permission": "orcamentos/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0019": {
+    "destination": "V109",
+    "permission": "listas/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0020": {
+    "destination": "V110",
+    "permission": "documentos_contrato/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0021": {
+    "destination": "V111",
+    "permission": "documentos_contrato/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0022": {
+    "destination": "V112",
+    "permission": "competencias/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0023": {
+    "destination": "V113",
+    "permission": "competencias/criar",
+    "reader": false
+  },
+  "IFV1-F3-C0024": {
+    "destination": "V114",
+    "permission": "competencias/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0025": {
+    "destination": "V115",
+    "permission": "documentos_competencia/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0026": {
+    "destination": "V116",
+    "permission": "analises/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0027": {
+    "destination": "V117",
+    "permission": "analises/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0028": {
+    "destination": "V118",
+    "permission": "pareceres/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0029": {
+    "destination": "V119",
+    "permission": "apresentacoes/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0030": {
+    "destination": "V120",
+    "permission": "apresentacoes/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0031": {
+    "destination": "V121",
+    "permission": "historico/consultar",
+    "reader": true
+  },
+  "IFV1-F3-C0032": {
+    "destination": "V122",
+    "permission": "historico/criar",
+    "reader": false
+  },
+  "IFV1-F3-C0034": {
+    "destination": "V123",
+    "permission": "auditoria/consultar",
+    "reader": false
+  }
+});
+let rbacRun;
+async function runRbacCases() {
+  if (!rbacRun) {
+    rbacRun = (async () => {
+      const dir = await mkdtemp(join(tmpdir(), "contaos-f3-adm01-rbac-"));
+      const evidenceFile = join(dir, "observations.json");
+      try {
+        await exec("bunx", ["vitest", "run", RBAC_SOURCE, "--reporter=dot"], {
+          cwd: ROOT, env: {...process.env, F3_CODE_ADM01_RBAC_OBSERVATIONS: evidenceFile},
+          timeout: 60000, maxBuffer: 1024 * 1024,
+        });
+        const parsed = JSON.parse(await readFile(evidenceFile, "utf8"));
+        const indexed = new Map();
+        if (!Array.isArray(parsed) || parsed.length !== Object.keys(rbacCases).length * 2)
+          throw Object.assign(new Error("F3_RBAC_EVIDENCE_COUNT"), {code:"F3_RBAC_EVIDENCE_COUNT"});
+        for (const e of parsed) {
+          const key = e.caseId + ":" + e.kind;
+          if (!Object.hasOwn(rbacCases,e.caseId) || indexed.has(key) ||
+              !["positive","negative"].includes(e.kind) || e.testId !== RBAC_SOURCE + ":" + key ||
+              e.consumer !== RBAC_SHARED || e.producerOrder !== 4 ||
+              e.organizationId !== RBAC_ORG || e.producerEntityId !== RBAC_LINK ||
+              e.state !== "EXECUTED" || e.assertion !== "PASS")
+            throw Object.assign(new Error("F3_RBAC_BAD_TEST_OUTPUT"), {code:"F3_RBAC_BAD_TEST_OUTPUT"});
+          indexed.set(key,Object.freeze(e));
+        }
+        return indexed;
+      } finally {await rm(dir,{recursive:true,force:true});}
+    })();
+  }
+  return rbacRun;
+}
+async function rbacEvidence(c,kind) {
+  const config=rbacCases[c.caseId];
+  if (!config || c.destination !== config.destination || c.consumer !== RBAC_SHARED || c.producerOrder !== 4)
+    throw Object.assign(new Error("F3_RBAC_CASE_NOT_IMPLEMENTED"), {code:"F3_RBAC_CASE_NOT_IMPLEMENTED"});
+  const value=(await runRbacCases()).get(c.caseId+":"+kind);
+  if (!value) throw Object.assign(new Error("F3_RBAC_EVIDENCE_MISSING"), {code:"F3_RBAC_EVIDENCE_MISSING"});
+  return structuredClone(value);
+}
+
 export const producerDrivers = Object.freeze({
+  4: async (c) => {
+    const positive = await rbacEvidence(c,"positive");
+    return Object.freeze({state:"UI_OBSERVED_NOT_CERTIFIED",organizationId:positive.organizationId,producerEntityId:positive.producerEntityId});
+  },
   1: async (c) => {
     if (![CASE_0036, CASE_0037].includes(c.caseId)) {
       throw Object.assign(new Error("F3_DRIVER_CASE_NOT_IMPLEMENTED"), {
@@ -407,6 +574,7 @@ export const producerDrivers = Object.freeze({
 
 export const consumerDrivers = Object.freeze({
   ...additionalConsumers("positive"),
+  [RBAC_SHARED]: async ({case:c}) => rbacEvidence(c,"positive"),
   [CONSUMER_0036]: async ({ case: c }) => {
     if (c.caseId !== CASE_0036) {
       throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"), {
@@ -456,6 +624,7 @@ export const consumerDrivers = Object.freeze({
 
 export const negativeDrivers = Object.freeze({
   ...additionalConsumers("negative"),
+  [RBAC_SHARED]: async ({case:c}) => rbacEvidence(c,"negative"),
   [CONSUMER_0036]: async ({ case: c }) => {
     if (c.caseId !== CASE_0036) {
       throw Object.assign(new Error("F3_NEGATIVE_CASE_NOT_IMPLEMENTED"), {
@@ -505,6 +674,26 @@ export const negativeDrivers = Object.freeze({
 
 /** Contraditório estrutural interno. Não constitui auditoria independente final. */
 export async function independentVerifier(c, observed) {
+  if (Object.hasOwn(rbacCases,c.caseId)) {
+    const config=rbacCases[c.caseId];
+    const {producer,positive,negative}=observed;
+    return c.origin==="ADM01" && c.destination===config.destination &&
+      c.consumer===RBAC_SHARED && c.expected?.master==="ALLOW" &&
+      c.expected?.leitor===(config.reader?"ALLOW":"DENY") &&
+      producer?.organizationId===RBAC_ORG && producer.producerEntityId===RBAC_LINK &&
+      positive.testId===RBAC_SOURCE+":"+c.caseId+":positive" &&
+      negative.testId===RBAC_SOURCE+":"+c.caseId+":negative" &&
+      positive.network?.rpc==="consultar_permissoes_efetivas" &&
+      negative.network?.rpc==="consultar_permissoes_efetivas" &&
+      positive.network?.fixture===true && negative.network?.fixture===true &&
+      positive.network?.status===200 && negative.network?.status===403 &&
+      positive.readback?.screen===config.destination && negative.readback?.screen===config.destination &&
+      positive.readback?.permission===config.permission && negative.readback?.permission===config.permission &&
+      positive.readback?.masterAllowed===true && positive.readback?.readerAllowed===config.reader &&
+      positive.readback?.bindingId===RBAC_LINK && negative.readback?.bindingId===RBAC_LINK &&
+      positive.readback?.version===6 && negative.readback?.outcome==="DENY" &&
+      negative.readback?.foreignOrganization===RBAC_FOREIGN;
+  }
   if (Object.hasOwn(additionalCases,c.caseId)) {
     const config = additionalCases[c.caseId];
     const {producer, positive, negative} = observed;
