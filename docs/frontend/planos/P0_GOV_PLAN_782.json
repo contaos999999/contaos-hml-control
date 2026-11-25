@@ -1,0 +1,32 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 782,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "F5.2 CODE_FIXTURE. 24 casos e 48 provas mínimas de autorização e isolamento de contratantes e contratos.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_2_CASE_CONTRACTS_PROPOSAL.json",
+    "src/test/f5-code-v102-v103-scope-isolation.test.ts",
+    "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
+    ".github/workflows/contaos-f5-code-material.yml",
+    "scripts/hml/f5-code-material-evidence.mjs",
+    "scripts/hml/f5-code-material-evidence.test.mjs",
+    "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json"
+  ],
+  "baseline_main": "9ebf16f6b339ddf7113add52257c08c9c89b9f8e",
+  "plan_pr": 777,
+  "authorization": "PLAN #777 integrado e ordem de execução integral registrada na Issue #708. Eficácia após CI, revisão assistida conforme #781, merge protegido e readback deste PLAN P0.",
+  "acceptance": [
+    "Reconciliação exata dos 24 IDs de #777 e da matriz bb7ce43f9c334f2f03e9aafab405addadfe5e19a. Nove casos V102/V103 e quinze V105/V106. Confirmar as quatro condições de auditoria documentadas na proposta da #782 e observar os eventos e a correlação nas provas.",
+    "Dois tenants e identidades sintéticas. Executar os produtores e consumidores reais de cada conexão com fixture apenas no transporte. Provar o efeito em A, negação explícita no escopo indevido, ausência de exposição e de mudança em B. Utilizar associação composta para a negativa pertinente. Distinguir autorização, conflito de versão e falha de transporte.",
+    "F5.2 deve produzir 48 provas distintas e recibos dos dois novos lotes. Executar também os 54 casos anteriores no mesmo HEAD para total cumulativo de 78 casos e 156 provas. Preservar a verificação de HEAD, run, tentativa, job, títulos, identidade, escopo, SHA256SUMS e artefatos. Rejeitar adulterações por autoteste e preservar os artefatos de F5.1.",
+    "Atualizar no diff a ficha RCA V1 com os caminhos src efetivamente modificados, frontend e backend vivos e testes GREEN/NEG/REG executáveis. O RED ancestral de identidade 45546975968 continua aplicável à extensão do coletor. Próprio RED e PLAN separado para eventual defeito de produto. CI integral, material cumulativo, revisão assistida e readback."
+  ],
+  "constraints": [
+    "Escopo exclusivamente da PR #782. Usar entradas restritas por PR 782 na base protegida. Preservar os vínculos históricos de #778 e as regras de allowlist global.",
+    "Somente código de teste, coleta, workflow material e documentação nos caminhos autorizados. Zero-Drift, LOCK-TYPES, Anti-Reincidência, Teste C e requisitos de merge permanecem exigíveis.",
+    "CODE_FIXTURE. Sem dados reais, backend, Supabase remoto, produto, produção ou certificação antecipada."
+  ],
+  "certification": "F5_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
