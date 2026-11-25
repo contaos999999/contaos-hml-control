@@ -47,7 +47,7 @@ jobs:
           head_sha="$(git rev-parse HEAD)"
           test "$head_sha" = "$F5_EXPECTED_HEAD"
           test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .head_sha)" = "$head_sha"
-          job_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" | jq -er --arg label "$F5_JOB_NAME" --arg head "$head_sha" '[.jobs[] | select(.name == $label and .head_sha == $head and .status == "in_progress") | .id] | if length == 1 then .[0] else error("job F5 inexistente ou ambíguo") end')"
+          job_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" | jq -er --arg job_name "$F5_JOB_NAME" --arg head "$head_sha" '[.jobs[] | select(.name == $job_name and .head_sha == $head and .status == "in_progress") | .id] | if length == 1 then .[0] else error("job F5 inexistente ou ambíguo") end')"
           printf 'F5_FRONTEND_SHA=%s\nF5_HARNESS_SHA=%s\nJOB_ID=%s\n' \
             "$head_sha" "$(git hash-object scripts/hml/f5-code-material-evidence.mjs)" "$job_id" >> "$GITHUB_ENV"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
