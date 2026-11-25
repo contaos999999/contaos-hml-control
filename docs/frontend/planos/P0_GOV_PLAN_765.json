@@ -1,0 +1,33 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 765,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Concluir implementação F4.1 com 25 casos SYS04 (50 testes): competência, dados e ações após troca de contexto.",
+  "files": [
+    "src/test/f4-code-sys04-competence-context-sync.test.ts",
+    "src/test/f4-code-sys04-data-context-sync.test.ts",
+    "src/test/f4-code-sys04-actions-context-sync.test.ts",
+    ".github/workflows/contaos-f4-code-material.yml",
+    "scripts/hml/f4-code-material-evidence.mjs",
+    "scripts/hml/f4-code-material-evidence.test.mjs",
+    "scripts/p0-rca-impact-gate.test.mjs"
+  ],
+  "baseline_main": "cca8c4bf24a6b6eb6e9a0e16bdd2f0e34ee1e97f",
+  "plan_pr": 759,
+  "authorization": "PLAN F4 #759 integrado, titular determinou continuidade e execução dos testes materiais; revisão técnica assistida específica F4.",
+  "acceptance": [
+    "Atribuir exclusivamente os três novos arquivos à PR 765, preservar restrições anteriores.",
+    "Reancorar após integração #760 e #763, conferir blobs e diff.",
+    "Estender validador comum com três lotes exatos (5/10/10 IDs), sem relaxar os lotes anteriores; executar e preservar os 108 testes materiais F4.1, com readback observado e recibos parciais.",
+    "Confirmar requisitos por contrato, corrigir falhas de compilação/execução; prova RCA real quando exigida, sem criar RED artificial ou alegar defeito do produto.",
+    "CI integral e review assistido no HEAD exato antes do merge; nenhuma certificação de fase até atestação global."
+  ],
+  "constraints": [
+    "Sem alterações de produto, guard, backend, F3, LIVE ou PROD.",
+    "Não substituir evidência por rótulo nem alterar testes para ocultar falha.",
+    "Não sobrescrever recibos anteriores."
+  ],
+  "certification": "F4_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
