@@ -36,6 +36,10 @@ Implementar um workflow GitHub Actions de execução **CODE** de cada uma das 13
 7. A execução CODE roda sem credenciais HML, via fixtures locais isoladas. Mutação HML autenticada e sua certificação apenas no GATE PROD pós-V5.
 8. Testes positivos e negativos do próprio runner, com CI, revisão de segurança e zero drift.
 
+## Gate automatizado CODE
+
+O gate revalida automaticamente o relatório integral, manifesto, hash do relatório, proveniência e unicidade das provas, sem intervenção manual por caso. PASS_CODE exige 138 casos e 276 provas válidas. O certificado formal e o ledger continuam separados; não há exigência LIVE antes da V5.
+
 ## Critérios de conclusão
 
 - Workflow disparado na branch e com artefato JSON de **138 resultados individuais**.

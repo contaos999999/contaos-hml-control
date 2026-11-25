@@ -93,7 +93,6 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Gate de provas individuais, sem certificacao automatica
+      - name: Gate automatizado CODE - 138 casos e 276 provas verificadas
         if: always()
-        run: |
-          node -e 'const fs=require("node:fs");const p="artifacts/f3-code-functional-138/F3_CODE_FUNCTIONAL_SUMMARY.json";if(!fs.existsSync(p)){console.error("F3_CODE_REPORT_MISSING");process.exit(1)}const s=JSON.parse(fs.readFileSync(p,"utf8"));if(s.status!=="SUBMITTED_UNVERIFIED"||s.cases!==138||s.observedTests!==276||s.blocked!==0||s.failed!==0){console.error("F3_CODE_INCOMPLETE: ",JSON.stringify({cases:s.cases,observedTests:s.observedTests,blocked:s.blocked,failed:s.failed}));process.exit(1)}'
+        run: node scripts/hml/integracao-v1-fase3-functional-138.mjs --gate

@@ -195,6 +195,60 @@ export async function persistF3Diagnostic({ report, tally }, outputDir) {
   return Object.freeze(summary);
 }
 
+// Automated gate: re-read the artifact, not just the caller's counters.
+export function validateF3AutomaticGate({ report, summary, manifest, catalogue, provenance }) {
+  const tally = validateF3FunctionalReport(report, catalogue);
+  const { reportSha256, ...unsigned } = report;
+  assert(HASH(JSON.stringify(unsigned)) === reportSha256, "F3_CODE_GATE_REPORT_HASH");
+  for (const key of ["frontendSha", "backendSha", "workflowRunId", "jobId"]) {
+    assert(report.provenance?.[key] === provenance[key], "F3_CODE_GATE_PROVENANCE");
+    assert(summary.provenance?.[key] === provenance[key], "F3_CODE_GATE_PROVENANCE");
+  }
+  assert(JSON.stringify(manifest) === JSON.stringify(report.entries), "F3_CODE_GATE_MANIFEST");
+  for (const [key, value] of Object.entries(tally)) {
+    assert(summary[key] === value, "F3_CODE_GATE_SUMMARY");
+  }
+  assert(
+    summary.reportSha256 === reportSha256 &&
+      summary.status === (tally.complete ? "SUBMITTED_UNVERIFIED" : "INCOMPLETE"),
+    "F3_CODE_GATE_SUMMARY",
+  );
+  const ids = new Set();
+  for (const entry of report.entries) {
+    for (const proof of entry.tests) {
+      assert(
+        proof.caseId === entry.caseId &&
+          proof.outcome === "PASS" &&
+          /^[a-f0-9]{64}$/.test(proof.outputSha256) &&
+          typeof proof.testId === "string" &&
+          !ids.has(proof.testId),
+        "F3_CODE_GATE_PROOF",
+      );
+      ids.add(proof.testId);
+    }
+  }
+  return Object.freeze({
+    ...tally,
+    gate: tally.complete ? "PASS_CODE" : "FAIL_CODE",
+  });
+}
+
+export async function runF3AutomaticGate(env = process.env) {
+  const provenance = f3CodeProvenance(env);
+  const out = env.F3_CODE_OUTPUT_DIR ?? join(REPO_ROOT, "artifacts/f3-code-functional-138");
+  const [report, summary, manifest, catalogue] = await Promise.all([
+    readFile(join(out, "F3_CODE_FUNCTIONAL_138_REPORT.json"), "utf8").then(JSON.parse),
+    readFile(join(out, "F3_CODE_FUNCTIONAL_SUMMARY.json"), "utf8").then(JSON.parse),
+    readFile(join(out, "F3_CODE_CASE_RESULTS.jsonl"), "utf8").then((raw) =>
+      raw.trim().split("\n").map(JSON.parse),
+    ),
+    readFile(join(REPO_ROOT, F3, "F3_CASES.json"), "utf8").then(JSON.parse),
+  ]);
+  const result = validateF3AutomaticGate({ report, summary, manifest, catalogue, provenance });
+  console.log(JSON.stringify(result));
+  return result.complete;
+}
+
 export async function runF3FunctionalCli(env = process.env) {
   const provenance = f3CodeProvenance(env);
   const outcome = await executeF3Functional138({ provenance });
@@ -210,7 +264,7 @@ export async function runF3FunctionalCli(env = process.env) {
     "- BLOCKED: " + summary.blocked,
     "- FAIL: " + summary.failed,
     "- Situação: **" + summary.status + "**",
-    "- Sem PASS/certificação automática e sem alterar ledger.",
+    "- Provas e gate CODE automatizados; certificado e ledger permanecem separados.",
     "",
   ].join("\n");
   if (env.GITHUB_STEP_SUMMARY) {
@@ -233,9 +287,12 @@ export async function runF3FunctionalCli(env = process.env) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  if (process.argv.length !== 3 || process.argv[2] !== "--run") error("F3_CODE_CLI_USAGE");
+  if (process.argv.length !== 3 || !["--run", "--gate"].includes(process.argv[2])) {
+    error("F3_CODE_CLI_USAGE");
+  }
   try {
-    const complete = await runF3FunctionalCli();
+    const complete =
+      process.argv[2] === "--gate" ? await runF3AutomaticGate() : await runF3FunctionalCli();
     if (!complete) process.exitCode = 1;
   } catch (cause) {
     // No tokens, payloads or raw fixture values in logs.

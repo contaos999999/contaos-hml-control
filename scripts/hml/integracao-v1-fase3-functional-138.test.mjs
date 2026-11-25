@@ -9,6 +9,7 @@ import {
   executeF3Functional138,
   persistF3Diagnostic,
   validateF3FunctionalReport,
+  validateF3AutomaticGate,
 } from "./integracao-v1-fase3-functional-138.mjs";
 
 const provenance = Object.freeze({
@@ -112,6 +113,52 @@ test("F3 CODE 138: artefato de diagnóstico rastreia 138 casos e SHA256", async 
       const bytes = await readFile(join(dir, match[2]));
       assert.equal(createHash("sha256").update(bytes).digest("hex"), match[1]);
     }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("F3 automated gate rejects missing proofs, provenance and tampered summaries", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "f3-gate-"));
+  try {
+    const outcome = await executeF3Functional138({ provenance, drivers: noDrivers });
+    const summary = await persistF3Diagnostic(outcome, dir);
+    const catalogue = JSON.parse(
+      await readFile(
+        new URL(
+          "../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
+    const input = {
+      report: outcome.report,
+      summary,
+      manifest: outcome.report.entries,
+      catalogue,
+      provenance,
+    };
+    assert.equal(validateF3AutomaticGate(input).gate, "FAIL_CODE");
+    assert.throws(
+      () => validateF3AutomaticGate({ ...input, summary: { ...summary, observedTests: 276 } }),
+      { code: "F3_CODE_GATE_SUMMARY" },
+    );
+    assert.throws(
+      () => validateF3AutomaticGate({ ...input, provenance: { ...provenance, jobId: "999" } }),
+      { code: "F3_CODE_GATE_PROVENANCE" },
+    );
+    assert.throws(() => validateF3AutomaticGate({ ...input, manifest: [] }), {
+      code: "F3_CODE_GATE_MANIFEST",
+    });
+    assert.throws(
+      () =>
+        validateF3AutomaticGate({
+          ...input,
+          report: { ...input.report, reportSha256: "0".repeat(64) },
+        }),
+      { code: "F3_CODE_GATE_REPORT_HASH" },
+    );
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
