@@ -1,0 +1,50 @@
+name: ContaOS F4 CODE - atestacao de provas
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/hml/integracao-v1-fase4-code-attestation*.mjs"
+      - ".github/workflows/contaos-f4-code-attestation.yml"
+      - "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_ATTESTATION_SOURCE.json"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+jobs:
+  attest:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Contraprovas de integridade e proveniencia
+        run: |
+          node --test scripts/hml/integracao-v1-fase4-code-attestation.test.mjs scripts/hml/integracao-v1-fase4-code-attestation-live.test.mjs
+      - name: Conferir 13 arquivos oficiais e reproduzir ledger candidato
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/f4-attest"
+          node scripts/hml/integracao-v1-fase4-code-attestation-live.mjs docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_ATTESTATION_SOURCE.json "$RUNNER_TEMP/f4-attest/F4_CODE_ATTESTATION_CANDIDATE.json"
+          cd "$RUNNER_TEMP/f4-attest"
+          sha256sum F4_CODE_ATTESTATION_CANDIDATE.json > SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - name: Publicar transporte de bytes do candidato CODE
+        run: |
+          node --input-type=module -e 'import {readFileSync} from "node:fs";const b=readFileSync(process.env.RUNNER_TEMP+"/f4-attest/F4_CODE_ATTESTATION_CANDIDATE.json").toString("base64");for(let i=0;i<b.length;i+=4096)console.log("F4_ATTESTATION_LEDGER_DATA "+b.slice(i,i+4096));'
+      - name: Preservar candidato nao certificado
+        uses: actions/upload-artifact@v4
+        with:
+          name: f4-code-attestation-candidate-${{ github.sha }}
+          path: ${{ runner.temp }}/f4-attest/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Confirmar checkout imutavel
+        run: git diff --exit-code
