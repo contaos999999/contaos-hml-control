@@ -4,6 +4,7 @@
  */
 import {createHash} from "node:crypto";
 import {F3_PRODUCERS} from "./integracao-v1-fase3.mjs";
+import {certifyF3Code138} from "./integracao-v1-fase3-code-138-runner.mjs";
 
 const sha256=value=>createHash("sha256").update(value).digest("hex");
 const SHA40=/^[a-f0-9]{40}$/;
@@ -67,5 +68,6 @@ export async function runF3CodeDrivers(catalogue,implementations,context) {
   }
   if(results.length!==138||new Set(results.map(r=>r.caseId)).size!==138)
     throw error("F3_DRIVER_COVERAGE");
-  return Object.freeze({results,sha256:sha256(JSON.stringify(results))});
+  const certificate=certifyF3Code138(catalogue,results,context);
+  return Object.freeze({results,sha256:sha256(JSON.stringify(results)),certificate});
 }
