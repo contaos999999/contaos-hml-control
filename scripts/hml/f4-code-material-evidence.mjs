@@ -22,6 +22,8 @@ const BATCHES = Object.freeze({ adm01: Object.freeze(ADM01), context: Object.fre
   "documents": Object.freeze(["0288","0294","0297","0311","0315","0320","0321","0324","0410","0413","0415","0416","0418","0420"].map(id=>"IFV1-F4-C"+id)), 
   "competence": Object.freeze(["0352","0365","0368","0369","0370","0371","0372","0373","0376"].map(id=>"IFV1-F4-C"+id)),
   "analysis": Object.freeze(["0433","0437","0439","0441","0443","0455","0458","0461","0463","0465"].map(id=>"IFV1-F4-C"+id)),
+  "opinion-presentation": Object.freeze(["0477","0482","0484","0496","0502","0504"].map(id=>"IFV1-F4-C"+id)),
+  "history": Object.freeze(["0562","0563","0564","0567"].map(id=>"IFV1-F4-C"+id)),
 });
 
 export function validateMaterial(batch, observations, report) {

@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - "src/test/f4-code-adm01-version-sync.test.ts"
+      - "src/test/f4-code-v122-history-sync.test.ts"
+      - "src/test/f4-code-v118-v119-opinion-presentation-sync.test.ts"
       - "src/test/f4-code-v116-v117-analysis-sync.test.ts"
       - "src/test/f4-code-v113-competence-sync.test.tsx"
       - "src/test/f4-code-v110-v111-v115-document-sync.test.ts"
@@ -484,6 +486,90 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: f4-code-analysis-${{ github.sha }}
+          path: artifacts/f4-code/
+          if-no-files-found: warn
+          retention-days: 30
+
+  opinion-presentation:
+    name: F4 CODE opinion-presentation - material e readback
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Instalar Bun fixado
+        run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
+      - run: bun install --frozen-lockfile
+      - name: Executar testes materiais
+        env:
+          F4_CODE_OPINION_PRESENTATION_OBSERVATIONS: artifacts/f4-code/observations.json
+        run: |
+          mkdir -p artifacts/f4-code
+          bunx vitest run src/test/f4-code-v118-v119-opinion-presentation-sync.test.ts --reporter=json --outputFile=artifacts/f4-code/vitest.json
+      - name: Conferir resultados e identidade real
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          JOB_ID="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" --jq '.jobs[] | select(.name=="F4 CODE opinion-presentation - material e readback") | .id')"
+          export JOB_ID
+          node scripts/hml/f4-code-material-evidence.mjs --batch opinion-presentation
+          cd artifacts/f4-code
+          sha256sum observations.json vitest.json receipt.json > SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - name: Preservar relatorios e observacoes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f4-code-opinion-presentation-${{ github.sha }}
+          path: artifacts/f4-code/
+          if-no-files-found: warn
+          retention-days: 30
+
+  history:
+    name: F4 CODE history - material e readback
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Instalar Bun fixado
+        run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
+      - run: bun install --frozen-lockfile
+      - name: Executar testes materiais
+        env:
+          F4_CODE_HISTORY_OBSERVATIONS: artifacts/f4-code/observations.json
+        run: |
+          mkdir -p artifacts/f4-code
+          bunx vitest run src/test/f4-code-v122-history-sync.test.ts --reporter=json --outputFile=artifacts/f4-code/vitest.json
+      - name: Conferir resultados e identidade real
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          JOB_ID="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" --jq '.jobs[] | select(.name=="F4 CODE history - material e readback") | .id')"
+          export JOB_ID
+          node scripts/hml/f4-code-material-evidence.mjs --batch history
+          cd artifacts/f4-code
+          sha256sum observations.json vitest.json receipt.json > SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - name: Preservar relatorios e observacoes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f4-code-history-${{ github.sha }}
           path: artifacts/f4-code/
           if-no-files-found: warn
           retention-days: 30
