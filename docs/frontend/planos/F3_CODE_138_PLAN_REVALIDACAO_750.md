@@ -44,6 +44,8 @@
 - `docs/frontend/planos/F3_CODE_138_REAPLICACAO_BUILD.md` — reserva documental da PR #750.
 - No PLAN documental separado: `docs/frontend/planos/PLANO_ATIVO.json`, `docs/frontend/planos/P0_GOV_PLAN_750.json` e este documento, somente após revisão do escopo e contexto. Nenhuma mudança nos guards.
 
+- `scripts/p0-rca-impact-gate.test.mjs` — acrescentar um único teste de integração de governança, sem editar o guard nem os testes existentes. O teste deverá carregar o executor funcional e o registro de drivers, conferir o catálogo oficial de 138 identificadores, 20 produtores e os consumidores positivos/negativos registrados. Executa na etapa de autotestes RCA já existente no Zero-Drift, antes de Bun ou do gate RCA. No RED, ausência do executor no baseline deve falhar pelo teste nominal; no GREEN, a implementação reaplicada satisfaz a presença/registro. Este RED demonstra a lacuna real de infraestrutura, não é prova de execução dos 138 casos; o gate funcional separado permanece obrigatório.
+
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 Sem alterações de identidade visual, rotas, componentes de produção, tipos gerados, Supabase, dados, RLS, Auth, Edge, migrations, ledger ou PROD; impacto visual de produto N/A por serem testes e runner. Preservar Teste C quando aplicável. Sem Lovable. Norma P0-CERT-LIVE-001 de 22/11/2026 exige CODE automatizado, integração, segurança, regressão, CI no SHA e revisão; LIVE somente GATE PROD após V5, sem dispensa de segurança.
 

@@ -9,6 +9,7 @@
     "scripts/hml/f3-code-functional-drivers.mjs",
     "scripts/hml/integracao-v1-fase3-functional-138.mjs",
     "scripts/hml/integracao-v1-fase3-functional-138.test.mjs",
+    "scripts/p0-rca-impact-gate.test.mjs",
     "src/test/f3-code-adm01-dashboard.test.tsx",
     "src/test/f3-code-adm01-rbac-integration.test.ts",
     "src/test/f3-code-case-0036.test.ts",
