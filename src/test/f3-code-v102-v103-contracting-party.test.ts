@@ -188,14 +188,14 @@ async function consume(c:Case,negative:boolean){
   if(c.destination==="V103"){
     const allowed=await consultarCapacidadeEdicaoContratante(ORG);
     expect(allowed).toBe(!negative);
-    if(negative)return null;
+    if(negative){await expect(buscarContratante(FOREIGN,ID)).rejects.toMatchObject({tipo:"negado"});return null;}
     const value=await buscarContratante(ORG,ID);
     expect(value).toMatchObject({id:ID,id_organizacao:ORG,razao_social:name,versao_registro:1});
     return {id:value.id,name:value.razao_social,version:value.versao_registro};
   }
   if(c.destination==="V105"){
     expect(await gateCreate()).toBe(!negative);
-    if(negative)return null;
+    if(negative){await expect(buscarOpcoesContratantes({idOrganizacao:FOREIGN,busca:"",pagina:1})).rejects.toMatchObject({tipo:"negado"});return null;}
     const options=await buscarOpcoesContratantes({idOrganizacao:ORG,busca:"",pagina:1});
     expect(options.itens).toHaveLength(1);expect(options.itens[0]).toMatchObject({id:ID,razao_social:name});
     expect(calls.at(-1)?.filters).toEqual([["id_organizacao",ORG]]);
@@ -217,6 +217,7 @@ async function consume(c:Case,negative:boolean){
   }
   if(negative){await expect(obterContrato(CONTRACT)).rejects.toMatchObject({tipo:"negado"});return null;}
   const contract=await obterContrato(CONTRACT);
+  expect(calls.at(-1)?.filters).toEqual([["id",CONTRACT]]);
   expect(contract).toMatchObject({id:CONTRACT,id_organizacao:ORG,id_contratante:ID,contratante:{razao_social:name}});
   return {id:contract.id_contratante,name:contract.contratante?.razao_social,contractId:contract.id};
 }
@@ -240,7 +241,7 @@ describe("V102/V103 create/edit -> real linked consumers",()=>{
       const id=await produce(c);let witness:unknown=null;
       for(const role of c.reader?["master","leitor"]:["master"]){actor=role;witness=await consume(c,false);expect(witness).not.toBeNull();}
       expect(writes).toBe(1);
-      observations.push({caseId:c.caseId,consumer:c.consumer,producerOrder:c.order,kind:"positive",testId:SOURCE+":"+c.caseId+":positive",state:"EXECUTED",assertion:"PASS",organizationId:ORG,producerEntityId:id,network:{method:"GET",status:200,table:c.consumer,fixture:true},readback:{matched:true,destination:c.destination,partyId:id,version:c.order===5?1:2,roles:c.reader?2:1,writes,witness}});
+      observations.push({caseId:c.caseId,consumer:c.consumer,producerOrder:c.order,kind:"positive",testId:SOURCE+":"+c.caseId+":positive",state:"EXECUTED",assertion:"PASS",organizationId:ORG,producerEntityId:id,network:{method:"GET",status:200,table:c.destination==="V106"?"contratos":c.consumer,fixture:true},readback:{matched:true,destination:c.destination,partyId:id,version:c.order===5?1:2,roles:c.reader?2:1,writes,witness}});
     });
     it(c.caseId+" negative: denied mutation and protected consumer",async()=>{
       const id=await produce(c);actor="leitor";
@@ -250,7 +251,7 @@ describe("V102/V103 create/edit -> real linked consumers",()=>{
       expect(await buscarContratante(ORG,ID)).toMatchObject({id,razao_social:expectedName(c),versao_registro:c.order===5?1:2});
       await expect(buscarContratante(FOREIGN,ID)).rejects.toMatchObject({tipo:"negado"});
       expect(writes).toBe(1);
-      observations.push({caseId:c.caseId,consumer:c.consumer,producerOrder:c.order,kind:"negative",testId:SOURCE+":"+c.caseId+":negative",state:"EXECUTED",assertion:"PASS",organizationId:ORG,producerEntityId:id,network:{method:"GET",status:403,table:c.consumer,fixture:true},readback:{outcome:"DENY",destination:c.destination,partyId:id,version:c.order===5?1:2,writes,mutationDenied:true,entityPreserved:true}});
+      observations.push({caseId:c.caseId,consumer:c.consumer,producerOrder:c.order,kind:"negative",testId:SOURCE+":"+c.caseId+":negative",state:"EXECUTED",assertion:"PASS",organizationId:ORG,producerEntityId:id,network:{method:"GET",status:403,table:c.destination==="V106"?"contratos":c.consumer,fixture:true},readback:{outcome:"DENY",destination:c.destination,partyId:id,version:c.order===5?1:2,writes,mutationDenied:true,entityPreserved:true}});
     });
   }
   afterAll(()=>{const path=process.env.F3_CODE_PARTY_OBSERVATIONS;if(path){expect(observations).toHaveLength(cases.length*2);writeFileSync(path,JSON.stringify(observations)+"\n",{flag:"wx"});}});
