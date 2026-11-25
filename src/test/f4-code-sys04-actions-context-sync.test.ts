@@ -44,10 +44,10 @@ const writePermissions=[{recurso:"usuarios",acao:"administrar"},{recurso:"contra
 function rpc(n:string,a:Record<string,unknown>={}){
   if(n==="listar_organizacoes_disponiveis")return ok(role==="master"?[...stores.values()].map(x=>orgRow(x.scope)):[orgRow(current)]);
   if(n==="consultar_permissoes_efetivas"){
-    if(a.p_id_organizacao!==current.org||(a.p_id_contrato!==null&&a.p_id_contrato!==current.contract))return deny();
+    if(a["p_id_organizacao"]!==current.org||(a["p_id_contrato"]!==null&&a["p_id_contrato"]!==current.contract))return deny();
     return ok({schema_versao:"rbac-v1",versao:1,master:role==="master",permissoes:[...readPermissions,...(canWrite()?writePermissions:[])]});
   }
-  if(n==="pode_consultar_auditoria_organizacao")return ok(canWrite()&&a.p_id_organizacao===current.org);
+  if(n==="pode_consultar_auditoria_organizacao")return ok(canWrite()&&a["p_id_organizacao"]===current.org);
   if(n==="criar_organizacao"){
     if(role!=="master")return deny();
     if(stores.has(C.org))return fail("23505",409);
@@ -55,15 +55,15 @@ function rpc(n:string,a:Record<string,unknown>={}){
     const created=store(C);created.events=[audit(C,n,"organizacoes",C.org)];stores.set(C.org,created);return ok(C.org);
   }
   if(n==="atualizar_contratante"){
-    if(!canWrite()||a.p_id_organizacao!==current.org)return deny();
-    const p=get().parties.find(x=>x.id===a.p_id_contratante);if(!p)return deny();
-    if(a.p_versao_esperada!==p.versao_registro)return fail("PT409",409);
-    p.razao_social=String(a.p_razao_social);p.versao_registro++;
+    if(!canWrite()||a["p_id_organizacao"]!==current.org)return deny();
+    const p=get().parties.find(x=>x.id===a["p_id_contratante"]);if(!p)return deny();
+    if(a["p_versao_esperada"]!==p.versao_registro)return fail("PT409",409);
+    p.razao_social=String(a["p_razao_social"]);p.versao_registro++;
     return ok({schema_versao:"v103-v1",contratante:p});
   }
   if(n==="criar_competencia"){
-    if(!canWrite()||a.p_id_contrato!==current.contract)return deny();
-    if(a.p_competencia_referencia!=="2026-11-01")return fail("PT400",400);
+    if(!canWrite()||a["p_id_contrato"]!==current.contract)return deny();
+    if(a["p_competencia_referencia"]!=="2026-11-01")return fail("PT400",400);
     if(get().comp)return fail("23505",409);
     get().comp=current.comp;return ok(current.comp);
   }
@@ -74,15 +74,15 @@ const calls:Call[]=[];
 function response(q:Call){
   const s=current;const x=get();const has=(k:string,v:unknown)=>q.filters.some(([key,value])=>key===k&&value===v);
   if(q.payload){
-    if(!canWrite()||q.payload.id_organizacao!==s.org)return deny();
+    if(!canWrite()||q.payload["id_organizacao"]!==s.org)return deny();
     if(q.table==="contratantes"){
       if(x.parties.some(p=>p.id===s.newParty))return fail("23505",409);
       const p={...q.payload,id:s.newParty,versao_registro:1,atualizado_em:date} as Party;
       x.parties.push(p);return ok({id:p.id,razao_social:p.razao_social,situacao:p.situacao});
     }
     if(q.table==="contratos"){
-      if(!x.parties.some(p=>p.id===q.payload!.id_contratante))return fail("23503",422);
-      if(x.contracts.some(c=>c.id===s.newContract))return fail("23505",409);
+      if(!x.parties.some(p=>p.id===q.payload!["id_contratante"]))return fail("23503",422);
+      if(x.contracts.some(c=>c["id"]===s.newContract))return fail("23505",409);
       x.contracts.push({...q.payload,id:s.newContract,situacao:"ativo",criticidade:"baixa"});return ok(null);
     }
     throw Error("unexpected insert "+q.table);
@@ -96,7 +96,7 @@ function response(q:Call){
     case "contratos":return has("id_organizacao",s.org)?ok(x.contracts):deny();
     case "competencias":return has("id_contrato",s.contract)&&has("competencia_referencia","2026-11-01")?ok(x.comp?{id:x.comp}:null):deny();
     case "relatorios_historicos_contratante":return has("id_organizacao",s.org)&&has("id_contrato",s.contract)?ok([{id:s.report,id_contrato:s.contract,id_organizacao:s.org,id_arquivo:s.file,numero_documento:s.label+"-REL",tipo:"relatorio",competencia_referencia:"2026-10-01",data_documento:null,status_processamento:"concluido",resultado_geral:null,origem_temporal:"historico",criado_em:date}]):deny();
-    case "eventos_auditoria":return canWrite()&&has("id_organizacao",s.org)?ok(x.events.filter(e=>!q.filters.some(([k])=>k==="correlation_id")||has("correlation_id",e.correlation_id))):deny();
+    case "eventos_auditoria":return canWrite()&&has("id_organizacao",s.org)?ok(x.events.filter(e=>!q.filters.some(([k])=>k==="correlation_id")||has("correlation_id",e["correlation_id"]))):deny();
     default:throw Error("unexpected table "+q.table);
   }
 }
@@ -107,10 +107,10 @@ beforeEach(()=>{
   m.from.mockImplementation((table:string)=>{
     const call:Call={table,filters:[],single:false};calls.push(call);const q:Record<string,unknown>={};
     for(const op of ["select","order","range","abortSignal","or"])q[op]=()=>q;
-    q.eq=(k:string,v:unknown)=>{call.filters.push([k,v]);return q;};
-    q.insert=(payload:Record<string,unknown>)=>{call.payload=payload;return q;};
-    q.single=q.maybeSingle=()=>{call.single=true;return Promise.resolve().then(()=>response(call));};
-    q.then=(resolve:(v:unknown)=>unknown,reject:(e:unknown)=>unknown)=>Promise.resolve().then(()=>response(call)).then(resolve,reject);
+    q["eq"]=(k:string,v:unknown)=>{call.filters.push([k,v]);return q;};
+    q["insert"]=(payload:Record<string,unknown>)=>{call.payload=payload;return q;};
+    q["single"]=q["maybeSingle"]=()=>{call.single=true;return Promise.resolve().then(()=>response(call));};
+    q["then"]=(resolve:(v:unknown)=>unknown,reject:(e:unknown)=>unknown)=>Promise.resolve().then(()=>response(call)).then(resolve,reject);
     return q;
   });
 });
@@ -191,4 +191,4 @@ describe("F4.1 remaining material scopes and writes",()=>{
     record("0068",kind,{before,after});
   });
 });
-afterAll(()=>{const path=process.env.F4_CODE_SYS04_ACTION_OBSERVATIONS;if(path){expect(obs).toHaveLength(20);writeFileSync(path,JSON.stringify(obs,null,2)+"\n",{flag:"wx"});}});
+afterAll(()=>{const path=process.env["F4_CODE_SYS"]04_ACTION_OBSERVATIONS;if(path){expect(obs).toHaveLength(20);writeFileSync(path,JSON.stringify(obs,null,2)+"\n",{flag:"wx"});}});
