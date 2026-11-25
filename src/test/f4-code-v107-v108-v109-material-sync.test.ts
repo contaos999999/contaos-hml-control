@@ -794,15 +794,7 @@ async function readMaterial(after: boolean) {
     });
     return a;
   } else {
-    const a = await listarRelatoriosHistoricos(CONTRACT, ORG, 0, signal);
-    expect(a.total).toBe(after ? 1 : 0);
-    if (after)
-      expect(a.itens[0]).toMatchObject({
-        id: REPORT,
-        id_arquivo: FILE,
-        origem_temporal: "historico",
-        competencia_referencia: "2026-10-01",
-      });
+    throw new Error("readMaterial: outside F4.3 canonical orders");
   }
 }
 async function gateSnapshot(){
