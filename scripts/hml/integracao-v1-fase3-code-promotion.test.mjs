@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { CANDIDATE, SOURCE, RUNS, verifyEntries, verifyMetadata, verifyBytes } from "./integracao-v1-fase3-code-promotion.mjs";
+import { CANDIDATE, SOURCE, RUNS, verifyEntries, verifyMetadata, verifyBytes, verifyCandidateBytes } from "./integracao-v1-fase3-code-promotion.mjs";
 const root=new URL("../../",import.meta.url);
 const candidate=()=>JSON.parse(readFileSync(new URL(CANDIDATE,root)));
 const catalogue=()=>JSON.parse(readFileSync(new URL("docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json",root)));
@@ -37,3 +37,10 @@ for(const [label,mutate] of Object.entries({
   drift:m=>m.compare.files.push({filename:"src/bad.ts"}),
 })) test("F3 promotion rejects "+label,()=>{const m=metadata();mutate(m);assert.throws(()=>verifyMetadata(m),/F3_PROMOTION_/);});
 test("F3 promotion rejects forged archive and content",()=>{const b=Buffer.from("fake");assert.throws(()=>verifyBytes(b,b,b,b),/F3_PROMOTION_ZIP/);});
+test("F3 promotion rejects any altered versioned, downloaded or reproduced byte",()=>{
+  const real=readFileSync(new URL(CANDIDATE,root));
+  assert.equal(verifyCandidateBytes(real,real,real),true);
+  const changed=Buffer.from(real);changed[0]^=1;
+  for(const args of [[changed,real,real],[real,changed,real],[real,real,changed],[changed,changed,changed]])
+    assert.throws(()=>verifyCandidateBytes(...args),/F3_PROMOTION_BYTES/);
+});
