@@ -364,6 +364,18 @@ const additionalCases = Object.freeze({
     "destination": "V121",
     "file": "src/test/f3-code-case-0065.test.ts",
     "env": "F3_CODE_C0065_OBSERVATIONS"
+  },
+  "IFV1-F3-C0050": {
+    "table": "contratos",
+    "destination": "V106",
+    "file": "src/test/f3-code-case-0050.test.ts",
+    "env": "F3_CODE_C0050_OBSERVATIONS"
+  },
+  "IFV1-F3-C0055": {
+    "table": "documentos_contrato",
+    "destination": "V111",
+    "file": "src/test/f3-code-case-0055.test.ts",
+    "env": "F3_CODE_C0055_OBSERVATIONS"
   }
 });
 const additionalRuns = new Map();
@@ -710,6 +722,7 @@ export const consumerDrivers = Object.freeze({
     return structuredClone(positive);
   },
   [CONSUMER_0048]: async ({ case: c }) => {
+    if(c.caseId==="IFV1-F3-C0050") return structuredClone((await runAdditionalCase(c))[0]);
     if (c.caseId !== CASE_0048) {
       throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"), {
         code: "F3_CONSUMER_CASE_NOT_IMPLEMENTED",
@@ -763,6 +776,7 @@ export const negativeDrivers = Object.freeze({
     return structuredClone(negative);
   },
   [CONSUMER_0048]: async ({ case: c }) => {
+    if(c.caseId==="IFV1-F3-C0050") return structuredClone((await runAdditionalCase(c))[1]);
     if (c.caseId !== CASE_0048) {
       throw Object.assign(new Error("F3_NEGATIVE_CASE_NOT_IMPLEMENTED"), {
         code: "F3_NEGATIVE_CASE_NOT_IMPLEMENTED",
@@ -839,7 +853,9 @@ export async function independentVerifier(c, observed) {
       positive.network?.status === 200 && negative.network?.status === 403 &&
       positive.readback?.contractId === CONTRACT_EXTRA &&
       negative.readback?.contractId === CONTRACT_EXTRA &&
-      positive.readback?.rowId === ROW_EXTRA &&
+      positive.readback?.rowId === (c.caseId==="IFV1-F3-C0050"?CONTRACT_EXTRA:ROW_EXTRA) &&
+      (c.caseId!=="IFV1-F3-C0055" || (positive.readback?.versionId==="b1111111-1111-4111-8111-111111111111" &&
+        positive.readback?.fileId==="b2222222-2222-4222-8222-222222222222" && negative.readback?.versionDenied===true)) &&
       positive.readback?.authorizedLocalIdentities === 2 &&
       negative.readback?.outcome === "DENY" &&
       negative.readback?.preferenceNotAuthorization === true;

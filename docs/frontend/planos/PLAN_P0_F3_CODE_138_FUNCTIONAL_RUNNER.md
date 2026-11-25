@@ -34,6 +34,9 @@ Implementar um workflow GitHub Actions de execução **CODE** de cada uma das 13
 
 - `src/test/f3-code-sys04-competence-rpc.test.ts` (5 relações SYS04 → RPCs V114, V115, V116, V117, V119: cadeia de seleção, parse do produto, capacidade de ações e isolamento sob fixtures CODE)
 
+- `src/test/f3-code-case-0050.test.ts` (SYS04 → V106, contrato selecionado e detalhe por ID)
+- `src/test/f3-code-case-0055.test.ts` (SYS04 → V111, versão e arquivo vinculados, recusa de leitura)
+
 ## Garantias
 
 1. Catálogo imutável: arquivo e hash canônicos; 120 casos obrigatórios e 18 condicionais; nenhum caso novo ou removido.
