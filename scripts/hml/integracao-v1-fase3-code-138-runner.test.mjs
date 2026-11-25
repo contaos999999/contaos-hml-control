@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { buildF3Code138Preflight, SCHEMA } from "./integracao-v1-fase3-code-138-runner.mjs";
+import { buildF3Code138Preflight, certifyF3Code138, SCHEMA } from "./integracao-v1-fase3-code-138-runner.mjs";
 
 const fake = {count:138,cases:Array.from({length:138},(_,i)=>({
   caseId:"IFV1-F3-C"+String(i+1).padStart(4,"0"),producerOrder:i%20+1,
@@ -74,3 +74,17 @@ for (const [i,c] of cat.cases.entries()) {
     }
   });
 }
+
+test("F3 138 certification: rejects absent execution evidence",()=>{
+  assert.throws(()=>certifyF3Code138(fake,[],{frontendSha:"a".repeat(40),workflowRunId:"123"}),/F3_CERT_RESULT_COUNT/);
+});
+test("F3 138 certification: rejects forged or stale individual results",()=>{
+  const provenance={frontendSha:"a".repeat(40),workflowRunId:"123"};
+  const results=fake.cases.map(c=>({caseId:c.caseId,...provenance,executed:true,
+    positiveTest:"PASS",negativeTest:"PASS",state:"PASS",testName:"test-"+c.caseId,
+    logSha256:"b".repeat(64)}));
+  assert.equal(certifyF3Code138(fake,results,provenance).summary.passed,138);
+  assert.throws(()=>certifyF3Code138(fake,results.map((r,i)=>i===0?{...r,frontendSha:"c".repeat(40)}:r),provenance),/F3_CERT_MISSING_OR_STALE/);
+  assert.throws(()=>certifyF3Code138(fake,results.map((r,i)=>i===0?{...r,negativeTest:"NOT_RUN"}:r),provenance),/F3_CERT_UNPROVEN_CASE/);
+  assert.throws(()=>certifyF3Code138(fake,results.map((r,i)=>i===0?{...r,logSha256:null}:r),provenance),/F3_CERT_UNPROVEN_CASE/);
+});
