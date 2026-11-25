@@ -1,0 +1,39 @@
+{
+  "schema": "contaos.ifv1.f3.code-promotion-receipt.v1",
+  "state": "LEDGER_VERIFIED_CERTIFICATE_PENDING",
+  "scope": "CODE_ONLY",
+  "source": {
+    "pr": 754,
+    "head": "b26ece8c0b03485aeeb7091aaed548ec284986cd",
+    "merge": "a162574386e752d3f9b928dbf8e3296d3a62255b",
+    "review": 6050561220,
+    "run": 45530510437,
+    "job": 138924335258,
+    "artifact": 14985165418,
+    "artifactDigest": "340a69e7b7d49e98d1ab8074544dd8108103837c18a5d0bd5397ab5904925695",
+    "candidateDigest": "de6fdd18468868fc163574fccda016322a2eb7e412bb984a0212fb783c770c06"
+  },
+  "counts": {
+    "cases": 138,
+    "mandatory": 120,
+    "conditional": 18,
+    "tests": 276,
+    "failed": 0,
+    "blocked": 0
+  },
+  "ledgerPath": "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_ATTESTATION_CANDIDATE.json",
+  "ledgerSha256": "de6fdd18468868fc163574fccda016322a2eb7e412bb984a0212fb783c770c06",
+  "promotionExecution": {
+    "sha": "b6d9737f8afd14e009a9aff3fe0f6c843eca9d53",
+    "run": "45536232935"
+  },
+  "limitations": [
+    "CODE fixtures and real frontend adapters; no remote RLS or LIVE claims.",
+    "Output hashes bind observations, but report does not include their full raw payloads.",
+    "Review account differs from author; review assisted by same agent, not independent human audit.",
+    "Requires separate formal attestation/ledger promotion and governance approval; no authorization of F4 or PROD."
+  ],
+  "certification": "NOT_CERTIFIED",
+  "f4": "NOT_AUTHORIZED",
+  "production": "NO-GO"
+}
