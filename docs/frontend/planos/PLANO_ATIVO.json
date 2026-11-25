@@ -4548,6 +4548,14 @@
     "build2b2a_pr": "#679 (autor Edivan5002); main 20d4ad9 mesclada; R3 aplica a emenda 1 aos fluxos das ordens 2 a 8 (inventário por posição, versão observada, chave da UI e bind do V106, reenvio só com chave, TUS, esperas W1–W5); barreira NR-008 por teste; limites e obrigações dos incrementos seguintes em fase3/BUILD2B2_DRIVERS.md; redesenho alternativo preservado em backup/f3-b2b2a-redesenho-r3-local (não integrado, decisão do titular \"Manter a versão remota\")"
   },
   "arquivos_restritos_por_pr": {
+    "src/test/f4-code-v102-v103-crud-sync.test.ts": 767,
+    "src/test/f4-code-v105-v106-crud-sync.test.tsx": 767,
+    "src/test/f4-code-v107-v108-v109-material-sync.test.ts": 768,
+    "src/test/f4-code-v110-v111-v115-document-sync.test.ts": 769,
+    "src/test/f4-code-v113-competence-sync.test.tsx": 770,
+    "src/test/f4-code-v116-v117-analysis-sync.test.ts": 770,
+    "src/test/f4-code-v118-v119-opinion-presentation-sync.test.ts": 771,
+    "src/test/f4-code-v122-history-sync.test.ts": 771,
     "src/test/f4-code-sys04-competence-context-sync.test.ts": 765,
     "src/test/f4-code-sys04-data-context-sync.test.ts": 765,
     "src/test/f4-code-sys04-actions-context-sync.test.ts": 765,
