@@ -55,7 +55,10 @@ export function createF3BackendTransport({master,leitor,plan,recordEvidence}) {
         if(!allowed)fail("F3_BACKEND_OPERATION_NOT_IN_CONTRACT");
         const client=item.actor==="master"?master:leitor;
         const result=await dispatch(client,item.step,item.args,item.operation);
-        const denied=Boolean(result?.error);
+        const code=String(result?.error?.code??"");
+        const status=Number(result?.error?.status??result?.error?.context?.status??0);
+        const denied=code==="42501"||code==="PGRST301"||status===401||status===403;
+        if(result?.error&&!denied)fail("F3_BACKEND_TRANSPORT_ERROR");
         if((item.expect==="denied")!==denied)fail("F3_BACKEND_ASSERTION_FAILED");
         traces.push({kind,actor:item.actor,target:item.step.target,
           operation:item.step.name,denied,errorCode:result?.error?.code??null});
@@ -64,7 +67,11 @@ export function createF3BackendTransport({master,leitor,plan,recordEvidence}) {
     const evidence=await recordEvidence({caseId,producer,context,traces,traceSha256:hash(traces)});
     if(!isRecord(evidence)||evidence.caseId!==caseId||
        evidence.executed!==true||evidence.positiveTest!=="PASS"||
-       evidence.negativeTest!=="PASS"||evidence.state!=="PASS")
+       evidence.negativeTest!=="PASS"||evidence.state!=="PASS"||
+       evidence.frontendSha!==context.frontendSha||
+       String(evidence.workflowRunId)!==String(context.workflowRunId)||
+       !/^[a-f0-9]{64}$/.test(evidence.logSha256??"")||
+       typeof evidence.testName!=="string"||!evidence.testName)
       fail("F3_BACKEND_EVIDENCE_MISSING");
     return evidence;
   }
