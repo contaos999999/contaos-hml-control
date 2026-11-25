@@ -51,26 +51,14 @@ jobs:
           bunx prettier --check scripts/hml/integracao-v1-fase3-functional-138.mjs scripts/hml/integracao-v1-fase3-functional-138.test.mjs scripts/hml/f3-code-functional-drivers.mjs src/test/f3-code-case-0036.test.ts src/test/f3-code-case-0037.test.tsx src/test/f3-code-case-0041.test.ts src/test/f3-code-case-0043.test.tsx src/test/f3-code-case-0045.test.ts src/test/f3-code-case-0048.test.ts .github/workflows/contaos-f3-code-138-functional.yml src/test/f3-code-case-0051.test.ts src/test/f3-code-case-0052.test.ts src/test/f3-code-case-0053.test.ts src/test/f3-code-case-0056.test.ts src/test/f3-code-adm01-rbac-integration.test.ts src/test/f3-code-case-0054.test.ts src/test/f3-code-case-0062.test.ts src/test/f3-code-case-0064.test.ts src/test/f3-code-case-0065.test.ts src/test/f3-code-sys04-competence-rpc.test.ts src/test/f3-code-case-0050.test.ts src/test/f3-code-case-0055.test.ts src/test/f3-code-v113-created-competence.test.tsx src/test/f3-code-v118-v119-material-actions.test.ts src/test/f3-code-v102-v103-contracting-party.test.ts src/test/f3-code-v105-v106-contract-actions.test.tsx src/test/f3-code-v116-v117-analysis-review.test.ts src/test/f3-code-v110-v111-v115-document-actions.test.ts src/test/f3-code-sys04-preference-guard-actions.test.ts src/test/f3-code-v107-v108-v109-v122-material-source.test.ts src/test/f3-code-adm01-dashboard.test.tsx
           git diff --exit-code
 
-      - name: Diagnosticar selecao nominal RCA no Node 24
+      - name: Verificar GREEN nominal pelo validador RCA
         run: |
           node --input-type=module <<'JS'
-          import { spawnSync } from "node:child_process";
           import { runCase } from "./scripts/p0-rca-impact-gate.mjs";
           const caso = "F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 producers";
-          const arquivo = "scripts/p0-rca-impact-gate.test.mjs";
-          const pat = "^" + caso.replace(/[^\w -]/g, x => "\\" + x) + "$";
-          const env = { ...process.env };
-          for (const key of Object.keys(env)) {
-            if (/(?:TOKEN|SECRET|PASSWORD|API_KEY|AUTH_KEY|PRIVATE_KEY)/i.test(key)) delete env[key];
-          }
-          delete env.NODE_TEST_CONTEXT;
-          const args = ["--test", "--experimental-test-isolation=none", "--test-reporter=tap", "--test-name-pattern=" + pat, arquivo];
-          const p = spawnSync(process.execPath, args, {encoding:"utf8",timeout:120000,maxBuffer:5*1024*1024,env});
-          console.log(JSON.stringify({node:process.version,status:p.status,signal:p.signal,pattern:pat}));
-          console.log(p.stdout || "");
-          console.error(p.stderr || "");
-          const valid = runCase({runner:"node",arquivo,caso});
-          console.log("RCA_NAMED_CASE_VERIFIED="+valid);
+          const arquivo = "scripts/hml/integracao-v1-fase3-functional-138.test.mjs";
+          if (!runCase({runner:"node",arquivo,caso})) process.exit(1);
+          console.log("RCA_NAMED_CASE_VERIFIED=true");
           JS
 
       - name: Autotestes do executor, incluindo negativas contra PASS ficticio

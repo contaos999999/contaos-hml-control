@@ -159,7 +159,8 @@
         "descricao": "O executor e testes existentes na PR #748 ainda não integram a main. A reaplicação depende do PLAN prospectivo #753.",
         "evidencias": [
           "https://github.com/contaos999999/contaos-hml-control/actions/runs/45527094754",
-          "PR #748 CI 45521644438 PASS_CODE (276 provas CODE)"
+          "PR #748 CI 45521644438 PASS_CODE (276 provas CODE)",
+          "CI 45527777125 job 138915282703: Node24 isolation=none selects relative argv[1] and RCA guard CLI URL throws ERR_INVALID_FILE_URL_HOST before its self-test can execute; test logic passes in full suite. GREEN now executes same registry assertion in functional suite, without importing guard."
         ],
         "hipoteses_descartadas": [
           "Não há exigência de execução LIVE antes da V5.",
@@ -202,7 +203,7 @@
           {
             "id": "GREEN-F3-REGISTRY",
             "runner": "node",
-            "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+            "arquivo": "scripts/hml/integracao-v1-fase3-functional-138.test.mjs",
             "caso": "F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 producers"
           }
         ],
@@ -224,7 +225,7 @@
         ]
       },
       "solucao": {
-        "descricao": "Reaplicar os testes e executor do HEAD comprovado da #748, ajustar formatação versionada e validar no novo CI.",
+        "descricao": "Reaplicar os testes e executor do HEAD comprovado da #748, ajustar formatação versionada e validar no novo CI. Preservar RED e pré-instalação, reexecutar GREEN nominal na suíte funcional que importa o executor e não o CLI do guard; nenhum guard alterado.",
         "rollback": "Reverter BUILD em PR protegida, sem alteração de dados ou backend.",
         "arquivos": [
           "src/test/f3-code-adm01-dashboard.test.tsx",

@@ -163,3 +163,25 @@ test("F3 automated gate rejects missing proofs, provenance and tampered summarie
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+// Reexecute the actual registry in the product suite, not in the RCA guard's
+// own test module: Node 24 supplies a relative argv[1] with isolation=none.
+test("F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 producers", async () => {
+  const catalogue = JSON.parse(
+    await readFile(
+      new URL("../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const drivers = await import("./f3-code-functional-drivers.mjs");
+  assert.equal(catalogue.cases.length, 138);
+  assert.equal(new Set(catalogue.cases.map((c) => c.caseId)).size, 138);
+  assert.equal(typeof executeF3Functional138, "function");
+  assert.equal(typeof validateF3AutomaticGate, "function");
+  assert.equal(Object.keys(drivers.producerDrivers).length, 20);
+  for (const c of catalogue.cases) {
+    assert.equal(typeof drivers.producerDrivers[c.producerOrder], "function", c.caseId);
+    assert.equal(typeof drivers.consumerDrivers[c.consumer], "function", c.caseId);
+    assert.equal(typeof drivers.negativeDrivers[c.consumer], "function", c.caseId);
+  }
+});
