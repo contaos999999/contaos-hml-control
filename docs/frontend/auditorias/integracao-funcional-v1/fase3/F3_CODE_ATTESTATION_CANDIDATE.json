@@ -1,0 +1,4620 @@
+{
+  "schema": "contaos.ifv1.f3.code-attestation-candidate.v1",
+  "state": "CANDIDATE_NOT_CERTIFIED",
+  "sourceCatalogueSha256": "bce15980d31ce22c8836e26621b267951296e905139b9833c8db4a7400c9ecbb",
+  "source": {
+    "schema": "contaos.ifv1.f3.code-attestation-source.v1",
+    "state": "CANDIDATE_NOT_CERTIFIED",
+    "repository": "contaos999999/contaos-hml-control",
+    "buildPr": 752,
+    "head": "da715ce7348a1def7a9ac18e1895ae7cd7eae15e",
+    "executionSha": "ec445264b5e2d901c96cfc5466e8ff23a4106095",
+    "mergeSha": "4f696f74453f5bd73a9334c090a3cf28ee968961",
+    "backendSha": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "normativeSha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+    "functionalRun": 45528651072,
+    "functionalJob": 138918169561,
+    "artifactId": 14982269982,
+    "artifactSha256": "9b5c4a960d49d4568a810d2c1498628d144ed59c3f4a83b4c7a3364c62869717",
+    "reportSha256": "0e44a1783523a67c0e7b6af5de93e5825cc476568fd751f757b25effb41642d2",
+    "reviewId": 6050459412,
+    "reviewer": "Edivan5002",
+    "reviewMode": "AUTHORIZED_AGENT_ASSISTED_TECHNICAL_REVIEW_NOT_HUMAN_INDEPENDENT",
+    "runs": [
+      {
+        "id": 45528651072,
+        "name": "ContaOS F3 CODE - 138 execucoes funcionais individuais"
+      },
+      {
+        "id": 45528651040,
+        "name": "ContaOS Frontend Zero-Drift"
+      },
+      {
+        "id": 45528651075,
+        "name": "ContaOS LOCK-TYPES-01 Double Barrier"
+      },
+      {
+        "id": 45528651062,
+        "name": "ContaOS F3 CODE - Coletor offline (nao certificador)"
+      },
+      {
+        "id": 45528651064,
+        "name": "ContaOS P0-NR-001 Anti-Reincidencia"
+      },
+      {
+        "id": 45528651148,
+        "name": "ContaOS F3 CODE - 138 case preflight (not certification)"
+      }
+    ]
+  },
+  "counts": {
+    "cases": 138,
+    "mandatory": 120,
+    "conditional": 18,
+    "tests": 276,
+    "failed": 0,
+    "blocked": 0
+  },
+  "entries": [
+    {
+      "caseId": "IFV1-F3-C0036",
+      "classification": "OBRIGATORIA",
+      "producer": "listar_organizacoes_disponiveis",
+      "consumer": "listar_organizacoes_disponiveis",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/auth/resolverDestinoPosLogin.ts:50",
+        "src/lib/auth/resolverDestinoPosLogin.ts:50"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0036",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0036.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/auth/resolverDestinoPosLogin.ts",
+          "outputSha256": "a61f542982b6c060b06f5ff38e5c8fd1b1422b45576d1b629e5dbec2142a080f"
+        },
+        {
+          "caseId": "IFV1-F3-C0036",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0036.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/auth/resolverDestinoPosLogin.ts",
+          "outputSha256": "31d7fb985775d47050698c8683e6df142b420866831c7cb48cb54337aafd8e99"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0037",
+      "classification": "OBRIGATORIA",
+      "producer": "listar_organizacoes_disponiveis",
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/auth/resolverDestinoPosLogin.ts:50",
+        "src/components/dashboard/Dashboard.tsx:70"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0037",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0037.test.tsx:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "42eb365f4544dd806a7a3f3094238f1469de18029c411083bae8aa4fe4504626"
+        },
+        {
+          "caseId": "IFV1-F3-C0037",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0037.test.tsx:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "ab92db104d576768d0e977ac2785a0e13f90cfc61c57c0bc540ffd4ed7298c6f"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0067",
+      "classification": "CONDICIONAL",
+      "producer": "criar_organizacao",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/organizacao/criarOrganizacaoDados.ts:35",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0067",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0067:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "95a05204f6a1310150b05e8981d6d1b826c9c40c79b72faf44f669edbc3ba532"
+        },
+        {
+          "caseId": "IFV1-F3-C0067",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0067:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "3aadb1bbb6acc92bebfa7263757cf0fe5f1894cec2a1c82d67a1241e753ba087"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0041",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "consultar_permissoes_efetivas",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0041",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0041.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "f8c19427cb5161e708cc2f5d59648eadf2d4bfcc5a8407f930b3a4a5209a0fd7"
+        },
+        {
+          "caseId": "IFV1-F3-C0041",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0041.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "3be2d48a72db5296c805e791b1d4d271209a543f411bafe900da48eb66d3bdf8"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0043",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/components/dashboard/Dashboard.tsx:70"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0043",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0043.test.tsx:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "f16c7f6d6d3f8d0e591c3d3be9d5f577c058c768bbd03e50060971ad89ca5dc8"
+        },
+        {
+          "caseId": "IFV1-F3-C0043",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0043.test.tsx:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "42b631297a4f3fd7360d73989493b44b3a55fc39d1eb6c78db2147aee952d27a"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0045",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "contratantes",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratantes/contratantesDados.ts:89"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0045",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0045.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/contratantesDados.ts",
+          "outputSha256": "593dd5c1914d1e73a3b12799facfaaf17ec2491cf610c4bd39f37f0c9da970df"
+        },
+        {
+          "caseId": "IFV1-F3-C0045",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0045.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/contratantesDados.ts",
+          "outputSha256": "eaf5efe1dcd57c196eae79ce8a34a42424716c56fa979529002aeb762e73fc58"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0046",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "contratantes",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratantes/novoContratanteDados.ts:148"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0046",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0046:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/novoContratanteDados.ts",
+          "outputSha256": "7fc8089eddef0dffba1ca0fc95e1e8e8ed7aca016115d3da8eedded177fd3dc3"
+        },
+        {
+          "caseId": "IFV1-F3-C0046",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0046:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/novoContratanteDados.ts",
+          "outputSha256": "a9fca2f631f78aee639296e7baacb7d5e1f852c15413d90ff568b92e12ea20aa"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0047",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "contratantes",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratantes/novoContratanteDados.ts:148"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0047",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0047:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/novoContratanteDados.ts",
+          "outputSha256": "46efe5958eb9a71c0f358a6ceb77119e30428bdecdc13e8e950385b85d2ca830"
+        },
+        {
+          "caseId": "IFV1-F3-C0047",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0047:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/novoContratanteDados.ts",
+          "outputSha256": "f266a4f4e604687d5de3fabd4f96d20265d9183b474dfcab1618e1c8becacba0"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0048",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/contratosDados.ts:41"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0048",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0048.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratosDados.ts",
+          "outputSha256": "1cdc941537c827bb225902fc2fbf88cf089105632f90f051aa730180caac4adf"
+        },
+        {
+          "caseId": "IFV1-F3-C0048",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0048.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratosDados.ts",
+          "outputSha256": "4b12cafbf39dd69021c0e26dd30f64b8a5b83c3d1c5418b131427f25605b5c21"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0049",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "contratantes",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/novoContratoDados.ts:44"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0049",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0049:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novoContratoDados.ts",
+          "outputSha256": "3bbb5dbe69574b7bccb502dc3e1f786f2109b0ebb3f7b748343e33aa912119b4"
+        },
+        {
+          "caseId": "IFV1-F3-C0049",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0049:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novoContratoDados.ts",
+          "outputSha256": "b8262005e5c12261be3a7b8f2b524de9531b3e23281bf6067cb2b0ed024ca0c7"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0050",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0050",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0050.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "82665bf6bfc4433a4730c84f56995cbf70ab2b5e9e20cf5ab8bd4aa4a8a721e0"
+        },
+        {
+          "caseId": "IFV1-F3-C0050",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0050.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "60ac440030ed766eb2bd2f5d54a80570b051414a1bf52ea9f83eb2b52d243ac0"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0051",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "fontes_normativas",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/baseNormativaDados.ts:58"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0051",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0051.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/baseNormativaDados.ts",
+          "outputSha256": "8475675899db17db5d774e9029053e0beabfe1f43d9623a2b0f09631a6658eed"
+        },
+        {
+          "caseId": "IFV1-F3-C0051",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0051.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/baseNormativaDados.ts",
+          "outputSha256": "3eb217edd3fb397782c713c55714401af51498eeac40ce9aa46e3931fefc1e7c"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0052",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "propostas_orcamentarias",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/orcamentoDados.ts:99"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0052",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0052.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/orcamentoDados.ts",
+          "outputSha256": "19afe35907665472f4785040fbfacf8d5b179f4ba8c3efe98db15cd56618d436"
+        },
+        {
+          "caseId": "IFV1-F3-C0052",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0052.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/orcamentoDados.ts",
+          "outputSha256": "214b8194297acd123b149924a7ba7962dbe7e8b1f9154a2393b32cbebb8940eb"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0053",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "listas_verificacao",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/regrasDados.ts:154"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0053",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0053.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/regrasDados.ts",
+          "outputSha256": "ed796ed18e0cf25f16bd2abfd9c36becd0306ff1d5686c099e9c7a840fe1b3b3"
+        },
+        {
+          "caseId": "IFV1-F3-C0053",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0053.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/regrasDados.ts",
+          "outputSha256": "13210a7bf6edfa82799afa381274bc6136f51e8fb8f83d78d5c539d43fd5f0cd"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0054",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "documentos_contrato",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/documentosDados.ts:209"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0054",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0054.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/documentosDados.ts",
+          "outputSha256": "43433537fefbc7da216309ac4db91e154ca4014ba7387f5b59cb624c62e5141a"
+        },
+        {
+          "caseId": "IFV1-F3-C0054",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0054.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/documentosDados.ts",
+          "outputSha256": "2566188a28c001376e1b866f5c1997e21c5cbd35d8b62e34e70f2c3c656337c3"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0055",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "documentos_contrato",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/documentosDados.ts:209"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0055",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0055.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/documentosDados.ts",
+          "outputSha256": "49e37ab3d3cd8b4dc26bcecbc2789b342a397cc7ad3c59d210466abd61afaeb1"
+        },
+        {
+          "caseId": "IFV1-F3-C0055",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0055.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/documentosDados.ts",
+          "outputSha256": "0f0030efe15f965decac941f8936e52a7b66af6ecb8ebb87b24515adc6fb701d"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0056",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "competencias",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/competenciasDados.ts:79"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0056",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0056.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/competenciasDados.ts",
+          "outputSha256": "d2f3340d7551d52c3c7e40089163edaadc1623a707342f74d13aec267280aafa"
+        },
+        {
+          "caseId": "IFV1-F3-C0056",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0056.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/competenciasDados.ts",
+          "outputSha256": "385871d0b5a3bd5affc56e034a0868db7936f6148c2f1c629031c568b65331ce"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0057",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "criar_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/novaCompetenciaDados.ts:71"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0057",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0057:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novaCompetenciaDados.ts",
+          "outputSha256": "b71358e618f26bf9d2778a3c8a8624abacb4060cf38161cf4a5b65a094774fab"
+        },
+        {
+          "caseId": "IFV1-F3-C0057",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0057:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novaCompetenciaDados.ts",
+          "outputSha256": "360c5777e2d99f01363cf20a624c5c5036d3f8fff0675482d375587f3158087b"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0058",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0058",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-competence-rpc.test.ts:IFV1-F3-C0058:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "fce331c988d1016117acd364e9fbb9e956f69cea3fda5573c7ab7dc3bc1dfbd1"
+        },
+        {
+          "caseId": "IFV1-F3-C0058",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-competence-rpc.test.ts:IFV1-F3-C0058:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "55d0cec3c6aab301d6ad9e28141e06f1e16c35a1ce8d5d6902bdc720899e3b24"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0059",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "obter_documentos_competencia_v115",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/competencias/competenciaDocumentosDados.ts:116"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0059",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-competence-rpc.test.ts:IFV1-F3-C0059:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaDocumentosDados.ts",
+          "outputSha256": "9afc5dd28401b2ffa7dc0f216019585703e80f2592d1b233962a9ab206b94647"
+        },
+        {
+          "caseId": "IFV1-F3-C0059",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-competence-rpc.test.ts:IFV1-F3-C0059:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaDocumentosDados.ts",
+          "outputSha256": "a631becb6ea063c6940bc2dfd3bcb10c766f5b73d3c419f38eb2304f8ff335ac"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0060",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/competencias/competenciaAnaliseDados.ts:158"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0060",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-competence-rpc.test.ts:IFV1-F3-C0060:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "7468b8558f9bf831278873a7240c43067f4bc9d15f9598b44370ffeaed63492f"
+        },
+        {
+          "caseId": "IFV1-F3-C0060",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-competence-rpc.test.ts:IFV1-F3-C0060:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "d00c8025d1bc2bd182940ad59a0e56792a45794670e906cc5ccb5516f9c5036e"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0061",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/competencias/requisitoDetalheDados.ts:45"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0061",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-competence-rpc.test.ts:IFV1-F3-C0061:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "4029f929df210438b1f78dae4d34e11ab3bb978bb802bceecb1a6a95c05b2f21"
+        },
+        {
+          "caseId": "IFV1-F3-C0061",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-competence-rpc.test.ts:IFV1-F3-C0061:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "5a8ad49645de845093bbe96433970f2d6dd01a9609dfc758aa9b9e2d85293da8"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0062",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/competencias/parecerInternoDados.ts:113"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0062",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0062.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "00d617bf1c1be9403738326952cab9fc43f2fe58265609154b066a2366be6c0c"
+        },
+        {
+          "caseId": "IFV1-F3-C0062",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0062.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "db57636dbbc2e7c3e27aa5c80afd4d58ca8ed745e7bb247bed1dffa46a9afbb5"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0063",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0063",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-competence-rpc.test.ts:IFV1-F3-C0063:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "038947aadd754423d15e183de65824b741e32ae8b17854f9242ab3ad7cd30df9"
+        },
+        {
+          "caseId": "IFV1-F3-C0063",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-competence-rpc.test.ts:IFV1-F3-C0063:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "449bca3550326d4aed19af8fcf90e56decc7e261d0fbbbd04ab84486d9b45b42"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0064",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "apresentacoes_contratante",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/competencias/protocoloDados.ts:92"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0064",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0064.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/protocoloDados.ts",
+          "outputSha256": "6f495ef83d055d6896e1636c85a42f9ea0e9eacee04b122726a6d48431c05e1a"
+        },
+        {
+          "caseId": "IFV1-F3-C0064",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0064.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/protocoloDados.ts",
+          "outputSha256": "da4491fcffdc409f74db9e1a68597e87c13b216004af40147b7ef303dae1cd72"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0065",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "relatorios_historicos_contratante",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/historicoContratoDados.ts:160"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0065",
+          "kind": "positive",
+          "testId": "src/test/f3-code-case-0065.test.ts:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/historicoContratoDados.ts",
+          "outputSha256": "75adf9a316f7e900b89ab7e173cff5dd5b20920df3934cf42c8b8e2b631b3fc1"
+        },
+        {
+          "caseId": "IFV1-F3-C0065",
+          "kind": "negative",
+          "testId": "src/test/f3-code-case-0065.test.ts:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/historicoContratoDados.ts",
+          "outputSha256": "50998a5bd169015ee620b14feba9c3ab59be53d4963d7cbb7b1d9687295531a0"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0066",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "relatorios_historicos_contratante",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/contratos/historicoContratoDados.ts:160"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0066",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0066:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/historicoContratoDados.ts",
+          "outputSha256": "4058b5f23bb982d06eda17d1ff972eec101915cfd05c3a4b470534a4206e0cc2"
+        },
+        {
+          "caseId": "IFV1-F3-C0066",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0066:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/historicoContratoDados.ts",
+          "outputSha256": "a5005e28c7f30dc7aefc68bac083303ef58faf65fd3bc702e8214b5f85370954"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0068",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/components/organizacao/OrganizationSelector.tsx:299",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0068",
+          "kind": "positive",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0068:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "2b71d89ea571116a038bffa3e58527be1b906bdf0d6cad4331c35563a170588c"
+        },
+        {
+          "caseId": "IFV1-F3-C0068",
+          "kind": "negative",
+          "testId": "src/test/f3-code-sys04-preference-guard-actions.test.ts:IFV1-F3-C0068:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "4f16ce3515c84d9211b18ec8d6118676d3696fff43a131e4bb9e85826b62d73f"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0002",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "listar_organizacoes_disponiveis",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/auth/resolverDestinoPosLogin.ts:50"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0002",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0002:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/auth/resolverDestinoPosLogin.ts",
+          "outputSha256": "69c9323a51102818ebf0d626af8b5d06564b7ffa1b52aad1db3fe3f0aa118e7d"
+        },
+        {
+          "caseId": "IFV1-F3-C0002",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0002:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/auth/resolverDestinoPosLogin.ts",
+          "outputSha256": "33a0e0d1686a3101bf1ed6c10755ff8d731943a9074ea6c712cdea938753afee"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0005",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/components/dashboard/Dashboard.tsx:70"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0005",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-dashboard.test.tsx:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "f29f878a9c2285959e60f915841fcd2d41718d02bde59b49afcc9842bc8ee3bf"
+        },
+        {
+          "caseId": "IFV1-F3-C0005",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-dashboard.test.tsx:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "f9764c9b2842b3596d099a70bbb5f92945844656336b454d74bd167507a5cfdf"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0007",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0007",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0007:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "529060ed20f74df3598bb10032c2a9e99330408362469882cc2c2d20b8a8b5a9"
+        },
+        {
+          "caseId": "IFV1-F3-C0007",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0007:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "9d929e745fb5896f5f25164685ad1f5ca2aa6c4051adb7d7aff8ba5c5de0e59f"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0009",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0009",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0009:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "6f48f6ea855253bed73ae8d5e59e1cdc040e92fb9274ecd9e36c4930edbe430d"
+        },
+        {
+          "caseId": "IFV1-F3-C0009",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0009:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "42862697637d8e00ed63d8e6b8494dcdca1147604e6bea1162aa156f5bcb2a63"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0011",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0011",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0011:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "ebf8845a9cf63217a2893de920a43693d2bf912579d7134171210320228112ac"
+        },
+        {
+          "caseId": "IFV1-F3-C0011",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0011:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "643c9aa0aec5078f923bb1106435e8463276a0029fd40faa189171cbc47bfba9"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0012",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0012",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0012:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "386926229f891c5c401bd16142a7c7f697485890d5da8c7adca5bc9059a962e9"
+        },
+        {
+          "caseId": "IFV1-F3-C0012",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0012:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "b78da4f2321e539d40ebd5e41dc14ae61ed3063b6ed03da0032a7cf58b81c244"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0014",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0014",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0014:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "0976c8e1bc897d56df8eaae2256fe7cdc701d48f978e9b44fc839c71599ea544"
+        },
+        {
+          "caseId": "IFV1-F3-C0014",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0014:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "c5d5af9620350026771a68f172b62583b098e7bc7cc0d202f289f5a8ebd3a883"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0016",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0016",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0016:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "f3bf77cf6339ac489eb035b864a90e2698822e738cc3ae6a6470b5bf73e4482f"
+        },
+        {
+          "caseId": "IFV1-F3-C0016",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0016:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "1ee27061a607be44abcbc43c0593283e75c9c8e6ef32a4a439b655bc7450fa35"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0017",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0017",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0017:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "ad70e6633144910e7149d3ad036682f728015fa3c6800fd6cec632b202361fd0"
+        },
+        {
+          "caseId": "IFV1-F3-C0017",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0017:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "8a1c5c334aaca6d1ca893d31801d4a65789ffdf5119fbbf931bd034564574206"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0018",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0018",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0018:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "7173ede8b2b734dac52d1d6ae03dd056a33bbb5c94115958d723c556971526b5"
+        },
+        {
+          "caseId": "IFV1-F3-C0018",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0018:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "3f5a9dd5c68a752701043ccfb657b2baa3ff756d873fa76ab44b111e93102754"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0019",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0019",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0019:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "6098ba6a832fdbe45202b31c96168088560cc099892be2d2204ffd9cc49a3383"
+        },
+        {
+          "caseId": "IFV1-F3-C0019",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0019:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "491b1411ec4ad0e38d2016c8e00fad048a7d206647e50ad57adc701a2e167086"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0020",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0020",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0020:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "54ca8983122ed35ab57df8d8489b6d21203094cc2f654753ebafaedc763f13fd"
+        },
+        {
+          "caseId": "IFV1-F3-C0020",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0020:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "e2ccba87d3b52a83960bfc630f6ae55961ce80b597db49aa51ee64cbbe943bac"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0021",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0021",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0021:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "1cc9b371ac0385f58a1384e85c9111fbf5ea7030b7b2bfa4b3f0ef0cdbfaf918"
+        },
+        {
+          "caseId": "IFV1-F3-C0021",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0021:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "1ce7272988aef16c319cf1565b37e1f944f82d26574eb39ce69851292198d7cf"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0022",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0022",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0022:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "8956944df2edd99208e6d4ef98c294a1c2473e7148ab38802bff202a280def18"
+        },
+        {
+          "caseId": "IFV1-F3-C0022",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0022:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "832efd0d673d53ba00ef9a458d387599ecde1564461d9c18c761a70f76879b69"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0023",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0023",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0023:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "cb913494f2f166b574543def8b89d062f4236e2b42ce11b1ad34cd13217c8a73"
+        },
+        {
+          "caseId": "IFV1-F3-C0023",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0023:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "34e2f9ae31fe2d7424d960825ac0b33b141825b196383884ffc6c9467ab12ac2"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0024",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0024",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0024:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "d331af914ee2b49bba2fbefcdedaadf787d1fb52dac1d8903267f723a56815c4"
+        },
+        {
+          "caseId": "IFV1-F3-C0024",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0024:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "a745672620dc6f52918a0b983d5f9a6e0b66423504329ab8e7778d0b23b7726a"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0025",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0025",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0025:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "b7631b708313e3361f2600fbaeab8242aac37eb5f284d86e900e2dcb74f0e471"
+        },
+        {
+          "caseId": "IFV1-F3-C0025",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0025:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "9326a8e472a23b1467a24b9a53cdfc3705d985cf443a1defc2cd026af7f08604"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0026",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0026",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0026:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "861196a4e36235adda875f3052ff04ba7adde69004038aab48b799bbc33bf496"
+        },
+        {
+          "caseId": "IFV1-F3-C0026",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0026:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "9b3b513e88eda6af50fa069118d00aec09f504c07b8b98110adbe0558866bee2"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0027",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0027",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0027:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "2adc668d4db07627b88966743d1cfc905c74d4ee438736f422d7811ba333b0ed"
+        },
+        {
+          "caseId": "IFV1-F3-C0027",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0027:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "810006c84aa3810aba1470a85e16b8180e44cde7c091b4dc8ccb0d198a55588d"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0028",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0028",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0028:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "508c231aecc21fe11a9572509bf3df93410c4783f342dfb54e65980fb12d5b9e"
+        },
+        {
+          "caseId": "IFV1-F3-C0028",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0028:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "b98125b98b9da3b3b7830dc1bda712c3b10920ceaa29a8aceb88efb8e8b41af8"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0029",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0029",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0029:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "a39cc7e9b70e1eb90bf4953baa575d6f6b48cd6e87371e9046c76cfae034c7b5"
+        },
+        {
+          "caseId": "IFV1-F3-C0029",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0029:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "fbd4f497c8b01e6293d0e93c126f3e64de141c94510351624c07401c1dfe131b"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0030",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0030",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0030:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "55ca71e3a8f3ffb46049ecfc337e9b8cf1e9f1d1cffde5bc7986be73efa65608"
+        },
+        {
+          "caseId": "IFV1-F3-C0030",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0030:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "a22c7929a8a2ab487d1989ed3dbcedc1744162691c9b5a10424e5be111b284eb"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0031",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0031",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0031:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "8c2adddef5b33e37e69dc1b4e687c49a759a8362fd6c359082ab829d311ce639"
+        },
+        {
+          "caseId": "IFV1-F3-C0031",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0031:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "56cfbe860e9ef0cd66f160ea6341573c723a1237956a4a7d4f6700b41119a1e4"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0032",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0032",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0032:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "6f5418a5aa107faec6377225f59033367e3b106f7b5f6937858d36b47a1e531a"
+        },
+        {
+          "caseId": "IFV1-F3-C0032",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0032:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "5d24e8bc2248b3a5e7c66db5039a6c15569600f71226a15faed32bdba0396c4e"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0033",
+      "classification": "CONDICIONAL",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0033",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0033:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "0f27a7dc040882b7292fa89104106313bb0097ba21e094ff704d151784ae4970"
+        },
+        {
+          "caseId": "IFV1-F3-C0033",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0033:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "c8cae60138ad6267e23c754d8d4bfdfcef51a52cbc26d1bcd4d06d7ab7b0ae5b"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0034",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/administracao/admUsuariosRpc.ts:184",
+        "src/lib/administracao/rbacRpc.ts:144"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0034",
+          "kind": "positive",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0034:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "8ce4da56a7d87bb35652c7baf2cb7eacb828a1e63755c4fee22aa151ec69e0e5"
+        },
+        {
+          "caseId": "IFV1-F3-C0034",
+          "kind": "negative",
+          "testId": "src/test/f3-code-adm01-rbac-integration.test.ts:IFV1-F3-C0034:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/rbacRpc.ts",
+          "outputSha256": "00273b4a76d006513c7dd030f2cbf759bea678d4fb7f661e9c66b795c19006b4"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0093",
+      "classification": "OBRIGATORIA",
+      "producer": "contratantes",
+      "consumer": "contratantes",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratantes/novoContratanteDados.ts:148",
+        "src/lib/contratantes/contratantesDados.ts:89"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0093",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0093:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/contratantesDados.ts",
+          "outputSha256": "29f48dc3e21f7f2bf493d5a7f81c0b2c24c785ff5f0ca34b05756371eeebaac6"
+        },
+        {
+          "caseId": "IFV1-F3-C0093",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0093:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/contratantesDados.ts",
+          "outputSha256": "27178452d907b110449b9e0eb1a7135999be9ae24b3977bfb70bf8029da581c3"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0096",
+      "classification": "OBRIGATORIA",
+      "producer": "contratantes",
+      "consumer": "contratantes",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratantes/novoContratanteDados.ts:148",
+        "src/lib/contratantes/novoContratanteDados.ts:148"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0096",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0096:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/novoContratanteDados.ts",
+          "outputSha256": "f5c766ff6ecb8b9c0d73811604dfe3bd4bec79ffa9460efecee88c443ee8432c"
+        },
+        {
+          "caseId": "IFV1-F3-C0096",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0096:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/novoContratanteDados.ts",
+          "outputSha256": "2d6e3b1489dc0552bc61065fd3826f9e6606ac4b25a5f304704fcf7dd5d93a08"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0098",
+      "classification": "OBRIGATORIA",
+      "producer": "contratantes",
+      "consumer": "contratantes",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratantes/novoContratanteDados.ts:148",
+        "src/lib/contratos/novoContratoDados.ts:44"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0098",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0098:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novoContratoDados.ts",
+          "outputSha256": "a328dd546fd93ee81314787728649112f12363de05563d906f262ce6844db57c"
+        },
+        {
+          "caseId": "IFV1-F3-C0098",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0098:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novoContratoDados.ts",
+          "outputSha256": "e005c6ebd71973fc8169cc8b4087621dbbc9882fcb2d86d421ca8bae209cf47b"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0100",
+      "classification": "CONDICIONAL",
+      "producer": "contratantes",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratantes/novoContratanteDados.ts:148",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0100",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0100:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "7ccbd3a78aed1f53005f56c9baa28dc87dc6a16564c160c0e5d4fdbfe179ea9a"
+        },
+        {
+          "caseId": "IFV1-F3-C0100",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0100:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "3fc3fb81d82b67fb831d35047636fc5e536c9afa5207b4e75a1db9ccd3de3715"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0107",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contratante",
+      "consumer": "contratantes",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratantes/editarContratanteDados.ts:115",
+        "src/lib/contratantes/contratantesDados.ts:89"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0107",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0107:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/contratantesDados.ts",
+          "outputSha256": "5b4b47b2d0ee7ddbae3d74b7f51544bfb0c80ca72ea9ca46d163a475238b77e3"
+        },
+        {
+          "caseId": "IFV1-F3-C0107",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0107:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratantes/contratantesDados.ts",
+          "outputSha256": "509e53c0cf4194bc627a9d5d0198620db7913fa9697c6e98c7314c7499e32c14"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0111",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contratante",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratantes/editarContratanteDados.ts:115",
+        "src/lib/contratos/contratosDados.ts:41"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0111",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0111:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratosDados.ts",
+          "outputSha256": "114ec9e4fa31a1cc36b640978812d838dc273f71a3d63c318b2e28a5f11f7b21"
+        },
+        {
+          "caseId": "IFV1-F3-C0111",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0111:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratosDados.ts",
+          "outputSha256": "63dd51b9564b91f1815fe5f1dcc77a42e568dac30f24ead8bbd5aa479f92712d"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0113",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contratante",
+      "consumer": "contratantes",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratantes/editarContratanteDados.ts:115",
+        "src/lib/contratos/novoContratoDados.ts:44"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0113",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0113:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novoContratoDados.ts",
+          "outputSha256": "3c2de719371c407a2430144d0729b5adcef627b58c39c23dee5fc915aa91b02d"
+        },
+        {
+          "caseId": "IFV1-F3-C0113",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0113:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novoContratoDados.ts",
+          "outputSha256": "dad671cf96781a3c9381e62dbbe0fd849789397aa9907b71bf36d27861a61523"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0115",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contratante",
+      "consumer": "contratantes",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratantes/editarContratanteDados.ts:115",
+        "src/lib/contratos/contratoDetalheDados.ts:10"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0115",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0115:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "37943cf0ebbf20b22b163cde7e2de501fd722b5df9cd17788366f4aaebe9d14e"
+        },
+        {
+          "caseId": "IFV1-F3-C0115",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0115:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "ab5ead15ae9312de359417314f227fad69587850cfee20383e75dd77e0b094e5"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0116",
+      "classification": "CONDICIONAL",
+      "producer": "atualizar_contratante",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratantes/editarContratanteDados.ts:115",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0116",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0116:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "600d390e2d1b67d886226007526807a81540321d2f53a2f4f572dd45ce60fae3"
+        },
+        {
+          "caseId": "IFV1-F3-C0116",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v102-v103-contracting-party.test.ts:IFV1-F3-C0116:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "ed8fa9b60c7f955b8ef2244a0bd5fd8a600061909d5f8aca6109b9daf2ea88ce"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0132",
+      "classification": "OBRIGATORIA",
+      "producer": "contratos",
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novoContratoDados.ts:129",
+        "src/components/dashboard/Dashboard.tsx:70"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0132",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0132:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "995fea2eb65e3d50df0c84b5d60c8f1396465ba6b9709d375288443c91db57c2"
+        },
+        {
+          "caseId": "IFV1-F3-C0132",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0132:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "faeb4a807cb73f2cc79f9eafcd4ec6261ebc851051000da9185cf2549731c381"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0136",
+      "classification": "OBRIGATORIA",
+      "producer": "contratos",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novoContratoDados.ts:129",
+        "src/lib/contratos/contratosDados.ts:41"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0136",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0136:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratosDados.ts",
+          "outputSha256": "6f9ba8052494307191ca45f34b05e80bc2bf37ed015c448e93fca226729770a2"
+        },
+        {
+          "caseId": "IFV1-F3-C0136",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0136:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratosDados.ts",
+          "outputSha256": "717d3eeb062434306c75c287bfa54d42490453b9a3aa2f0ce03638d8f63597b8"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0139",
+      "classification": "OBRIGATORIA",
+      "producer": "contratos",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novoContratoDados.ts:129",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0139",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0139:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "d385416505e76553367910c890933802f5cc0c0111ba2a8d18fe72e7840f882e"
+        },
+        {
+          "caseId": "IFV1-F3-C0139",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0139:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "40f52a8856c2c6a5a990306e294b2aa383725543743ceea159f6f465e3b69f1a"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0140",
+      "classification": "CONDICIONAL",
+      "producer": "contratos",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novoContratoDados.ts:129",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0140",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0140:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "63f5ffe2f88978e1583889f184f1ac94dc94a29a07fb3a096b9a5b8df8aa7b72"
+        },
+        {
+          "caseId": "IFV1-F3-C0140",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0140:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "fada111a8a1df3c16a3ccf742317a34708f0b189e90dd3beb25194b4c0166386"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0146",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/components/dashboard/Dashboard.tsx:70"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0146",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0146:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "5ccc27f810e98f49f0fc94fb419f89af5a106770bee958409bfbcb3ce3249e85"
+        },
+        {
+          "caseId": "IFV1-F3-C0146",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0146:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "b5cd681522115df57dd565691e57e5d95fe5fa17d51a66da37e57a3a6f2bc2a5"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0153",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0153",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0153:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "59597e9f131223dae69787d2771b9d9f9c457afd6cd41b2898a447f82e6a0136"
+        },
+        {
+          "caseId": "IFV1-F3-C0153",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0153:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "5e7e0d31fc10051f6af8c4a139126da5115a087a98ee40ad344d2fd6a12a6c68"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0156",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0156",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0156:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "7b88e6cba4d5d645264d5299a68f1473fdafd2338f792a462835265168da79fd"
+        },
+        {
+          "caseId": "IFV1-F3-C0156",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0156:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "1b5c8258109a0ff1302c68bc9b0199ec22a9a935542a3ce644253d61f28e0bc5"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0159",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0159",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0159:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "d99ff02b932cddf586ca353ed5530aebb8f2634b7eb65fcc344888b2c64e4bbd"
+        },
+        {
+          "caseId": "IFV1-F3-C0159",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0159:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "30add4758737507d54d7b16eea9fdc4038194e37906c6ad13b260f607359e07e"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0162",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0162",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0162:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "bb6079f8bd2e559434764fd76528cc134abd7a435572648b6aead0e25e9dcfb3"
+        },
+        {
+          "caseId": "IFV1-F3-C0162",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0162:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "322234ce868e0b8765487e28cf2ae4bba08d6477a2ec2322cf64cc1f03299a3b"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0165",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0165",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0165:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "42e83971c445a5130e9579f15547fb47a14249ddaad4fc4631d6cd48e2a9ee25"
+        },
+        {
+          "caseId": "IFV1-F3-C0165",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0165:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "d0c9d4e68f9ad12950927dc72066d2d7d46bcf9b7400e1bf02ae69e41b120412"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0167",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0167",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0167:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "19e48dbe6feaef283001b593018aae87823e7cc9492a6f8c56097a608dcb3ba0"
+        },
+        {
+          "caseId": "IFV1-F3-C0167",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0167:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "b82df5fdfc8e401065fbdf56f8d664c8378bfc41658c7de811622dcd842d92f6"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0170",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0170",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0170:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "e552344bd75c2926c5bcb5a5c9891f38719f624245a4bc1691c765faa74e58b2"
+        },
+        {
+          "caseId": "IFV1-F3-C0170",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0170:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "ce7e52028af046190097ada398747007257c67ed226f7cae5440f40c8ae06ee4"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0172",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0172",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0172:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "54007c0dfe9c0847f9ed02e483cf7a7108f7371169fccdf850bb6a9518312bc2"
+        },
+        {
+          "caseId": "IFV1-F3-C0172",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0172:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "fcf9d927cd4e5c89598e15f2f9c28b75f57cffc743dbac11b330715e35183ce0"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0174",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "contratos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/lib/contratos/contratoDetalheDados.ts:77"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0174",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0174:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "b4b18a4eb7ad9636b847e458d250afe5a0ed57c3f554690bbfef451704deb7ef"
+        },
+        {
+          "caseId": "IFV1-F3-C0174",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0174:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/contratoDetalheDados.ts",
+          "outputSha256": "5aa4e28845810cc76e412a8df963a24c6775f529631c6da41294e123fccb118f"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0176",
+      "classification": "CONDICIONAL",
+      "producer": "atualizar_contrato_v1",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/cadastros/cadastroOperacionalDados.ts:225",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0176",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0176:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "e1e08d92a179fb8a40da0c25545e93fba338377e677feab791b52960d2f94ecc"
+        },
+        {
+          "caseId": "IFV1-F3-C0176",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v105-v106-contract-actions.test.tsx:IFV1-F3-C0176:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "5b94d2c572a4845cb43534086ac7a8d06d7659ae3138029de58240662b944525"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0232",
+      "classification": "OBRIGATORIA",
+      "producer": "publicar_versao_proposta_v108",
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/orcamentoDados.ts:204",
+        "src/lib/competencias/competenciaAnaliseDados.ts:158"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0232",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0232:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "ba6821b623f8e5d0eb4787f81266bab9ace22ee10f6bc14e80dfe3e6b3240cdc"
+        },
+        {
+          "caseId": "IFV1-F3-C0232",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0232:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "cd2437388fb76707ffae974cd25b95c05d3cd82079fd4e98db1a2e8a9374b753"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0233",
+      "classification": "OBRIGATORIA",
+      "producer": "publicar_versao_proposta_v108",
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/orcamentoDados.ts:204",
+        "src/lib/competencias/parecerInternoDados.ts:113"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0233",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0233:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "f1d93a73c59f901d0b802789cf8a7a71a955649b8fc4b7a2a24868e1c88b2a8f"
+        },
+        {
+          "caseId": "IFV1-F3-C0233",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0233:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "c56e9749eb5373aab72fd743e945cc9e1ce89971a66025c154cf509dba834624"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0234",
+      "classification": "OBRIGATORIA",
+      "producer": "publicar_versao_proposta_v108",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/orcamentoDados.ts:204",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0234",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0234:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "3f7308a218e3f3117a41f034ea9f6e9b5a3b421d83c72c7e9f464893c605ee14"
+        },
+        {
+          "caseId": "IFV1-F3-C0234",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0234:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "00320b39c1ed2e73534dfa9782e6e1ea5496f0ed3d2077bb3f3c1243f23d947d"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0237",
+      "classification": "CONDICIONAL",
+      "producer": "publicar_versao_proposta_v108",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratos/orcamentoDados.ts:204",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0237",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0237:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "7375953f2fd829cdee965f9a8e25d28c1cf9df83ed4c1b42a392a3bfd9ef315d"
+        },
+        {
+          "caseId": "IFV1-F3-C0237",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0237:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "d78206fe24e3e4e25d5807d9bc0d7964b45ef6d0327cc1472aa2158d502a77bb"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0192",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "consumer": "listas_verificacao",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/baseNormativaDados.ts:125",
+        "src/lib/contratos/regrasDados.ts:154"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0192",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0192:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/regrasDados.ts",
+          "outputSha256": "fd1b0711feebbad5885b03c7b606af17f9551396a157f50976313a7837818e8b"
+        },
+        {
+          "caseId": "IFV1-F3-C0192",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0192:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/regrasDados.ts",
+          "outputSha256": "75b9d0af47b5ae447b1d9192c5da030793e437e4652addc644da5c8da18d82fd"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0200",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "consumer": "criar_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratos/baseNormativaDados.ts:125",
+        "src/lib/contratos/novaCompetenciaDados.ts:71"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0200",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0200:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novaCompetenciaDados.ts",
+          "outputSha256": "4310b7e78034e08ebe3e1da500940d04ca37cdcc10bfaef3c528244ef8382aee"
+        },
+        {
+          "caseId": "IFV1-F3-C0200",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0200:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novaCompetenciaDados.ts",
+          "outputSha256": "582d81e1c2850a66f9e15ee9994dd8b0569b2b411e4ee6a270996d2f59936bbc"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0202",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/baseNormativaDados.ts:125",
+        "src/lib/competencias/competenciaAnaliseDados.ts:158"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0202",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0202:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "98a38ee7188815b2b4ded10bd0a2a84625983b45aaae242a86a653b7a28741d0"
+        },
+        {
+          "caseId": "IFV1-F3-C0202",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0202:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "a76eeaa24fa454472e30f536058828cfb96ab6ffdd98e8ca5e03460e8f053816"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0203",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/baseNormativaDados.ts:125",
+        "src/lib/competencias/requisitoDetalheDados.ts:45"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0203",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0203:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "26d8fa637f948f6d6347c3b4c0fdaad2a8316952c2456fcb918a2b396e96ff13"
+        },
+        {
+          "caseId": "IFV1-F3-C0203",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0203:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "2e68e12fddd626ffd12f3e37a3fdcfc707a2dc4ab213ac071a34099ee4300577"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0204",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/baseNormativaDados.ts:125",
+        "src/lib/competencias/parecerInternoDados.ts:113"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0204",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0204:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "8ae6847a3b662973bf58868e22e7240c151abac0a5aaa5a28e03b281e3601cae"
+        },
+        {
+          "caseId": "IFV1-F3-C0204",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0204:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "f68243a92266af65858d54527fd9863daccdf99cc53361231de80ef3d8def92d"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0205",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/baseNormativaDados.ts:125",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0205",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0205:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "308ae3f396c57914203fff38226841846dc6a297be755f839613540843298fc8"
+        },
+        {
+          "caseId": "IFV1-F3-C0205",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0205:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "3c095a0ad097a1867050747620032db27e0a0cff27055c61fce522d5e5263973"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0208",
+      "classification": "CONDICIONAL",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratos/baseNormativaDados.ts:125",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0208",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0208:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "19a7e3ffe7a57ad95eeebb2833bbc528add2c868a5585705969f780ba0c591b9"
+        },
+        {
+          "caseId": "IFV1-F3-C0208",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0208:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "f7215f3c232fe1e327c73e8f894e423a7fbc0c6bf7809f69747c248b49479bb6"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0260",
+      "classification": "OBRIGATORIA",
+      "producer": "executar_comando_lista_v1",
+      "consumer": "criar_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratos/listaOperacionalDados.ts:317",
+        "src/lib/contratos/novaCompetenciaDados.ts:71"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0260",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0260:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novaCompetenciaDados.ts",
+          "outputSha256": "65b2bd9ea686e50bc319d3ffae0475e25620c0b95c1dd675910d8401ea7d5bd6"
+        },
+        {
+          "caseId": "IFV1-F3-C0260",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0260:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/novaCompetenciaDados.ts",
+          "outputSha256": "fa3d916334e1eb0775905a641db1df287f2482557642967c3ae0a2e8cb2b2d5a"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0262",
+      "classification": "OBRIGATORIA",
+      "producer": "executar_comando_lista_v1",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/listaOperacionalDados.ts:317",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0262",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0262:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "b271bace62b0fa2e9bb03085f290f6d4be79976ff8d80625435df3d64cb94253"
+        },
+        {
+          "caseId": "IFV1-F3-C0262",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0262:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "a67e2a47e9f682f8543ffd5da48cff0b968199e4f6b295239917c375f0ddd618"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0263",
+      "classification": "OBRIGATORIA",
+      "producer": "executar_comando_lista_v1",
+      "consumer": "obter_documentos_competencia_v115",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/listaOperacionalDados.ts:317",
+        "src/lib/competencias/competenciaDocumentosDados.ts:116"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0263",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0263:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaDocumentosDados.ts",
+          "outputSha256": "224cf3aec8016946103047f8e0448ddddef4dee555fb54b80bdb900956297502"
+        },
+        {
+          "caseId": "IFV1-F3-C0263",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0263:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaDocumentosDados.ts",
+          "outputSha256": "2e628ce4ba929a9ab7fadd44e6cf23beae380fb9281fd7e71a14488df8c25bac"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0264",
+      "classification": "OBRIGATORIA",
+      "producer": "executar_comando_lista_v1",
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/listaOperacionalDados.ts:317",
+        "src/lib/competencias/competenciaAnaliseDados.ts:158"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0264",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0264:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "8276cc6ac3bba0755fbda1874f1e871684a6ecd2e937474e17749b2b090be574"
+        },
+        {
+          "caseId": "IFV1-F3-C0264",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0264:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "f729c8537e4eb040e61120cf034c37dd26b3992dc6a4927b52e32bd89c8b41ad"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0265",
+      "classification": "OBRIGATORIA",
+      "producer": "executar_comando_lista_v1",
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/listaOperacionalDados.ts:317",
+        "src/lib/competencias/requisitoDetalheDados.ts:45"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0265",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0265:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "68fcca15e54370720d1057bf161e2727468d6c26c3c663b47ec9f9c35c90e34b"
+        },
+        {
+          "caseId": "IFV1-F3-C0265",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0265:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "48eba99bd2d0b49ed8a90a4fdd104fe548397f40f70ecadf7cec2c8e6dfd9716"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0268",
+      "classification": "CONDICIONAL",
+      "producer": "executar_comando_lista_v1",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratos/listaOperacionalDados.ts:317",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0268",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0268:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "8e73bb782a4e5469ec9367a15a82bda72d98be560e88a8e6174ca2e86d299fc3"
+        },
+        {
+          "caseId": "IFV1-F3-C0268",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0268:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "78485fc03ebda93404c0aa44e6c6fa20f2af0cdadf12eb20013b0488e30c09aa"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0288",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_contrato_completo",
+      "consumer": "documentos_contrato",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/documentosDados.ts:763",
+        "src/lib/contratos/documentosDados.ts:209"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0288",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0288:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/documentosDados.ts",
+          "outputSha256": "30917f4584db9481fba8ca43443147c730b35e33a247384e9ce7729c1ab2fda6"
+        },
+        {
+          "caseId": "IFV1-F3-C0288",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0288:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/documentosDados.ts",
+          "outputSha256": "b255b4dded0abfc8c96ad1e1c2ebca3d33fd9b10c53bdff00897acada318c464"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0294",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_contrato_completo",
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/documentosDados.ts:763",
+        "src/lib/competencias/competenciaAnaliseDados.ts:158"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0294",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0294:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "68e546db76e8b266191cf37aa4ffe76f28acd08f4a3274f358a1fdb83dbd1e97"
+        },
+        {
+          "caseId": "IFV1-F3-C0294",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0294:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "a478fbe772e9892674c9089019e25dcc0335695fd8543b5defe015b17e8dc528"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0297",
+      "classification": "CONDICIONAL",
+      "producer": "criar_documento_contrato_completo",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratos/documentosDados.ts:763",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0297",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0297:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "ce373a77085f59c0a9db3537ba60f269eb2579e99e279246422d7972ca9173e4"
+        },
+        {
+          "caseId": "IFV1-F3-C0297",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0297:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "859b2d316c6f0b4bcaaa9590439530f26de69899910256736d8307daab5cc2a3"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0311",
+      "classification": "OBRIGATORIA",
+      "producer": "adicionar_versao_documento_contrato",
+      "consumer": "fontes_normativas",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/documentosDados.ts:783",
+        "src/lib/contratos/baseNormativaDados.ts:58"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0311",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0311:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/baseNormativaDados.ts",
+          "outputSha256": "2238fc8c59d8a72fe871f81b95e0d6510048229cc6cf545676de3ac0be0b279b"
+        },
+        {
+          "caseId": "IFV1-F3-C0311",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0311:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/baseNormativaDados.ts",
+          "outputSha256": "49e959acc40fdc399fcc61c3a4a631f3016c24c1d569df60ce9d35a3c401f31a"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0315",
+      "classification": "OBRIGATORIA",
+      "producer": "adicionar_versao_documento_contrato",
+      "consumer": "documentos_contrato",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/documentosDados.ts:783",
+        "src/lib/contratos/documentosDados.ts:209"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0315",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0315:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/documentosDados.ts",
+          "outputSha256": "94b2a328179e27e066f09a9a718ef963bfa4353aabded7203ac1d607e0ceb6e1"
+        },
+        {
+          "caseId": "IFV1-F3-C0315",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0315:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/documentosDados.ts",
+          "outputSha256": "f8181c427c230db4d2ec10020c5f43e0bd770db2b860bc1c4dec146a205951ee"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0320",
+      "classification": "OBRIGATORIA",
+      "producer": "adicionar_versao_documento_contrato",
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/documentosDados.ts:783",
+        "src/lib/competencias/competenciaAnaliseDados.ts:158"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0320",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0320:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "7f44396dd8dd58fefc7489746c7c8f59349d9eb5befefdc3658fd02ffa509195"
+        },
+        {
+          "caseId": "IFV1-F3-C0320",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0320:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "fec20e385add72e9d836e258c4bd52ad41f454d8506c3bb49c3ab5174e0feffb"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0321",
+      "classification": "OBRIGATORIA",
+      "producer": "adicionar_versao_documento_contrato",
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/documentosDados.ts:783",
+        "src/lib/competencias/requisitoDetalheDados.ts:45"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0321",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0321:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "7cc4a53e933bc8809679c85bc1694b78f01c201f405b5feb1bd17bbe01623979"
+        },
+        {
+          "caseId": "IFV1-F3-C0321",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0321:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "572523d88b8ab4e19e434eb397c67cff43619410778ff6fe8ea97b42e384e820"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0324",
+      "classification": "CONDICIONAL",
+      "producer": "adicionar_versao_documento_contrato",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratos/documentosDados.ts:783",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0324",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0324:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "6815d46c891809cae6d76bb9a7738375c4c06f315977b224dd5257b5279714f0"
+        },
+        {
+          "caseId": "IFV1-F3-C0324",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0324:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "d5fca15e3a04298c65f5b72aa84faf4448ce4f9562f71740abcade95e1064d2c"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0352",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novaCompetenciaDados.ts:71",
+        "src/components/dashboard/Dashboard.tsx:70"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0352",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0352:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "0f333e3b6088de682bc3d072cf99aecce6bf13aaf68909ff8ffce218527aff69"
+        },
+        {
+          "caseId": "IFV1-F3-C0352",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0352:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/components/dashboard/Dashboard.tsx",
+          "outputSha256": "8d167c39081456bf9a9812854fd277c4502ac22bc0f0f7d413146cf611d666b8"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0365",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "consumer": "competencias",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novaCompetenciaDados.ts:71",
+        "src/lib/contratos/competenciasDados.ts:79"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0365",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0365:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/competenciasDados.ts",
+          "outputSha256": "63522a1488670c181ef492329d6275fa5d61dc72e4df38feb6eaf6b642fe8cf4"
+        },
+        {
+          "caseId": "IFV1-F3-C0365",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0365:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/competenciasDados.ts",
+          "outputSha256": "06298681a3453a5efa48f8c1bcf1a173e0da09909b1c70c8161af6b0b816ee89"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0368",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novaCompetenciaDados.ts:71",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0368",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0368:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "90b7818d90e95d4325e9beb5ee7fb5d24097f04cb132c26805d3e28bc2cdb3ad"
+        },
+        {
+          "caseId": "IFV1-F3-C0368",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0368:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "9cc80f965cc6d15f7ef998bad82af4d06894857646f0080ddb844a637895569d"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0369",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "consumer": "obter_documentos_competencia_v115",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novaCompetenciaDados.ts:71",
+        "src/lib/competencias/competenciaDocumentosDados.ts:116"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0369",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0369:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaDocumentosDados.ts",
+          "outputSha256": "a1d46bb9cc5b42649f87e820dd73e5eafa4f1981afbe2470620f1606d2512e19"
+        },
+        {
+          "caseId": "IFV1-F3-C0369",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0369:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaDocumentosDados.ts",
+          "outputSha256": "d1d7bf1789261519f3e54993c24a6eed6ac0918d7a502f86e7ffae9b4ebd0e3c"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0370",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novaCompetenciaDados.ts:71",
+        "src/lib/competencias/competenciaAnaliseDados.ts:158"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0370",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0370:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "acbebf911bb4730fd85fe82e6c770f9b7a5373518f00086f77f7279b350698c2"
+        },
+        {
+          "caseId": "IFV1-F3-C0370",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0370:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "b5e697f4e65c5adc4d6e4ac9f8cacce5f28a16cd8294c7adb7e746f20bee71ef"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0371",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novaCompetenciaDados.ts:71",
+        "src/lib/competencias/parecerInternoDados.ts:113"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0371",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0371:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "95cdda70fe1d7362568a2574ada39abef2b39ad2d62ee348d949d5cff1125c80"
+        },
+        {
+          "caseId": "IFV1-F3-C0371",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0371:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "bf21e8dc02cea9e337696b1eb4dec9208954ac60ef2ecdc464f319b9be862075"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0372",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novaCompetenciaDados.ts:71",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0372",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0372:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "42555795617cdf4f52b8b7d2737398d343f4026b246cf731136bd5d9890124a0"
+        },
+        {
+          "caseId": "IFV1-F3-C0372",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0372:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "fcece776a3bfa4a0d026afffc38924e205ca7793334723291320964bbb217b85"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0373",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "consumer": "apresentacoes_contratante",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novaCompetenciaDados.ts:71",
+        "src/lib/competencias/protocoloDados.ts:92"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0373",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0373:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/protocoloDados.ts",
+          "outputSha256": "ceaa2b2e62dc9ce39ccc1926444a5319f390bb1f82b83f7d079d5657c9a93175"
+        },
+        {
+          "caseId": "IFV1-F3-C0373",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0373:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/protocoloDados.ts",
+          "outputSha256": "ffde23fe2e506c2fc3287c7c71e640d67be375cb5f9c0920d1928395c96bda55"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0376",
+      "classification": "CONDICIONAL",
+      "producer": "criar_competencia",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratos/novaCompetenciaDados.ts:71",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0376",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0376:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "d4fbf48033eb48c50bd80168408203baa60103e2b8cc8678e03bbd4c3a69740a"
+        },
+        {
+          "caseId": "IFV1-F3-C0376",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v113-created-competence.test.tsx:IFV1-F3-C0376:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "720e613f74f7ab509e17e6fd53a2b79630fe4cbd40e506840a78c6b43c514a11"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0410",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_competencia_v115",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaDocumentosDados.ts:308",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0410",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0410:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "2ea7048d7994220b8a87dfffb76de99427a7216f16804ab201a5461ef73010be"
+        },
+        {
+          "caseId": "IFV1-F3-C0410",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0410:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "bdd6c054ae07d2707891cdc6c87f8ae08925bdfc968a1042345d00e6f6fae742"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0413",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_competencia_v115",
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaDocumentosDados.ts:308",
+        "src/lib/competencias/competenciaAnaliseDados.ts:158"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0413",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0413:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "5c790d9742b6bf88fe60bdf1e1bdba6c656d6b71cd41eb92aeb98c8c1b67d651"
+        },
+        {
+          "caseId": "IFV1-F3-C0413",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0413:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "acbbd8d25fe40b1783ded060e37707a1582a9acb330b14116cfda0e969dd4464"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0415",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_competencia_v115",
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaDocumentosDados.ts:308",
+        "src/lib/competencias/requisitoDetalheDados.ts:45"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0415",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0415:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "fe2ed99e51efc2ebd9dec8ebf13ac538722c346b0e64ccbbb8af25ae7ac3310e"
+        },
+        {
+          "caseId": "IFV1-F3-C0415",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0415:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "62ffc827cdc16cc4ff82c61b9604c2aaf90ad12916b5a98aa4dabba9e43c7488"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0416",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_competencia_v115",
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaDocumentosDados.ts:308",
+        "src/lib/competencias/parecerInternoDados.ts:113"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0416",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0416:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "ea76b2cdab129cdac4da03dcc24b4c75e1b5825b3182f2f434a3843c7c6db83b"
+        },
+        {
+          "caseId": "IFV1-F3-C0416",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0416:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "ab5e8f0940bb904609512ba6509f728512854130d38423609c4d21727f3fd245"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0418",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_competencia_v115",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaDocumentosDados.ts:308",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0418",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0418:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "b7f7af5f5bf3be24eb45bcd8f9715c0dddde7e5c4de0b0b50f1c25ac7859be8d"
+        },
+        {
+          "caseId": "IFV1-F3-C0418",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0418:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "f18a01d08eee3462595e299e22ef94bbcb3b87c03345a0fdf16c8cfde1e542f5"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0420",
+      "classification": "CONDICIONAL",
+      "producer": "criar_documento_competencia_v115",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaDocumentosDados.ts:308",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0420",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0420:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "662c6f3b4a2221a518dcc76c99666ee07d1c7c4fdb60e0312027ff713f7c5953"
+        },
+        {
+          "caseId": "IFV1-F3-C0420",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v110-v111-v115-document-actions.test.ts:IFV1-F3-C0420:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "94c54ecedd4f85fb420e907a06a4859f0be439f26f17493ce0336e90cbdf7ce7"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0433",
+      "classification": "OBRIGATORIA",
+      "producer": "solicitar_analise_competencia",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaAnaliseDados.ts:194",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0433",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0433:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "f1abc8cb1cdfd2b9406967ffbcb338b7eeeeb87153843327d45dc63e392f4ba5"
+        },
+        {
+          "caseId": "IFV1-F3-C0433",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0433:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "d47a0d73a2401ce50ac00eef554419697552ce1391f47bf60587e793bd5bfa56"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0437",
+      "classification": "OBRIGATORIA",
+      "producer": "solicitar_analise_competencia",
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaAnaliseDados.ts:194",
+        "src/lib/competencias/requisitoDetalheDados.ts:45"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0437",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0437:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "d081473dd73dcdca26bf81991185767f4eed2e45f2e4fc010c9dea6a69f50fec"
+        },
+        {
+          "caseId": "IFV1-F3-C0437",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0437:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "f2a9c1a28606414ce11bf35db56b3d0954f500b2fe2d8dcaad7b258dfd211a2f"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0439",
+      "classification": "OBRIGATORIA",
+      "producer": "solicitar_analise_competencia",
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaAnaliseDados.ts:194",
+        "src/lib/competencias/parecerInternoDados.ts:113"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0439",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0439:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "a4022b1ff38dc96710e4e8d7d6b2074c8611ee81e0bb590aec4efce1a8a5ad35"
+        },
+        {
+          "caseId": "IFV1-F3-C0439",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0439:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "fde24a8fc89984bcfdf6eecb396ea7a21b3242858de51d46d9311865b7a80995"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0441",
+      "classification": "OBRIGATORIA",
+      "producer": "solicitar_analise_competencia",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaAnaliseDados.ts:194",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0441",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0441:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "e4f8f3d865212ccd9457467e19d4348812d445a8afe57560d2a7b6b68f27d414"
+        },
+        {
+          "caseId": "IFV1-F3-C0441",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0441:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "17a162a2f919932cf21870ad6b46a9c9a57ef9bdcc398b0f5e4bce68d94cc0dc"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0443",
+      "classification": "CONDICIONAL",
+      "producer": "solicitar_analise_competencia",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/competencias/competenciaAnaliseDados.ts:194",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0443",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0443:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "64b407dd0e9fa259deb86499bffc554d599eee78f6d9637ede4a5690d6c8634c"
+        },
+        {
+          "caseId": "IFV1-F3-C0443",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0443:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "096742287da63027af26efe64516b9c4bb27dccdfcdd414cca50363f7424b0ef"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0455",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_revisao_requisito_v117",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/revisaoRequisitoDados.ts:171",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0455",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0455:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "00a0e30c6c35c1f06746d400322f89d38d24140da9c46f288629c8fb311d3e66"
+        },
+        {
+          "caseId": "IFV1-F3-C0455",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0455:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "72cf9a07d555a64ac0c96c1d3bc1fde3a8b4a91d2933e5fa01d7142dd171c5f0"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0458",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_revisao_requisito_v117",
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/revisaoRequisitoDados.ts:171",
+        "src/lib/competencias/competenciaAnaliseDados.ts:158"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0458",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0458:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "2e7cb8ef71304a7a621ae52bd8bd5129a918ebc50f23bc3e0f5961c08df630b3"
+        },
+        {
+          "caseId": "IFV1-F3-C0458",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0458:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "72847a3b4a796c15b8ed81165c5e55008ad810f542d407263d6d78c0fa730cb9"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0461",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_revisao_requisito_v117",
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/revisaoRequisitoDados.ts:171",
+        "src/lib/competencias/parecerInternoDados.ts:113"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0461",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0461:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "4cacf754482d68e5cd2a3708bc63b66f4c73cb00542dfb20b2d840714b824777"
+        },
+        {
+          "caseId": "IFV1-F3-C0461",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0461:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/parecerInternoDados.ts",
+          "outputSha256": "a8c5f412f853968516e05b1cefd03392d89182cadcf767508b09bbc59859ef80"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0463",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_revisao_requisito_v117",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/revisaoRequisitoDados.ts:171",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0463",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0463:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "b0f08b5fbdca7120f85a61a1259422810b028ca79070595ce81fdbd0ae8fb990"
+        },
+        {
+          "caseId": "IFV1-F3-C0463",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0463:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "89fcaf02b0cd75d5b21d466a143a1a3933bd6f7d1b991277ba8380a744114db6"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0465",
+      "classification": "CONDICIONAL",
+      "producer": "registrar_revisao_requisito_v117",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/competencias/revisaoRequisitoDados.ts:171",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0465",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0465:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "e186ced02edc3724af358eb395a69ec8f0da659ce586a22d0827325d9a9a749d"
+        },
+        {
+          "caseId": "IFV1-F3-C0465",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v116-v117-analysis-review.test.ts:IFV1-F3-C0465:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "acd4a5b6df25df47b5418b20550fb57bc11491fc2104f146de4be2cd0639db36"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0477",
+      "classification": "OBRIGATORIA",
+      "producer": "aprovar_parecer_interno",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/parecerInternoDados.ts:158",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0477",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0477:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "1ab2a2ede99096c0756616b4562bfa674cffd119e2a6f828340db0a38c3d1741"
+        },
+        {
+          "caseId": "IFV1-F3-C0477",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0477:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "3239348afe846e0840be653dd981a56daef377cd2ded690f43b37835666edf13"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0482",
+      "classification": "OBRIGATORIA",
+      "producer": "aprovar_parecer_interno",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/parecerInternoDados.ts:158",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0482",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0482:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "a8de8b86366542e567d7e9e73ef82643df897d801bc9f71da0e7bcc110819a18"
+        },
+        {
+          "caseId": "IFV1-F3-C0482",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0482:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "42fd72c61c342512f7f9b2d822d144e9a759415205b9a80f545ea5bcbab448e1"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0484",
+      "classification": "CONDICIONAL",
+      "producer": "aprovar_parecer_interno",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/competencias/parecerInternoDados.ts:158",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0484",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0484:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "ddfe66449391345b70d79189be1b28b129db236d473b3313ae311f98ca454080"
+        },
+        {
+          "caseId": "IFV1-F3-C0484",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0484:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "ddc788ab03e6c1bad915b1db3c33ddba9e95861cb9bf44f8feb340c4e7045d13"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0496",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_apresentacao",
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/apresentacaoDados.ts:99",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts:19"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0496",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0496:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "cb00a26a1f062bd17d91b98422e523cb793551287a4b213fc4419c53931ebe2b"
+        },
+        {
+          "caseId": "IFV1-F3-C0496",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0496:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+          "outputSha256": "045b9b5f2ba9c0ab527b1805345543f329772d673da41909547cba3b741ad7ff"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0502",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_apresentacao",
+      "consumer": "apresentacoes_contratante",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/competencias/apresentacaoDados.ts:99",
+        "src/lib/competencias/protocoloDados.ts:92"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0502",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0502:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/protocoloDados.ts",
+          "outputSha256": "dfeb4258cb068f910dd71508c5dfca451462c160dfe4a982ad9f616c88af5e97"
+        },
+        {
+          "caseId": "IFV1-F3-C0502",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0502:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/protocoloDados.ts",
+          "outputSha256": "0fb5919028f982c4ba13dc4f0c3e13eff7349bb78544c5cb122c67f841debe82"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0504",
+      "classification": "CONDICIONAL",
+      "producer": "registrar_apresentacao",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/competencias/apresentacaoDados.ts:99",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0504",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0504:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "8a83ac92fb160600995d6a3ea93dba15b979c0fdf7a360d1a0d0c4e30fc30df5"
+        },
+        {
+          "caseId": "IFV1-F3-C0504",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v118-v119-material-actions.test.ts:IFV1-F3-C0504:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "e68b8837404afb4a6fedc5d65c38faf62675986cb6844143fd62fce1612bf7b2"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0562",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_relatorio_historico_hml",
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/ingestaoHistoricoDados.ts:77",
+        "src/lib/competencias/competenciaAnaliseDados.ts:158"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0562",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0562:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "309cb71a03377f1624b3b9542ada28173f39ec830a59e1d5efdc74add9fb268b"
+        },
+        {
+          "caseId": "IFV1-F3-C0562",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0562:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/competenciaAnaliseDados.ts",
+          "outputSha256": "6128b3e4b6446618ba9b6b38f58c7c5ac8d412a3954f3c9f2a660df2102e5f65"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0563",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_relatorio_historico_hml",
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/ingestaoHistoricoDados.ts:77",
+        "src/lib/competencias/requisitoDetalheDados.ts:45"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0563",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0563:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "67e753c8660d5291715cba1da13ffa6f2bde70796fd4d73991c3f61106a2adf6"
+        },
+        {
+          "caseId": "IFV1-F3-C0563",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0563:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/competencias/requisitoDetalheDados.ts",
+          "outputSha256": "27f2f04ca09bcd8cbe13bee6598f042391be3f660bec5d4ade6e9d998fe677e0"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0564",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_relatorio_historico_hml",
+      "consumer": "relatorios_historicos_contratante",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "ALLOW"
+      },
+      "sourceHints": [
+        "src/lib/contratos/ingestaoHistoricoDados.ts:77",
+        "src/lib/contratos/historicoContratoDados.ts:160"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0564",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0564:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/historicoContratoDados.ts",
+          "outputSha256": "092c22c6214369b2de817eaea55001dbc8637f4ee256d72811a96c41acc30e00"
+        },
+        {
+          "caseId": "IFV1-F3-C0564",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0564:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/contratos/historicoContratoDados.ts",
+          "outputSha256": "6cca9ae9c8804eff0e7b2e563944e40f8da9a99d20a09a8ab33a034551c938e4"
+        }
+      ]
+    },
+    {
+      "caseId": "IFV1-F3-C0567",
+      "classification": "CONDICIONAL",
+      "producer": "registrar_relatorio_historico_hml",
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": "ALLOW",
+        "leitor": "DENY"
+      },
+      "sourceHints": [
+        "src/lib/contratos/ingestaoHistoricoDados.ts:77",
+        "src/lib/administracao/auditoriaDados.ts:33"
+      ],
+      "status": "SUBMITTED_UNVERIFIED",
+      "tests": [
+        {
+          "caseId": "IFV1-F3-C0567",
+          "kind": "positive",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0567:positive",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "3e76e4047aea508a4eec40b0831ee698c7b1eb7fdbb6bd7f08131a0834f33789"
+        },
+        {
+          "caseId": "IFV1-F3-C0567",
+          "kind": "negative",
+          "testId": "src/test/f3-code-v107-v108-v109-v122-material-source.test.ts:IFV1-F3-C0567:negative",
+          "outcome": "PASS",
+          "sourcePath": "src/lib/administracao/auditoriaDados.ts",
+          "outputSha256": "e45f2d22ae604a8e997e4200df6a921fe10f0cab7dc66ccec15d5a11fdd0f7ca"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "CODE fixtures and real frontend adapters; no remote RLS or LIVE claims.",
+    "Output hashes bind observations, but report does not include their full raw payloads.",
+    "Review account differs from author; review assisted by same agent, not independent human audit.",
+    "Requires separate formal attestation/ledger promotion and governance approval; no authorization of F4 or PROD."
+  ]
+}
