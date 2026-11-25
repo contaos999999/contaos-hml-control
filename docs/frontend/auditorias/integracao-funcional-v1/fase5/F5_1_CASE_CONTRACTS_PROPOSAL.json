@@ -1,6 +1,6 @@
 {
   "schema": "contaos.ifv1.f5.case-contract-proposal.v1",
-  "status": "PREPARATORY_NOT_AUTHORIZED_BUILD",
+  "status": "PARTIAL_BUILD_NOT_CERTIFIED",
   "planPr": 777,
   "planMerge": "c28069b1b69d07cc55bd061c50327dc2f0f5961a",
   "backendNormativeSha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
@@ -1293,7 +1293,7 @@
       "consumer": "contratos",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/contratoDetalheDados.ts:77",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "data",
       "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
@@ -1317,7 +1317,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "adapter": "src/lib/contratos/contratoDetalheDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210030_0003b_acesso_contratos_rls.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Leitura pelo filtro de escopo do consumidor real e conferência de material e ausência de consultas adicionais após a negativa."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0051",
@@ -1329,7 +1352,7 @@
       "consumer": "fontes_normativas",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/baseNormativaDados.ts:58",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "data",
       "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
@@ -1353,7 +1376,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "adapter": "src/lib/contratos/baseNormativaDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210053_0004_fontes_orcamento_listas.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Leitura pelo filtro de escopo do consumidor real e conferência de material e ausência de consultas adicionais após a negativa."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0052",
@@ -1365,7 +1411,7 @@
       "consumer": "propostas_orcamentarias",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/orcamentoDados.ts:99",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "data",
       "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
@@ -1389,7 +1435,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "adapter": "src/lib/contratos/orcamentoDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210053_0004_fontes_orcamento_listas.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Leitura pelo filtro de escopo do consumidor real e conferência de material e ausência de consultas adicionais após a negativa."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0053",
@@ -1401,7 +1470,7 @@
       "consumer": "listas_verificacao",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/regrasDados.ts:154",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "data",
       "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
@@ -1425,7 +1494,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "adapter": "src/lib/contratos/regrasDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210053_0004_fontes_orcamento_listas.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Leitura pelo filtro de escopo do consumidor real e conferência de material e ausência de consultas adicionais após a negativa."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0054",
@@ -1437,7 +1529,7 @@
       "consumer": "documentos_contrato",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/documentosDados.ts:209",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "data",
       "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
@@ -1461,7 +1553,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "adapter": "src/lib/contratos/documentosDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210110_0005_storage_documentos.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Leitura pelo filtro de escopo do consumidor real e conferência de material e ausência de consultas adicionais após a negativa."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0055",
@@ -1473,7 +1588,7 @@
       "consumer": "documentos_contrato",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/documentosDados.ts:209",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "data",
       "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
@@ -1497,7 +1612,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "adapter": "src/lib/contratos/documentoDetalheDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210110_0005_storage_documentos.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Leitura pelo filtro de escopo do consumidor real e conferência de material e ausência de consultas adicionais após a negativa."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0056",
@@ -1509,7 +1647,7 @@
       "consumer": "competencias",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/competenciasDados.ts:79",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "data",
       "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
@@ -1533,7 +1671,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "adapter": "src/lib/contratos/competenciasDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210948_0006_competencias_analise.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Leitura pelo filtro de escopo do consumidor real e conferência de material e ausência de consultas adicionais após a negativa."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0057",
@@ -1582,7 +1743,7 @@
       "consumer": "obter_visao_geral_competencia",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/competenciaVisaoGeralDados.ts:19",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "competence",
       "priorImplementationReference": "src/test/f4-code-sys04-competence-context-sync.test.ts",
@@ -1606,7 +1767,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-competence-isolation.test.ts",
+        "adapter": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261103092055_v114_visao_geral_competencia.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Busca pelo ID da competência e validação do conteúdo processado pelo adaptador."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0059",
@@ -1618,7 +1802,7 @@
       "consumer": "obter_documentos_competencia_v115",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/competenciaDocumentosDados.ts:116",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "competence",
       "priorImplementationReference": "src/test/f4-code-sys04-competence-context-sync.test.ts",
@@ -1642,7 +1826,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-competence-isolation.test.ts",
+        "adapter": "src/lib/competencias/competenciaDocumentosDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261103101542_v115_documentos_competencia_autoridade.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Busca pelo ID da competência e validação do conteúdo processado pelo adaptador."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0060",
@@ -1654,7 +1861,7 @@
       "consumer": "obter_analise_competencia_v116",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/competenciaAnaliseDados.ts:158",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "competence",
       "priorImplementationReference": "src/test/f4-code-sys04-competence-context-sync.test.ts",
@@ -1678,7 +1885,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-competence-isolation.test.ts",
+        "adapter": "src/lib/competencias/competenciaAnaliseDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261103135545_v116_obter_analise_competencia.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Busca pelo ID da competência e validação do conteúdo processado pelo adaptador."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0061",
@@ -1690,7 +1920,7 @@
       "consumer": "obter_detalhe_requisito_v117",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/requisitoDetalheDados.ts:45",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "competence",
       "priorImplementationReference": "src/test/f4-code-sys04-competence-context-sync.test.ts",
@@ -1714,7 +1944,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-competence-isolation.test.ts",
+        "adapter": "src/lib/competencias/requisitoDetalheDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261103172929_v117_obter_detalhe_requisito.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Busca pelo ID da competência e validação do conteúdo processado pelo adaptador."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0062",
@@ -1726,7 +1979,7 @@
       "consumer": "pareceres_internos",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/parecerInternoDados.ts:113",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "data",
       "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
@@ -1750,7 +2003,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "adapter": "src/lib/competencias/parecerInternoDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101211016_0007_portoes_apresentacao.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Leitura pelo filtro de escopo do consumidor real e conferência de material e ausência de consultas adicionais após a negativa."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0063",
@@ -1762,7 +2038,7 @@
       "consumer": "obter_visao_geral_competencia",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/competenciaVisaoGeralDados.ts:19",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "competence",
       "priorImplementationReference": "src/test/f4-code-sys04-competence-context-sync.test.ts",
@@ -1786,7 +2062,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-competence-isolation.test.ts",
+        "adapter": "src/lib/competencias/competenciaVisaoGeralDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261103092055_v114_visao_geral_competencia.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Busca pelo ID da competência e validação do conteúdo processado pelo adaptador."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0064",
@@ -1798,7 +2097,7 @@
       "consumer": "apresentacoes_contratante",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/competencias/protocoloDados.ts:92",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "data",
       "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
@@ -1822,7 +2121,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "adapter": "src/lib/competencias/protocoloDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101211016_0007_portoes_apresentacao.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Leitura pelo filtro de escopo do consumidor real e conferência de material e ausência de consultas adicionais após a negativa."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0065",
@@ -1834,7 +2156,7 @@
       "consumer": "relatorios_historicos_contratante",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/historicoContratoDados.ts:160",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "data",
       "priorImplementationReference": "src/test/f4-code-sys04-data-context-sync.test.ts",
@@ -1858,7 +2180,30 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "adapter": "src/lib/contratos/historicoContratoDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101211039_0008_historico.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "tenant": "A",
+          "target": "A",
+          "assertion": "Leitura pelo filtro de escopo do consumidor real e conferência de material e ausência de consultas adicionais após a negativa."
+        },
+        "negative": {
+          "profile": "leitor",
+          "tenant": "B",
+          "target": "A",
+          "status": 403,
+          "code": "42501",
+          "assertion": "Negação explícita no transporte fixture, consumidor real sem dados de A e contexto B preservado."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0066",
@@ -1999,5 +2344,10 @@
       "name": "actions",
       "cases": 10
     }
-  ]
+  ],
+  "buildAuthorization": {
+    "planPr": 779,
+    "amendmentPr": 780,
+    "scope": "PR #778"
+  }
 }

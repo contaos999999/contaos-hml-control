@@ -105,9 +105,12 @@ function observe(
     frontier,
     operation,
     decision,
-    frontend: process.env["GITHUB_SHA"] ?? "",
+    frontend: process.env["F5_FRONTEND_SHA"] ?? "",
     backend: "a1516de1d8949e505d83b5e000eb1cc558b217a7",
     harness: process.env["F5_HARNESS_SHA"] ?? "",
+    run: process.env["GITHUB_RUN_ID"] ?? "",
+    attempt: process.env["GITHUB_RUN_ATTEMPT"] ?? "",
+    job: process.env["JOB_ID"] ?? "",
     readback,
   });
 }
@@ -294,7 +297,7 @@ describe("F5 context material isolation", () => {
   });
 });
 afterAll(() => {
-  const p = process.env["F5_CONTEXT_OBSERVATIONS"];
+  const p = process.env["F5_OBSERVATIONS"];
   if (p) {
     expect(observations).toHaveLength(8);
     writeFileSync(p, JSON.stringify(observations, null, 2) + "\n", { flag: "wx" });

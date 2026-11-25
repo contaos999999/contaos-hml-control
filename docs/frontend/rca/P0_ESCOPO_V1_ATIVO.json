@@ -11,6 +11,16 @@
       "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
       "versao": "V1",
       "justificativa": "F5.1: provas CODE de isolamento em sessão, preferência, seletor e dashboard com identidades e organizações sintéticas."
+    },
+    {
+      "arquivo": "src/test/f5-code-sys04-competence-isolation.test.ts",
+      "versao": "V1",
+      "justificativa": "SYS04: adaptadores e contratos de competência sob identidade e organização sintéticas."
+    },
+    {
+      "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
+      "versao": "V1",
+      "justificativa": "SYS04: consultas reais de documentos, dados e histórico com escopo sintético."
     }
   ],
   "itens": [
@@ -31,7 +41,8 @@
           "Run ancestral 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2. Falha do coletor F4 preservada no histórico da PR #760.",
           "Zero-Drift da #778, run 45600835643, job 139159136439, HEAD a91fe529ca15b1ea410b0434504c4457f6b88b94, rejeitou o diff por ausência da ficha RCA.",
           "PLAN #779 e emenda #780 integrados. Readback P0_GOV_PLAN_778.json na main e0823b6f4b398c13cca430cb0130f4f5dd95f521, blob e9e1eb21988b528510d831243b981aa48555bbf1.",
-          "Ficha e evidências históricas da Fase 4 preservadas no commit e0823b6f4b398c13cca430cb0130f4f5dd95f521."
+          "Ficha e evidências históricas da Fase 4 preservadas no commit e0823b6f4b398c13cca430cb0130f4f5dd95f521.",
+          "Readback do artefato parcial 15040075703, run 45649961252 job 139331458010. SHA256SUMS verificado. O recibo usava o SHA do merge sintético 1d8a91f452153d6fe995ea1c2d3c75cef2ed5a65 no lugar do HEAD da PR d92b89c3446f93587a1b3a1b67855ea43e821ea2. O workflow passa a vincular checkout, HEAD vivo do run, tentativa e job antes de executar as provas."
         ],
         "hipoteses_descartadas": [
           "A mesma cardinalidade pode conter IDs indevidos. A contagem por si só não demonstra a identidade das provas.",
@@ -42,7 +53,8 @@
         "dependencias": [
           "Coletor de provas F5 CODE_FIXTURE",
           "Inventário F5.1 aprovado no PLAN #777",
-          "Seletor de organização, preferência por identidade e consumidor real do dashboard"
+          "Seletor de organização, preferência por identidade e consumidor real do dashboard",
+          "Oráculos de competência e dados, com consultas reais ao transporte sintético."
         ],
         "versoes_afetadas": ["V1"],
         "riscos": [
@@ -89,6 +101,18 @@
             "runner": "vitest",
             "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
             "caso": "F5 context material isolation IFV1-F5-C0043 positive: real selector switch invalidates A cache"
+          },
+          {
+            "id": "GREEN-F5-COMPETENCE-C0059",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-competence-isolation.test.ts",
+            "caso": "F5 SYS04 competence isolation IFV1-F5-C0059 positive: material read in the selected tenant"
+          },
+          {
+            "id": "GREEN-F5-DATA-C0055",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
+            "caso": "F5 SYS04 data isolation IFV1-F5-C0055 positive: scoped query returns only the selected tenant material"
           }
         ],
         "negativos": [
@@ -115,6 +139,24 @@
             "runner": "vitest",
             "arquivo": "src/test/f5-code-context-session-isolation.test.tsx",
             "caso": "F5 context material isolation IFV1-F5-C0043 negative: delayed A data cannot render after B switch"
+          },
+          {
+            "id": "NEGATIVOS-F5-COMPETENCE-C0061",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-competence-isolation.test.ts",
+            "caso": "F5 SYS04 competence isolation IFV1-F5-C0061 negative: stale case is denied after switching identity"
+          },
+          {
+            "id": "NEGATIVOS-F5-DATA-C0055",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
+            "caso": "F5 SYS04 data isolation IFV1-F5-C0055 negative: previous tenant data is denied without follow-on reads"
+          },
+          {
+            "id": "NEG-F5-EXEC-JOB",
+            "runner": "node",
+            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
+            "caso": "F5 reject wrong execution job"
           }
         ],
         "regressao": [
@@ -133,9 +175,13 @@
         ]
       },
       "solucao": {
-        "descricao": "Registrar a cadeia causal, vincular o diff efetivo aos testes de contexto e executar as provas específicas da Fase 5 no mesmo HEAD. O lote de contexto é candidato parcial e a certificação depende dos cinco lotes de F5.1 e das demais fatias.",
+        "descricao": "Vincular cada caso e decisão material ao runner, arquivo, título exato, SHA e job reais. Executar as provas dos lotes no HEAD da PR com recibos parciais, preservando o isolamento, as regressões e a certificação própria após as seis fatias.",
         "rollback": "Reverter o BUILD por PR protegida, preservando a trilha histórica e os recibos integrados das fases anteriores.",
-        "arquivos": ["src/test/f5-code-context-session-isolation.test.tsx"]
+        "arquivos": [
+          "src/test/f5-code-context-session-isolation.test.tsx",
+          "src/test/f5-code-sys04-competence-isolation.test.ts",
+          "src/test/f5-code-sys04-data-isolation.test.ts"
+        ]
       }
     }
   ]
