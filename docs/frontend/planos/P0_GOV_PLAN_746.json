@@ -1,0 +1,23 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 746,
+  "approved": true,
+  "purpose": "Código dos 11 drivers F3 CODE solicitados pelo titular, com testes de contratos positivos/negativos e implementação gradativa sem comprovar LIVE HML.",
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD_F3_11_DRIVERS_CODE.md"
+  ],
+  "authorization": "Ordem expressa do titular para liberar SYS04 preferência, V107, V108, V109, V110, V111, V115, V117, V118, V119 e V122.",
+  "constraints": [
+    "Sem alteração do backend, RLS, PROD ou credenciais",
+    "Sem alterar catálogo/matriz/ledger CODE e sem PASS de 138 casos por mocks",
+    "Nenhum HML autenticado LIVE até V5",
+    "Manter mutação armada por cerca sem bypass, livros de intenções e regras de origem",
+    "Exigir testes e regressões positivas/negativas e revisor independente",
+    "Só declarar driver liberado se pré-requisitos e interface realmente implementados",
+    "Este arquivo é pré-aprovação de escopo, não certificação"
+  ],
+  "certification": "F3_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
