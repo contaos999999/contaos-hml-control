@@ -3,19 +3,19 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "9af3c2216c0b06527abd714aa288a72f6f81151e",
+    "frontend_sha": "c8fd1011983664e21a6de2ca9335c42df0987feb",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f4-code-adm01-version-sync.test.ts",
+      "arquivo": "src/test/f4-code-context-dashboard-sync.test.tsx",
       "versao": "V1",
-      "justificativa": "Teste material F4.1 de atualização versionada, readback e sincronização; integra as provas cuja identidade o coletor deve verificar, sem alteração de produto."
+      "justificativa": "Extensão do lote F4.1 ao contexto e dashboard, sob PLAN P0 763 integrado; a execução material comum verifica IDs exatos do segundo lote."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F4-760-IDENTITY",
+      "id": "RCA-F4-763-IDENTITY-CONTEXT",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -26,10 +26,11 @@
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "Verificador inline verificava cardinalidade, unicidade e correspondência de títulos, mas não comparava conjunto exato de IDs nem exigia bijeção de assertions.",
+        "descricao": "Verificador inline verificava cardinalidade, unicidade e correspondência de títulos, mas não comparava conjunto exato de IDs nem exigia bijeção de assertions. Este incremento estende o uso da correção já comprovada aos 4 IDs do lote contexto, não afirma nova falha do produto nem novo RED.",
         "evidencias": [
           "Zero-Drift run 45546975968 job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2; teste nominal falhou por aceitar os 25 IDs estrangeiros.",
-          "PLAN prospectivo #764 integrado 9af3c2216c0b06527abd714aa288a72f6f81151e; autorização escopo restrito #762."
+          "PLAN prospectivo #764 integrado 9af3c2216c0b06527abd714aa288a72f6f81151e; autorização escopo restrito #762.",
+          "Correção do coletor integrada em #760, c8fd1011983664e21a6de2ca9335c42df0987feb, gate RCA e CI 7/7 PASS; PLAN específico #764 integrado. RED anterior preservado como ancestral, não reclassificado como falha da tela."
         ],
         "hipoteses_descartadas": [
           "Não foi demonstrada falha do produto ou de RLS remota.",
@@ -38,9 +39,9 @@
       },
       "impacto": {
         "dependencias": [
-          "CI F4 material",
-          "Matriz canônica de 138 posições",
-          "Adaptadores ADM01 reais com fixture isolada"
+          "OrganizationSelector, Dashboard, TanStack Query e preferenciaOrganizacao",
+          "CI material comum com dois lotes exatos",
+          "Matriz canônica F4.1 e recibos parciais"
         ],
         "versoes_afetadas": [
           "V1"
@@ -53,6 +54,15 @@
               "runner": "node",
               "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
               "caso": "F4 CODE material verifier rejects a nonexecuted proof"
+            }
+          },
+          {
+            "risco": "Resposta tardia do contexto anterior reaparece no dashboard",
+            "teste_preventivo": {
+              "id": "PREV-F4-C0043",
+              "runner": "vitest",
+              "arquivo": "src/test/f4-code-context-dashboard-sync.test.tsx",
+              "caso": "F4 material context synchronization IFV1-F4-C0043 negative: late A response cannot replace B"
             }
           }
         ]
@@ -74,6 +84,12 @@
             "runner": "node",
             "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
             "caso": "F4 CODE material verifier rejects noncanonical case IDs"
+          },
+          {
+            "id": "GREEN-F4-C0043",
+            "runner": "vitest",
+            "arquivo": "src/test/f4-code-context-dashboard-sync.test.tsx",
+            "caso": "F4 material context synchronization IFV1-F4-C0043 positive: actual switch clears cache and reads B"
           }
         ],
         "negativos": [
@@ -88,6 +104,12 @@
             "runner": "node",
             "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
             "caso": "F4 CODE material verifier rejects a nonexecuted proof"
+          },
+          {
+            "id": "NEG-F4-C0043",
+            "runner": "vitest",
+            "arquivo": "src/test/f4-code-context-dashboard-sync.test.tsx",
+            "caso": "F4 material context synchronization IFV1-F4-C0043 negative: late A response cannot replace B"
           }
         ],
         "regressao": [
@@ -96,14 +118,20 @@
             "runner": "node",
             "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
             "caso": "F4 CODE material verifier accepts exact canonical ID pairs"
+          },
+          {
+            "id": "REG-F4-C0005",
+            "runner": "vitest",
+            "arquivo": "src/test/f4-code-context-dashboard-sync.test.tsx",
+            "caso": "F4 material context synchronization IFV1-F4-C0005 positive: versioned activation refreshes real dashboard"
           }
         ]
       },
       "solucao": {
-        "descricao": "Extrair validador material e exigir conjunto exato de IDs e pares, resultados executados, identidade real da execução e emissão exclusiva de recibo parcial. Preservar workflow, testes F3 e guard. O teste material ADM01 continua sendo executado separadamente pelo CI.",
+        "descricao": "Aplicar a correção de integridade do coletor ao lote contexto, por segundo job no workflow material comum, 4 IDs canônicos/8 testes distintos em componentes reais; manter regressão dos 25 IDs ADM01. Executar troca A/B, rejeição de contexto revogado e resposta tardia; RCA verifica o mesmo validador protegido.",
         "rollback": "Reverter a entrega em PR protegida; não alterar dados, produto ou backend.",
         "arquivos": [
-          "src/test/f4-code-adm01-version-sync.test.ts"
+          "src/test/f4-code-context-dashboard-sync.test.tsx"
         ]
       }
     }
