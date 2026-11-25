@@ -169,7 +169,10 @@ test("F3 automated gate rejects missing proofs, provenance and tampered summarie
 test("F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 producers", async () => {
   const catalogue = JSON.parse(
     await readFile(
-      new URL("../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json", import.meta.url),
+      new URL(
+        "../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json",
+        import.meta.url,
+      ),
       "utf8",
     ),
   );
