@@ -117,7 +117,7 @@ type Party = {
 let actor = "master",
   party: Party | null = null,
   writes = 0,
-  event: Record<string, unknown> | null = null;
+  events: Record<string, unknown>[] = [];
 const observations: Record<string, unknown>[] = [];
 const calls: Array<{ table: string; filters: unknown[][]; insert?: unknown }> = [];
 const form = {
@@ -134,16 +134,16 @@ let transportFailure = false;
 const deny = () => ({ data: null, error: { code: "42501" }, status: 403, count: null });
 function record(order: number) {
   writes++;
-  event = {
-    id: EVENT,
+  events.push({
+    id: writes === 1 ? EVENT : `c0500000-0000-4000-8000-${String(100+writes).padStart(12,"0")}`,
     criado_em: DATE,
-    evento: order === 5 ? "contratantes.insert" : "atualizar_contratante",
+    evento: order === 5 ? "contratantes.insert" : "ContratanteAtualizado",
     entidade: "contratantes",
     origem: order === 5 ? "data_api" : "rpc",
     id_usuario: null,
     id_entidade: ID,
-    correlation_id: CORR,
-  };
+    correlation_id: writes===1?CORR:`c0500000-0000-4000-8000-${String(200+writes).padStart(12,"0")}`,
+  });
 }
 function rpc(name: string, args: Record<string, unknown> = {}) {
   if (name === "listar_organizacoes_disponiveis")
@@ -246,7 +246,7 @@ function read(call: (typeof calls)[number], single: boolean) {
   }
   if (call.table === "eventos_auditoria") {
     if (actor !== "master" || !has("id_organizacao", ORG)) return deny();
-    const found = event && has("correlation_id", CORR) ? [event] : [];
+    const found = events.filter(e=>!call.filters.some(([k])=>k==="correlation_id")||has("correlation_id",String(e["correlation_id"])));
     return ok(found, found.length);
   }
   throw new Error("unexpected table " + call.table);
@@ -289,24 +289,17 @@ async function consume(c: Case, negative: boolean) {
   const name = expectedName(c);
   if (c.destination === "V123") {
     expect(await podeConsultarAuditoria(ORG)).toBe(!negative);
-    const p = obterEventosAuditoria({ idOrganizacao: ORG, pagina: 0, correlationId: CORR });
+    const p = obterEventosAuditoria({ idOrganizacao: ORG, pagina: 0 });
     if (negative) {
       await expect(p).rejects.toThrow("Acesso não autorizado");
       return null;
     }
     const a = await p;
-    expect(a.total).toBe(1);
-    expect(a.eventos[0]).toMatchObject({
-      id: EVENT,
-      id_entidade: ID,
-      correlation_id: CORR,
-      evento: c.order === 5 ? "contratantes.insert" : "atualizar_contratante",
-    });
-    return {
-      entity: a.eventos[0]!.id_entidade,
-      eventId: a.eventos[0]!.id,
-      correlation: a.eventos[0]!.correlation_id,
-    };
+    expect(a.total).toBe(c.order===5?1:3);
+    expect(a.eventos.map(e=>e.evento)).toEqual(c.order===5?["contratantes.insert"]:["contratantes.insert","ContratanteAtualizado","ContratanteAtualizado"]);
+    expect(new Set(a.eventos.map(e=>e.id)).size).toBe(a.total);
+    expect(a.eventos.every(e=>e.id_entidade===ID)).toBe(true);
+    return a;
   }
   if (c.destination === "V103") {
     const allowed = await consultarCapacidadeEdicaoContratante(ORG);
@@ -397,7 +390,7 @@ describe("F4.2 V102/V103 material create, two versioned writes and consumer refr
     party = null;
     transportFailure = false;
     writes = 0;
-    event = null;
+    events = [];
     calls.length = 0;
     m.rpc.mockReset();
     m.from.mockReset();
@@ -434,7 +427,10 @@ describe("F4.2 V102/V103 material create, two versioned writes and consumer refr
       const page = await list();
       expect(page.total).toBe(1);
       expect(page.itens[0]).toMatchObject({ id: ID, razao_social: row.razao_social });
-      return { row, page };
+      const audit=await obterEventosAuditoria({idOrganizacao:ORG,pagina:0});
+      expect(audit.total).toBe(writes);
+      expect(new Set(audit.eventos.map(e=>e.id)).size).toBe(writes);
+      return { row, page, audit };
     };
     it(c.caseId + " positive: material persistence and fresh consumer after version evolution", async () => {
       actor = "master";
