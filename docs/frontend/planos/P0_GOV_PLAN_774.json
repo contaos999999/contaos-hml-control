@@ -1,0 +1,31 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 774,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Verificar integridade e proveniência das 276 provas da execução cumulativa final #771; produzir candidato sem certificado.",
+  "files": [
+    "scripts/hml/integracao-v1-fase4-code-attestation.mjs",
+    "scripts/hml/integracao-v1-fase4-code-attestation.test.mjs",
+    "scripts/hml/integracao-v1-fase4-code-attestation-live.mjs",
+    "scripts/hml/integracao-v1-fase4-code-attestation-live.test.mjs",
+    ".github/workflows/contaos-f4-code-attestation.yml",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_ATTESTATION_SOURCE.json"
+  ],
+  "baseline_main": "d96dfa794b4b0da01088931ef45a77c25a3c807c",
+  "plan_pr": 773,
+  "authorization": "Titular determinou concluir certificação F4. PLAN #759 e #772 integrados; #771 MERGED, CI 7/7. Eficácia após CI, revisão assistida e merge #773.",
+  "acceptance": [
+    "Pinagem de dados reais #771, 13 artefatos, run, attempt, jobs e SHA; verificar PR, review, CI e igualdade de árvore via API.",
+    "Contraprovas Node e validação real de ZIP, checksums, matriz e 276 provas únicas; gerar candidato NOT_CERTIFIED.",
+    "Sem alterações no produto, guard, backend, F3, LIVE ou PROD. Não usar execução preliminar como fonte final.",
+    "Reancorar após #773 integrado; CI integral, review assistido no HEAD exato, merge protegido e readback."
+  ],
+  "certification": "F4_NOT_CERTIFIED",
+  "production": "NO-GO",
+  "source_pr": 771,
+  "source_head": "1aa145c87d3584cdd2f18911aea83b91e023fac1",
+  "source_merge": "d96dfa794b4b0da01088931ef45a77c25a3c807c",
+  "material_run": 45589213529,
+  "tested_sha": "2a3afa7d4a983111bce75f62b5693fe8dd41daf2"
+}
