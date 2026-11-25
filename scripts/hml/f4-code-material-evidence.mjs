@@ -12,7 +12,11 @@ const ADM01 = [
   "0030", "0031", "0032", "0033", "0034",
 ].map((id) => "IFV1-F4-C" + id);
 const CONTEXT = ["0005", "0036", "0037", "0043"].map((id) => "IFV1-F4-C" + id);
-const BATCHES = Object.freeze({ adm01: Object.freeze(ADM01), context: Object.freeze(CONTEXT) });
+const BATCHES = Object.freeze({ adm01: Object.freeze(ADM01), context: Object.freeze(CONTEXT),
+  "sys04-competence": Object.freeze(["0058","0059","0060","0061","0063"].map(id=>"IFV1-F4-C"+id)),
+  "sys04-data": Object.freeze(["0050","0051","0052","0053","0054","0055","0056","0062","0064","0065"].map(id=>"IFV1-F4-C"+id)),
+  "sys04-actions": Object.freeze(["0041","0045","0046","0047","0048","0049","0057","0066","0067","0068"].map(id=>"IFV1-F4-C"+id)),
+});
 
 export function validateMaterial(batch, observations, report) {
   const expected = BATCHES[batch];
@@ -47,7 +51,7 @@ export function validateMaterial(batch, observations, report) {
 
 function main() {
   const [flag, batch] = process.argv.slice(2);
-  if (flag !== "--batch" || !BATCHES[batch]) throw Error("usage: --batch adm01|context");
+  if (flag !== "--batch" || !BATCHES[batch]) throw Error("usage: --batch <canonical-batch>");
   const d = process.env.F4_CODE_OUTPUT_DIR || "artifacts/f4-code";
   const sha = process.env.GITHUB_SHA ?? "";
   const run = process.env.GITHUB_RUN_ID ?? "";
