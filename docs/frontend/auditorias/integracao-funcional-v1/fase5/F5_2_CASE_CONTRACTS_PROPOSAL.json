@@ -1,6 +1,6 @@
 {
   "schema": "contaos.ifv1.f5.case-contract-proposal.v1",
-  "status": "PREPARATORY_NOT_AUTHORIZED_BUILD",
+  "status": "IMPLEMENTED_CANDIDATE_PENDING_CI",
   "scope": "F5.2",
   "planPr": 777,
   "f51BuildPr": 778,
@@ -27,7 +27,7 @@
       "backendContract": "supabase/migrations/20261102155834_v102_auditoria_criacao_contratante.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0096",
@@ -43,7 +43,7 @@
       "backendContract": "supabase/migrations/20261102155834_v102_auditoria_criacao_contratante.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0098",
@@ -59,7 +59,7 @@
       "backendContract": "supabase/migrations/20261102155834_v102_auditoria_criacao_contratante.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0100",
@@ -75,7 +75,7 @@
       "backendContract": "supabase/migrations/20261102155834_v102_auditoria_criacao_contratante.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD",
       "conditionalApplicability": {
         "sourceEvent": "ContratanteCriado",
         "sourceVerified": true,
@@ -96,7 +96,7 @@
       "backendContract": "supabase/migrations/20261102163433_v103_editar_contratante_concorrencia_auditoria.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0111",
@@ -112,7 +112,7 @@
       "backendContract": "supabase/migrations/20261102163433_v103_editar_contratante_concorrencia_auditoria.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0113",
@@ -128,7 +128,7 @@
       "backendContract": "supabase/migrations/20261102163433_v103_editar_contratante_concorrencia_auditoria.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0115",
@@ -144,7 +144,7 @@
       "backendContract": "supabase/migrations/20261102163433_v103_editar_contratante_concorrencia_auditoria.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0116",
@@ -160,7 +160,7 @@
       "backendContract": "supabase/migrations/20261102163433_v103_editar_contratante_concorrencia_auditoria.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD",
       "conditionalApplicability": {
         "sourceEvent": "ContratanteAtualizado",
         "sourceVerified": true,
@@ -179,9 +179,9 @@
       "sourceReferences": "src/lib/contratos/novoContratoDados.ts:129;src/components/dashboard/Dashboard.tsx:70",
       "producerAdapter": "src/lib/contratos/novoContratoDados.ts",
       "backendContract": "supabase/migrations/20261102174004_v105_contrato_criado_escopo_auditoria.sql",
-      "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
+      "positiveProposal": "Administrador de A cria contrato em rascunho, conforme o default normativo. O Dashboard mostra um contrato visível adicional e o agrupamento rascunho, com o total de ativos estável.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0136",
@@ -196,8 +196,8 @@
       "producerAdapter": "src/lib/contratos/novoContratoDados.ts",
       "backendContract": "supabase/migrations/20261102174004_v105_contrato_criado_escopo_auditoria.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
-      "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "negativeProposal": "Gestor de B autorizado a criar no próprio tenant tenta associar um contratante de A por ID. O transporte sintético devolve a falha 23503 da chave composta e a consulta de B preserva apenas seu contrato anterior.",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0139",
@@ -213,7 +213,7 @@
       "backendContract": "supabase/migrations/20261102174004_v105_contrato_criado_escopo_auditoria.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0140",
@@ -229,7 +229,7 @@
       "backendContract": "supabase/migrations/20261102174004_v105_contrato_criado_escopo_auditoria.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD",
       "conditionalApplicability": {
         "sourceEvent": "ContratoCriado",
         "sourceVerified": true,
@@ -250,7 +250,7 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0153",
@@ -266,7 +266,7 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0156",
@@ -282,7 +282,7 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0159",
@@ -298,7 +298,7 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0162",
@@ -314,7 +314,7 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0165",
@@ -330,7 +330,7 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0167",
@@ -346,7 +346,7 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0170",
@@ -362,7 +362,7 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0172",
@@ -378,7 +378,7 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0174",
@@ -394,7 +394,7 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0176",
@@ -410,12 +410,14 @@
       "backendContract": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
       "positiveProposal": "Administrador organizacional de A executa o produtor e reconcilia a resposta ou o efeito no consumidor real com a identidade de A.",
       "negativeProposal": "Leitor de B usa o consumidor ou comando fiscalizado no contexto de A, com negação de autorização ou de associação comprovada e readback sem dados ou efeito indevido.",
-      "proofState": "NOT_RUN",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD",
       "conditionalApplicability": {
         "sourceEvent": "CadastroOperacionalAtualizado",
         "sourceVerified": true,
         "requiredEvidence": "Ler o evento no consumidor real e conferir correlação, entidade e organização. A negativa deve bloquear o escopo indevido."
       }
     }
-  ]
+  ],
+  "scopePlanPr": 783,
+  "scopePlanIntegration": "45afa6b3d00572b74eeb380580ba9ff2b1d97357"
 }
