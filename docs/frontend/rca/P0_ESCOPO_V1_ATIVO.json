@@ -3,24 +3,19 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "556725a3734a3ec34204961f585328ada1c37a71",
+    "frontend_sha": "f39e4bd87e51537b4c761c576faf6c241adcbcac",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f4-code-v102-v103-crud-sync.test.ts",
+      "arquivo": "src/test/f4-code-v107-v108-v109-material-sync.test.ts",
       "versao": "V1",
-      "justificativa": "Extensão do coletor de identidade exata para a F4.2, sob PLAN 767 integrado #772. Testes materiais de CRUD, readback, auditoria e negativas com transporte sintético."
-    },
-    {
-      "arquivo": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
-      "versao": "V1",
-      "justificativa": "Extensão do coletor de identidade exata para a F4.2, sob PLAN 767 integrado #772. Testes materiais de CRUD, readback, auditoria e negativas com transporte sintético."
+      "justificativa": "Extensão do coletor canônico F4.3 sob PLAN #772 integrado. Publicação e leitura independente em fixture."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F4-767-IDENTITY-CRUD",
+      "id": "RCA-F4-768-IDENTITY-MATERIAL",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -37,7 +32,8 @@
           "PLAN prospectivo #764 integrado 9af3c2216c0b06527abd714aa288a72f6f81151e; autorização escopo restrito #762.",
           "Correção do coletor integrada em #760, c8fd1011983664e21a6de2ca9335c42df0987feb, gate RCA e CI 7/7 PASS; PLAN específico #764 integrado. RED anterior preservado como ancestral, não reclassificado como falha da tela.",
           "Extensão do coletor corrigido #760, #763 integrado cca8c4bf24a6b6eb6e9a0e16bdd2f0e34ee1e97f, PLAN #766 integrado e0d128829af55d2993a63b66444c56ceb6702c8f; RED ancestral do coletor, não falha de produto.",
-          "PLAN #772 MERGED 556725a3734a3ec34204961f585328ada1c37a71, F4.1 #765 MERGED 4e3cb2d4452ce934113f2ae397bcbf032e4b0263; contratos backend 20261102163433_v103_editar_contratante_concorrencia_auditoria.sql e 20261106230839_p0_crud_organizacoes_contratos.sql conferidos para versionamento e eventos de auditoria."
+          "PLAN #772 MERGED 556725a3734a3ec34204961f585328ada1c37a71, F4.1 #765 MERGED 4e3cb2d4452ce934113f2ae397bcbf032e4b0263; contratos backend 20261102163433_v103_editar_contratante_concorrencia_auditoria.sql e 20261106230839_p0_crud_organizacoes_contratos.sql conferidos para versionamento e eventos de auditoria.",
+          "F4.2 #767 MERGED f39e4bd87e51537b4c761c576faf6c241adcbcac, CI 7/7 PASS, PLAN #772 integrado; RED anterior é do coletor, não falha nova de produto."
         ],
         "hipoteses_descartadas": [
           "Não foi demonstrada falha do produto ou de RLS remota.",
@@ -46,9 +42,9 @@
       },
       "impacto": {
         "dependencias": [
-          "Adaptadores reais V102–V106",
-          "Workflow material comum e identidade canônica",
-          "Histórico de auditoria e readback versionado"
+          "V107/V108/V109 adaptadores reais",
+          "CI material comum",
+          "Matriz canônica e readback"
         ],
         "versoes_afetadas": [
           "V1"
@@ -64,12 +60,12 @@
             }
           },
           {
-            "risco": "Edição concorrente ou repetição altera material e trilha histórica",
+            "risco": "Publicação repetida ou obsoleta altera material indevidamente",
             "teste_preventivo": {
-              "id": "NEG-767-C0176",
+              "id": "NEG-768",
               "runner": "vitest",
-              "arquivo": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
-              "caso": "F4.2 contract persistence, version evolution, replay and consumer readback IFV1-F4-C0176 negative: stale request, failed transport and cross-scope rejection preserve state"
+              "arquivo": "src/test/f4-code-v107-v108-v109-material-sync.test.ts",
+              "caso": "F4.3 material publication, replay and refreshed consumer state IFV1-F4-C0232 negative: transport failure, stale command, changed replay and denial preserve material"
             }
           }
         ]
@@ -93,16 +89,10 @@
             "caso": "F4 CODE material verifier rejects noncanonical case IDs"
           },
           {
-            "id": "GREEN-767-C0116",
+            "id": "GREEN-768",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-v102-v103-crud-sync.test.ts",
-            "caso": "F4.2 V102/V103 material create, two versioned writes and consumer refresh IFV1-F4-C0116 positive: material persistence and fresh consumer after version evolution"
-          },
-          {
-            "id": "GREEN-767-C0176",
-            "runner": "vitest",
-            "arquivo": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
-            "caso": "F4.2 contract persistence, version evolution, replay and consumer readback IFV1-F4-C0176 positive: two versioned updates and fresh consumer persistence"
+            "arquivo": "src/test/f4-code-v107-v108-v109-material-sync.test.ts",
+            "caso": "F4.3 material publication, replay and refreshed consumer state IFV1-F4-C0232 positive: durable source readback, exact replay and refreshed consumer"
           }
         ],
         "negativos": [
@@ -119,16 +109,10 @@
             "caso": "F4 CODE material verifier rejects a nonexecuted proof"
           },
           {
-            "id": "NEG-767-C0116",
+            "id": "NEG-768",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-v102-v103-crud-sync.test.ts",
-            "caso": "F4.2 V102/V103 material create, two versioned writes and consumer refresh IFV1-F4-C0116 negative: rejected transport, stale version and unauthorized writes preserve readback"
-          },
-          {
-            "id": "NEG-767-C0176",
-            "runner": "vitest",
-            "arquivo": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
-            "caso": "F4.2 contract persistence, version evolution, replay and consumer readback IFV1-F4-C0176 negative: stale request, failed transport and cross-scope rejection preserve state"
+            "arquivo": "src/test/f4-code-v107-v108-v109-material-sync.test.ts",
+            "caso": "F4.3 material publication, replay and refreshed consumer state IFV1-F4-C0232 negative: transport failure, stale command, changed replay and denial preserve material"
           }
         ],
         "regressao": [
@@ -139,19 +123,18 @@
             "caso": "F4 CODE material verifier accepts exact canonical ID pairs"
           },
           {
-            "id": "REG-767-C0146",
+            "id": "REG-768",
             "runner": "vitest",
-            "arquivo": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
-            "caso": "F4.2 contract persistence, version evolution, replay and consumer readback IFV1-F4-C0146 positive: two versioned updates and fresh consumer persistence"
+            "arquivo": "src/test/f4-code-v107-v108-v109-material-sync.test.ts",
+            "caso": "F4.3 material publication, replay and refreshed consumer state IFV1-F4-C0268 positive: durable source readback, exact replay and refreshed consumer"
           }
         ]
       },
       "solucao": {
-        "descricao": "Ampliar validador e workflow para 9+15 IDs, executar readbacks de versões, replay e falhas materiais preservando a trilha histórica, além da regressão dos 54 casos anteriores.",
+        "descricao": "Ampliar o validador e workflow em 17 IDs de fontes normativas, orçamento e lista; novas provas, replay e estado obsoleto, regressão dos 78 casos já integrados.",
         "rollback": "Reverter a entrega em PR protegida; não alterar dados, produto ou backend.",
         "arquivos": [
-          "src/test/f4-code-v102-v103-crud-sync.test.ts",
-          "src/test/f4-code-v105-v106-crud-sync.test.tsx"
+          "src/test/f4-code-v107-v108-v109-material-sync.test.ts"
         ]
       }
     }
