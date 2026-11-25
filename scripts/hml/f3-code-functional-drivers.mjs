@@ -748,7 +748,105 @@ function dispatchV113(base,kind){
   }])));
 }
 
+
+const MATERIAL_SOURCE="src/test/f3-code-v118-v119-material-actions.test.ts";
+const MATERIAL_ORG="c1800000-0000-4000-8000-000000000001";
+const MATERIAL_CONTRACT="c1800000-0000-4000-8000-000000000002";
+const MATERIAL_COMP="c1800000-0000-4000-8000-000000000003";
+const materialId=order=>order===18?"c1800000-0000-4000-8000-000000000004":"c1800000-0000-4000-8000-000000000005";
+const materialCases=Object.freeze({
+  "IFV1-F3-C0477": {
+    "caseId": "IFV1-F3-C0477",
+    "order": 18,
+    "destination": "V114",
+    "consumer": "obter_visao_geral_competencia",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0482": {
+    "caseId": "IFV1-F3-C0482",
+    "order": 18,
+    "destination": "V119",
+    "consumer": "obter_visao_geral_competencia",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0484": {
+    "caseId": "IFV1-F3-C0484",
+    "order": 18,
+    "destination": "V123",
+    "consumer": "eventos_auditoria",
+    "method": "GET",
+    "reader": false
+  },
+  "IFV1-F3-C0496": {
+    "caseId": "IFV1-F3-C0496",
+    "order": 19,
+    "destination": "V114",
+    "consumer": "obter_visao_geral_competencia",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0502": {
+    "caseId": "IFV1-F3-C0502",
+    "order": 19,
+    "destination": "V120",
+    "consumer": "apresentacoes_contratante",
+    "method": "GET",
+    "reader": true
+  },
+  "IFV1-F3-C0504": {
+    "caseId": "IFV1-F3-C0504",
+    "order": 19,
+    "destination": "V123",
+    "consumer": "eventos_auditoria",
+    "method": "GET",
+    "reader": false
+  }
+});
+let materialRun;
+async function runMaterial(){
+  if(!materialRun)materialRun=(async()=>{
+    const dir=await mkdtemp(join(tmpdir(),"contaos-f3-material-"));
+    const file=join(dir,"observations.json");
+    try{
+      await exec("bunx",["vitest","run",MATERIAL_SOURCE,"--reporter=dot"],{cwd:ROOT,env:{...process.env,F3_CODE_MATERIAL_OBSERVATIONS:file},timeout:60000,maxBuffer:1024*1024});
+      const parsed=JSON.parse(await readFile(file,"utf8")),map=new Map();
+      if(!Array.isArray(parsed)||parsed.length!==Object.keys(materialCases).length*2)throw Object.assign(new Error("F3_MATERIAL_COUNT"),{code:"F3_MATERIAL_COUNT"});
+      for(const e of parsed){
+        const c=materialCases[e.caseId],key=e.caseId+":"+e.kind;
+        if(!c||map.has(key)||!["positive","negative"].includes(e.kind)||e.testId!==MATERIAL_SOURCE+":"+key||e.consumer!==c.consumer||e.producerOrder!==c.order||e.organizationId!==MATERIAL_ORG||e.producerEntityId!==materialId(c.order)||e.state!=="EXECUTED"||e.assertion!=="PASS")throw Object.assign(new Error("F3_MATERIAL_OUTPUT"),{code:"F3_MATERIAL_OUTPUT"});
+        map.set(key,Object.freeze(e));
+      }return map;
+    }finally{await rm(dir,{recursive:true,force:true});}
+  })();
+  return materialRun;
+}
+async function materialEvidence(c,kind){
+  const spec=materialCases[c.caseId];
+  if(!spec||c.producerOrder!==spec.order||c.consumer!==spec.consumer||c.destination!==spec.destination)throw Object.assign(new Error("F3_MATERIAL_CASE_NOT_IMPLEMENTED"),{code:"F3_MATERIAL_CASE_NOT_IMPLEMENTED"});
+  const e=(await runMaterial()).get(c.caseId+":"+kind);
+  if(!e)throw Object.assign(new Error("F3_MATERIAL_MISSING"),{code:"F3_MATERIAL_MISSING"});
+  return structuredClone(e);
+}
+function dispatchMaterial(base,kind){
+  const all=new Set([...Object.keys(base),...Object.values(materialCases).map(c=>c.consumer)]);
+  return Object.freeze(Object.fromEntries([...all].map(consumer=>[consumer,async args=>{
+    if(Object.hasOwn(materialCases,args.case.caseId))return materialEvidence(args.case,kind);
+    if(typeof base[consumer]!=="function")throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"),{code:"F3_CONSUMER_CASE_NOT_IMPLEMENTED"});
+    return base[consumer](args);
+  }])));
+}
+async function materialProducer(order){
+  const c=Object.values(materialCases).find(x=>x.order===order);
+  const e=(await runMaterial()).get(c.caseId+":positive");
+  if(!e)throw Object.assign(new Error("F3_MATERIAL_PRODUCER_MISSING"),{code:"F3_MATERIAL_PRODUCER_MISSING"});
+  return Object.freeze({state:"UI_OBSERVED_NOT_CERTIFIED",organizationId:e.organizationId,producerEntityId:e.producerEntityId});
+}
+
 export const producerDrivers = Object.freeze({
+  18:()=>materialProducer(18),
+  19:()=>materialProducer(19),
   14: async()=>{const e=(await runV113()).get('IFV1-F3-C0365:positive');if(!e)throw Object.assign(new Error('F3_V113_PRODUCER_MISSING'),{code:'F3_V113_PRODUCER_MISSING'});return Object.freeze({state:'UI_OBSERVED_NOT_CERTIFIED',organizationId:e.organizationId,producerEntityId:e.producerEntityId});},
   4: async () => {
     // Producer is shared by all ADM01 relations, even if the first consumer
@@ -894,11 +992,20 @@ const baseNegativeDrivers = Object.freeze({
   },
 });
 
-export const consumerDrivers=dispatchV113(baseConsumerDrivers,"positive");
-export const negativeDrivers=dispatchV113(baseNegativeDrivers,"negative");
+export const consumerDrivers=dispatchMaterial(dispatchV113(baseConsumerDrivers,"positive"),"positive");
+export const negativeDrivers=dispatchMaterial(dispatchV113(baseNegativeDrivers,"negative"),"negative");
 
 /** Contraditório estrutural interno. Não constitui auditoria independente final. */
 export async function independentVerifier(c, observed) {
+  if(Object.hasOwn(materialCases,c.caseId)){
+    const spec=materialCases[c.caseId],{producer,positive,negative}=observed,a=positive.readback,b=negative.readback,key=spec.method==="GET"?"table":"rpc";
+    if(!(c.origin===(spec.order===18?"V118":"V119")&&c.destination===spec.destination&&c.consumer===spec.consumer&&c.expected?.master==="ALLOW"&&c.expected?.leitor===(spec.reader?"ALLOW":"DENY")&&producer.organizationId===MATERIAL_ORG&&producer.producerEntityId===materialId(spec.order)&&positive.testId===MATERIAL_SOURCE+":"+c.caseId+":positive"&&negative.testId===MATERIAL_SOURCE+":"+c.caseId+":negative"&&positive.network?.method===spec.method&&negative.network?.method===spec.method&&positive.network?.[key]===spec.consumer&&negative.network?.[key]===spec.consumer&&positive.network?.fixture===true&&negative.network?.fixture===true&&positive.network?.status===200&&negative.network?.status===403&&a?.destination===spec.destination&&b?.destination===spec.destination&&a?.contractId===MATERIAL_CONTRACT&&b?.contractId===MATERIAL_CONTRACT&&a?.competenceId===MATERIAL_COMP&&b?.competenceId===MATERIAL_COMP&&a?.roles===(spec.reader?2:1)&&a?.writes===1&&b?.writes===1&&b?.outcome==="DENY"&&b?.mutationDenied===true&&b?.entityPreserved===true))return false;
+    const v=a.witness;
+    if(spec.destination==="V123")return v?.entity===materialId(spec.order)&&v.eventId==="c1800000-0000-4000-8000-000000000009"&&v.correlation===(spec.order===18?"c1800000-0000-4000-8000-000000000010":"c1800000-0000-4000-8000-000000000007");
+    if(spec.order===18)return v?.scope===MATERIAL_COMP&&v.approved===true&&v.gate===false&&v.percent===50&&v.canPresent===false;
+    if(spec.destination==="V114")return v?.scope===MATERIAL_COMP&&v.state==="apresentado"&&v.packageVersion===1&&v.canPresent===false;
+    return spec.destination==="V120"&&v?.packageId==="c1800000-0000-4000-8000-000000000006"&&v.hash==="a".repeat(64)&&v.protocol==="F3-119"&&v.versionId==="c1800000-0000-4000-8000-000000000012";
+  }
   if(Object.hasOwn(v113Cases,c.caseId)){
     const spec=v113Cases[c.caseId],{producer,positive,negative}=observed;
     const a=positive.readback,b=negative.readback, key=spec.method==="GET"?"table":"rpc";
