@@ -340,6 +340,30 @@ const additionalCases = Object.freeze({
     "destination": "V112",
     "file": "src/test/f3-code-case-0056.test.ts",
     "env": "F3_CODE_C0056_OBSERVATIONS"
+  },
+  "IFV1-F3-C0054": {
+    "table": "documentos_contrato",
+    "destination": "V110",
+    "file": "src/test/f3-code-case-0054.test.ts",
+    "env": "F3_CODE_C0054_OBSERVATIONS"
+  },
+  "IFV1-F3-C0062": {
+    "table": "pareceres_internos",
+    "destination": "V118",
+    "file": "src/test/f3-code-case-0062.test.ts",
+    "env": "F3_CODE_C0062_OBSERVATIONS"
+  },
+  "IFV1-F3-C0064": {
+    "table": "apresentacoes_contratante",
+    "destination": "V120",
+    "file": "src/test/f3-code-case-0064.test.ts",
+    "env": "F3_CODE_C0064_OBSERVATIONS"
+  },
+  "IFV1-F3-C0065": {
+    "table": "relatorios_historicos_contratante",
+    "destination": "V121",
+    "file": "src/test/f3-code-case-0065.test.ts",
+    "env": "F3_CODE_C0065_OBSERVATIONS"
   }
 });
 const additionalRuns = new Map();

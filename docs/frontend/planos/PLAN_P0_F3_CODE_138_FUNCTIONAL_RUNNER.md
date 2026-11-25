@@ -27,6 +27,11 @@ Implementar um workflow GitHub Actions de execução **CODE** de cada uma das 13
 
 - `src/test/f3-code-adm01-rbac-integration.test.ts` (23 relações ADM01 → infraestrutura RBAC, vínculo real via wrapper, releitura, permissões e navegação CODE, isolamento negativo por caso)
 
+- `src/test/f3-code-case-0054.test.ts` (SYS04 → V110, releitura real por adapter documentos_contrato e recusa sob fixture CODE)
+- `src/test/f3-code-case-0062.test.ts` (SYS04 → V118, releitura real por adapter pareceres_internos e recusa sob fixture CODE)
+- `src/test/f3-code-case-0064.test.ts` (SYS04 → V120, releitura real por adapter apresentacoes_contratante e recusa sob fixture CODE)
+- `src/test/f3-code-case-0065.test.ts` (SYS04 → V121, releitura real por adapter relatorios_historicos_contratante e recusa sob fixture CODE)
+
 ## Garantias
 
 1. Catálogo imutável: arquivo e hash canônicos; 120 casos obrigatórios e 18 condicionais; nenhum caso novo ou removido.
