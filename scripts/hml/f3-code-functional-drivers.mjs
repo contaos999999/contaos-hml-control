@@ -1155,7 +1155,111 @@ async function contractProducer(order){
   return Object.freeze({state:"UI_OBSERVED_NOT_CERTIFIED",organizationId:e.organizationId,producerEntityId:e.producerEntityId});
 }
 
+
+const ANALYSIS_SOURCE="src/test/f3-code-v116-v117-analysis-review.test.ts";
+const ANALYSIS_ORG="c1600000-0000-4000-8000-000000000001",ANALYSIS_CONTRACT="c1600000-0000-4000-8000-000000000002",ANALYSIS_COMP="c1600000-0000-4000-8000-000000000003",ANALYSIS_EXEC="c1600000-0000-4000-8000-000000000006",ANALYSIS_RESULT="c1600000-0000-4000-8000-000000000008";
+const analysisId=order=>order===16?ANALYSIS_EXEC:ANALYSIS_RESULT;
+const analysisCases=Object.freeze({
+  "IFV1-F3-C0433": {
+    "caseId": "IFV1-F3-C0433",
+    "order": 16,
+    "destination": "V114",
+    "consumer": "obter_visao_geral_competencia",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0437": {
+    "caseId": "IFV1-F3-C0437",
+    "order": 16,
+    "destination": "V117",
+    "consumer": "obter_detalhe_requisito_v117",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0439": {
+    "caseId": "IFV1-F3-C0439",
+    "order": 16,
+    "destination": "V118",
+    "consumer": "pareceres_internos",
+    "method": "GET",
+    "reader": true
+  },
+  "IFV1-F3-C0441": {
+    "caseId": "IFV1-F3-C0441",
+    "order": 16,
+    "destination": "V119",
+    "consumer": "obter_visao_geral_competencia",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0443": {
+    "caseId": "IFV1-F3-C0443",
+    "order": 16,
+    "destination": "V123",
+    "consumer": "eventos_auditoria",
+    "method": "GET",
+    "reader": false
+  },
+  "IFV1-F3-C0455": {
+    "caseId": "IFV1-F3-C0455",
+    "order": 17,
+    "destination": "V114",
+    "consumer": "obter_visao_geral_competencia",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0458": {
+    "caseId": "IFV1-F3-C0458",
+    "order": 17,
+    "destination": "V116",
+    "consumer": "obter_analise_competencia_v116",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0461": {
+    "caseId": "IFV1-F3-C0461",
+    "order": 17,
+    "destination": "V118",
+    "consumer": "pareceres_internos",
+    "method": "GET",
+    "reader": true
+  },
+  "IFV1-F3-C0463": {
+    "caseId": "IFV1-F3-C0463",
+    "order": 17,
+    "destination": "V119",
+    "consumer": "obter_visao_geral_competencia",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0465": {
+    "caseId": "IFV1-F3-C0465",
+    "order": 17,
+    "destination": "V123",
+    "consumer": "eventos_auditoria",
+    "method": "GET",
+    "reader": false
+  }
+});
+let analysisRun;
+async function runAnalysisCases(){
+  if(!analysisRun)analysisRun=(async()=>{
+    const dir=await mkdtemp(join(tmpdir(),"contaos-f3-analysis-")),file=join(dir,"observations.json");
+    try{
+      await exec("bunx",["vitest","run",ANALYSIS_SOURCE,"--reporter=dot"],{cwd:ROOT,env:{...process.env,F3_CODE_ANALYSIS_OBSERVATIONS:file},timeout:60000,maxBuffer:1024*1024});
+      const parsed=JSON.parse(await readFile(file,"utf8")),map=new Map();
+      if(!Array.isArray(parsed)||parsed.length!==Object.keys(analysisCases).length*2)throw Object.assign(new Error("F3_ANALYSIS_COUNT"),{code:"F3_ANALYSIS_COUNT"});
+      for(const e of parsed){const c=analysisCases[e.caseId],key=e.caseId+":"+e.kind;if(!c||map.has(key)||!["positive","negative"].includes(e.kind)||e.testId!==ANALYSIS_SOURCE+":"+key||e.consumer!==c.consumer||e.producerOrder!==c.order||e.organizationId!==ANALYSIS_ORG||e.producerEntityId!==analysisId(c.order)||e.state!=="EXECUTED"||e.assertion!=="PASS")throw Object.assign(new Error("F3_ANALYSIS_OUTPUT"),{code:"F3_ANALYSIS_OUTPUT"});map.set(key,Object.freeze(e));}return map;
+    }finally{await rm(dir,{recursive:true,force:true});}
+  })();return analysisRun;
+}
+async function analysisEvidence(c,kind){const spec=analysisCases[c.caseId];if(!spec||c.producerOrder!==spec.order||c.destination!==spec.destination||c.consumer!==spec.consumer)throw Object.assign(new Error("F3_ANALYSIS_CASE_NOT_IMPLEMENTED"),{code:"F3_ANALYSIS_CASE_NOT_IMPLEMENTED"});const e=(await runAnalysisCases()).get(c.caseId+":"+kind);if(!e)throw Object.assign(new Error("F3_ANALYSIS_MISSING"),{code:"F3_ANALYSIS_MISSING"});return structuredClone(e);}
+function dispatchAnalysis(base,kind){const all=new Set([...Object.keys(base),...Object.values(analysisCases).map(c=>c.consumer)]);return Object.freeze(Object.fromEntries([...all].map(consumer=>[consumer,async args=>{if(Object.hasOwn(analysisCases,args.case.caseId))return analysisEvidence(args.case,kind);if(typeof base[consumer]!=="function")throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"),{code:"F3_CONSUMER_CASE_NOT_IMPLEMENTED"});return base[consumer](args);}])));}
+async function analysisProducer(order){const c=Object.values(analysisCases).find(x=>x.order===order),e=(await runAnalysisCases()).get(c.caseId+":positive");if(!e)throw Object.assign(new Error("F3_ANALYSIS_PRODUCER_MISSING"),{code:"F3_ANALYSIS_PRODUCER_MISSING"});return Object.freeze({state:"UI_OBSERVED_NOT_CERTIFIED",organizationId:e.organizationId,producerEntityId:e.producerEntityId});}
+
 export const producerDrivers = Object.freeze({
+  16:()=>analysisProducer(16),
+  17:()=>analysisProducer(17),
   7:()=>contractProducer(7),
   8:()=>contractProducer(8),
   5:()=>partyProducer(5),
@@ -1307,11 +1411,22 @@ const baseNegativeDrivers = Object.freeze({
   },
 });
 
-export const consumerDrivers=dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseConsumerDrivers,"positive"),"positive"),"positive"),"positive");
-export const negativeDrivers=dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseNegativeDrivers,"negative"),"negative"),"negative"),"negative");
+export const consumerDrivers=dispatchAnalysis(dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseConsumerDrivers,"positive"),"positive"),"positive"),"positive"),"positive");
+export const negativeDrivers=dispatchAnalysis(dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseNegativeDrivers,"negative"),"negative"),"negative"),"negative"),"negative");
 
 /** Contraditório estrutural interno. Não constitui auditoria independente final. */
 export async function independentVerifier(c, observed) {
+  if(Object.hasOwn(analysisCases,c.caseId)){
+    const spec=analysisCases[c.caseId],{producer,positive,negative}=observed,a=positive.readback,b=negative.readback,key=spec.method==="GET"?"table":"rpc";
+    if(!(c.origin===(spec.order===16?"V116":"V117")&&c.destination===spec.destination&&c.consumer===spec.consumer&&c.expected?.master==="ALLOW"&&c.expected?.leitor===(spec.reader?"ALLOW":"DENY")&&producer.organizationId===ANALYSIS_ORG&&producer.producerEntityId===analysisId(spec.order)&&positive.testId===ANALYSIS_SOURCE+":"+c.caseId+":positive"&&negative.testId===ANALYSIS_SOURCE+":"+c.caseId+":negative"&&positive.network?.[key]===spec.consumer&&negative.network?.[key]===spec.consumer&&positive.network?.fixture===true&&negative.network?.fixture===true&&positive.network?.status===200&&negative.network?.status===403&&a?.destination===spec.destination&&b?.destination===spec.destination&&a?.competenceId===ANALYSIS_COMP&&b?.competenceId===ANALYSIS_COMP&&a?.contractId===ANALYSIS_CONTRACT&&b?.contractId===ANALYSIS_CONTRACT&&a?.executionId===ANALYSIS_EXEC&&b?.executionId===ANALYSIS_EXEC&&a?.resultId===ANALYSIS_RESULT&&b?.resultId===ANALYSIS_RESULT&&a?.hash==="b".repeat(64)&&b?.hash===a.hash&&a?.roles===(spec.reader?2:1)&&a?.writes===1&&b?.writes===1&&b?.outcome==="DENY"&&b?.mutationDenied===true&&b?.entityPreserved===true))return false;
+    const v=a.witness;
+    if(spec.destination==="V123")return v?.entity===analysisId(spec.order)&&v.eventId==="c1600000-0000-4000-8000-000000000011"&&v.correlation==="c1600000-0000-4000-8000-000000000012";
+    if(v?.scope!==ANALYSIS_COMP)return false;
+    if(spec.destination==="V118")return v.opinions===0;
+    if(spec.destination==="V116")return v.execution===ANALYSIS_EXEC&&v.result===ANALYSIS_RESULT&&v.justification==="Justificativa F3 documentada"&&v.evidence==="c1600000-0000-4000-8000-000000000010";
+    if(spec.destination==="V117")return v.execution===ANALYSIS_EXEC&&v.result===ANALYSIS_RESULT&&v.version==="c1600000-0000-4000-8000-000000000009"&&v.oldExecution==="c1600000-0000-4000-8000-000000000005";
+    return ["V114","V119"].includes(spec.destination)&&v.current===true&&v.gate===false&&v.canPresent===false;
+  }
   if(Object.hasOwn(contractCases,c.caseId)){
     const spec=contractCases[c.caseId],{producer,positive,negative}=observed,a=positive.readback,b=negative.readback,key=spec.method==="GET"?"table":"rpc";
     if(!(c.origin===(spec.order===7?"V105":"V106")&&c.destination===spec.destination&&c.consumer===spec.consumer&&c.expected?.master==="ALLOW"&&c.expected?.leitor===(spec.reader?"ALLOW":"DENY")&&producer.organizationId===CONTRACT_ORG&&producer.producerEntityId===CONTRACT_ID&&positive.testId===CONTRACT_SOURCE+":"+c.caseId+":positive"&&negative.testId===CONTRACT_SOURCE+":"+c.caseId+":negative"&&positive.network?.[key]===spec.consumer&&negative.network?.[key]===spec.consumer&&positive.network?.fixture===true&&negative.network?.fixture===true&&positive.network?.status===200&&negative.network?.status===403&&a?.destination===spec.destination&&b?.destination===spec.destination&&a?.contractId===CONTRACT_ID&&b?.contractId===CONTRACT_ID&&a?.partyId===CONTRACT_PARTY&&b?.partyId===CONTRACT_PARTY&&a?.roles===(spec.reader?2:1)&&a?.writes===1&&b?.writes===1&&b?.outcome==="DENY"&&b?.mutationDenied===true&&b?.entityPreserved===true))return false;
