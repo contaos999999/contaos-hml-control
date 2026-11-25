@@ -1,3 +1,3 @@
-# BUILD F3 — reserva, não mesclar
+# BUILD F3 — reaplicação sob PLAN #753
 
-DRAFT BLOQUEADO. Esta PR não é entrega documental nem certificação. Não mesclar esta reserva. Aguardar PLAN protegido e reaplicação de todos os arquivos, RED/GREEN, 276 provas no novo HEAD e Zero-Drift completo. PR #750 foi integrada apenas como reserva, sem código. PR #748 permanece fonte de recuperação.
+PLAN integrado: 0e85c23cb256c28914cc17b159258ab77f0edd75. RED comprovado: 308e9cd0952b9cc40b981d46bbc144f38677da9a, CI 45527094754. Fonte: PR #748 HEAD 489924b41c2f555ccdb76d152d9dc327dfd97fd2. Reaplicação em DRAFT, sem certificação. Prettier temporário somente para obter formatação a versionar; obrigatória nova execução imutável e regressão antes do merge.
