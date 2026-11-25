@@ -1,0 +1,31 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 767,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "F4 CODE: executar 24 casos e 48 provas novas do lote #767, preservando os lotes anteriores.",
+  "files": [
+    "src/test/f4-code-v102-v103-crud-sync.test.ts",
+    "src/test/f4-code-v105-v106-crud-sync.test.tsx",
+    ".github/workflows/contaos-f4-code-material.yml",
+    "scripts/hml/f4-code-material-evidence.mjs",
+    "scripts/hml/f4-code-material-evidence.test.mjs",
+    "scripts/p0-rca-impact-gate.test.mjs"
+  ],
+  "baseline_main": "4e3cb2d4452ce934113f2ae397bcbf032e4b0263",
+  "plan_pr": 759,
+  "authorization": "PLAN #759 integrado; titular determinou continuidade integral da missão. Revisão técnica assistida específica F4, não independente.",
+  "acceptance": [
+    "Reancorar após integração do lote precedente; manter restrição exata de fontes nesta PR e diff mínimo.",
+    "Usar workflow e validador comum, acrescentar os conjuntos canônicos específicos e executar testes anteriores como regressão; preservar recibos e observações reais.",
+    "Conferir contratos backend, provas por caso, testes negativos e leitura independente; qualquer falha exige RCA, RED observado, GREEN e regressões; não converter falha em N/A.",
+    "CI integral, review no HEAD exato, merge protegido e readback. Não emitir certificado até atestação global."
+  ],
+  "constraints": [
+    "Sem alteração de produto, guard, F3, backend, LIVE ou PROD.",
+    "Sem reutilizar PASS F3 como prova F4; sem falsificar resultados ou relaxar as negativas.",
+    "Preservar branch anterior em backup antes de reancoragem."
+  ],
+  "certification": "F4_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
