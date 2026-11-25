@@ -581,7 +581,7 @@ async function mutate(variation:"normal"|"mismatch"|"blocked"="normal") {
   return criarDocumentoCompetencia({
     idCompetencia: COMP,
     tipo: "contrato",
-    titulo: TITLE,
+    titulo: title,
     categoria: "",
     idRequisito: REQ,
     idArquivo: file,
