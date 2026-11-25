@@ -1,0 +1,45 @@
+{
+  "schema": "contaos.ifv1.f3.code-attestation-source.v1",
+  "state": "CANDIDATE_NOT_CERTIFIED",
+  "repository": "contaos999999/contaos-hml-control",
+  "buildPr": 752,
+  "head": "da715ce7348a1def7a9ac18e1895ae7cd7eae15e",
+  "executionSha": "ec445264b5e2d901c96cfc5466e8ff23a4106095",
+  "mergeSha": "4f696f74453f5bd73a9334c090a3cf28ee968961",
+  "backendSha": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+  "normativeSha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "functionalRun": 45528651072,
+  "functionalJob": 138918169561,
+  "artifactId": 14982269982,
+  "artifactSha256": "9b5c4a960d49d4568a810d2c1498628d144ed59c3f4a83b4c7a3364c62869717",
+  "reportSha256": "0e44a1783523a67c0e7b6af5de93e5825cc476568fd751f757b25effb41642d2",
+  "reviewId": 6050459412,
+  "reviewer": "Edivan5002",
+  "reviewMode": "AUTHORIZED_AGENT_ASSISTED_TECHNICAL_REVIEW_NOT_HUMAN_INDEPENDENT",
+  "runs": [
+    {
+      "id": 45528651072,
+      "name": "ContaOS F3 CODE - 138 execucoes funcionais individuais"
+    },
+    {
+      "id": 45528651040,
+      "name": "ContaOS Frontend Zero-Drift"
+    },
+    {
+      "id": 45528651075,
+      "name": "ContaOS LOCK-TYPES-01 Double Barrier"
+    },
+    {
+      "id": 45528651062,
+      "name": "ContaOS F3 CODE - Coletor offline (nao certificador)"
+    },
+    {
+      "id": 45528651064,
+      "name": "ContaOS P0-NR-001 Anti-Reincidencia"
+    },
+    {
+      "id": 45528651148,
+      "name": "ContaOS F3 CODE - 138 case preflight (not certification)"
+    }
+  ]
+}
