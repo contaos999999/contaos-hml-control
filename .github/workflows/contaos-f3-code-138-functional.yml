@@ -55,9 +55,9 @@ jobs:
       - name: Autotestes do executor, incluindo negativas contra PASS ficticio
         run: node --test scripts/hml/integracao-v1-fase3-functional-138.test.mjs
 
-      - name: Diagnosticar provas C0043 e C0048 pelo Vitest do produto
+      - name: Diagnosticar suites CODE do produto
         continue-on-error: true
-        run: bunx vitest run src/test/f3-code-case-0043.test.tsx src/test/f3-code-case-0048.test.ts --reporter=verbose
+        run: bunx vitest run src/test/f3-code-case-0043.test.tsx src/test/f3-code-case-0048.test.ts src/test/f3-code-adm01-rbac-integration.test.ts src/test/f3-code-sys04-competence-rpc.test.ts --reporter=verbose
 
       - name: Capturar jobId real da API GitHub Actions
         env:
