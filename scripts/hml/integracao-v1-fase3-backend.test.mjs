@@ -20,7 +20,8 @@ test("F3 backend: executes real RPC client and checks denied negative",async()=>
       negative:[{actor:"leitor",step:F3_MUTATION_FLOWS[14].principal[0],
       args:{p_id_contrato:"contract-id"},expect:"denied"}]}),
     recordEvidence:async({caseId})=>({caseId,executed:true,positiveTest:"PASS",
-      negativeTest:"PASS",state:"PASS"})
+      negativeTest:"PASS",state:"PASS",frontendSha:context.frontendSha,
+      workflowRunId:context.workflowRunId,logSha256:"b".repeat(64),testName:"rpc-authz"})
   });
   const evidence=await transport.execute(caseInput);
   assert.equal(evidence.state,"PASS");
@@ -38,4 +39,12 @@ test("F3 backend: rejects false denial assertion",async()=>{
     recordEvidence:async()=>{throw Error("must not record");}
   });
   await assert.rejects(transport.execute(caseInput),/F3_BACKEND_ASSERTION_FAILED/);
+});
+
+test("F3 backend: network failure must not count as denied",async()=>{
+  const client={rpc:async()=>({data:null,error:{code:"ECONNRESET"}})};
+  const transport=createF3BackendTransport({master:client,leitor:client,
+    plan:async()=>({positive:[{actor:"master",step:F3_MUTATION_FLOWS[14].principal[0],args:{},expect:"success"}],negative:[{actor:"leitor",step:F3_MUTATION_FLOWS[14].principal[0],args:{},expect:"denied"}]}),
+    recordEvidence:async()=>{throw Error("must not record");}});
+  await assert.rejects(transport.execute(caseInput),/F3_BACKEND_TRANSPORT_ERROR/);
 });
