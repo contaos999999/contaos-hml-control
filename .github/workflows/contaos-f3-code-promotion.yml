@@ -1,0 +1,63 @@
+name: ContaOS F3 CODE - verificacao do ledger versionado
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/hml/integracao-v1-fase3-code-promotion.mjs"
+      - "scripts/hml/integracao-v1-fase3-code-promotion.test.mjs"
+      - ".github/workflows/contaos-f3-code-promotion.yml"
+      - "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_ATTESTATION_CANDIDATE.json"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+jobs:
+  promote:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Bootstrap pinned Bun
+        run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Negative tests of evidence and provenance
+        run: node --test scripts/hml/integracao-v1-fase3-code-promotion.test.mjs
+      - name: Download both immutable evidence archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/f3-promotion"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/14982269982/zip" > "$RUNNER_TEMP/f3-promotion/original.zip"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/14985165418/zip" > "$RUNNER_TEMP/f3-promotion/candidate.zip"
+          unzip -t "$RUNNER_TEMP/f3-promotion/original.zip"
+          unzip -t "$RUNNER_TEMP/f3-promotion/candidate.zip"
+          unzip -q "$RUNNER_TEMP/f3-promotion/original.zip" -d "$RUNNER_TEMP/f3-promotion/original"
+          unzip -q "$RUNNER_TEMP/f3-promotion/candidate.zip" -d "$RUNNER_TEMP/f3-promotion/candidate"
+      - name: Reproduce the attestation using original evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/hml/integracao-v1-fase3-code-attestation.mjs "$RUNNER_TEMP/f3-promotion/original.zip" "$RUNNER_TEMP/f3-promotion/original" "$RUNNER_TEMP/f3-promotion/reproduced"
+      - name: Verify versioned ledger and live provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/hml/integracao-v1-fase3-code-promotion.mjs "$RUNNER_TEMP/f3-promotion/candidate.zip" "$RUNNER_TEMP/f3-promotion/candidate/F3_CODE_ATTESTATION_CANDIDATE.json" "$RUNNER_TEMP/f3-promotion/reproduced/F3_CODE_ATTESTATION_CANDIDATE.json" "$RUNNER_TEMP/f3-promotion/F3_CODE_PROMOTION_RECEIPT.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f3-code-promotion-receipt-${{ github.sha }}
+          path: ${{ runner.temp }}/f3-promotion/F3_CODE_PROMOTION_RECEIPT.json
+          if-no-files-found: error
+      - name: Confirm immutable checkout
+        run: git diff --exit-code
