@@ -521,6 +521,16 @@ const rbacCases = Object.freeze({
     "destination": "V123",
     "permission": "auditoria/consultar",
     "reader": false
+  },
+  "IFV1-F3-C0002": {
+    "destination": "SYS04",
+    "consumer": "listar_organizacoes_disponiveis",
+    "reader": true
+  },
+  "IFV1-F3-C0033": {
+    "destination": "V123",
+    "consumer": "eventos_auditoria",
+    "reader": false
   }
 });
 let rbacRun;
@@ -542,7 +552,7 @@ async function runRbacCases() {
           const key = e.caseId + ":" + e.kind;
           if (!Object.hasOwn(rbacCases,e.caseId) || indexed.has(key) ||
               !["positive","negative"].includes(e.kind) || e.testId !== RBAC_SOURCE + ":" + key ||
-              e.consumer !== RBAC_SHARED || e.producerOrder !== 4 ||
+              e.consumer !== (rbacCases[e.caseId].consumer ?? RBAC_SHARED) || e.producerOrder !== 4 ||
               e.organizationId !== RBAC_ORG || e.producerEntityId !== RBAC_LINK ||
               e.state !== "EXECUTED" || e.assertion !== "PASS")
             throw Object.assign(new Error("F3_RBAC_BAD_TEST_OUTPUT"), {code:"F3_RBAC_BAD_TEST_OUTPUT"});
@@ -556,7 +566,7 @@ async function runRbacCases() {
 }
 async function rbacEvidence(c,kind) {
   const config=rbacCases[c.caseId];
-  if (!config || c.destination !== config.destination || c.consumer !== RBAC_SHARED || c.producerOrder !== 4)
+  if (!config || c.destination !== config.destination || c.consumer !== (config.consumer ?? RBAC_SHARED) || c.producerOrder !== 4)
     throw Object.assign(new Error("F3_RBAC_CASE_NOT_IMPLEMENTED"), {code:"F3_RBAC_CASE_NOT_IMPLEMENTED"});
   const value=(await runRbacCases()).get(c.caseId+":"+kind);
   if (!value) throw Object.assign(new Error("F3_RBAC_EVIDENCE_MISSING"), {code:"F3_RBAC_EVIDENCE_MISSING"});
@@ -661,7 +671,9 @@ export const consumerDrivers = Object.freeze({
   ...additionalConsumers("positive"),
   ...competenceRpcConsumers("positive"),
   [RBAC_SHARED]: async ({case:c}) => rbacEvidence(c,"positive"),
+  eventos_auditoria: async ({case:c}) => rbacEvidence(c,"positive"),
   [CONSUMER_0036]: async ({ case: c }) => {
+    if (c.caseId === "IFV1-F3-C0002") return rbacEvidence(c,"positive");
     if (c.caseId !== CASE_0036) {
       throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"), {
         code: "F3_CONSUMER_CASE_NOT_IMPLEMENTED",
@@ -712,7 +724,9 @@ export const negativeDrivers = Object.freeze({
   ...additionalConsumers("negative"),
   ...competenceRpcConsumers("negative"),
   [RBAC_SHARED]: async ({case:c}) => rbacEvidence(c,"negative"),
+  eventos_auditoria: async ({case:c}) => rbacEvidence(c,"negative"),
   [CONSUMER_0036]: async ({ case: c }) => {
+    if (c.caseId === "IFV1-F3-C0002") return rbacEvidence(c,"negative");
     if (c.caseId !== CASE_0036) {
       throw Object.assign(new Error("F3_NEGATIVE_CASE_NOT_IMPLEMENTED"), {
         code: "F3_NEGATIVE_CASE_NOT_IMPLEMENTED",
@@ -775,6 +789,21 @@ export async function independentVerifier(c, observed) {
       positive.readback?.competenceId===COMP_RPC_ID && negative.readback?.competenceId===COMP_RPC_ID &&
       positive.readback?.authorizedLocalIdentities===2 &&
       negative.readback?.outcome==="DENY" && negative.readback?.preferenceNotAuthorization===true;
+  }
+  if(c.caseId==="IFV1-F3-C0002"||c.caseId==="IFV1-F3-C0033"){
+    const spec=rbacCases[c.caseId],{producer,positive,negative}=observed;
+    const base=c.origin==="ADM01"&&c.destination===spec.destination&&c.consumer===spec.consumer&&
+      c.expected?.master==="ALLOW"&&c.expected?.leitor===(spec.reader?"ALLOW":"DENY")&&
+      producer?.organizationId===RBAC_ORG&&producer.producerEntityId===RBAC_LINK&&
+      positive.testId===RBAC_SOURCE+":"+c.caseId+":positive"&&negative.testId===RBAC_SOURCE+":"+c.caseId+":negative"&&
+      positive.network?.fixture===true&&negative.network?.fixture===true&&positive.network?.status===200&&
+      positive.readback?.bindingId===RBAC_LINK&&negative.readback?.bindingId===RBAC_LINK;
+    if(c.caseId==="IFV1-F3-C0002")return base&&positive.network?.rpc===spec.consumer&&negative.network?.rpc===spec.consumer&&
+      positive.readback?.linkedOrgId===RBAC_ORG&&positive.readback?.route==="/"&&positive.readback?.roles===2&&
+      negative.network?.status===200&&negative.readback?.outcome==="NO_FOREIGN_DATA"&&negative.readback?.route==="sem-acesso"&&negative.readback?.count===0;
+    return base&&positive.network?.table===spec.consumer&&negative.network?.table===spec.consumer&&negative.network?.status===403&&
+      positive.readback?.correlationId==="a5555555-5555-4555-8555-555555555555"&&negative.readback?.correlationId===positive.readback?.correlationId&&
+      positive.readback?.eventId==="a9999999-9999-4999-8999-999999999999"&&negative.readback?.outcome==="DENY";
   }
   if (Object.hasOwn(rbacCases,c.caseId)) {
     const config=rbacCases[c.caseId];

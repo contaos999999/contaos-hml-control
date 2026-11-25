@@ -25,7 +25,7 @@ Implementar um workflow GitHub Actions de execução **CODE** de cada uma das 13
 - `src/test/f3-code-case-0053.test.ts` (SYS04 → V109, seleção de contrato e consulta listas_verificacao, positivas e negativas CODE)
 - `src/test/f3-code-case-0056.test.ts` (SYS04 → V112, seleção de contrato e consulta competencias, positivas e negativas CODE)
 
-- `src/test/f3-code-adm01-rbac-integration.test.ts` (23 relações ADM01 → infraestrutura RBAC, vínculo real via wrapper, releitura, permissões e navegação CODE, isolamento negativo por caso)
+- `src/test/f3-code-adm01-rbac-integration.test.ts` (25 relações ADM01 → infraestrutura RBAC, lista de organizações e auditoria, vínculo real via wrapper, releitura, permissões e navegação CODE, isolamento negativo por caso)
 
 - `src/test/f3-code-case-0054.test.ts` (SYS04 → V110, releitura real por adapter documentos_contrato e recusa sob fixture CODE)
 - `src/test/f3-code-case-0062.test.ts` (SYS04 → V118, releitura real por adapter pareceres_internos e recusa sob fixture CODE)

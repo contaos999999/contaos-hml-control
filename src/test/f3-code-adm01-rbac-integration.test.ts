@@ -5,11 +5,14 @@
  */
 import { beforeAll, afterAll, describe, expect, it, vi } from "vitest";
 import { writeFileSync } from "node:fs";
-const fixture = vi.hoisted(() => ({ rpc: vi.fn() }));
-vi.mock("@/integrations/supabase/client", () => ({supabase: {rpc: fixture.rpc}}));
+const fixture = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }));
+vi.mock("@/integrations/supabase/client", () => ({supabase: {rpc: fixture.rpc, from: fixture.from}}));
 import { salvarVinculo, listarUsuarios } from "@/lib/administracao/admUsuariosRpc";
 import { consultarPermissoesEfetivas, temPermissao } from "@/lib/administracao/rbacRpc";
 import { menuComumPermitido, menuContextualV1 } from "@/lib/navegacao/menuV1";
+import { listarOrganizacoesDisponiveis, resolverDestinoPosLogin } from "@/lib/auth/resolverDestinoPosLogin";
+import { podeConsultarAuditoria } from "@/lib/administracao/admUsuariosRpc";
+import { obterEventosAuditoria } from "@/lib/administracao/auditoriaDados";
 
 const ORG = "a1111111-1111-4111-8111-111111111111";
 const OTHER = "a2222222-2222-4222-8222-222222222222";
@@ -426,9 +429,11 @@ const MASTER = [
   }
 ];
 const READER = ["analises","apresentacoes","arquivos","competencias","contratantes","contratos","dashboard","documentos_competencia","documentos_contrato","historico","listas","normativos","orcamentos","organizacoes","pareceres"].map(recurso => ({recurso,acao:"consultar"}));
-let actor: "master"|"leitor" = "master";
+let actor: "master"|"leitor"|"outsider" = "master";
 let binding: {id:string; perfil:string; ativo:boolean; escopo_todos_contratos:boolean; versao_registro:number} | undefined;
 let producerEntityId = "";
+let auditEvent: Record<string,unknown>|undefined;
+const auditFilters: unknown[][] = [];
 const observations: Record<string,unknown>[] = [];
 const ok = (data:unknown) => ({data,error:null,status:200});
 const deny = () => ({data:null,error:{code:"42501"},status:403});
@@ -458,18 +463,37 @@ describe("F3 ADM01 saved binding -> actual shared permission consumer", () => {
       if (name === "salvar_vinculo_usuario_adm") {
         if(actor!=="master" || args.p_id_organizacao!==ORG || args.p_id_usuario!==USER || args.p_perfil!=="leitor") return deny();
         binding={id:LINK,perfil:"leitor",ativo:args.p_ativo===true,escopo_todos_contratos:args.p_escopo_todos_contratos===true,versao_registro:1};
+        auditEvent={id:"a9999999-9999-4999-8999-999999999999",criado_em:"2026-01-01T12:00:00Z",evento:"salvar_vinculo_usuario_adm",entidade:"vinculos_usuarios",origem:"rpc",id_usuario:USER,id_entidade:LINK,correlation_id:KEY};
         return ok({schema_versao:"adm01-v2",correlation_id:KEY,id_usuario:USER,vinculo:binding});
       }
       if (name === "listar_usuarios_vinculos_adm") {
         if(actor!=="master" || args.p_id_organizacao!==ORG) return deny();
         return ok({schema_versao:"adm01-v2",pagina:1,tamanho_pagina:25,total:binding?1:0,total_paginas:1,itens:binding?[{id_usuario:USER,vinculo:binding}]:[],perfis_disponiveis:[]});
       }
+      if(name==="listar_organizacoes_disponiveis"){
+        const visible=actor==="master"||(actor==="leitor"&&binding?.ativo===true);
+        return ok(visible?[{id:ORG,razao_social:"Organização F3",nome_fantasia:null,cnpj:null,situacao:"ativa",perfil:actor==="master"?"administrador_master":"leitor"}]:[]);
+      }
+      if(name==="pode_consultar_auditoria_organizacao")return ok(actor==="master"&&args.p_id_organizacao===ORG);
       if(name===RPC) {
         if(args.p_id_organizacao!==ORG || (args.p_id_contrato!==null && args.p_id_contrato!==CONTRACT)) return deny();
         if(actor==="leitor" && (!binding?.ativo || !binding.escopo_todos_contratos)) return deny();
         return ok({schema_versao:"rbac-v1",versao:6,master:actor==="master",permissoes:actor==="master"?MASTER:READER});
       }
       throw new Error("unexpected fixture operation: "+name);
+    });
+    fixture.from.mockImplementation((table:string)=>{
+      if(table!=="eventos_auditoria")throw new Error("unexpected table");
+      auditFilters.length=0;
+      const q:Record<string,unknown>={};
+      for(const op of ["select","order","range"])q[op]=()=>q;
+      q.eq=(...args:unknown[])=>{auditFilters.push(args);return q;};
+      q.then=(resolve:(value:unknown)=>unknown,reject:(error:unknown)=>unknown)=>Promise.resolve().then(()=>{
+        if(actor!=="master")return deny();
+        if(!auditEvent || !auditFilters.some(([k,v])=>k==="id_organizacao"&&v===ORG))throw new Error("wrong audit scope");
+        return {...ok([auditEvent]),count:1};
+      }).then(resolve,reject);
+      return q;
     });
     const receipt=await salvarVinculo({p_id_organizacao:ORG,p_id_usuario:USER,p_email:null,p_perfil:"leitor",p_escopo_todos_contratos:true,p_ativo:true,p_ids_contratos_ativar:[],p_ids_contratos_revogar:[],p_versao_esperada:null},KEY,"salvarNovo");
     expect(receipt.id_usuario).toBe(USER);
@@ -515,11 +539,45 @@ describe("F3 ADM01 saved binding -> actual shared permission consumer", () => {
       });
     });
   }
+  it("IFV1-F3-C0002 positive: saved binding is returned by actual organization list",async()=>{
+    for(const role of ["master","leitor"] as const){
+      actor=role;
+      const orgs=await listarOrganizacoesDisponiveis();
+      expect(orgs).toHaveLength(1);
+      expect(orgs[0]).toMatchObject({id:ORG,perfil:role==="master"?"administrador_master":"leitor"});
+      expect(resolverDestinoPosLogin(orgs)).toEqual({tipo:"rota",rota:"/"});
+      expect(fixture.rpc).toHaveBeenLastCalledWith("listar_organizacoes_disponiveis");
+    }
+    observations.push({caseId:"IFV1-F3-C0002",consumer:"listar_organizacoes_disponiveis",producerOrder:4,kind:"positive",testId:SOURCE+":IFV1-F3-C0002:positive",state:"EXECUTED",assertion:"PASS",organizationId:ORG,producerEntityId,network:{method:"POST",status:200,rpc:"listar_organizacoes_disponiveis",fixture:true},readback:{matched:true,bindingId:producerEntityId,linkedOrgId:ORG,route:"/",roles:2}});
+  });
+  it("IFV1-F3-C0002 negative: unbound identity does not see the organization",async()=>{
+    actor="outsider";
+    const orgs=await listarOrganizacoesDisponiveis();
+    expect(orgs).toEqual([]);
+    expect(resolverDestinoPosLogin(orgs)).toEqual({tipo:"sem-acesso"});
+    observations.push({caseId:"IFV1-F3-C0002",consumer:"listar_organizacoes_disponiveis",producerOrder:4,kind:"negative",testId:SOURCE+":IFV1-F3-C0002:negative",state:"EXECUTED",assertion:"PASS",organizationId:ORG,producerEntityId,network:{method:"POST",status:200,rpc:"listar_organizacoes_disponiveis",fixture:true},readback:{outcome:"NO_FOREIGN_DATA",bindingId:producerEntityId,route:"sem-acesso",count:orgs.length}});
+  });
+  it("IFV1-F3-C0033 positive: actual audit reader correlates the saved binding",async()=>{
+    actor="master";
+    expect(await podeConsultarAuditoria(ORG)).toBe(true);
+    const result=await obterEventosAuditoria({idOrganizacao:ORG,pagina:0,correlationId:KEY});
+    expect(result.total).toBe(1);
+    expect(result.eventos[0]).toMatchObject({id_entidade:producerEntityId,correlation_id:KEY,evento:"salvar_vinculo_usuario_adm"});
+    expect(auditFilters).toEqual([["id_organizacao",ORG],["correlation_id",KEY]]);
+    observations.push({caseId:"IFV1-F3-C0033",consumer:"eventos_auditoria",producerOrder:4,kind:"positive",testId:SOURCE+":IFV1-F3-C0033:positive",state:"EXECUTED",assertion:"PASS",organizationId:ORG,producerEntityId,network:{method:"GET",status:200,table:"eventos_auditoria",fixture:true},readback:{matched:true,bindingId:producerEntityId,correlationId:KEY,eventId:result.eventos[0].id}});
+  });
+  it("IFV1-F3-C0033 negative: reader cannot access the same audit event",async()=>{
+    actor="leitor";
+    expect(await podeConsultarAuditoria(ORG)).toBe(false);
+    await expect(obterEventosAuditoria({idOrganizacao:ORG,pagina:0,correlationId:KEY})).rejects.toThrow("Acesso não autorizado à trilha de auditoria.");
+    expect(auditFilters).toEqual([["id_organizacao",ORG],["correlation_id",KEY]]);
+    observations.push({caseId:"IFV1-F3-C0033",consumer:"eventos_auditoria",producerOrder:4,kind:"negative",testId:SOURCE+":IFV1-F3-C0033:negative",state:"EXECUTED",assertion:"PASS",organizationId:ORG,producerEntityId,network:{method:"GET",status:403,table:"eventos_auditoria",fixture:true},readback:{outcome:"DENY",bindingId:producerEntityId,correlationId:KEY}});
+  });
   afterAll(()=>{
     expect(fixture.rpc.mock.calls.filter(([name])=>name==="salvar_vinculo_usuario_adm")).toHaveLength(1);
     const path=process.env.F3_CODE_ADM01_RBAC_OBSERVATIONS;
     if(path){
-      expect(observations).toHaveLength(matrix.length*2);
+      expect(observations).toHaveLength(matrix.length*2+4);
       writeFileSync(path,JSON.stringify(observations)+"\n",{flag:"wx"});
     }
   });
