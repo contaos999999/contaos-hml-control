@@ -25,10 +25,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - name: Install frozen dependencies
+      - name: Bootstrap pinned Bun
         run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
           node scripts/ci/install-pinned-bun.mjs
-          bun install --frozen-lockfile
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
       - name: Test negative provenance
         run: node --test scripts/hml/integracao-v1-fase3-code-attestation.test.mjs
       - name: Download real evidence from GitHub Actions
