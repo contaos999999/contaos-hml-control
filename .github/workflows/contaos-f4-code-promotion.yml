@@ -1,0 +1,47 @@
+name: ContaOS F4 CODE - promocao de ledger
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/hml/integracao-v1-fase4-code-promotion*.mjs"
+      - ".github/workflows/contaos-f4-code-promotion.yml"
+      - "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_ATTESTATION_CANDIDATE.json"
+      - "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_PROMOTION_SOURCE.json"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+jobs:
+  promote:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Contraprovas de promocao
+        run: node --test scripts/hml/integracao-v1-fase4-code-promotion.test.mjs
+      - name: Reproduzir atestacao com as 13 fontes originais
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/f4-promotion"
+          node scripts/hml/integracao-v1-fase4-code-attestation-live.mjs docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_ATTESTATION_SOURCE.json "$RUNNER_TEMP/f4-promotion/reproduced.json"
+      - name: Conferir candidato versionado byte a byte e gerar recibo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/hml/integracao-v1-fase4-code-promotion.mjs docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_PROMOTION_SOURCE.json "$RUNNER_TEMP/f4-promotion/reproduced.json" "$RUNNER_TEMP/f4-promotion/F4_CODE_PROMOTION_RECEIPT.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f4-code-promotion-receipt-${{ github.sha }}
+          path: ${{ runner.temp }}/f4-promotion/F4_CODE_PROMOTION_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Confirmar checkout imutavel
+        run: git diff --exit-code
