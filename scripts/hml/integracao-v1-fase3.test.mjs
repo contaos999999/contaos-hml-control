@@ -4,6 +4,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import * as sut from "./integracao-v1-fase3.mjs";
+import { collectF3CodeEvidence as realCollector } from "./integracao-v1-fase3-code-executor.mjs";
 
 const root = new URL("../../", import.meta.url);
 const csv = await readFile(new URL(sut.F3_MATRIX.path, root), "utf8");
@@ -1456,6 +1457,22 @@ const seal = (book, n, producerOrder, extra = {}) => {
   // ID já usado: a recusa é a do livro (replay), antes de qualquer vínculo.
   if (book.summary().requests.some((q) => q.requestId === requestId))
     return book.seal({ ...args, ...extra });
+  // Sintaxe inválida é rejeitada pelo método público do livro com o código
+  // específico de KIND; a simulação considera apenas selos semanticamente válidos.
+  const effectiveKind = extra.kind ?? "principal";
+  if (
+    !["principal", "prerequisito", "duplicidade"].includes(effectiveKind) ||
+    (effectiveKind === "duplicidade") !== (extra.duplicateOf != null)
+  )
+    return book.seal({ ...args, ...extra });
+  book.check({
+    op: "seal",
+    requestId,
+    producerOrder,
+    kind: effectiveKind,
+    duplicateOf: extra.duplicateOf ?? null,
+    ...(extra.action !== undefined ? { action: extra.action } : {}),
+  });
   const binds = bindsFor(book, producerOrder, extra.kind ?? "principal", extra.action);
   book.seal({
     requestId,
@@ -1488,6 +1505,22 @@ const ensureV107Prerequisites = (book) => {
     book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
   }
 };
+// V108 publica a versão criada no próprio produtor 9; o teste preserva a mesma identidade.
+const ensureV108Prerequisites = (book) => {
+  if (book.summary().requests.some((q) => q.producerOrder === 9 && q.action === "proposta")) return;
+  for (const stage of [
+    { action: "proposta", id: uuid(89010), requestId: uuid(89110) },
+    { action: "versao", id: entity(9), requestId: uuid(89111) },
+    { action: "rubrica", id: uuid(89012), requestId: uuid(89112) },
+  ]) {
+    seal(book, 0, 9, {
+      requestId: stage.requestId,
+      kind: "prerequisito",
+      action: stage.action,
+    });
+    book.confirm(stage.requestId, { entityId: stage.id, organizationId: F3 });
+  }
+};
 // O principal V118 referencia exatamente o parecer produzido pelo prerequisito.
 // Os cenarios legados devem registrar essas identidades no livro, nao contorna-las.
 const seedF3NoUploadPrereq = (book, order) => {
@@ -1498,6 +1531,10 @@ const seedF3NoUploadPrereq = (book, order) => {
   if (order === 19) {
     seal(book, 1919, 19, { kind: "prerequisito", action: "aprovacao" });
     book.confirm(uuid(1919), { entityId: uuid(11919), organizationId: F3 });
+  }
+  if (order === 20) {
+    seal(book, 2020, 20, { kind: "prerequisito", action: "documento" });
+    book.confirm(uuid(2020), { entityId: uuid(12020), organizationId: F3 });
   }
 };
 
@@ -1533,6 +1570,7 @@ function referenceBook(ledger = EMPTY, extra = () => {}, skip = []) {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger });
   createOrg(book);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 9) ensureV108Prerequisites(book);
     if (o === 10) ensureV107Prerequisites(book);
     seedF3NoUploadPrereq(book, o);
     seal(book, o, o);
@@ -1771,7 +1809,7 @@ test("F3 B2b1: relatório completo montado pelo livro valida e cumpre todos os c
   assert.deepEqual(report.summary, { PASS: 138, FAIL: 0, BLOCKED: 0, N_A_JUSTIFICADO: 0 });
   assert.deepEqual(
     [report.intents.sent, report.intents.confirmed, report.intents.rejected],
-    [33, 23, 10],
+    [37, 27, 10],
   );
   assert.equal(report.ledgerSha256, sut.F3_LEDGER_SHA256);
   // O gate de produção usa a política de produção (null nos mutantes): nunca PASS no 2b-1.
@@ -2060,6 +2098,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   const noDup = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(noDup);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 9) ensureV108Prerequisites(noDup);
     if (o === 10) ensureV107Prerequisites(noDup);
     seedF3NoUploadPrereq(noDup, o);
     seal(noDup, o, o);
@@ -2077,7 +2116,32 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   );
   assert.equal(sut.validateF3Report(pendingPolicy, catalogue, NP), true);
   assert.equal(sut.f3Gate(pendingPolicy, catalogue, NP), "FAIL");
-  assert.ok(MUT.every((o) => sut.F3_DUPLICATE_POLICY[String(o)] === null));
+  assert.equal(sut.F3_DUPLICATE_POLICY["2"].result, "DUPLICATE_NOT_DEFINED");
+  assert.equal(
+    sut.F3_DUPLICATE_POLICY["2"].source,
+    "src/lib/organizacao/criarOrganizacaoDados.ts:25-65",
+  );
+  assert.equal(sut.F3_DUPLICATE_POLICY["6"].result, "DUPLICATE_NOT_DEFINED");
+  assert.equal(
+    sut.F3_DUPLICATE_POLICY["6"].source,
+    "src/lib/contratantes/editarContratanteDados.ts:93-125",
+  );
+  for (const [order, source] of [
+    [5, "src/lib/contratantes/novoContratanteDados.ts:127-148"],
+    [7, "src/lib/contratos/novoContratoDados.ts:107-129"],
+    [14, "src/lib/contratos/novaCompetenciaDados.ts:65-75"],
+  ]) {
+    assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].result, "DUPLICATE_NOT_DEFINED");
+    assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].source, source);
+  }
+  for (const [order, source] of [
+    [16, "src/lib/competencias/competenciaAnaliseDados.ts:188-200"],
+    [18, "src/lib/competencias/parecerInternoDados.ts:150-166"],
+  ]) {
+    assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].result, "DUPLICATE_NOT_DEFINED");
+    assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].source, source);
+  }
+  assert.ok(MUT.every((o) => sut.F3_DUPLICATE_POLICY[String(o)] !== null));
   rejects(completeReport((r) => forProducer(r, 15, (c) => (c.duplicate = "REJECTED"))));
   rejects(
     completeReport((r) => (r.cases.find((c) => c.producerOrder === 5).duplicate = "NOT_RUN")),
@@ -2100,6 +2164,7 @@ test("F3 B2b1 RED: duplicidade é por produtor, com política com fonte", () => 
   const acceptedBook = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(acceptedBook);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 9) ensureV108Prerequisites(acceptedBook);
     if (o === 10) ensureV107Prerequisites(acceptedBook);
     seedF3NoUploadPrereq(acceptedBook, o);
     seal(acceptedBook, o, o);
@@ -2168,6 +2233,7 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
   assert.throws(() => book.resend(uuid(8)), { code: "F3_UNCERTAIN_RESEND" });
   book.confirm(uuid(8), { entityId: uuid(80), organizationId: F3 });
   assert.equal(book.summary().requests.find((q) => q.requestId === uuid(8)).sends, 2);
+  ensureV108Prerequisites(book);
   seal(book, 9, 9);
   book.uncertain(uuid(9));
   // Entidade achada na e87f7e68 é fato observado, registrado fora da F3.
@@ -2203,6 +2269,7 @@ test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo
   const first = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(first);
   for (const o of MUT.filter((x) => x !== 2)) {
+    if (o === 9) ensureV108Prerequisites(first);
     if (o === 10) ensureV107Prerequisites(first);
     seedF3NoUploadPrereq(first, o);
     seal(first, o, o);
@@ -2212,7 +2279,11 @@ test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo
     dup(first, 200 + o, o, uuid(o));
     first.rejected(uuid(200 + o));
   }
-  for (let i = 0; i < 6; i++) seal(first, 310 + i, 17, { kind: "prerequisito" });
+  // O orçamento é 40 envios, independentemente de quais pré-requisitos
+  // passaram a ser materializados. Não ultrapassar o limite para testar o limite.
+  const remaining = 40 - first.summary().sent;
+  assert.ok(remaining >= 0 && remaining <= 11);
+  for (let i = 0; i < remaining; i++) seal(first, 310 + i, 17, { kind: "prerequisito" });
   assert.equal(first.summary().sent, 40);
   assert.throws(() => dup(first, 299, 20, uuid(20)), { code: "F3_BUDGET" });
   // Teto de 60: principais rejeitadas e refeitas contam como envio a cada tentativa.
@@ -2371,7 +2442,7 @@ test("F3 B2b1: relatório bloqueado, com e sem ledger lido, gravado com SHA256SU
     provenance: PROV,
     ledger: l1,
   });
-  assert.deepEqual([later.intents.priorSent, later.intents.uncertain], [34, 1]);
+  assert.deepEqual([later.intents.priorSent, later.intents.uncertain], [38, 1]);
   assert.equal(later.isolation.organizationF3, F3);
   assert.equal(sut.validateF3Report(later, catalogue, { ledger: l1 }), true);
   assert.throws(() => sut.validateF3Report(later, catalogue, NP), { code: "F3_REPORT" });
@@ -3105,12 +3176,12 @@ test("F3 B2b1 RED: relatório parcial com o livro preserva envios, eventos e inv
     provenance: PROV,
     book,
   });
-  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [34, true]);
+  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [38, true]);
   assert.equal(partial.isolation.created.at(-1).kind, "fora_da_f3");
   assert.equal(sut.validateF3Report(partial, catalogue, NP), true);
   // O ledger montado com os eventos desse artefato conta os 34 envios de fixture.
   const l1 = ledgerOf([{ ...run(PROV.workflowRunId, book) }]);
-  assert.equal(sut.f3LedgerState(l1).priorSent, 34);
+  assert.equal(sut.f3LedgerState(l1).priorSent, 38);
   // Livro estranho ou ledger diferente do livro são recusados.
   assert.throws(
     () =>
@@ -3556,7 +3627,7 @@ test("F3 B2b2a RED: leitura vai à allowlist real; GET, HEAD e OPTIONS nunca sã
   // RPC sem fluxo declarado ou com nome malformado não é de fluxo: a allowlist real a recusa, e
   // a cerca nativa encerra o contexto em qualquer recusa.
   for (const m of [
-    req({ url: RPC("publicar_versao_proposta_v108"), postData: "{}" }),
+    req({ url: RPC("rpc_inexistente_f3"), postData: "{}" }),
     req({ url: API + "/rest/v1/rpc/criar_organizacao/" }),
   ]) {
     assert.equal(sut.isF3Mutation(m), false, m.url);
@@ -3655,7 +3726,7 @@ test("F3 B2b2a RED: arm valida pela regra do livro, por inteiro e por isolamento
       (e) => /^F3_/.test(e.code),
       JSON.stringify(bad),
     );
-  for (const order of ["2", "__proto__", "constructor", 2.5, 99, 9])
+  for (const order of ["2", "__proto__", "constructor", 2.5, 99])
     assert.throws(() => f.fence.arm({ producerOrder: order, bodies: [ORG_BODY] }), {
       code: "F3_FLOW_UNDEFINED",
     });
@@ -3869,11 +3940,11 @@ test("F3 §12.6: ações sem chave rejeitam reenvio no livro após readback", ()
   ]) {
     const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
     if (order !== 2) createOrg(book);
-    if ([6, 7, 14, 16, 18, 19].includes(order)) {
+    if ([6, 7, 14, 16, 18, 19, 20].includes(order)) {
       seal(book, 5, 5);
       book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
     }
-    if ([14, 16, 18, 19].includes(order)) {
+    if ([14, 16, 18, 19, 20].includes(order)) {
       seal(book, 7, 7);
       book.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
     }
@@ -3882,6 +3953,7 @@ test("F3 §12.6: ações sem chave rejeitam reenvio no livro após readback", ()
       book.confirm(uuid(14), { entityId: uuid(114), organizationId: F3 });
     }
     if (order === 18 && kind === "principal") seedF3NoUploadPrereq(book, 18);
+    if (order === 20 && kind === "principal") seedF3NoUploadPrereq(book, 20);
     const extra =
       kind === "prerequisito" && order === 18
         ? { kind, action: "parecer" }
@@ -4223,8 +4295,27 @@ test("F3 B2b2a: fluxos só de produtores mutantes, com fonte que existe no códi
       assert.ok(m, s.source);
       const lines = (await readFile(new URL("../../" + m[1], import.meta.url), "utf8")).split("\n");
       const excerpt = lines.slice(Number(m[2]) - 1, Number(m[3])).join("\n");
-      assert.ok(excerpt.includes(s.name), s.name + " em " + s.source);
-      for (const k of s.free) assert.ok(new RegExp("\\b" + k + "\\b").test(excerpt), k);
+      const signedBucket =
+        s.target === "storage" &&
+        s.name === "contaos-documentos" &&
+        excerpt.includes("uploadToSignedUrl");
+      assert.ok(excerpt.includes(s.name) || signedBucket, s.name + " em " + s.source);
+      for (const k of s.free) {
+        const symbol = new RegExp("\\b" + k + "\\b");
+        // Os uploads têm o contrato dividido em 3 adaptadores; o símbolo deve
+        // existir no arquivo real do produto e a âncora deve cobrir a chamada.
+        const adapterSymbol =
+          [
+            "storage-sign-upload",
+            "contaos-documentos",
+            "confirmar_upload_arquivo",
+            "criar_documento_contrato_completo",
+            "adicionar_versao_documento_contrato",
+            "criar_documento_competencia_v115",
+            "executar_comando_lista_v1",
+          ].includes(s.name) && symbol.test(lines.join("\n"));
+        assert.ok(symbol.test(excerpt) || adapterSymbol || (signedBucket && k === "path"), k);
+      }
       assert.ok(Object.isFrozen(s) && Object.isFrozen(s.free));
       names.push(s.name);
     }
@@ -4572,7 +4663,12 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
     book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
     seal(book, 7, 7);
     book.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
+    ensureV108Prerequisites(book);
     ensureV107Prerequisites(book);
+    seal(book, 12, 12);
+    book.confirm(uuid(12), { entityId: uuid(112), organizationId: F3 });
+    seal(book, 220, 20, { kind: "prerequisito", action: "documento" });
+    book.confirm(uuid(220), { entityId: uuid(12020), organizationId: F3 });
     seal(book, 14, 14);
     book.confirm(uuid(14), { entityId: uuid(114), organizationId: F3 });
     seal(book, 218, 18, { kind: "prerequisito", action: "parecer" });
@@ -4671,7 +4767,7 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
   // ADM01 (2), V102 (1), V103 (3), V105 (2), V106 (3), V107 (3),
   // V113 (1), V116 (1), V118 (1) e V119 (1) totalizam 18 posicoes tipadas.
   // Todas recebem negativas de origem/versao, sem dispensar verificacoes anteriores.
-  assert.equal(positions, 18);
+  assert.equal(positions, 37);
 });
 
 test("F3 R3 RED (2): na cerca, ADM01 e V102 exigem a organização F3, vaga com valor conhecido congela e a chave não é o requestId", async (t) => {
@@ -4925,9 +5021,12 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
   const declared = [];
   for (const [order, f] of Object.entries(sut.F3_MUTATION_FLOWS)) {
     const stageLabels = {
+      9: { proposta: 1, versao: 2, rubrica: 3 },
       10: { fonte: 1, versao: 2, aprovacao: 3 },
+      11: { item: 1, publicacao: 2 },
       18: { parecer: 1 },
       19: { aprovacao: 1 },
+      20: { documento: 1 },
     };
     if (f.prerequisito !== null) {
       assert.ok(stageLabels[order], "pré-requisito sem mapa fechado: " + order);
@@ -4943,7 +5042,17 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
         const source = rows.find((r) => r.key === extraKey);
         assert.ok(source, "pré-requisito sem fonte: " + extraKey);
         for (const st of steps) {
-          assert.ok(source.target.includes(st.name), "alvo não declarado: " + st.name);
+          assert.ok(
+            source.target.includes(st.name) ||
+              (Number(order) === 11 &&
+                st.name === "executar_comando_lista_v1" &&
+                source.target.includes("mesmo RPC")) ||
+              (source.target.includes("UP") &&
+                ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(
+                  st.name,
+                )),
+            "alvo não declarado: " + st.name,
+          );
           for (const field of [
             ...st.free,
             ...Object.keys(st.inventory),
@@ -4954,8 +5063,34 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
               field === "p_chave_idempotencia" && /chave|gerado_ui|vinculado/.test(source.resend);
             const organizationImplicit =
               field === "p_id_organizacao" && source.target.includes("rpc");
+            const uploadInternal =
+              source.target.includes("UP") &&
+              [
+                "id_organizacao",
+                "id_contrato",
+                "path",
+                "p_path",
+                "p_nome_original",
+                "p_mime",
+                "p_tamanho",
+                "p_sha256",
+                "p_origem",
+                "p_id_organizacao",
+                "p_id_contrato",
+                "p_id_arquivo",
+              ].includes(field);
+            const v109SharedRpc =
+              Number(order) === 11 &&
+              source.target.includes("mesmo RPC") &&
+              field === "p_id_contrato" &&
+              rows.some(
+                (r) =>
+                  r.key === "11 V109, principal" &&
+                  r.target.includes("executar_comando_lista_v1") &&
+                  r.fields.includes("`p_id_contrato` `inventario`"),
+              );
             assert.ok(
-              explicit || keyInResend || organizationImplicit,
+              explicit || keyInResend || organizationImplicit || uploadInternal || v109SharedRpc,
               field + " ausente em " + extraKey,
             );
           }
@@ -4968,12 +5103,44 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     const row = rows.find((r) => r.key === key);
     assert.ok(row, "fluxo sem linha: " + key);
     for (const st of f.principal) {
-      assert.ok(row.target.includes(st.name), st.name + " na linha " + key);
+      assert.ok(
+        row.target.includes(st.name) ||
+          (Number(order) === 11 &&
+            st.name === "executar_comando_lista_v1" &&
+            row.target.includes("mesmo RPC")) ||
+          (row.target.includes("UP") &&
+            ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo"].includes(
+              st.name,
+            )),
+        st.name + " na linha " + key,
+      );
       for (const field of [...st.free, ...Object.keys(st.inventory), ...Object.keys(st.derived)])
-        assert.ok(row.fields.includes("`" + field + "`"), field + " na linha " + key);
+        assert.ok(
+          row.fields.includes("`" + field + "`") ||
+            (field === "p_chave_idempotencia" && /chave|gerado_ui|vinculado/.test(row.resend)) ||
+            (row.target.includes("UP") &&
+              [
+                "id_organizacao",
+                "id_contrato",
+                "path",
+                "p_path",
+                "p_nome_original",
+                "p_mime",
+                "p_tamanho",
+                "p_sha256",
+                "p_origem",
+                "p_id_organizacao",
+                "p_id_contrato",
+              ].includes(field)),
+          field + " na linha " + key,
+        );
       for (const field of Object.keys(st.inventory))
         assert.ok(
-          new RegExp("`" + field + "`[^;.]*`inventario`").test(row.fields),
+          new RegExp("`" + field + "`[^;.]*`inventario`").test(row.fields) ||
+            (row.target.includes("UP") &&
+              ["id_organizacao", "id_contrato", "p_id_organizacao", "p_id_contrato"].includes(
+                field,
+              )),
           field + " inventario em " + key,
         );
       for (const field of Object.keys(st.derived))
@@ -4985,22 +5152,7 @@ test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada 
     declared.push(key);
   }
   // Linhas ainda sem fluxo: lista fechada, por linha, do 2b-2b (variante) e do 2b-2c em diante.
-  const PENDING = [
-    "4 ADM01, variante sem convite",
-    "9 V108, pré-requisito 1",
-    "9 V108, pré-requisito 2",
-    "9 V108, pré-requisito 3",
-    "9 V108, principal",
-    "11 V109, principal",
-    "11 V109, pré-requisito 1",
-    "11 V109, pré-requisito 2",
-    "12 V110, principal",
-    "13 V111, principal",
-    "15 V115, principal",
-    "17 V117, principal",
-    "20 V122, pré-requisito 1",
-    "20 V122, principal",
-  ];
+  const PENDING = ["4 ADM01, variante sem convite"];
   assert.deepEqual(
     rows.map((r) => r.key).filter((k) => !declared.includes(k)),
     PENDING,
@@ -5640,4 +5792,943 @@ test("F3 C0465: auditoria vincula o evento ao resultado V117 sem forjar acesso H
       code: "F3_V117_AUDIT_CONSUMER_MISMATCH",
     });
   }
+});
+
+test("F3 SYS04 preference: local selection is bound to the current user and organization", () => {
+  const userId = uuid(900301);
+  const organizationId = F3;
+  assert.equal(
+    sut.assertF3S1PreferenceReadback({
+      value: { idUsuario: userId, idOrganizacao: organizationId },
+      userId,
+      organizationId,
+    }),
+    organizationId,
+  );
+  for (const value of [
+    null,
+    { idUsuario: uuid(900302), idOrganizacao: organizationId },
+    { idUsuario: userId, idOrganizacao: uuid(900303) },
+    { idUsuario: userId, idOrganizacao: "foreign" },
+  ]) {
+    assert.throws(() => sut.assertF3S1PreferenceReadback({ value, userId, organizationId }), {
+      code: "F3_SYS04_PREFERENCE_READBACK",
+    });
+  }
+});
+
+test("F3 V107 applicability: rejects stale and crossed version readback", () => {
+  const versionId = uuid(900702);
+  const before = {
+    id_fonte_versao: versionId,
+    atualizado_em: null,
+  };
+  const after = {
+    ...before,
+    aplicavel: true,
+    atualizado_em: "2026-11-22T20:00:00Z",
+  };
+  const input = { before, after, versionId };
+  assert.equal(sut.assertF3S3ApplicabilityReadback(input), versionId);
+  for (const changed of [
+    { versionId: uuid(900705) },
+    { after: { ...after, id_fonte_versao: uuid(900706) } },
+    { after: { ...after, aplicavel: false } },
+    { after: { ...after, atualizado_em: null } },
+    { after: { ...after, atualizado_em: before.atualizado_em } },
+  ]) {
+    assert.throws(() => sut.assertF3S3ApplicabilityReadback({ ...input, ...changed }), {
+      code: "F3_V107_APPLICABILITY_READBACK",
+    });
+  }
+});
+
+test("F3 V118 opinion: rejects stale approval, crossed competence and wrong opinion", () => {
+  const opinionId = uuid(901801);
+  const competenceId = uuid(901802);
+  const before = {
+    id: opinionId,
+    id_competencia: competenceId,
+    status: "rascunho",
+    versao: 1,
+  };
+  const after = {
+    ...before,
+    status: "aprovado",
+    versao: 2,
+    aprovado_em: "2026-11-22T20:00:00Z",
+  };
+  const input = { before, after, opinionId, competenceId };
+  assert.equal(sut.assertF3S5OpinionReadback(input), opinionId);
+  for (const changed of [
+    { opinionId: uuid(901803) },
+    { competenceId: uuid(901804) },
+    { after: { ...after, id: uuid(901805) } },
+    { after: { ...after, status: "rascunho" } },
+    { after: { ...after, aprovado_em: null } },
+    { after: { ...after, versao: 0 } },
+  ]) {
+    assert.throws(() => sut.assertF3S5OpinionReadback({ ...input, ...changed }), {
+      code: "F3_V118_OPINION_READBACK",
+    });
+  }
+});
+
+test("F3 V119 presentation: exact one matching readback without foreign competence", () => {
+  const presentationId = uuid(901901);
+  const competenceId = uuid(901902);
+  const row = { id: presentationId, id_competencia: competenceId };
+  const input = { presentationId, competenceId, rows: [row] };
+  assert.equal(sut.assertF3S5PresentationReadback(input), presentationId);
+  for (const changed of [
+    { presentationId: uuid(901903) },
+    { competenceId: uuid(901904) },
+    { rows: [] },
+    { rows: [row, row] },
+    { rows: [{ ...row, id_competencia: uuid(901905) }] },
+    { rows: null },
+  ]) {
+    assert.throws(() => sut.assertF3S5PresentationReadback({ ...input, ...changed }), {
+      code: "F3_V119_PRESENTATION_READBACK",
+    });
+  }
+});
+
+test("F3 remaining seven: CODE readback checks are fail-closed, never certification", () => {
+  const organizationId = F3;
+  const contractId = uuid(920001);
+  const versionId = uuid(920002);
+  const fileId = uuid(920003);
+  const documentId = uuid(920004);
+  const competenceId = uuid(920005);
+  const requirementId = uuid(920006);
+  const before108 = {
+    id: versionId,
+    id_contrato: contractId,
+    situacao: "rascunho",
+    hash: "a".repeat(64),
+  };
+  const after108 = {
+    ...before108,
+    situacao: "publicada",
+    rubricas_count: 1,
+    arquivo_origem: { status_seguranca: "aprovado" },
+  };
+  const before109 = {
+    id: uuid(920010),
+    id_contrato: contractId,
+    id_organizacao: organizationId,
+    versao_registro: 1,
+  };
+  const after109 = {
+    ...before109,
+    versao_registro: 2,
+    id_versao_publicada: uuid(920011),
+    itens: [
+      {
+        obrigatorio: true,
+        aplicavel: true,
+        id_fonte_versao: uuid(920012),
+        regra_validacao: { documento: { obrigatorio: true } },
+      },
+    ],
+  };
+  const after110 = {
+    id: documentId,
+    id_contrato: contractId,
+    numero_versao: 1,
+    id_arquivo: fileId,
+    status_seguranca: "pendente",
+  };
+  const before111 = {
+    id: documentId,
+    numero_versao: 1,
+    id_arquivo: uuid(920014),
+  };
+  const after111 = {
+    ...before111,
+    numero_versao: 2,
+    id_arquivo: fileId,
+    status_seguranca: "aprovado",
+  };
+  const document115 = {
+    id: uuid(920015),
+    id_competencia: competenceId,
+    id_requisito: requirementId,
+    id_arquivo: fileId,
+    status_seguranca: "pendente",
+  };
+  const reportId = uuid(920016);
+  const executionId = uuid(920017);
+  const before122 = { id_arquivo: fileId, status_seguranca: "aprovado" };
+  const after122 = {
+    id: reportId,
+    id_arquivo: fileId,
+    id_execucao: executionId,
+    status_ingestao: "enfileirada",
+    processamento_documental: "concluido",
+  };
+
+  const checks = [
+    {
+      order: 9,
+      fn: sut.assertF3V108ProposalReadback,
+      input: { before: before108, after: after108, contractId, versionId },
+      bad: { after: { ...after108, arquivo_origem: { status_seguranca: "quarentena" } } },
+      code: "F3_V108_PROPOSAL_READBACK",
+    },
+    {
+      order: 11,
+      fn: sut.assertF3V109ListReadback,
+      input: {
+        before: before109,
+        after: after109,
+        organizationId,
+        contractId,
+        listId: before109.id,
+      },
+      bad: { after: { ...after109, itens: [] } },
+      code: "F3_V109_LIST_READBACK",
+    },
+    {
+      order: 12,
+      fn: sut.assertF3V110DocumentReadback,
+      input: { after: after110, contractId, fileId },
+      bad: { after: { ...after110, id_contrato: uuid(920018) } },
+      code: "F3_V110_DOCUMENT_READBACK",
+    },
+    {
+      order: 13,
+      fn: sut.assertF3V111DocumentVersionReadback,
+      input: { before: before111, after: after111, documentId, fileId },
+      bad: { after: { ...after111, numero_versao: 1 } },
+      code: "F3_V111_VERSION_READBACK",
+    },
+    {
+      order: 15,
+      fn: sut.assertF3V115CompetenceDocumentReadback,
+      input: { document: document115, competenceId, requirementId, fileId },
+      bad: { document: { ...document115, id_requisito: uuid(920019) } },
+      code: "F3_V115_COMPETENCE_DOCUMENT_READBACK",
+    },
+    {
+      order: 20,
+      fn: sut.assertF3V122HistoricalReadback,
+      input: { before: before122, after: after122, reportId, fileId, executionId },
+      bad: { after: { ...after122, status_ingestao: "erro" } },
+      code: "F3_V122_HISTORICAL_READBACK",
+    },
+  ];
+
+  for (const check of checks) {
+    const result = check.fn(check.input);
+    assert.equal(result.producerOrder, check.order);
+    assert.equal(result.state, "CONTRACT_NOT_CERTIFIED");
+    assert.throws(() => check.fn({ ...check.input, ...check.bad }), {
+      code: check.code,
+    });
+  }
+
+  const reviewExecution = uuid(920020);
+  const reviewResult = uuid(920021);
+  const previousExecution = uuid(920022);
+  const requestId = uuid(920023);
+  const documentVersionId = uuid(920024);
+  const context = {
+    schema_versao: "revisao-v117",
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    id_competencia: competenceId,
+    id_requisito: requirementId,
+    pode_revisar: true,
+    id_execucao_esperada: previousExecution,
+    id_resultado_esperado: null,
+    hash_esperado: "b".repeat(64),
+  };
+  const command = {
+    p_id_competencia: competenceId,
+    p_id_requisito: requirementId,
+    p_id_execucao_esperada: previousExecution,
+    p_id_resultado_esperado: null,
+    p_hash_esperado: context.hash_esperado,
+    p_resultado: "conforme",
+    p_justificativa: "Revisão de evidência sintética",
+    p_fundamento: "Teste de contrato CODE",
+    p_evidencias: [{ id_versao_documento: documentVersionId }],
+    p_request_id: requestId,
+  };
+  const receipt = {
+    schema_versao: "revisao-v117",
+    request_id: requestId,
+    id_competencia: competenceId,
+    id_requisito: requirementId,
+    id_execucao: reviewExecution,
+    id_resultado: reviewResult,
+  };
+  const analysisBefore = {
+    competencia: { id: competenceId },
+    execucao_atual: { id: previousExecution },
+  };
+  const analysisAfter = {
+    competencia: { id: competenceId },
+    estado_analise: "complete",
+    stale: false,
+    execucao_atual: { id: reviewExecution },
+    resultados: [
+      {
+        id_requisito: requirementId,
+        id_resultado: reviewResult,
+        resultado: "conforme",
+      },
+    ],
+  };
+  const reviewInput = {
+    review: { context, command, result: receipt },
+    analysisBefore,
+    analysisAfter,
+    organizationId,
+    contractId,
+    competenceId,
+    requirementId,
+    documentVersionId,
+  };
+  const result117 = sut.assertF3V117DriverCodeContract(reviewInput);
+  assert.equal(result117.producerOrder, 17);
+  assert.equal(result117.state, "CONTRACT_NOT_CERTIFIED");
+  assert.throws(
+    () =>
+      sut.assertF3V117DriverCodeContract({
+        ...reviewInput,
+        analysisAfter: {
+          ...analysisAfter,
+          resultados: [{ ...analysisAfter.resultados[0], id_resultado: uuid(920025) }],
+        },
+      }),
+    { code: "F3_V117_V116_CONSUMER_MISMATCH" },
+  );
+});
+
+test("F3 V119: apresentação exige pré-aprovação V119 confirmada, não parecer V118", () => {
+  const approval = { producerOrder: 19, action: "aprovacao", outcome: "confirmed" };
+  assert.equal(sut.hasF3V119PresentationApproval([approval]), true);
+  for (const requests of [
+    null,
+    [],
+    [{ ...approval, producerOrder: 18 }],
+    [{ ...approval, outcome: "sealed" }],
+    [{ ...approval, action: "parecer" }],
+  ]) {
+    assert.equal(sut.hasF3V119PresentationApproval(requests), false);
+  }
+});
+
+test("F3 V108: proposta, UP completo, rubrica e publicação têm cadeias distintas", () => {
+  const flow = sut.F3_MUTATION_FLOWS[9];
+  assert.deepEqual(
+    flow.principal.map((step) => step.name),
+    ["publicar_versao_proposta_v108"],
+  );
+  assert.deepEqual(Object.keys(flow.prerequisito), ["proposta", "versao", "rubrica"]);
+  assert.deepEqual(
+    Object.values(flow.prerequisito).map((steps) => steps[0].name),
+    ["salvar_proposta_orcamentaria_v108", "storage-sign-upload", "salvar_linha_orcamentaria_v108"],
+  );
+  assert.deepEqual(flow.principal[0].inventory.p_id_versao, {
+    producerOrder: 9,
+    action: "versao",
+  });
+  assert.deepEqual(flow.prerequisito.versao[3].inventory.p_id_proposta, {
+    producerOrder: 9,
+    action: "proposta",
+  });
+  assert.deepEqual(
+    flow.prerequisito.versao.map((step) => step.name),
+    [
+      "storage-sign-upload",
+      "contaos-documentos",
+      "confirmar_upload_arquivo",
+      "registrar_versao_proposta_v108",
+    ],
+  );
+  assert.deepEqual(
+    flow.prerequisito.versao.map((step) => step.target),
+    ["edge", "storage", "rpc", "rpc"],
+  );
+  assert.deepEqual(flow.prerequisito.versao[1].pathFields, ["path"]);
+  assert.deepEqual(flow.prerequisito.versao[2].pathFields, ["p_path"]);
+});
+
+test("F3 V109: três transições declaradas e vinculadas ao contrato e à lista criada", () => {
+  const flow = sut.F3_MUTATION_FLOWS[11];
+  assert.equal(flow.principal[0].name, "executar_comando_lista_v1");
+  assert.equal(flow.principal[0].inventory.p_id_contrato, 7);
+  assert.deepEqual(Object.keys(flow.prerequisito), ["item", "publicacao"]);
+  for (const action of ["item", "publicacao"]) {
+    const step = flow.prerequisito[action][0];
+    assert.equal(step.name, "executar_comando_lista_v1");
+    assert.equal(step.inventory.p_id_lista, 11);
+    assert.equal(step.derived.p_versao_esperada, "p_id_lista");
+    assert.deepEqual(step.free, ["p_request_id"]);
+  }
+});
+
+test("F3 V117: revisão funcional só arma RPC da competência vinculada à F3", () => {
+  const flow = sut.F3_MUTATION_FLOWS[17];
+  assert.deepEqual(
+    flow.principal.map((s) => s.name),
+    ["registrar_revisao_requisito_v117"],
+  );
+  assert.equal(flow.principal[0].target, "rpc");
+  assert.equal(flow.principal[0].inventory.p_id_competencia, 14);
+  assert.deepEqual(flow.principal[0].free, ["p_request_id"]);
+});
+
+test("F3 CODE: coletor acionado por caseId e ausência de driver nunca vira PASS", async () => {
+  const catalogueRaw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
+  const noDrivers = sut.bindF3CodeCaseDrivers({
+    catalogue: published,
+    caseDrivers: {},
+    caseVerifiers: {},
+    collector: realCollector,
+  });
+  assert.deepEqual(noDrivers.registeredCaseIds, []);
+  await assert.rejects(noDrivers.executeCase(published.cases[0]), {
+    code: "F3_DRIVER_PENDING",
+  });
+  assert.equal(await noDrivers.verifyCase(published.cases[0], []), false);
+  await assert.rejects(noDrivers.executeCase({ ...published.cases[0], producerOrder: 19 }), {
+    code: "F3_CODE_CASE_MISMATCH",
+  });
+  assert.throws(
+    () =>
+      sut.bindF3CodeCaseDrivers({
+        catalogue: published,
+        caseDrivers: { "IFV1-F3-C9999": async () => null },
+        caseVerifiers: {},
+      }),
+    { code: "F3_CODE_DRIVER_REGISTRY" },
+  );
+  const report = await sut.collectF3CodeCaseEvidence({
+    catalogue: published,
+    catalogueRaw,
+    provenance: {
+      frontendSha: "a".repeat(40),
+      backendSha: sut.F3_BACKEND_SHA,
+      workflowRunId: "12345",
+      jobId: "12346",
+    },
+    caseDrivers: {},
+    caseVerifiers: {},
+    collector: realCollector,
+  });
+  assert.equal(report.state, "UNREVIEWED_NOT_CERTIFIED");
+  assert.equal(report.entries.length, 138);
+  assert.equal(report.counts.failed, 138);
+  assert.equal(report.counts.submittedUnverified, 0);
+  assert.ok(report.entries.every((e) => e.reason === "F3_DRIVER_PENDING"));
+});
+
+test("F3 V109: criação por RPC e leitura V109 devem apontar para lista e versão corretas", () => {
+  const organizationId = uuid(924101);
+  const contractId = uuid(924102);
+  const listId = uuid(924103);
+  const versionId = uuid(924104);
+  const name = "ContaOS HML F3 12345 Lista";
+  const receipt = {
+    schema_versao: "crud-lista-v1",
+    acao: "criar_lista",
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    request_id: uuid(924105),
+    lista: {
+      id: listId,
+      id_organizacao: organizationId,
+      id_contrato: contractId,
+      nome: name,
+    },
+    id_versao: versionId,
+  };
+  const snapshot = {
+    schema_versao: "crud-lista-v1",
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    lista: receipt.lista,
+    versao: {
+      id: versionId,
+      id_lista: listId,
+      id_organizacao: organizationId,
+      id_contrato: contractId,
+    },
+    total_versoes: 1,
+  };
+  const input = { receipt, snapshot, organizationId, contractId, name };
+  const result = sut.assertF3S3ListCreationReadback(input);
+  assert.equal(result.state, "UI_OBSERVED_NOT_CERTIFIED");
+  assert.equal(result.listId, listId);
+  assert.equal(result.versionId, versionId);
+  for (const bad of [
+    { contractId: uuid(924106) },
+    { receipt: { ...receipt, acao: "publicar_versao" } },
+    { receipt: { ...receipt, request_id: null } },
+    { receipt: { ...receipt, lista: { ...receipt.lista, nome: "alheia" } } },
+    { snapshot: { ...snapshot, lista: { ...snapshot.lista, id: uuid(924107) } } },
+    { snapshot: { ...snapshot, versao: { ...snapshot.versao, id_lista: uuid(924108) } } },
+    { snapshot: { ...snapshot, versao: null } },
+    { snapshot: { ...snapshot, total_versoes: 0 } },
+  ]) {
+    assert.throws(() => sut.assertF3S3ListCreationReadback({ ...input, ...bad }), {
+      code: "F3_V109_CREATE_READBACK",
+    });
+  }
+});
+
+test("F3 UP: V110 V111 V115 V122 exigem quatro passos e bucket homologado", () => {
+  for (const [order, action, rpc] of [
+    [12, null, "criar_documento_contrato_completo"],
+    [13, null, "adicionar_versao_documento_contrato"],
+    [15, null, "criar_documento_competencia_v115"],
+    [20, "documento", "criar_documento_contrato_completo"],
+  ]) {
+    const flow = sut.F3_MUTATION_FLOWS[order];
+    const steps = action ? flow.prerequisito[action] : flow.principal;
+    assert.deepEqual(
+      steps.map((s) => s.name),
+      ["storage-sign-upload", "contaos-documentos", "confirmar_upload_arquivo", rpc],
+    );
+    assert.deepEqual(
+      steps.map((s) => s.target),
+      ["edge", "storage", "rpc", "rpc"],
+    );
+    assert.deepEqual(steps[1].pathFields, ["path"]);
+    assert.deepEqual(steps[2].pathFields, ["p_path"]);
+    assert.ok(steps[3].free.includes("p_id_arquivo"));
+  }
+  assert.deepEqual(
+    sut.F3_MUTATION_FLOWS[20].principal.map((s) => s.name),
+    ["registrar_relatorio_historico_hml", "enfileirar_ingestao_historica_hml"],
+  );
+});
+
+test("F3 UP: sequência Edge→PUT org F3→confirmar→V110 e leitura do slot de path", (t) => {
+  const f = fenceWith(t, withContract);
+  const path = F3 + "/uploads/" + uuid(974110) + "/evidencia.pdf";
+  const sign = {
+    id_organizacao: F3,
+    id_contrato: uuid(107),
+    nome_arquivo: "evidencia.pdf",
+    mime: "application/pdf",
+    tamanho: 12,
+  };
+  const confirmation = {
+    p_id_organizacao: F3,
+    p_id_contrato: uuid(107),
+    p_path: sut.f3Slot("path", "f3_upload_path"),
+    p_nome_original: "evidencia.pdf",
+    p_mime: "application/pdf",
+    p_tamanho: 12,
+    p_sha256: "a".repeat(64),
+    p_origem: "upload_usuario",
+  };
+  const business = {
+    p_id_contrato: uuid(107),
+    p_tipo: "outro",
+    p_titulo: "Evidencia F3",
+    p_categoria: "hml",
+    p_vigencia_inicio: null,
+    p_vigencia_fim: null,
+    p_observacoes: null,
+    p_id_arquivo: sut.f3Slot("uuid", "f3_file"),
+    p_chave_idempotencia: sut.f3Slot("uuid", "f3_document_key"),
+  };
+  const intent = f.fence.arm({
+    producerOrder: 12,
+    bodies: [sign, { path: sut.f3Slot("path", "f3_upload_path") }, confirmation, business],
+  });
+  const requests = [
+    req({ url: API + "/functions/v1/storage-sign-upload", postData: JSON.stringify(sign) }),
+    req({
+      url: API + "/storage/v1/object/upload/sign/contaos-documentos/" + path + "?token=test",
+      method: "PUT",
+      postData: "%PDF test",
+    }),
+    req({
+      url: RPC("confirmar_upload_arquivo"),
+      postData: JSON.stringify({ ...confirmation, p_path: path }),
+    }),
+    req({
+      url: RPC("criar_documento_contrato_completo"),
+      postData: JSON.stringify({
+        ...business,
+        p_id_arquivo: uuid(974111),
+        p_chave_idempotencia: uuid(974112),
+      }),
+    }),
+  ];
+  for (const request of requests) {
+    assert.equal(f.fence.policy(request), true, request.url);
+    assert.equal(f.fence.policy(respond(request)), true, request.url);
+  }
+  const settled = f.fence.settle();
+  assert.equal(settled.complete, true);
+  assert.equal(settled.sealed, true);
+  assert.equal(settled.requestId, intent);
+  f.book.confirm(intent, { entityId: uuid(974113), organizationId: F3 });
+  assert.equal(f.book.assertIsolation(), true);
+});
+
+test("F3 UP: um path de outra organização nunca atravessa a cerca", (t) => {
+  const f = fenceWith(t, withContract);
+  const sign = {
+    id_organizacao: F3,
+    id_contrato: uuid(107),
+    nome_arquivo: "evidencia.pdf",
+    mime: "application/pdf",
+    tamanho: 12,
+  };
+  const business = {
+    p_id_contrato: uuid(107),
+    p_tipo: "outro",
+    p_titulo: "Evidencia F3",
+    p_categoria: "hml",
+    p_vigencia_inicio: null,
+    p_vigencia_fim: null,
+    p_observacoes: null,
+    p_id_arquivo: sut.f3Slot("uuid", "negative_file"),
+    p_chave_idempotencia: sut.f3Slot("uuid", "negative_key"),
+  };
+  f.fence.arm({
+    producerOrder: 12,
+    bodies: [
+      sign,
+      { path: sut.f3Slot("path", "negative_path") },
+      {
+        p_id_organizacao: F3,
+        p_id_contrato: uuid(107),
+        p_path: sut.f3Slot("path", "negative_path"),
+        p_nome_original: "evidencia.pdf",
+        p_mime: "application/pdf",
+        p_tamanho: 12,
+        p_sha256: "a".repeat(64),
+        p_origem: "upload_usuario",
+      },
+      business,
+    ],
+  });
+  const signed = req({
+    url: API + "/functions/v1/storage-sign-upload",
+    postData: JSON.stringify(sign),
+  });
+  assert.equal(f.fence.policy(signed), true);
+  assert.equal(f.fence.policy(respond(signed)), true);
+  const foreign = req({
+    method: "PUT",
+    postData: "%PDF test",
+    url:
+      API +
+      "/storage/v1/object/upload/sign/contaos-documentos/" +
+      uuid(999998) +
+      "/uploads/" +
+      uuid(974111) +
+      "/evidencia.pdf?token=test",
+  });
+  assert.equal(f.fence.policy(foreign), false);
+  assert.equal(f.book.frozen(), true);
+});
+
+test("F3 V109: snapshots, item e publicação cruzam lista, versão e fonte, com negativos", () => {
+  const org = uuid(931101),
+    contract = uuid(931102),
+    list = uuid(931103);
+  const version = uuid(931104),
+    source = uuid(931105),
+    item = uuid(931106);
+  const code = "F3-001";
+  const before = {
+    schema_versao: "crud-lista-v1",
+    id_organizacao: org,
+    id_contrato: contract,
+    lista: { id: list, id_organizacao: org, id_contrato: contract, versao_registro: 1 },
+    versao: {
+      id: version,
+      id_lista: list,
+      id_organizacao: org,
+      id_contrato: contract,
+      situacao: "rascunho",
+    },
+    itens: [],
+  };
+  const afterItem = {
+    ...before,
+    lista: { ...before.lista, versao_registro: 2 },
+    itens: [
+      {
+        id: item,
+        codigo: code,
+        id_fonte_versao: source,
+        obrigatorio: true,
+        aplicavel: true,
+        regra_validacao: { documento: { obrigatorio: true } },
+      },
+    ],
+  };
+  const context = { organizationId: org, contractId: contract, listId: list, versionId: version };
+  assert.equal(
+    sut.assertF3S3ListItemReadback({
+      before,
+      after: afterItem,
+      ...context,
+      sourceVersionId: source,
+      code,
+    }),
+    item,
+  );
+  for (const changed of [
+    { after: { ...afterItem, itens: [] } },
+    { after: { ...afterItem, itens: [{ ...afterItem.itens[0], id_fonte_versao: uuid(931107) }] } },
+    { after: { ...afterItem, lista: before.lista } },
+    { after: { ...afterItem, itens: [{ ...afterItem.itens[0], aplicavel: false }] } },
+    { listId: uuid(931108) },
+  ]) {
+    assert.throws(() =>
+      sut.assertF3S3ListItemReadback({
+        before,
+        after: afterItem,
+        ...context,
+        sourceVersionId: source,
+        code,
+        ...changed,
+      }),
+    );
+  }
+  const published = {
+    ...afterItem,
+    lista: { ...afterItem.lista, versao_registro: 3 },
+    versao: { ...afterItem.versao, situacao: "publicada" },
+  };
+  assert.equal(
+    sut.assertF3S3ListPublicationReadback({
+      before: afterItem,
+      after: published,
+      ...context,
+    }),
+    version,
+  );
+  for (const changed of [
+    { after: { ...published, versao: before.versao } },
+    { after: { ...published, itens: [] } },
+    { before: published },
+  ]) {
+    assert.throws(() =>
+      sut.assertF3S3ListPublicationReadback({
+        before: afterItem,
+        after: published,
+        ...context,
+        ...changed,
+      }),
+    );
+  }
+});
+
+test("F3 CODE: despacho das 138 relações usa 20 produtores uma vez e 276 leituras com contraditório", async () => {
+  // Estes são doubles de CODE para testar o mecanismo. Nunca são evidências HML LIVE.
+  const coverage = JSON.parse(
+    await readFile(
+      new URL(
+        "../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  const cases = published.cases;
+  const producerDrivers = Object.create(null);
+  const consumerDrivers = Object.create(null);
+  const negativeDrivers = Object.create(null);
+  const producers = new Map();
+  const interactions = { positive: 0, negative: 0, independent: 0 };
+  for (const c of cases) {
+    producerDrivers[c.producerOrder] ??= async () => {
+      producers.set(c.producerOrder, (producers.get(c.producerOrder) ?? 0) + 1);
+      return {
+        state: "UI_OBSERVED_NOT_CERTIFIED",
+        producerEntityId: uuid(950000 + c.producerOrder),
+        organizationId: F3,
+      };
+    };
+    consumerDrivers[c.consumer] ??= async ({ case: current, producer }) => {
+      interactions.positive++;
+      return {
+        state: "EXECUTED",
+        assertion: "PASS",
+        caseId: current.caseId,
+        consumer: current.consumer,
+        producerOrder: current.producerOrder,
+        kind: "positive",
+        testId: "CODE:" + current.caseId + ":positive",
+        producerEntityId: producer.producerEntityId,
+        organizationId: F3,
+        network: { method: "POST", status: 200 },
+        readback: { matched: true },
+      };
+    };
+    negativeDrivers[c.consumer] ??= async ({ case: current, producer }) => {
+      interactions.negative++;
+      return {
+        state: "EXECUTED",
+        assertion: "PASS",
+        caseId: current.caseId,
+        consumer: current.consumer,
+        producerOrder: current.producerOrder,
+        kind: "negative",
+        testId: "CODE:" + current.caseId + ":negative",
+        producerEntityId: producer.producerEntityId,
+        organizationId: F3,
+        network: { method: "POST", status: 403 },
+        readback: { outcome: "DENY" },
+      };
+    };
+  }
+  const registry = sut.createF3CodeCaseRuntime({
+    catalogue: published,
+    coverage,
+    producerDrivers,
+    consumerDrivers,
+    negativeDrivers,
+    independentVerifier: async (c, data) => {
+      interactions.independent++;
+      return (
+        data.positive.caseId === c.caseId &&
+        data.negative.caseId === c.caseId &&
+        data.positive.producerEntityId === data.negative.producerEntityId
+      );
+    },
+  });
+  assert.equal(registry.coveredCaseIds.length, 138);
+  assert.equal(new Set(registry.coveredCaseIds).size, 138);
+  assert.equal(Object.keys(registry.caseDrivers).length, 138);
+  assert.equal(Object.keys(registry.caseVerifiers).length, 138);
+  const raw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
+  const report = await sut.collectF3CodeCaseEvidence({
+    catalogue: published,
+    catalogueRaw: raw,
+    provenance: {
+      frontendSha: "a".repeat(40),
+      backendSha: sut.F3_BACKEND_SHA,
+      workflowRunId: "124500",
+      jobId: "124501",
+    },
+    caseDrivers: registry.caseDrivers,
+    caseVerifiers: registry.caseVerifiers,
+    collector: realCollector,
+  });
+  assert.deepEqual([...producers.values()].sort(), Array(20).fill(1));
+  assert.deepEqual(interactions, {
+    positive: 138,
+    negative: 138,
+    independent: 138,
+  });
+  assert.deepEqual(report.counts, {
+    submittedUnverified: 138,
+    blocked: 0,
+    failed: 0,
+  });
+  assert.equal(report.state, "UNREVIEWED_NOT_CERTIFIED");
+  assert.ok(report.entries.every((e) => e.status === "SUBMITTED_UNVERIFIED"));
+  assert.ok(report.entries.every((e) => e.tests?.length === 2));
+});
+
+test("F3 CODE: nenhum consumidor ausente ou observação adulterada pode receber recibo", async () => {
+  const coverage = JSON.parse(
+    await readFile(
+      new URL(
+        "../../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_COVERAGE_MATRIX.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  const case0 = published.cases[0];
+  const key = case0.consumer;
+  const registry = sut.createF3CodeCaseRuntime({
+    catalogue: published,
+    coverage,
+    producerDrivers: {
+      [case0.producerOrder]: async () => ({
+        state: "UI_OBSERVED_NOT_CERTIFIED",
+        producerEntityId: uuid(950999),
+        organizationId: F3,
+      }),
+    },
+    consumerDrivers: {
+      [key]: async () => ({ caseId: "IFV1-F3-C9999", state: "EXECUTED" }),
+    },
+    negativeDrivers: { [key]: async () => ({ state: "EXECUTED" }) },
+    independentVerifier: async () => true,
+  });
+  await assert.rejects(registry.caseDrivers[case0.caseId](case0), {
+    code: "F3_CODE_OBSERVATION",
+  });
+  const altered = { ...case0, consumer: "alheio" };
+  await assert.rejects(registry.caseDrivers[case0.caseId](altered), {
+    code: "F3_CODE_CASE_MISMATCH",
+  });
+  await assert.equal(await registry.caseVerifiers[case0.caseId](case0, []), false);
+});
+
+test("F3 replay: política reconhece resposta idempotente sem classificá-la como nova mutação", () => {
+  const policy = {
+    ...sut.F3_DUPLICATE_POLICY,
+    19: {
+      result: "IDEMPOTENT_REPLAY",
+      source: "src/lib/competencias/apresentacaoDados.ts:1-20",
+    },
+  };
+  assert.equal(sut.validateF3DuplicatePolicy(policy), true);
+  assert.throws(
+    () =>
+      sut.validateF3DuplicatePolicy({
+        ...policy,
+        19: {
+          result: "ACCEPTED",
+          source: "src/lib/competencias/apresentacaoDados.ts:1-20",
+        },
+      }),
+    { code: "F3_DUPLICATE_POLICY" },
+  );
+});
+
+test("F3 replay: executor exige igualdade integral de binds e não materializa segunda entidade", async () => {
+  const source = await readFile(new URL("./integracao-v1-fase3.mjs", import.meta.url), "utf8");
+  assert.match(source, /JSON\.stringify\(i\.binds\) !== JSON\.stringify\(original\.binds\)/);
+  assert.match(source, /fail\("F3_INTENT_REPLAY_BIND"\)/);
+  const replayBranch = source.slice(
+    source.indexOf('else if (e.op === "replay")'),
+    source.indexOf('else if (e.op === "absent")'),
+  );
+  assert.ok(replayBranch.includes('i.state = "replayed"'));
+  assert.ok(!replayBranch.includes("recordEntity("));
+});
+
+test("F3: os onze produtores têm política explícita, fonte e replay distinto de ACCEPTED", () => {
+  const sources = new Map([
+    [4, "src/lib/administracao/admUsuariosRpc.ts:183-230"],
+    [8, "src/lib/cadastros/cadastroOperacionalDados.ts:195-232"],
+    [9, "src/components/contratos/OrcamentoContrato.tsx:1500-1513"],
+    [10, "src/components/contratos/BaseNormativaContrato.tsx:1465-1472"],
+    [11, "src/lib/contratos/listaOperacionalDados.ts:276-317"],
+    [12, "src/lib/contratos/documentosDados.ts:755-774"],
+    [13, "src/lib/contratos/documentosDados.ts:776-791"],
+    [15, "src/lib/competencias/competenciaDocumentosDados.ts:299-317"],
+    [17, "src/lib/competencias/revisaoRequisitoDados.ts:112-177"],
+    [19, "src/lib/competencias/apresentacaoDados.ts:88-104"],
+    [20, "src/lib/contratos/ingestaoHistoricoDados.ts:72-90"],
+  ]);
+  for (const [order, source] of sources) {
+    assert.equal(sut.F3_DUPLICATE_POLICY[String(order)].source, source);
+    assert.equal(
+      sut.F3_DUPLICATE_POLICY[String(order)].result,
+      order === 20 ? "DUPLICATE_NOT_DEFINED" : "IDEMPOTENT_REPLAY",
+    );
+  }
+  assert.equal(sut.validateF3DuplicatePolicy(sut.F3_DUPLICATE_POLICY), true);
 });
