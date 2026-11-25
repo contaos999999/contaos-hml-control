@@ -1,0 +1,31 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 754,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Autorizar prospectivamente a revalidação da atestação candidata F3 CODE, após integração deste PLAN documental; não convalidar retroativamente o código existente.",
+  "files": [
+    ".github/workflows/contaos-f3-code-attestation.yml",
+    "scripts/hml/integracao-v1-fase3-code-attestation.mjs",
+    "scripts/hml/integracao-v1-fase3-code-attestation.test.mjs"
+  ],
+  "source_pr": 754,
+  "source_head": "4bface4ae15e7aedcdccbb16c8268814641e740a",
+  "baseline_main": "4f696f74453f5bd73a9334c090a3cf28ee968961",
+  "authorization": "Titular: Execute integralmente, 24/11/2026. Escopo restrito à certificação F3. Eficácia após revisão, CI e merge desta PR documental.",
+  "rca": {
+    "cause": "Ausência do PLAN protegido P0_GOV_PLAN_754.json na main; gate RCA recusou três arquivos de governança.",
+    "red": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45529714541",
+    "required_green": "Revalidar PR 754 após merge deste PLAN, com novo CI integral, testes negativos de proveniência e revisão real."
+  },
+  "constraints": [
+    "Não alterar guard, dispensar testes ou forjar provas.",
+    "Não declarar certificação por atestação candidata.",
+    "Preservar BUILD #752 e inventário histórico.",
+    "Ledger e certificado exigem PR própria e validação de evidências.",
+    "Sem mudanças de aplicativo, backend, LIVE, F4 ou PROD.",
+    "Rollback: rejeitar PR #754; preservar main."
+  ],
+  "certification": "F3_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
