@@ -1,0 +1,133 @@
+{
+  "pr": 771,
+  "head": "1aa145c87d3584cdd2f18911aea83b91e023fac1",
+  "merge": "d96dfa794b4b0da01088931ef45a77c25a3c807c",
+  "testedSha": "2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+  "backendSha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "review": 6055359806,
+  "run": 45589213529,
+  "attempt": 1,
+  "runs": [
+    {
+      "name": "ContaOS F3 CODE - 138 case preflight (not certification)",
+      "id": 45589213386
+    },
+    {
+      "name": "ContaOS F3 CODE - 138 execucoes funcionais individuais",
+      "id": 45589213496
+    },
+    {
+      "name": "ContaOS F3 CODE - Coletor offline (nao certificador)",
+      "id": 45589213392
+    },
+    {
+      "name": "ContaOS F4 CODE - provas materiais",
+      "id": 45589213529
+    },
+    {
+      "name": "ContaOS Frontend Zero-Drift",
+      "id": 45589213525
+    },
+    {
+      "name": "ContaOS LOCK-TYPES-01 Double Barrier",
+      "id": 45589213478
+    },
+    {
+      "name": "ContaOS P0-NR-001 Anti-Reincidencia",
+      "id": 45589213466
+    }
+  ],
+  "batches": [
+    {
+      "name": "adm01",
+      "path": "src/test/f4-code-adm01-version-sync.test.ts",
+      "job": 139118637239,
+      "artifact": 15010191511,
+      "digest": "522a5b9955dd889f3d8c25de5d6b752c5d466cd5ce03d2592b607b1aa5682ff2"
+    },
+    {
+      "name": "context",
+      "path": "src/test/f4-code-context-dashboard-sync.test.tsx",
+      "job": 139118637735,
+      "artifact": 15009768393,
+      "digest": "6f249f765641ac236b8fe7f19f8dbd85811845f97f4851b7f478b255119d1914"
+    },
+    {
+      "name": "sys04-competence",
+      "path": "src/test/f4-code-sys04-competence-context-sync.test.ts",
+      "job": 139118636832,
+      "artifact": 15010366505,
+      "digest": "941cee1d00652b7a0a0d9b538a120302b3b6f979863514c641cec96f3a616ff8"
+    },
+    {
+      "name": "sys04-data",
+      "path": "src/test/f4-code-sys04-data-context-sync.test.ts",
+      "job": 139118637375,
+      "artifact": 15008834705,
+      "digest": "ca1fcdfba33c8a050cafbebda376fd7a337a4b9ca6513839b3ea03c132cb4fa9"
+    },
+    {
+      "name": "sys04-actions",
+      "path": "src/test/f4-code-sys04-actions-context-sync.test.ts",
+      "job": 139118637339,
+      "artifact": 15010980674,
+      "digest": "13cd30634835357766c97d704b7312acb2728da5e435db9202fa2cacaef75358"
+    },
+    {
+      "name": "contracting-party",
+      "path": "src/test/f4-code-v102-v103-crud-sync.test.ts",
+      "job": 139118637272,
+      "artifact": 15009244295,
+      "digest": "9aa1006238d20935e2717f76e2e70584e601611040915bac64caa20c88cf1af1"
+    },
+    {
+      "name": "contracts",
+      "path": "src/test/f4-code-v105-v106-crud-sync.test.tsx",
+      "job": 139118637154,
+      "artifact": 15009777619,
+      "digest": "a3e9e33bba164ddfbc21f0dff29244bc27a5b47c18c89f2d85b78ca8c16ded17"
+    },
+    {
+      "name": "material-source",
+      "path": "src/test/f4-code-v107-v108-v109-material-sync.test.ts",
+      "job": 139118637348,
+      "artifact": 15009209561,
+      "digest": "ff384c8528b578b0618b8a3866b5efcb87c44869da84cff3f0c42fb59c6708d1"
+    },
+    {
+      "name": "documents",
+      "path": "src/test/f4-code-v110-v111-v115-document-sync.test.ts",
+      "job": 139118637211,
+      "artifact": 15009673405,
+      "digest": "b8ce8b89c56a979037185c9307a850c9d50467e857c92badd66869ff15da202f"
+    },
+    {
+      "name": "competence",
+      "path": "src/test/f4-code-v113-competence-sync.test.tsx",
+      "job": 139118637528,
+      "artifact": 15009728241,
+      "digest": "cc85c2e6aa79534a48ba2829291b3c384cdf28a1d55c9d7e991107710bdba8f6"
+    },
+    {
+      "name": "analysis",
+      "path": "src/test/f4-code-v116-v117-analysis-sync.test.ts",
+      "job": 139118637772,
+      "artifact": 15009164583,
+      "digest": "8ecdbb86898c90c6978a6823efc2d2e280899b1d07219ae470e4bdcfb3db352d"
+    },
+    {
+      "name": "opinion-presentation",
+      "path": "src/test/f4-code-v118-v119-opinion-presentation-sync.test.ts",
+      "job": 139118637035,
+      "artifact": 15009583614,
+      "digest": "eab58053cff6de9315eaedc0f28d9e344965850941f6fb5e4652ed37ea8a9d73"
+    },
+    {
+      "name": "history",
+      "path": "src/test/f4-code-v122-history-sync.test.ts",
+      "job": 139118637289,
+      "artifact": 15009124936,
+      "digest": "ed8b111f6a9a7d1577397ad060b1777be73fdbb2c1fdd5bd293173061894e236"
+    }
+  ]
+}
