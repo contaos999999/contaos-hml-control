@@ -1,0 +1,24 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 775,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Validar proveniência e igualdade byte a byte do ledger candidato real, reproduzido e versionado; gerar recibo sem certificado.",
+  "files": [
+    "scripts/hml/integracao-v1-fase4-code-promotion.mjs",
+    "scripts/hml/integracao-v1-fase4-code-promotion.test.mjs",
+    ".github/workflows/contaos-f4-code-promotion.yml",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_ATTESTATION_CANDIDATE.json",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_PROMOTION_SOURCE.json"
+  ],
+  "baseline_main": "d96dfa794b4b0da01088931ef45a77c25a3c807c",
+  "plan_pr": 773,
+  "authorization": "Somente após #771 e #774 MERGED, PLAN #773 reancorado e integrado, CI e revisão; não executar promoção com dados preliminares.",
+  "acceptance": [
+    "Pinagem real do run/attempt/job/artifact/HEAD/review #774, SHA de árvore e digest oficial.",
+    "Reproduzir 13 ZIPs originais, validar ZIP candidato, comparar bytes baixados/reproduzidos/versionados, executar contraprovas e preservar recibo.",
+    "CI integral, review assistido no HEAD exato, merge protegido e readback; sem certificação antecipada."
+  ],
+  "certification": "F4_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
