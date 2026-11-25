@@ -7,6 +7,8 @@ on:
     paths:
       - "src/test/f4-code-adm01-version-sync.test.ts"
       - ".github/workflows/contaos-f4-code-material.yml"
+      - "scripts/hml/f4-code-material-evidence.mjs"
+      - "scripts/hml/f4-code-material-evidence.test.mjs"
   workflow_dispatch:
 
 permissions:
@@ -43,20 +45,7 @@ jobs:
           set -euo pipefail
           JOB_ID="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" --jq '.jobs[] | select(.name=="F4 CODE ADM01 - material e readback") | .id')"
           export JOB_ID
-          node --input-type=module <<'JS'
-          import fs from "node:fs";
-          const d = "artifacts/f4-code/";
-          const o = JSON.parse(fs.readFileSync(d+"observations.json", "utf8"));
-          const v = JSON.parse(fs.readFileSync(d+"vitest.json", "utf8"));
-          const ids = new Set(o.map(x=>x.caseId));
-          if (o.length!==50 || ids.size!==25 || new Set(o.map(x=>x.caseId+":"+x.kind)).size!==50 || o.some(x=>!["positive","negative"].includes(x.kind)||x.mode!=="CODE_FIXTURE"||!x.readback)) throw Error("incomplete observations");
-          if (v.numPassedTests!==50 || v.numFailedTests!==0 || v.numPendingTests!==0 || v.numTotalTests!==50 || !v.success) throw Error("test execution incomplete");
-          for (const x of o) {
-            if (!v.testResults.flatMap(r=>r.assertionResults).some(t=>t.status==="passed"&&t.title.startsWith(x.caseId+" "+x.kind+":"))) throw Error("missing named test");
-          }
-          if (!/^[1-9][0-9]*$/.test(process.env.JOB_ID??"")) throw Error("missing job identity");
-          fs.writeFileSync(d+"receipt.json", JSON.stringify({schema:"contaos.ifv1.f4.material-partial.v1",scope:"ADM01_CODE_FIXTURE",sha:process.env.GITHUB_SHA,run:process.env.GITHUB_RUN_ID,attempt:process.env.GITHUB_RUN_ATTEMPT,job:process.env.JOB_ID,covered:25,proofs:50,phaseTotal:138,certification:"NOT_CERTIFIED"},null,2)+"\n");
-          JS
+          node scripts/hml/f4-code-material-evidence.mjs --batch adm01
           cd artifacts/f4-code
           sha256sum observations.json vitest.json receipt.json > SHA256SUMS
           sha256sum -c SHA256SUMS
