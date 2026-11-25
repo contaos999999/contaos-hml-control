@@ -314,6 +314,68 @@ async function runCase0048() {
   return c0048Run;
 }
 
+
+// Dedicated product tests: each ID has its own positive/negative assertions.
+const additionalCases = Object.freeze({
+  "IFV1-F3-C0051": {
+    "table": "fontes_normativas",
+    "destination": "V107",
+    "file": "src/test/f3-code-case-0051.test.ts",
+    "env": "F3_CODE_C0051_OBSERVATIONS"
+  },
+  "IFV1-F3-C0052": {
+    "table": "propostas_orcamentarias",
+    "destination": "V108",
+    "file": "src/test/f3-code-case-0052.test.ts",
+    "env": "F3_CODE_C0052_OBSERVATIONS"
+  },
+  "IFV1-F3-C0053": {
+    "table": "listas_verificacao",
+    "destination": "V109",
+    "file": "src/test/f3-code-case-0053.test.ts",
+    "env": "F3_CODE_C0053_OBSERVATIONS"
+  },
+  "IFV1-F3-C0056": {
+    "table": "competencias",
+    "destination": "V112",
+    "file": "src/test/f3-code-case-0056.test.ts",
+    "env": "F3_CODE_C0056_OBSERVATIONS"
+  }
+});
+const additionalRuns = new Map();
+const CONTRACT_EXTRA = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+const ROW_EXTRA = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+
+async function runAdditionalCase(c) {
+  const config = additionalCases[c.caseId];
+  if (!config || c.consumer !== config.table || c.destination !== config.destination || c.producerOrder !== 3) {
+    throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"), {code:"F3_CONSUMER_CASE_NOT_IMPLEMENTED"});
+  }
+  if (!additionalRuns.has(c.caseId)) {
+    additionalRuns.set(c.caseId, (async () => {
+      const dir = await mkdtemp(join(tmpdir(), "contaos-f3-extra-"));
+      const evidenceFile = join(dir, "observations.json");
+      try {
+        await exec("bunx", ["vitest","run",config.file,"--reporter=dot"], {
+          cwd: ROOT, env: {...process.env, [config.env]:evidenceFile}, timeout:60000, maxBuffer:1024*1024,
+        });
+        const parsed = JSON.parse(await readFile(evidenceFile,"utf8"));
+        if (!Array.isArray(parsed) || parsed.length !== 2 || parsed.some((e,i) =>
+          e.caseId !== c.caseId || e.consumer !== c.consumer || e.producerOrder !== 3 ||
+          e.kind !== ["positive","negative"][i] || e.testId !== config.file + ":" + e.kind ||
+          e.organizationId !== ORG_0041 || e.producerEntityId !== ORG_0041 ||
+          e.state !== "EXECUTED" || e.assertion !== "PASS"
+        )) throw Object.assign(new Error("F3_EXTRA_BAD_TEST_OUTPUT"), {code:"F3_EXTRA_BAD_TEST_OUTPUT"});
+        return Object.freeze(parsed.map(e=>Object.freeze(e)));
+      } finally { await rm(dir,{recursive:true,force:true}); }
+    })());
+  }
+  return additionalRuns.get(c.caseId);
+}
+const additionalConsumers = kind => Object.fromEntries(Object.values(additionalCases).map(config => [
+  config.table, async ({case:c}) => structuredClone((await runAdditionalCase(c))[kind === "positive" ? 0 : 1])
+]));
+
 export const producerDrivers = Object.freeze({
   1: async (c) => {
     if (![CASE_0036, CASE_0037].includes(c.caseId)) {
@@ -329,7 +391,7 @@ export const producerDrivers = Object.freeze({
     });
   },
   3: async (c) => {
-    if (![CASE_0041, CASE_0043, CASE_0045, CASE_0048].includes(c.caseId)) {
+    if (![CASE_0041, CASE_0043, CASE_0045, CASE_0048].includes(c.caseId) && !Object.hasOwn(additionalCases,c.caseId)) {
       throw Object.assign(new Error("F3_DRIVER_CASE_NOT_IMPLEMENTED"), {
         code: "F3_DRIVER_CASE_NOT_IMPLEMENTED",
       });
@@ -344,6 +406,7 @@ export const producerDrivers = Object.freeze({
 });
 
 export const consumerDrivers = Object.freeze({
+  ...additionalConsumers("positive"),
   [CONSUMER_0036]: async ({ case: c }) => {
     if (c.caseId !== CASE_0036) {
       throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"), {
@@ -392,6 +455,7 @@ export const consumerDrivers = Object.freeze({
 });
 
 export const negativeDrivers = Object.freeze({
+  ...additionalConsumers("negative"),
   [CONSUMER_0036]: async ({ case: c }) => {
     if (c.caseId !== CASE_0036) {
       throw Object.assign(new Error("F3_NEGATIVE_CASE_NOT_IMPLEMENTED"), {
@@ -441,6 +505,25 @@ export const negativeDrivers = Object.freeze({
 
 /** Contraditório estrutural interno. Não constitui auditoria independente final. */
 export async function independentVerifier(c, observed) {
+  if (Object.hasOwn(additionalCases,c.caseId)) {
+    const config = additionalCases[c.caseId];
+    const {producer, positive, negative} = observed;
+    return c.origin === "SYS04" && c.destination === config.destination &&
+      c.consumer === config.table && c.expected?.master === "ALLOW" &&
+      c.expected?.leitor === "ALLOW" && producer?.organizationId === ORG_0041 &&
+      producer.producerEntityId === ORG_0041 &&
+      positive.testId === config.file + ":positive" &&
+      negative.testId === config.file + ":negative" &&
+      positive.network?.table === config.table && negative.network?.table === config.table &&
+      positive.network?.fixture === true && negative.network?.fixture === true &&
+      positive.network?.status === 200 && negative.network?.status === 403 &&
+      positive.readback?.contractId === CONTRACT_EXTRA &&
+      negative.readback?.contractId === CONTRACT_EXTRA &&
+      positive.readback?.rowId === ROW_EXTRA &&
+      positive.readback?.authorizedLocalIdentities === 2 &&
+      negative.readback?.outcome === "DENY" &&
+      negative.readback?.preferenceNotAuthorization === true;
+  }
   if (c.caseId === CASE_0048) {
     const { producer, positive, negative } = observed;
     return (

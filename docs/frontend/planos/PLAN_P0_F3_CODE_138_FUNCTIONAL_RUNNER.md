@@ -20,6 +20,11 @@ Implementar um workflow GitHub Actions de execução **CODE** de cada uma das 13
 - `src/test/f3-code-case-0045.test.ts` (SYS04 preferência → V101 listagem de contratantes, query org e negativa de acesso)
 - `src/test/f3-code-case-0048.test.ts` (SYS04 preferência → V104 listagem contratos, filtro org e negativa 403)
 
+- `src/test/f3-code-case-0051.test.ts` (SYS04 → V107, seleção de contrato e consulta fontes_normativas, positivas e negativas CODE)
+- `src/test/f3-code-case-0052.test.ts` (SYS04 → V108, seleção de contrato e consulta propostas_orcamentarias, positivas e negativas CODE)
+- `src/test/f3-code-case-0053.test.ts` (SYS04 → V109, seleção de contrato e consulta listas_verificacao, positivas e negativas CODE)
+- `src/test/f3-code-case-0056.test.ts` (SYS04 → V112, seleção de contrato e consulta competencias, positivas e negativas CODE)
+
 ## Garantias
 
 1. Catálogo imutável: arquivo e hash canônicos; 120 casos obrigatórios e 18 condicionais; nenhum caso novo ou removido.
