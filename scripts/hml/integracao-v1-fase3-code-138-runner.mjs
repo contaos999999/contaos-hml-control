@@ -74,6 +74,35 @@ export function buildF3Code138Preflight(catalogue, coverage, sources,
   return {...report,reportSha256:sha(JSON.stringify(report))};
 }
 
+/** Validates real per-case automated results. Source-map success is never evidence. */
+export function certifyF3Code138(catalogue, results, {frontendSha,workflowRunId}) {
+  checked(catalogue?.count===138 && catalogue.cases?.length===138,"F3_CERT_CATALOGUE");
+  checked(SHA40.test(frontendSha) && /^[1-9]\\d*$/.test(String(workflowRunId)),"F3_CERT_PROVENANCE");
+  checked(Array.isArray(results) && results.length===138,"F3_CERT_RESULT_COUNT");
+  const byId=new Map();
+  for(const r of results){
+    checked(r && CASE.test(r.caseId) && !byId.has(r.caseId),"F3_CERT_DUPLICATE_OR_INVALID");
+    byId.set(r.caseId,r);
+  }
+  const entries=catalogue.cases.map(c=>{
+    const r=byId.get(c.caseId);
+    checked(r && r.frontendSha===frontendSha &&
+      String(r.workflowRunId)===String(workflowRunId),"F3_CERT_MISSING_OR_STALE");
+    checked(r.positiveTest==="PASS" && r.negativeTest==="PASS" &&
+      r.state==="PASS" && r.executed===true &&
+      typeof r.testName==="string" && r.testName.length>0 &&
+      typeof r.logSha256==="string" && /^[a-f0-9]{64}$/.test(r.logSha256),
+      "F3_CERT_UNPROVEN_CASE");
+    return {caseId:c.caseId,classification:c.classification,testName:r.testName,
+      logSha256:r.logSha256,positiveTest:"PASS",negativeTest:"PASS",state:"PASS"};
+  });
+  checked(new Set(entries.map(e=>e.caseId)).size===138,"F3_CERT_COVERAGE");
+  const report={schema:"contaos.ifv1.f3.code-138-certification.v1",
+    state:"CERTIFIED_CODE_ONLY",provenance:{frontendSha,workflowRunId:String(workflowRunId)},
+    summary:{total:138,passed:138,failed:0},entries};
+  return {...report,reportSha256:sha(JSON.stringify(report))};
+}
+
 async function runCli(root=fileURLToPath(new URL("../../",import.meta.url)),env=process.env) {
   const [catRaw,mapRaw,ledgerRaw,csvRaw]=await Promise.all(
     [F3_CODE_CASES_PATH,F3_CODE_MATRIX_PATH,F3_CODE_LEDGER_PATH,F3_CODE_CSV_PATH]
