@@ -540,8 +540,12 @@ async function rbacEvidence(c,kind) {
 }
 
 export const producerDrivers = Object.freeze({
-  4: async (c) => {
-    const positive = await rbacEvidence(c,"positive");
+  4: async () => {
+    // Producer is shared by all ADM01 relations, even if the first consumer
+    // is not implemented. Its verified fixture write must not depend on that case.
+    const observed = await runRbacCases();
+    const positive = observed.get("IFV1-F3-C0007:positive");
+    if (!positive) throw Object.assign(new Error("F3_RBAC_PRODUCER_MISSING"), {code:"F3_RBAC_PRODUCER_MISSING"});
     return Object.freeze({state:"UI_OBSERVED_NOT_CERTIFIED",organizationId:positive.organizationId,producerEntityId:positive.producerEntityId});
   },
   1: async (c) => {
