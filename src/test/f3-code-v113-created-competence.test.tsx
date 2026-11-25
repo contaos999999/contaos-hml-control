@@ -126,7 +126,7 @@ function rpc(name:string,args:Record<string,unknown>){
   const counts={pendentes:1,nao_conformes:0,inconclusivos:0,em_analise:0,nao_conformidades_bloqueantes:0};
   if(name==="obter_visao_geral_competencia")return ok({competencia:{...c,periodo_inicio:REF,periodo_fim:"2026-11-30",atualizado_em:null,percentual_conformidade:0,versao_pacote_atual:null,versao_registro:1},
     portao:{...counts,liberado:false,total:1,conformes_ou_na_validos:0,percentual:0},blocking_summary:{...counts,parecer_aprovado:false,analise_concluida_atual:false,aprovacao_apresentacao_atual:false},allowed_actions:{abrir_documentos:true,analisar:actor==="master",abrir_parecer:true,apresentar:false}});
-  if(name==="obter_documentos_competencia_v115")return ok({schema_versao:"v115-v1",competencia:c,estado_documental:"missing_docs",resumo:{documentos_total:0,requisitos_documentais_total:1,requisitos_documentais_aplicaveis:1,requisitos_documentais_pendentes:1},documentos:[],requisitos_documentais:[],documentos_paginacao:pag(25),requisitos_paginacao:pag(25),capacidades:{pode_enviar:actor==="master",pode_nova_versao:actor==="master",motivo_nova_versao_obrigatorio:true}});
+  if(name==="obter_documentos_competencia_v115")return ok({schema_versao:"v115-v1",competencia:c,estado_documental:"missing_docs",resumo:{documentos_total:0,requisitos_documentais_total:1,requisitos_documentais_aplicaveis:1,requisitos_documentais_pendentes:1},documentos:[],requisitos_documentais:[{id:EVENT,codigo:"F3-REQ",obrigatorio:true,aplicavel:true,impeditivo:true,tipos_esperados:["contrato"],atendido:false}],documentos_paginacao:pag(25),requisitos_paginacao:pag(25,1),capacidades:{pode_enviar:actor==="master",pode_nova_versao:actor==="master",motivo_nova_versao_obrigatorio:true}});
   if(name==="obter_analise_competencia_v116")return ok({schema_versao:"v116-v1",competencia:c,estado_analise:"not_analyzed",stale:false,percentual:0,blocking_summary:counts,allowed_actions:{executar_analise:actor==="master",reanalisar:false,abrir_requisito:false},execucao_atual:null,mecanismos:{},resultados:[],resultados_paginacao:pag(25),execucoes:[],execucoes_paginacao:pag(10),apontamentos:[],apontamentos_paginacao:pag(25)});
   throw new Error("unexpected RPC "+name);
 }
@@ -134,6 +134,7 @@ function tableResponse(call:{table:string;filters:unknown[][]},single:boolean){
   const has=(k:string,v:string)=>call.filters.some(([key,value])=>key===k&&value===v);
   if(actor==="outsider"||(call.table==="eventos_auditoria"&&actor!=="master"))return deny();
   if(call.table==="competencias"){
+    if(has("id_contrato",FOREIGN))return deny();
     if(!has("id_contrato",CONTRACT))throw new Error("wrong contract");
     if(single&&!has("competencia_referencia",REF))throw new Error("wrong reference");
     return single?ok(stored):ok(stored?[stored]:[],stored?1:0);
@@ -173,7 +174,7 @@ async function consume(c:Case,id:string,negative:boolean){
     if(negative){expect(await screen.findByText(MENSAGENS_SYS05.negado)).toBeTruthy();expect(screen.queryByRole("region",{name:"Indicadores de resumo"})).toBeNull();expect(screen.queryByText("Competência criada F3")).toBeNull();}
     else {
       const kpi=await screen.findByText("Competências em fluxo");
-      expect(kpi.closest("div")?.parentElement?.querySelector("dd")?.textContent).toBe("1");
+      expect(kpi.closest("dt")?.parentElement?.querySelector("dd")?.textContent).toBe("1");
       expect(within(screen.getByRole("region",{name:"Competências por situação"})).getByText("rascunho")).toBeTruthy();
       expect(screen.getByText("Competência criada F3")).toBeTruthy();
       expect(within(screen.getByTestId("prazo-item")).getByText("15/12/2026")).toBeTruthy();
@@ -206,7 +207,7 @@ async function consume(c:Case,id:string,negative:boolean){
     expect(m.rpc).toHaveBeenLastCalledWith(c.consumer,{p_id_competencia:id,p_documentos_offset:0,p_documentos_limite:25,p_requisitos_offset:0,p_requisitos_limite:25});
     if(negative){expect(classificarErroV115(res.error,res.status)).toBe("sem_permissao");expect(parseLeituraV115(res.data)).toBeNull();return null;}
     const parsed=parseLeituraV115(res.data);expect(parsed?.competencia).toMatchObject({id,id_organizacao:ORG,id_contrato:CONTRACT});
-    expect(parsed?.estado_documental).toBe("missing_docs");expect(parsed?.documentos).toEqual([]);
+    expect(parsed?.estado_documental).toBe("missing_docs");expect(parsed?.documentos).toEqual([]);expect(parsed?.requisitos[0]).toMatchObject({id:EVENT,atendido:false,obrigatorio:true});
     expect(parsed?.capacidades.pode_enviar).toBe(actor==="master");
     return {scope:parsed?.competencia.id,state:parsed?.estado_documental,documentCount:parsed?.documentos_total};
   }
@@ -270,7 +271,7 @@ describe("V113 -> consumers of newly created competence",()=>{
       expect(await consume(c,id,true)).toBeNull();
       actor="master";
       expect(await verificarCompetenciaExistente(CONTRACT,MONTH)).toBe(id);
-      expect(await verificarCompetenciaExistente(FOREIGN,MONTH).catch(()=>null)).toBeNull();
+      expect(await verificarCompetenciaExistente(FOREIGN,MONTH)).toBeNull();
       observations.push({caseId:c.caseId,consumer:c.consumer,producerOrder:14,kind:"negative",testId:SOURCE+":"+c.caseId+":negative",state:"EXECUTED",assertion:"PASS",organizationId:ORG,producerEntityId:id,
         network:{method:c.method,status:403,[c.method==="GET"?"table":"rpc"]:c.consumer,fixture:true},readback:{outcome:"DENY",destination:c.destination,contractId:CONTRACT,competenceId:id,reference:REF,mutationDenied:true,entityPreserved:true}});
     });
