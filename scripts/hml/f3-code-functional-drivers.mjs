@@ -1390,7 +1390,15 @@ async function documentEvidence(c,kind){const spec=documentCases[c.caseId];if(!s
 function dispatchDocument(base,kind){const all=new Set([...Object.keys(base),...Object.values(documentCases).map(c=>c.consumer)]);return Object.freeze(Object.fromEntries([...all].map(consumer=>[consumer,async args=>{if(Object.hasOwn(documentCases,args.case.caseId))return documentEvidence(args.case,kind);if(typeof base[consumer]!=="function")throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"),{code:"F3_CONSUMER_CASE_NOT_IMPLEMENTED"});return base[consumer](args);}])));}
 async function documentProducer(order){const c=Object.values(documentCases).find(x=>x.order===order),e=(await runDocumentCases()).get(c.caseId+":positive");if(!e)throw Object.assign(new Error("F3_DOCUMENT_PRODUCER_MISSING"),{code:"F3_DOCUMENT_PRODUCER_MISSING"});return Object.freeze({state:"UI_OBSERVED_NOT_CERTIFIED",organizationId:e.organizationId,producerEntityId:e.producerEntityId});}
 
+const PREF_GUARD_SOURCE="src/test/f3-code-sys04-preference-guard-actions.test.ts",PREF_NEW="c0200000-0000-4000-8000-000000000001";
+const prefGuardCases=Object.freeze({"IFV1-F3-C0067":{"caseId":"IFV1-F3-C0067","order":2,"destination":"V123","consumer":"eventos_auditoria","method":"GET"},"IFV1-F3-C0046":{"caseId":"IFV1-F3-C0046","order":3,"destination":"V102","consumer":"contratantes","method":"GET"},"IFV1-F3-C0047":{"caseId":"IFV1-F3-C0047","order":3,"destination":"V103","consumer":"contratantes","method":"GET"},"IFV1-F3-C0049":{"caseId":"IFV1-F3-C0049","order":3,"destination":"V105","consumer":"contratantes","method":"GET"},"IFV1-F3-C0057":{"caseId":"IFV1-F3-C0057","order":3,"destination":"V113","consumer":"criar_competencia","method":"POST"},"IFV1-F3-C0066":{"caseId":"IFV1-F3-C0066","order":3,"destination":"V122","consumer":"relatorios_historicos_contratante","method":"GET"},"IFV1-F3-C0068":{"caseId":"IFV1-F3-C0068","order":3,"destination":"V123","consumer":"eventos_auditoria","method":"GET"}});
+let prefGuardRun;
+async function runPrefGuard(){if(!prefGuardRun)prefGuardRun=(async()=>{const dir=await mkdtemp(join(tmpdir(),"f3-pref-guard-")),file=join(dir,"observations.json");try{await exec("bunx",["vitest","run",PREF_GUARD_SOURCE,"--reporter=dot"],{cwd:ROOT,env:{...process.env,F3_CODE_PREF_GUARD_OBSERVATIONS:file},timeout:60000,maxBuffer:1024*1024});const parsed=JSON.parse(await readFile(file,"utf8")),map=new Map();if(!Array.isArray(parsed)||parsed.length!==Object.keys(prefGuardCases).length*2)throw new Error("F3_PREF_GUARD_COUNT");for(const e of parsed){const c=prefGuardCases[e.caseId],key=e.caseId+":"+e.kind,id=c?.order===2?PREF_NEW:ORG_0041;if(!c||map.has(key)||!["positive","negative"].includes(e.kind)||e.testId!==PREF_GUARD_SOURCE+":"+key||e.consumer!==c.consumer||e.producerOrder!==c.order||e.organizationId!==id||e.producerEntityId!==id||e.state!=="EXECUTED"||e.assertion!=="PASS")throw new Error("F3_PREF_GUARD_OUTPUT");map.set(key,Object.freeze(e));}return map;}finally{await rm(dir,{recursive:true,force:true});}})();return prefGuardRun;}
+async function prefGuardEvidence(c,kind){const spec=prefGuardCases[c.caseId];if(!spec||c.producerOrder!==spec.order||c.destination!==spec.destination||c.consumer!==spec.consumer)throw new Error("F3_PREF_GUARD_CASE");const e=(await runPrefGuard()).get(c.caseId+":"+kind);if(!e)throw new Error("F3_PREF_GUARD_MISSING");return structuredClone(e);}
+function dispatchPrefGuard(base,kind){return Object.freeze(Object.fromEntries([...new Set([...Object.keys(base),...Object.values(prefGuardCases).map(c=>c.consumer)])].map(consumer=>[consumer,async args=>{if(Object.hasOwn(prefGuardCases,args.case.caseId))return prefGuardEvidence(args.case,kind);if(typeof base[consumer]!=="function")throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"),{code:"F3_CONSUMER_CASE_NOT_IMPLEMENTED"});return base[consumer](args); }])));}
+
 export const producerDrivers = Object.freeze({
+  2:async c=>{const e=await prefGuardEvidence(c,'positive');return Object.freeze({state:'UI_OBSERVED_NOT_CERTIFIED',organizationId:e.organizationId,producerEntityId:e.producerEntityId});},
   12:()=>documentProducer(12),
   13:()=>documentProducer(13),
   15:()=>documentProducer(15),
@@ -1425,6 +1433,7 @@ export const producerDrivers = Object.freeze({
     });
   },
   3: async (c) => {
+    if(Object.hasOwn(prefGuardCases,c.caseId)){const e=await prefGuardEvidence(c,'positive');return Object.freeze({state:'UI_OBSERVED_NOT_CERTIFIED',organizationId:e.organizationId,producerEntityId:e.producerEntityId});}
     if (![CASE_0041, CASE_0043, CASE_0045, CASE_0048].includes(c.caseId) && !Object.hasOwn(additionalCases,c.caseId) && !Object.hasOwn(competenceRpcCases,c.caseId)) {
       throw Object.assign(new Error("F3_DRIVER_CASE_NOT_IMPLEMENTED"), {
         code: "F3_DRIVER_CASE_NOT_IMPLEMENTED",
@@ -1547,11 +1556,15 @@ const baseNegativeDrivers = Object.freeze({
   },
 });
 
-export const consumerDrivers=dispatchDocument(dispatchAnalysis(dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseConsumerDrivers,"positive"),"positive"),"positive"),"positive"),"positive"),"positive");
-export const negativeDrivers=dispatchDocument(dispatchAnalysis(dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseNegativeDrivers,"negative"),"negative"),"negative"),"negative"),"negative"),"negative");
+export const consumerDrivers=dispatchPrefGuard(dispatchDocument(dispatchAnalysis(dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseConsumerDrivers,"positive"),"positive"),"positive"),"positive"),"positive"),"positive"),"positive");
+export const negativeDrivers=dispatchPrefGuard(dispatchDocument(dispatchAnalysis(dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseNegativeDrivers,"negative"),"negative"),"negative"),"negative"),"negative"),"negative"),"negative");
 
 /** Contraditório estrutural interno. Não constitui auditoria independente final. */
 export async function independentVerifier(c, observed) {
+ if(Object.hasOwn(prefGuardCases,c.caseId)){const spec=prefGuardCases[c.caseId],{producer,positive,negative}=observed,a=positive.readback,b=negative.readback,key=spec.method==="GET"?"table":"rpc",id=spec.order===2?PREF_NEW:ORG_0041;
+ const expectedId=({V102:"c0300000-0000-4000-8000-000000000003",V103:"c0300000-0000-4000-8000-000000000003",V105:"c0300000-0000-4000-8000-000000000003",V113:"c0300000-0000-4000-8000-000000000004",V122:"c0300000-0000-4000-8000-000000000005",V123:"c0300000-0000-4000-8000-000000000007"})[spec.destination];
+ return c.origin==="SYS04"&&c.destination===spec.destination&&c.consumer===spec.consumer&&c.expected.master==="ALLOW"&&c.expected.leitor==="DENY"&&producer.organizationId===id&&producer.producerEntityId===id&&positive.testId===PREF_GUARD_SOURCE+":"+c.caseId+":positive"&&negative.testId===PREF_GUARD_SOURCE+":"+c.caseId+":negative"&&positive.network?.[key]===spec.consumer&&negative.network?.[key]===spec.consumer&&positive.network?.fixture===true&&negative.network?.fixture===true&&positive.network?.status===200&&negative.network?.status===403&&a?.destination===spec.destination&&b?.destination===spec.destination&&a?.selected===id&&b?.selected===id&&a?.witness?.id===expectedId&&a?.witness?.allowed===true&&(spec.destination!=="V123"||a.witness.entity===id)&&b?.outcome==="DENY"&&b?.preferenceNotAuthorization===true&&b?.writesPreserved===true;
+ }
   if(Object.hasOwn(documentCases,c.caseId)){
     const spec=documentCases[c.caseId],{producer,positive,negative}=observed,a=positive.readback,b=negative.readback,key=spec.method==="GET"?"table":"rpc";
     const {createHash}=await import("node:crypto");
