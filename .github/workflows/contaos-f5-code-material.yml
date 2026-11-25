@@ -47,7 +47,22 @@ jobs:
           head_sha="$(git rev-parse HEAD)"
           test "$head_sha" = "$F5_EXPECTED_HEAD"
           test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .head_sha)" = "$head_sha"
-          job_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" | jq -er --arg job_name "$F5_JOB_NAME" --arg head "$head_sha" '[.jobs[] | select(.name == $job_name and .head_sha == $head and .status == "in_progress") | .id] | if length == 1 then .[0] else error("job F5 inexistente ou ambíguo") end')"
+          endpoint="repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100"
+          for delay in 0 2 4 8 16; do
+            sleep "$delay"
+            jobs="$(gh api "$endpoint")"
+            job_id="$(jq -r --arg job_name "$F5_JOB_NAME" --arg head "$head_sha" \
+              --argjson run "$GITHUB_RUN_ID" --argjson attempt "$GITHUB_RUN_ATTEMPT" '
+              if .total_count != (.jobs | length) then error("lista de jobs incompleta")
+              else [.jobs[] | select(.name == $job_name and .head_sha == $head
+                  and .run_id == $run and .run_attempt == $attempt) | .id]
+                | if length > 1 then error("job F5 ambíguo")
+                  elif length == 1 then .[0] else empty end
+              end
+              ' <<< "$jobs")"
+            [[ -z "$job_id" ]] || break
+          done
+          [[ "$job_id" =~ ^[1-9][0-9]*$ ]] || { echo "GitHub não publicou a identidade do job F5"; exit 1; }
           printf 'F5_FRONTEND_SHA=%s\nF5_HARNESS_SHA=%s\nJOB_ID=%s\n' \
             "$head_sha" "$(git hash-object scripts/hml/f5-code-material-evidence.mjs)" "$job_id" >> "$GITHUB_ENV"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
