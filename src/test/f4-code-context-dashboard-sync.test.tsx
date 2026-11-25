@@ -59,20 +59,20 @@ beforeEach(() => {
   m.rpc.mockImplementation(async (name: string, a: Record<string, unknown> = {}) => {
     if (name===LIST) return ok(linked?orgs.map(org):[]);
     if (name===DASH) {
-      const id = String(a.p_id_organizacao);
+      const id = String(a["p_id_organizacao"]);
       if (!linked || !orgs.includes(id)) return fail("42501",403);
       if (id===A && delayed) return delayed;
       return ok(dash(id,id===A?31:72));
     }
     if (name==="listar_usuarios_vinculos_adm") {
-      if(actor!=="master"||a.p_id_organizacao!==A)return fail("42501",403);
+      if(actor!=="master"||a["p_id_organizacao"]!==A)return fail("42501",403);
       return ok({ schema_versao:"adm01-v2", pagina:1,tamanho_pagina:25,total:1,total_paginas:1,itens:[{id_usuario:U,vinculo:binding()}],perfis_disponiveis:[] });
     }
     if(name==="salvar_vinculo_usuario_adm"){
-      if(actor!=="master"||a.p_id_organizacao!==A||a.p_id_usuario!==U)return fail("42501",403);
-      if(a.p_versao_esperada!==version)return fail("PT409",409);
-      linked=a.p_ativo===true;version++;
-      return ok({schema_versao:"adm01-v2",correlation_id:a.p_chave_idempotencia,id_usuario:U,vinculo:binding()});
+      if(actor!=="master"||a["p_id_organizacao"]!==A||a["p_id_usuario"]!==U)return fail("42501",403);
+      if(a["p_versao_esperada"]!==version)return fail("PT409",409);
+      linked=a["p_ativo"]===true;version++;
+      return ok({schema_versao:"adm01-v2",correlation_id:a["p_chave_idempotencia"],id_usuario:U,vinculo:binding()});
     }
     throw Error("unexpected "+name);
   });
@@ -171,4 +171,4 @@ describe("F4 material context synchronization",()=>{
     observe("IFV1-F4-C0005","negative",{before,after,conflict:"PT409",dashboard:"DENIED"});
   });
 });
-afterAll(()=>{const p=process.env.F4_CODE_CONTEXT_OBSERVATIONS;if(p){expect(observations).toHaveLength(8);writeFileSync(p,JSON.stringify(observations,null,2)+"\n",{flag:"wx"});}});
+afterAll(()=>{const p=process.env["F4_CODE_CONTEXT_OBSERVATIONS"];if(p){expect(observations).toHaveLength(8);writeFileSync(p,JSON.stringify(observations,null,2)+"\n",{flag:"wx"});}});
