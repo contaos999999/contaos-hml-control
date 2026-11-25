@@ -103,3 +103,9 @@ A nomenclatura é proposta de implementação, não afirma existência atual:
 | Certificado | Não emitido | Integrado main e verificado |
 
 Estado inicial F4: PLAN_PROPOSED, sem alegação de implementação concluída. Decisão proposta: iniciar após PLAN integrado e aceite do titular, preservar F3 e executar S5.1 em diante com cobertura incremental e teste de regressão por impacto; não abrir F5 nem executar LIVE/PROD antecipadamente. Nenhuma duração arbitrária: acompanhar casos executados, evidências verificadas, falhas, revisões e gates em vez de estimativa de progresso fictícia.
+
+## 8. Proposta de disposição de governança para revisão técnica assistida F4
+
+Registro literal da sequência de instruções do titular: "Execute integralmente o plano da fase 4"; "Execute o parecer edivan5002"; após comunicação de que a revisão técnica assistida não comprova independência e de que faltava autorização para substituí-la na F4, "Continue sem parar ate certificar a fase 4".
+
+Interpretação operacional proposta: aceitar a revisão técnica assistida via conta autorizada Edivan5002, explicitamente identificada como NÃO INDEPENDENTE, para o PLAN, BUILD, ledger e CERT individual F4 CODE, em lugar do requisito de segregação de autoria. Não atribuir ao titular uma declaração literal de dispensa que ele não formulou; a eficácia desta disposição depende da aceitação específica e integração regular deste texto. Até então o requisito original permanece vigente. Preservar CI integral, autoria rastreável, revisão técnica no SHA exato, testes materiais, negativas, proteção de merge e readback. Nenhuma dispensa para F5–F7, outras versões, auditoria semântica #690 ou GATE PROD. Nenhum PASS por mera contagem, nenhum acesso LIVE e nenhuma autorização de produção.
