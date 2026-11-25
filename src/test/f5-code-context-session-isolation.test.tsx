@@ -23,6 +23,7 @@ vi.mock("@/components/organizacao/CriarOrganizacaoForm", () => ({
 }));
 import { OrganizationSelector } from "@/components/organizacao/OrganizationSelector";
 import { Dashboard, MENSAGENS_SYS05 } from "@/components/dashboard/Dashboard";
+import { salvarVinculo, type PayloadSalvar } from "@/lib/administracao/admUsuariosRpc";
 import {
   listarOrganizacoesDisponiveis,
   resolverDestinoPosLogin,
@@ -37,6 +38,21 @@ const U = "a3333333-3333-4333-8333-333333333333",
   V = "b3333333-3333-4333-8333-333333333333";
 const DASH = "obter_resumo_dashboard",
   LIST = "listar_organizacoes_disponiveis";
+const SAVE = "salvar_vinculo_usuario_adm";
+const bindingId = "a5000000-0000-4000-8000-000000000001";
+const correlationId = "a5000000-0000-4000-8000-000000000002";
+const binding: PayloadSalvar = {
+  p_id_organizacao: A,
+  p_id_usuario: U,
+  p_email: null,
+  p_perfil: "leitor",
+  p_escopo_todos_contratos: true,
+  p_ativo: true,
+  p_ids_contratos_ativar: [],
+  p_ids_contratos_revogar: [],
+  p_versao_esperada: 1,
+};
+const bindingRequest = "f5-1-dashboard-context";
 const ok = (data: unknown) => ({ data, error: null, status: 200 });
 const org = (id: string) => ({
   id,
@@ -142,13 +158,35 @@ async function choose(id: string) {
 }
 describe("F5 context material isolation", () => {
   it("IFV1-F5-C0005 positive: authorized reader sees own dashboard", async () => {
-    transport({ [DASH + ":" + A]: ok(dash(A, 31)) });
+    identity("a5000000-0000-4000-8000-000000000003");
+    transport({
+      [SAVE + ":" + A]: ok({
+        schema_versao: "adm01-v2",
+        correlation_id: correlationId,
+        id_usuario: U,
+        vinculo: { id: bindingId, perfil: "leitor", ativo: true, versao_registro: 2 },
+      }),
+      [DASH + ":" + A]: ok(dash(A, 31)),
+    });
+    const saved = await salvarVinculo(binding, bindingRequest, "salvarEdicao");
+    expect(m.rpc).toHaveBeenNthCalledWith(1, SAVE, {
+      ...binding,
+      p_chave_idempotencia: bindingRequest,
+    });
+    expect(saved).toMatchObject({
+      id_usuario: U,
+      correlation_id: correlationId,
+      vinculo: { id: bindingId, perfil: "leitor", ativo: true, versao_registro: 2 },
+    });
+    identity(U);
     definirPreferenciaOrganizacao(U, A);
     await show(A, 31);
     expect(screen.queryByText("72")).toBeNull();
     expect(qc.getQueryData(key(U, A))).toMatchObject({ organizacao: { id: A } });
     observe("0005", "positive", A, A, "dashboard", "read", "ALLOW", {
       visible: screen.getByText("31") !== null,
+      bindingCorrelationId: saved.correlation_id,
+      bindingVersion: (saved.vinculo as { versao_registro: number }).versao_registro,
       selected: obterPreferenciaOrganizacao(U),
       foreignVisible: screen.queryByText("72") !== null,
     });
@@ -156,7 +194,10 @@ describe("F5 context material isolation", () => {
   it("IFV1-F5-C0005 negative: forged organization receives denial without dashboard", async () => {
     identity(V);
     const denial = { data: null, error: { code: "42501" }, status: 403 };
-    transport({ [DASH + ":" + A]: denial });
+    transport({ [SAVE + ":" + A]: denial, [DASH + ":" + A]: denial });
+    await expect(salvarVinculo(binding, bindingRequest, "salvarEdicao")).rejects.toMatchObject({
+      tipo: "negado",
+    });
     definirPreferenciaOrganizacao(V, A);
     mount(<Dashboard />);
     await screen.findByText(MENSAGENS_SYS05.negado);
@@ -164,13 +205,19 @@ describe("F5 context material isolation", () => {
     expect(screen.queryByRole("region", { name: "Indicadores de resumo" })).toBeNull();
     expect(screen.queryByText("31")).toBeNull();
     expect(qc.getQueryData(key(V, A))).toBeUndefined();
-    expect(m.rpc.mock.calls.every(([name]) => name === DASH)).toBe(true);
+    expect(m.rpc.mock.calls.map(([name]) => name)).toEqual([SAVE, DASH]);
+    const rejectedWrite = await m.rpc.mock.results[0]?.value;
+    const dashboardResponse = await m.rpc.mock.results[1]?.value;
+    expect(rejectedWrite).toEqual(denial);
+    expect(dashboardResponse).toEqual(denial);
     observe("0005", "negative", B, A, "dashboard", "read", "DENY", {
-      status: denial.status,
-      code: denial.error.code,
+      status: dashboardResponse.status,
+      code: dashboardResponse.error.code,
+      bindingStatus: rejectedWrite.status,
+      bindingCode: rejectedWrite.error.code,
       denialRendered: screen.queryByText(MENSAGENS_SYS05.negado) !== null,
       foreignVisible: screen.queryByText("31") !== null,
-      mutationCount: m.rpc.mock.calls.filter(([n]) => n !== DASH).length,
+      mutationCount: Number(rejectedWrite.data !== null),
     });
   });
   it("IFV1-F5-C0036 positive: B identity sees and selects B only", async () => {

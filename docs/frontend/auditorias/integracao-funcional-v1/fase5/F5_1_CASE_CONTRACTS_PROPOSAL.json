@@ -1,6 +1,6 @@
 {
   "schema": "contaos.ifv1.f5.case-contract-proposal.v1",
-  "status": "PARTIAL_BUILD_NOT_CERTIFIED",
+  "status": "F51_IMPLEMENTED_PENDING_CI_AND_REVIEW",
   "planPr": 777,
   "planMerge": "c28069b1b69d07cc55bd061c50327dc2f0f5961a",
   "backendNormativeSha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
@@ -22,7 +22,7 @@
       "consumer": "listar_organizacoes_disponiveis",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/auth/resolverDestinoPosLogin.ts:50",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -46,7 +46,27 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+          "supabase/migrations/20261102183243_admin_master_rpc_security_invoker.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/auth/resolverDestinoPosLogin.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0005",
@@ -58,7 +78,7 @@
       "consumer": "obter_resumo_dashboard",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/components/dashboard/Dashboard.tsx:70",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "context",
       "priorImplementationReference": "src/test/f4-code-context-dashboard-sync.test.tsx",
@@ -82,7 +102,24 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-context-session-isolation.test.tsx",
+        "adapter": "src/components/dashboard/Dashboard.tsx",
+        "backendContracts": [
+          "supabase/migrations/20261102114958_sys05_dashboard_summary.sql",
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Isolamento entre preferências, sessão e consultas reais do dashboard/seletor."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0007",
@@ -94,7 +131,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -118,7 +155,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0009",
@@ -130,7 +186,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -155,7 +211,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "gestor_contrato",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0011",
@@ -167,7 +242,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -192,7 +267,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "gestor_contrato",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0012",
@@ -204,7 +298,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -228,7 +322,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0014",
@@ -240,7 +353,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -265,7 +378,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "gestor_contrato",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0016",
@@ -277,7 +409,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -301,7 +433,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0017",
@@ -313,7 +464,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -337,7 +488,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0018",
@@ -349,7 +519,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -373,7 +543,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0019",
@@ -385,7 +574,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -409,7 +598,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0020",
@@ -421,7 +629,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -445,7 +653,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0021",
@@ -457,7 +684,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -481,7 +708,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0022",
@@ -493,7 +739,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -517,7 +763,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0023",
@@ -529,7 +794,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -554,7 +819,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "gestor_contrato",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0024",
@@ -566,7 +850,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -590,7 +874,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0025",
@@ -602,7 +905,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -626,7 +929,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0026",
@@ -638,7 +960,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -662,7 +984,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0027",
@@ -674,7 +1015,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -698,7 +1039,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0028",
@@ -710,7 +1070,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -734,7 +1094,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0029",
@@ -746,7 +1125,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -770,7 +1149,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0030",
@@ -782,7 +1180,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -806,7 +1204,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0031",
@@ -818,7 +1235,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -842,7 +1259,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0032",
@@ -854,7 +1290,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -879,7 +1315,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "gestor_contrato",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0033",
@@ -891,7 +1346,7 @@
       "consumer": "eventos_auditoria",
       "normativeExpectation": "Ação material deve produzir evento rastreável no escopo autorizado; verificar conteúdo e correlation/request ID nas fases 3–6.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/auditoriaDados.ts:33",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -916,7 +1371,28 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Vínculo autorizado A; leitura nova de evento correlacionado por auditor com escopo A.",
-      "negativeProposal": "Ator sem direito/escopo não lê evento ou grava efeito; ausência de payload e novo evento indevido."
+      "negativeProposal": "Ator sem direito/escopo não lê evento ou grava efeito; ausência de payload e novo evento indevido.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+          "supabase/migrations/20261105102019_v123_auditoria_capacidade.sql"
+        ],
+        "positive": {
+          "profile": "administrador",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/auditoriaDados.ts",
+        "authorizationDenial": "42501",
+        "applicability": "A RPC gera VinculoUsuarioAdministrativoSalvo e devolve o correlation_id do evento gravado.",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0034",
@@ -928,7 +1404,7 @@
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "normativeExpectation": "Vínculo/perfil/escopo e matriz RBAC devem refletir-se em permissões efetivas, sem conceder papel humano especializado ao MASTER.",
       "sourceReferences": "src/lib/administracao/admUsuariosRpc.ts:184;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "adm01",
       "priorImplementationReference": "src/test/f4-code-adm01-version-sync.test.ts",
@@ -953,7 +1429,26 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Confirmar vínculo/escopo A e autorização do consumidor real; verificar resposta ou efeito material em A.",
-      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável."
+      "negativeProposal": "Identidade restrita sem vínculo em B ou vínculo revogado; alcançar consumidor com ID/rota B, negar e comprovar ausência de dados/efeito; perfil insuficiente quando aplicável.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "administrador",
+          "assertion": "Vínculo ativo e versionado, com versão anterior, comando e leitura de retorno, seguidos do consumidor no escopo correto."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "consumer": "src/lib/administracao/rbacRpc.ts",
+        "authorizationDenial": "42501",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0036",
@@ -965,7 +1460,7 @@
       "consumer": "listar_organizacoes_disponiveis",
       "normativeExpectation": "Sessão autenticada e destino pós-login resolvido por organizações disponíveis.",
       "sourceReferences": "src/lib/auth/resolverDestinoPosLogin.ts:50;src/lib/auth/resolverDestinoPosLogin.ts:50",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "context",
       "priorImplementationReference": "src/test/f4-code-context-dashboard-sync.test.tsx",
@@ -989,7 +1484,23 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Identidade ativa U_A, lista e destino/consumidor de A; conferir dados e chamadas exatas.",
-      "negativeProposal": "Revogar sessão ou alternar U_A/U_B; nenhuma herança de preferência, cache ou dados A."
+      "negativeProposal": "Revogar sessão ou alternar U_A/U_B; nenhuma herança de preferência, cache ou dados A.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-context-session-isolation.test.tsx",
+        "adapter": "src/components/organizacao/OrganizationSelector.tsx",
+        "backendContracts": [
+          "supabase/migrations/20261102183243_admin_master_rpc_security_invoker.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Isolamento entre preferências, sessão e consultas reais do dashboard/seletor."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0037",
@@ -1001,7 +1512,7 @@
       "consumer": "obter_resumo_dashboard",
       "normativeExpectation": "Sessão autenticada e destino pós-login resolvido por organizações disponíveis.",
       "sourceReferences": "src/lib/auth/resolverDestinoPosLogin.ts:50;src/components/dashboard/Dashboard.tsx:70",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "context",
       "priorImplementationReference": "src/test/f4-code-context-dashboard-sync.test.tsx",
@@ -1025,7 +1536,23 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Identidade ativa U_A, lista e destino/consumidor de A; conferir dados e chamadas exatas.",
-      "negativeProposal": "Revogar sessão ou alternar U_A/U_B; nenhuma herança de preferência, cache ou dados A."
+      "negativeProposal": "Revogar sessão ou alternar U_A/U_B; nenhuma herança de preferência, cache ou dados A.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-context-session-isolation.test.tsx",
+        "adapter": "src/components/dashboard/Dashboard.tsx",
+        "backendContracts": [
+          "supabase/migrations/20261102114958_sys05_dashboard_summary.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Isolamento entre preferências, sessão e consultas reais do dashboard/seletor."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0041",
@@ -1037,7 +1564,7 @@
       "consumer": "consultar_permissoes_efetivas",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/administracao/rbacRpc.ts:144",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "actions",
       "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
@@ -1062,7 +1589,23 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "adapter": "src/lib/administracao/rbacRpc.ts",
+        "backendContracts": [
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "administrador",
+          "assertion": "Operação real e confirmação de material no escopo selecionado."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0043",
@@ -1074,7 +1617,7 @@
       "consumer": "obter_resumo_dashboard",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/components/dashboard/Dashboard.tsx:70",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "context",
       "priorImplementationReference": "src/test/f4-code-context-dashboard-sync.test.tsx",
@@ -1098,7 +1641,23 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-context-session-isolation.test.tsx",
+        "adapter": "src/components/dashboard/Dashboard.tsx",
+        "backendContracts": [
+          "supabase/migrations/20261102114958_sys05_dashboard_summary.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Isolamento entre preferências, sessão e consultas reais do dashboard/seletor."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0045",
@@ -1110,7 +1669,7 @@
       "consumer": "contratantes",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratantes/contratantesDados.ts:89",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "actions",
       "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
@@ -1134,7 +1693,24 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "adapter": "src/lib/contratantes/contratantesDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210030_0003b_acesso_contratos_rls.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Operação real e confirmação de material no escopo selecionado."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0046",
@@ -1146,7 +1722,7 @@
       "consumer": "contratantes",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratantes/novoContratanteDados.ts:148",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "actions",
       "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
@@ -1171,7 +1747,24 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "adapter": "src/lib/contratantes/novoContratanteDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210030_0003b_acesso_contratos_rls.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "gestor_contrato",
+          "assertion": "Operação real e confirmação de material no escopo selecionado."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0047",
@@ -1183,7 +1776,7 @@
       "consumer": "contratantes",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratantes/novoContratanteDados.ts:148",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "actions",
       "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
@@ -1208,7 +1801,24 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "adapter": "src/lib/contratantes/editarContratanteDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102163433_v103_editar_contratante_concorrencia_auditoria.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "gestor_contrato",
+          "assertion": "Operação real e confirmação de material no escopo selecionado."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0048",
@@ -1220,7 +1830,7 @@
       "consumer": "contratos",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/contratosDados.ts:41",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "actions",
       "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
@@ -1244,7 +1854,24 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "adapter": "src/lib/contratos/contratosDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210030_0003b_acesso_contratos_rls.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Operação real e confirmação de material no escopo selecionado."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0049",
@@ -1256,7 +1883,7 @@
       "consumer": "contratantes",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/novoContratoDados.ts:44",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "actions",
       "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
@@ -1281,7 +1908,25 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "adapter": "src/lib/contratos/novoContratoDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210017_0003_contratantes_contratos_core.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "gestor_contrato",
+          "assertion": "Operação real e confirmação de material no escopo selecionado."
+        },
+        "negative": {
+          "profile": "gestor_contrato",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "authorizationDenial": "23503 na associação composta id_contratante/id_organizacao; nenhum registro no readback.",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0050",
@@ -1706,7 +2351,7 @@
       "consumer": "criar_competencia",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/novaCompetenciaDados.ts:71",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "actions",
       "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
@@ -1731,7 +2376,24 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "adapter": "src/lib/contratos/novaCompetenciaDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101210948_0006_competencias_analise.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "gestor_contrato",
+          "assertion": "Operação real e confirmação de material no escopo selecionado."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0058",
@@ -2215,7 +2877,7 @@
       "consumer": "relatorios_historicos_contratante",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/contratos/historicoContratoDados.ts:160",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "actions",
       "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
@@ -2240,7 +2902,24 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "adapter": "src/lib/contratos/historicoContratoDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261101211039_0008_historico.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Operação real e confirmação de material no escopo selecionado."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0067",
@@ -2252,7 +2931,7 @@
       "consumer": "eventos_auditoria",
       "normativeExpectation": "Ação material deve produzir evento rastreável no escopo autorizado; verificar conteúdo e correlation/request ID nas fases 3–6.",
       "sourceReferences": "src/lib/organizacao/criarOrganizacaoDados.ts:35;src/lib/administracao/auditoriaDados.ts:33",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "actions",
       "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
@@ -2277,7 +2956,27 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Criar organização por identidade com competência confirmada e reler evento correlacionado por auditor autorizado.",
-      "negativeProposal": "Ator sem direito/escopo não lê evento ou grava efeito; ausência de payload e novo evento indevido."
+      "negativeProposal": "Ator sem direito/escopo não lê evento ou grava efeito; ausência de payload e novo evento indevido.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "adapter": "src/lib/organizacao/criarOrganizacaoDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261102053745_hardening_create_organization_active_session.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+          "supabase/migrations/20261101230710_0041_auth_onboarding_timezone_brasilia.sql",
+          "supabase/migrations/20261101205936_0002_identidade_organizacoes.sql"
+        ],
+        "positive": {
+          "profile": "leitor",
+          "assertion": "Operação real e confirmação de material no escopo selecionado."
+        },
+        "negative": {
+          "profile": "anon",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "applicability": "Criação autenticada gera OrganizacaoCriada e correlation_id. A chamada anônima não tem EXECUTE no wrapper.",
+        "live": "NOT_RUN"
+      }
     },
     {
       "caseId": "IFV1-F5-C0068",
@@ -2289,7 +2988,7 @@
       "consumer": "eventos_auditoria",
       "normativeExpectation": "id_organizacao selecionado é preferência de navegação, nunca autorização; consultas confirmam escopo backend.",
       "sourceReferences": "src/components/organizacao/OrganizationSelector.tsx:299;src/lib/administracao/auditoriaDados.ts:33",
-      "oracleStatus": "SEED_CATALOG_MATCHED_PENDING_FULL_CONTRACT_AND_MATERIAL_TEST",
+      "oracleStatus": "MATERIAL_CODE_FIXTURE_IMPLEMENTED",
       "proofState": "NOT_RUN",
       "batch": "actions",
       "priorImplementationReference": "src/test/f4-code-sys04-actions-context-sync.test.ts",
@@ -2314,7 +3013,24 @@
         "notEffectiveRuntime": true
       },
       "positiveProposal": "Selecionar B com vínculo válido; consumir fonte real em B e verificar identidade, conteúdo e contexto.",
-      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B."
+      "negativeProposal": "Ator vinculado apenas a A tenta B por preferência, ID, payload ou filtro; recusa material e nenhum efeito; resposta A tardia não deve contaminar B.",
+      "materialOracle": {
+        "testFile": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "adapter": "src/lib/administracao/auditoriaDados.ts",
+        "backendContracts": [
+          "supabase/migrations/20261105102019_v123_auditoria_capacidade.sql",
+          "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql"
+        ],
+        "positive": {
+          "profile": "administrador",
+          "assertion": "Operação real e confirmação de material no escopo selecionado."
+        },
+        "negative": {
+          "profile": "leitor",
+          "assertion": "Negação ou isolamento no consumidor real, sem exposição de dados de outro contexto ou mutação indevida."
+        },
+        "live": "NOT_RUN"
+      }
     }
   ],
   "normativeSource": {

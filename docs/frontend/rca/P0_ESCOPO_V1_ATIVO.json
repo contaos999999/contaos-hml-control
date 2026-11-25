@@ -3,7 +3,7 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "e0823b6f4b398c13cca430cb0130f4f5dd95f521",
+    "frontend_sha": "cb39a0b59addadceaacf75ed5bc4dc04534dcb57",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
@@ -21,6 +21,16 @@
       "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
       "versao": "V1",
       "justificativa": "SYS04: consultas reais de documentos, dados e histórico com escopo sintético."
+    },
+    {
+      "arquivo": "src/test/f5-code-sys04-actions-isolation.test.ts",
+      "versao": "V1",
+      "justificativa": "Operações de escrita, leitura e auditoria pela fronteira material de SYS04."
+    },
+    {
+      "arquivo": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+      "versao": "V1",
+      "justificativa": "25 casos de vínculo ADM01, permissão por rota e trilha de auditoria por correlação."
     }
   ],
   "itens": [
@@ -42,7 +52,8 @@
           "Zero-Drift da #778, run 45600835643, job 139159136439, HEAD a91fe529ca15b1ea410b0434504c4457f6b88b94, rejeitou o diff por ausência da ficha RCA.",
           "PLAN #779 e emenda #780 integrados. Readback P0_GOV_PLAN_778.json na main e0823b6f4b398c13cca430cb0130f4f5dd95f521, blob e9e1eb21988b528510d831243b981aa48555bbf1.",
           "Ficha e evidências históricas da Fase 4 preservadas no commit e0823b6f4b398c13cca430cb0130f4f5dd95f521.",
-          "Readback do artefato parcial 15040075703, run 45649961252 job 139331458010. SHA256SUMS verificado. O recibo usava o SHA do merge sintético 1d8a91f452153d6fe995ea1c2d3c75cef2ed5a65 no lugar do HEAD da PR d92b89c3446f93587a1b3a1b67855ea43e821ea2. O workflow passa a vincular checkout, HEAD vivo do run, tentativa e job antes de executar as provas."
+          "Readback do artefato parcial 15040075703, run 45649961252 job 139331458010. SHA256SUMS verificado. O recibo usava o SHA do merge sintético 1d8a91f452153d6fe995ea1c2d3c75cef2ed5a65 no lugar do HEAD da PR d92b89c3446f93587a1b3a1b67855ea43e821ea2. O workflow passa a vincular checkout, HEAD vivo do run, tentativa e job antes de executar as provas.",
+          "Emenda de revisão assistida #781 integrada em cb39a0b59addadceaacf75ed5bc4dc04534dcb57, revisão 6060955228. Reancoragem após conferência da main viva."
         ],
         "hipoteses_descartadas": [
           "A mesma cardinalidade pode conter IDs indevidos. A contagem por si só não demonstra a identidade das provas.",
@@ -54,7 +65,9 @@
           "Coletor de provas F5 CODE_FIXTURE",
           "Inventário F5.1 aprovado no PLAN #777",
           "Seletor de organização, preferência por identidade e consumidor real do dashboard",
-          "Oráculos de competência e dados, com consultas reais ao transporte sintético."
+          "Oráculos de competência e dados, com consultas reais ao transporte sintético.",
+          "Vínculo ADM01 e chaves de correlação da trilha de auditoria",
+          "Comandos de SYS04 e validação de associação contratual"
         ],
         "versoes_afetadas": ["V1"],
         "riscos": [
@@ -113,6 +126,18 @@
             "runner": "vitest",
             "arquivo": "src/test/f5-code-sys04-data-isolation.test.ts",
             "caso": "F5 SYS04 data isolation IFV1-F5-C0055 positive: scoped query returns only the selected tenant material"
+          },
+          {
+            "id": "GREEN-F5-C0033",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+            "caso": "F5 ADM01 authorization and isolation IFV1-F5-C0033 positive: persisted binding is reflected in its authorized consumer"
+          },
+          {
+            "id": "GREEN-F5-C0067",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-actions-isolation.test.ts",
+            "caso": "F5 SYS04 action isolation IFV1-F5-C0067 positive: authorized operation and scoped readback"
           }
         ],
         "negativos": [
@@ -157,6 +182,18 @@
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
             "caso": "F5 reject wrong execution job"
+          },
+          {
+            "id": "NEG-F5-C0023",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+            "caso": "F5 ADM01 authorization and isolation IFV1-F5-C0023 negative: another tenant cannot grant access or consume the protected result"
+          },
+          {
+            "id": "NEG-F5-C0049",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-sys04-actions-isolation.test.ts",
+            "caso": "F5 SYS04 action isolation IFV1-F5-C0049 negative: unauthorized operation has no material effect"
           }
         ],
         "regressao": [
@@ -180,7 +217,9 @@
         "arquivos": [
           "src/test/f5-code-context-session-isolation.test.tsx",
           "src/test/f5-code-sys04-competence-isolation.test.ts",
-          "src/test/f5-code-sys04-data-isolation.test.ts"
+          "src/test/f5-code-sys04-data-isolation.test.ts",
+          "src/test/f5-code-sys04-actions-isolation.test.ts",
+          "src/test/f5-code-adm01-rbac-isolation.test.tsx"
         ]
       }
     }

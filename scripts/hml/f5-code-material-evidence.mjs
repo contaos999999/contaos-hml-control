@@ -126,6 +126,32 @@ const readFrontiers = {
     "0065": "relatorios_historicos_contratante",
   },
 };
+const actionContracts = {
+  "0041": ["consultar_permissoes_efetivas", "read", "administrador"],
+  "0045": ["contratantes", "read", "leitor"],
+  "0046": ["contratantes", "create", "gestor_contrato"],
+  "0047": ["atualizar_contratante", "update", "gestor_contrato"],
+  "0048": ["contratos", "read", "leitor"],
+  "0049": ["contratos", "create", "gestor_contrato"],
+  "0057": ["criar_competencia", "create", "gestor_contrato"],
+  "0066": ["relatorios_historicos_contratante", "read", "leitor"],
+  "0067": ["criar_organizacao", "create", "leitor"],
+  "0068": ["eventos_auditoria", "read", "administrador"],
+};
+const inventory = JSON.parse(
+  fs.readFileSync(
+    new URL(
+      "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_1_CASE_CONTRACTS_PROPOSAL.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+const admContracts = new Map(
+  inventory.cases
+    .filter((c) => c.batch === "adm01")
+    .map((c) => [c.caseId.slice(-4), c.seedMatrixCandidate]),
+);
 const contextTitles = {
   "0005": [
     "authorized reader sees own dashboard",
@@ -167,7 +193,108 @@ const batchesWithEvidence = {
       ][index],
     check: (o, id) => checkRead("data", o, id),
   },
+  actions: {
+    file: "f5-code-sys04-actions-isolation.test.ts",
+    suite: "F5 SYS04 action isolation",
+    title: (_id, index) =>
+      ["authorized operation and scoped readback", "unauthorized operation has no material effect"][
+        index
+      ],
+    check: checkAction,
+  },
+  adm01: {
+    file: "f5-code-adm01-rbac-isolation.test.tsx",
+    suite: "F5 ADM01 authorization and isolation",
+    title: (_id, index) =>
+      [
+        "persisted binding is reflected in its authorized consumer",
+        "another tenant cannot grant access or consume the protected result",
+      ][index],
+    check: checkAdm,
+  },
 };
+function checkAction(o, id) {
+  const [frontier, operation, allowedRole] = actionContracts[id];
+  const positive = o.kind === "positive";
+  const anonymous = !positive && id === "0067";
+  const crossAssociation = !positive && id === "0049";
+  const role = positive
+    ? allowedRole
+    : anonymous
+      ? "anon"
+      : crossAssociation
+        ? "gestor_contrato"
+        : "leitor";
+  const tenant = positive ? A : anonymous ? null : B;
+  const actor = positive ? U : anonymous ? null : V;
+  if (
+    o.frontier !== frontier ||
+    o.operation !== operation ||
+    o.role !== role ||
+    o.target !== A ||
+    o.actor !== actor ||
+    o.tenant !== tenant ||
+    o.decision !== (positive ? "ALLOW" : "DENY")
+  )
+    fail("action actor/tenant/frontier mismatch");
+  const b = o.readback;
+  if (
+    b.selected !== tenant ||
+    b.foreignVisible !== false ||
+    !Array.isArray(b.operations) ||
+    !b.operations.includes(frontier)
+  )
+    fail("action context or material boundary mismatch");
+  if (positive) {
+    if (!uuid(b.materialId)) fail("action material identity missing");
+  } else if (
+    !uuid(b.ownMaterialId) ||
+    b.mutationCount !== 0 ||
+    b.status !== (crossAssociation ? 409 : 403) ||
+    b.code !== (crossAssociation ? "23503" : "42501")
+  ) {
+    fail("invalid action denial or effect");
+  }
+}
+function checkAdm(o, id) {
+  const canonical = admContracts.get(id);
+  if (!canonical) fail("missing ADM01 canonical contract");
+  const { resource, action, allowedProfiles } = canonical;
+  const positive = o.kind === "positive";
+  const frontier =
+    id === "0002"
+      ? "listar_organizacoes_disponiveis"
+      : id === "0033"
+        ? "eventos_auditoria"
+        : "consultar_permissoes_efetivas";
+  const allowedRole =
+    resource === "auditoria"
+      ? "administrador"
+      : action === "consultar"
+        ? "leitor"
+        : "gestor_contrato";
+  const decision = positive ? "ALLOW" : id === "0002" ? "ISOLATED" : "DENY";
+  if (
+    o.resource !== resource ||
+    o.operation !== action ||
+    o.frontier !== frontier ||
+    o.role !== (positive ? allowedRole : "leitor") ||
+    !allowedProfiles.includes(allowedRole) ||
+    o.actor !== (positive ? U : V) ||
+    o.tenant !== (positive ? A : B) ||
+    o.target !== A ||
+    o.decision !== decision
+  )
+    fail("ADM01 actor/tenant/permission mismatch");
+  const b = o.readback;
+  if (b.foreignVisible !== false) fail("ADM01 material exposed");
+  if (positive) {
+    if (b.bindingVersion !== 2 || !uuid(b.materialId) || !uuid(b.correlationId))
+      fail("ADM01 binding/readback identity missing");
+  } else if (b.status !== 403 || b.code !== "42501" || b.mutationCount !== 0) {
+    fail("invalid ADM01 denial or effect");
+  }
+}
 function checkRead(batch, o, id) {
   const positive = o.kind === "positive";
   const frontier = readFrontiers[batch][id];
@@ -226,6 +353,8 @@ function checkContext(o, id) {
   if (o.kind === "positive") {
     if (b.visible !== true || b.selected !== o.target || b.foreignVisible !== false)
       fail("positive readback mismatch");
+    if (id === "0005" && (b.bindingVersion !== 2 || !uuid(b.bindingCorrelationId)))
+      fail("dashboard binding not observed");
   } else {
     if (b.foreignVisible !== false || b.mutationCount !== 0) fail("negative leak/effect");
     if (
@@ -235,6 +364,8 @@ function checkContext(o, id) {
       fail("not an authorization denial");
     if (o.decision === "ISOLATED" && (b.isolationObserved !== true || b.oldCacheRendered !== false))
       fail("isolation not observed");
+    if (id === "0005" && (b.bindingStatus !== 403 || b.bindingCode !== "42501"))
+      fail("dashboard binding denial not observed");
   }
 }
 export function validateMaterial(batch, observations, report, identity) {

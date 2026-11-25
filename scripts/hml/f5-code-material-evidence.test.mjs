@@ -52,13 +52,21 @@ function fixture() {
     job: identity.job,
     readback:
       kind === "positive"
-        ? { visible: true, selected: target, foreignVisible: false }
+        ? {
+            visible: true,
+            selected: target,
+            foreignVisible: false,
+            bindingVersion: 2,
+            bindingCorrelationId: "a5000000-0000-4000-8000-000000000002",
+          }
         : {
             foreignVisible: false,
             mutationCount: 0,
             status: 403,
             code: "42501",
             denialRendered: true,
+            bindingStatus: 403,
+            bindingCode: "42501",
             isolationObserved: true,
             oldCacheRendered: false,
           },
@@ -159,7 +167,7 @@ test("F5 rejects an alternate source file with valid assertion names", () => {
   report.testResults[0].name = "/workspace/src/test/f4-code-context-session-isolation.test.tsx";
   assert.throws(() => validateMaterial("context", obs, report, identity), /file identity/);
 });
-test("F5 reject unknown or unimplemented batch", () => {
+test("F5 rejects an observation set from another batch", () => {
   const { obs, report } = fixture();
   assert.throws(() => validateMaterial("adm01", obs, report, identity));
   assert.throws(() => validateMaterial("bad", obs, report, identity));
