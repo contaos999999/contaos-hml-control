@@ -680,7 +680,7 @@ describe("F4.2 contract persistence, version evolution, replay and consumer read
       expect(list.itens).toHaveLength(1);
       expect(list.itens[0]).toMatchObject({id:ID,id_organizacao:ORG,id_contratante:PARTY});
       const row=await detail();
-      expect(row.objeto).toBe(cadastro.registro.objeto);
+      expect(row.objeto).toBe(cadastro.registro["objeto"]);
       return {cadastro:cadastro.registro,list,row};
     };
     it(c.caseId+" positive: two versioned updates and fresh consumer persistence",async()=>{
