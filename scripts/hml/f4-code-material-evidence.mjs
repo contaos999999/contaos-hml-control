@@ -1,0 +1,63 @@
+/**
+ * Partial F4 CODE receipt. Verifies exact canonical batch identity, never
+ * promotes a phase certificate or attests HML/PROD.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ADM01 = [
+  "0002", "0007", "0009", "0011", "0012", "0014", "0016", "0017", "0018", "0019",
+  "0020", "0021", "0022", "0023", "0024", "0025", "0026", "0027", "0028", "0029",
+  "0030", "0031", "0032", "0033", "0034",
+].map((id) => "IFV1-F4-C" + id);
+const CONTEXT = ["0005", "0036", "0037", "0043"].map((id) => "IFV1-F4-C" + id);
+const BATCHES = Object.freeze({ adm01: Object.freeze(ADM01), context: Object.freeze(CONTEXT) });
+
+export function validateMaterial(batch, observations, report) {
+  const expected = BATCHES[batch];
+  if (!expected) throw Error("unknown batch");
+  const count = expected.length * 2;
+  const keys = new Set(expected.flatMap((id) => ["positive", "negative"].map((kind) => id + ":" + kind)));
+  if (!Array.isArray(observations) || observations.length !== count) throw Error("incomplete observations");
+  const observed = new Set();
+  for (const o of observations) {
+    const k = o?.caseId + ":" + o?.kind;
+    if (!keys.has(k) || observed.has(k) || o?.mode !== "CODE_FIXTURE" ||
+        !o.readback || typeof o.readback !== "object" || Array.isArray(o.readback) ||
+        Object.keys(o.readback).length === 0) throw Error("noncanonical, duplicate or invalid observation: " + k);
+    observed.add(k);
+  }
+  if (observed.size !== keys.size) throw Error("missing canonical observation");
+  if (report?.numPassedTests !== count || report.numTotalTests !== count ||
+      report.numFailedTests !== 0 || report.numPendingTests !== 0 || report.success !== true ||
+      !Array.isArray(report.testResults)) throw Error("test execution incomplete");
+  const assertions = report.testResults.flatMap((r) => Array.isArray(r?.assertionResults) ? r.assertionResults : []);
+  if (assertions.length !== count) throw Error("assertion count mismatch");
+  const tested = new Set();
+  for (const t of assertions) {
+    const match = /^(IFV1-F4-C\d{4}) (positive|negative): .+/.exec(t?.title ?? "");
+    const k = match ? match[1] + ":" + match[2] : "";
+    if (t?.status !== "passed" || !keys.has(k) || tested.has(k)) throw Error("noncanonical, duplicate or nonexecuted test: " + k);
+    tested.add(k);
+  }
+  if (tested.size !== keys.size) throw Error("missing named test");
+  return { covered: expected.length, proofs: count, caseIds: [...expected] };
+}
+
+function main() {
+  const [flag, batch] = process.argv.slice(2);
+  if (flag !== "--batch" || !BATCHES[batch]) throw Error("usage: --batch adm01|context");
+  const d = process.env.F4_CODE_OUTPUT_DIR || "artifacts/f4-code";
+  const sha = process.env.GITHUB_SHA ?? "";
+  const run = process.env.GITHUB_RUN_ID ?? "";
+  const attempt = process.env.GITHUB_RUN_ATTEMPT ?? "";
+  const job = process.env.JOB_ID ?? "";
+  if (!/^[a-f0-9]{40}$/.test(sha) || [run, attempt, job].some((x) => !/^[1-9]\d*$/.test(x))) throw Error("missing execution identity");
+  const result = validateMaterial(batch, JSON.parse(fs.readFileSync(path.join(d, "observations.json"), "utf8")), JSON.parse(fs.readFileSync(path.join(d, "vitest.json"), "utf8")));
+  const receipt = { schema: "contaos.ifv1.f4.material-partial.v1", scope: batch.toUpperCase() + "_CODE_FIXTURE", sha, run, attempt, job, ...result, phaseTotal: 138, certification: "NOT_CERTIFIED" };
+  fs.writeFileSync(path.join(d, "receipt.json"), JSON.stringify(receipt, null, 2) + "\n", { flag: "wx" });
+  console.log(JSON.stringify(receipt));
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
