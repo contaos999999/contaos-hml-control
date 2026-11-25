@@ -69,20 +69,32 @@ describe("F3 CODE C0045: preferência alimenta V101, mas autorização vem da Da
     expect(selected).toBe(ORG);
     expect(obterPreferenciaOrganizacao("outro-usuario")).toBeNull();
     m.handlers.organizacoes = () => ({
-      data: { id: ORG }, error: null, status: 200,
+      data: { id: ORG },
+      error: null,
+      status: 200,
     });
     m.handlers.contratantes = () => ({
-      data: [{
-        id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
-        razao_social: "Contratante F3", nome_fantasia: null,
-        documento: null, tipo_pessoa: "juridica",
-        situacao: "ativo", atualizado_em: null,
-      }],
-      count: 1, error: null, status: 200,
+      data: [
+        {
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          razao_social: "Contratante F3",
+          nome_fantasia: null,
+          documento: null,
+          tipo_pessoa: "juridica",
+          situacao: "ativo",
+          atualizado_em: null,
+        },
+      ],
+      count: 1,
+      error: null,
+      status: 200,
     });
     await expect(verificarAcessoOrganizacao(selected!)).resolves.toBe(true);
     const result = await listarContratantes({
-      idOrganizacao: selected!, pagina: 1, busca: "", situacao: "todos",
+      idOrganizacao: selected!,
+      pagina: 1,
+      busca: "",
+      situacao: "todos",
     });
     expect(result.total).toBe(1);
     expect(result.itens[0]?.razao_social).toBe("Contratante F3");
@@ -99,8 +111,10 @@ describe("F3 CODE C0045: preferência alimenta V101, mas autorização vem da Da
       producerOrder: 3,
       kind: "positive",
       testId: "src/test/f3-code-case-0045.test.ts:positive",
-      state: "EXECUTED", assertion: "PASS",
-      organizationId: ORG, producerEntityId: ORG,
+      state: "EXECUTED",
+      assertion: "PASS",
+      organizationId: ORG,
+      producerEntityId: ORG,
       network: { method: "GET", status: 200, table: CONSUMER, fixture: true },
       readback: { matched: true, isolatedOrgId: ORG, count: 1 },
     });
@@ -110,7 +124,9 @@ describe("F3 CODE C0045: preferência alimenta V101, mas autorização vem da Da
     definirPreferenciaOrganizacao(USER, ORG);
     expect(obterPreferenciaOrganizacao("outro-usuario")).toBeNull();
     m.handlers.organizacoes = () => ({
-      data: null, error: { code: "42501", message: "Negado" }, status: 403,
+      data: null,
+      error: { code: "42501", message: "Negado" },
+      status: 403,
     });
     await expect(verificarAcessoOrganizacao(FOREIGN)).rejects.toMatchObject({
       tipo: "negado",
@@ -123,8 +139,10 @@ describe("F3 CODE C0045: preferência alimenta V101, mas autorização vem da Da
       producerOrder: 3,
       kind: "negative",
       testId: "src/test/f3-code-case-0045.test.ts:negative",
-      state: "EXECUTED", assertion: "PASS",
-      organizationId: ORG, producerEntityId: ORG,
+      state: "EXECUTED",
+      assertion: "PASS",
+      organizationId: ORG,
+      producerEntityId: ORG,
       network: { method: "GET", status: 403, table: CONSUMER, fixture: true },
       readback: { outcome: "DENY", foreignOrgId: FOREIGN, noForeignRows: true },
     });

@@ -13,7 +13,9 @@ const m = vi.hoisted(() => ({
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    rpc: vi.fn(() => { throw new Error("unexpected RPC"); }),
+    rpc: vi.fn(() => {
+      throw new Error("unexpected RPC");
+    }),
     from: (table: string) => {
       const call: Call = { table, ops: [] };
       m.calls.push(call);
@@ -34,7 +36,10 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
-import { definirPreferenciaOrganizacao, obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
+import {
+  definirPreferenciaOrganizacao,
+  obterPreferenciaOrganizacao,
+} from "@/lib/organizacao/preferenciaOrganizacao";
 import { listarContratos } from "@/lib/contratos/contratosDados";
 import { listarFontes, COLUNAS_FONTE } from "@/lib/contratos/baseNormativaDados";
 
@@ -44,7 +49,8 @@ const ORG = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const CONTRACT = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 const ROW = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const observations: Record<string, unknown>[] = [];
-const ops = (call: Call, name: string) => call.ops.filter(([op]) => op === name).map(([, args]) => args);
+const ops = (call: Call, name: string) =>
+  call.ops.filter(([op]) => op === name).map(([, args]) => args);
 
 async function selectContract(user: string) {
   definirPreferenciaOrganizacao(user, ORG);
@@ -56,7 +62,7 @@ async function selectContract(user: string) {
   const contract = result.itens[0];
   expect(contract.id_organizacao).toBe(org);
   expect(ops(m.calls.at(-1)!, "eq")).toEqual([["id_organizacao", org]]);
-  return {org, id: contract.id};
+  return { org, id: contract.id };
 }
 
 async function readConsumer(org: string, id: string) {
@@ -67,8 +73,14 @@ function checkConsumer(org: string, id: string) {
   const call = m.calls.at(-1)!;
   expect(call.table).toBe(CONSUMER);
   expect(ops(call, "select")).toEqual([[COLUNAS_FONTE, { count: "exact" }]]);
-  expect(ops(call, "eq")).toEqual([["id_organizacao", org], ["id_contrato", id]]);
-  expect(ops(call, "order")).toEqual([["titulo", { ascending: true }], ["id", { ascending: true }]]);
+  expect(ops(call, "eq")).toEqual([
+    ["id_organizacao", org],
+    ["id_contrato", id],
+  ]);
+  expect(ops(call, "order")).toEqual([
+    ["titulo", { ascending: true }],
+    ["id", { ascending: true }],
+  ]);
   expect(ops(call, "range")).toEqual([[0, 24]]);
 }
 
@@ -77,51 +89,86 @@ describe("F3 CODE C0051: preference, linked contract and fontes_normativas", () 
     sessionStorage.clear();
     m.calls.length = 0;
     m.responses.clear();
-    m.responses.set("contratos", {data: [{id: CONTRACT, id_organizacao: ORG}], error: null, status: 200, count: 1});
+    m.responses.set("contratos", {
+      data: [{ id: CONTRACT, id_organizacao: ORG }],
+      error: null,
+      status: 200,
+      count: 1,
+    });
   });
 
   it("positive: both local authorized identities query the selected contract", async () => {
-    m.responses.set(CONSUMER, {data: [{id: ROW, id_organizacao: ORG, id_contrato: CONTRACT, titulo: "Fonte F3", situacao: "ativa"}], error: null, status: 200, count: 1});
+    m.responses.set(CONSUMER, {
+      data: [
+        {
+          id: ROW,
+          id_organizacao: ORG,
+          id_contrato: CONTRACT,
+          titulo: "Fonte F3",
+          situacao: "ativa",
+        },
+      ],
+      error: null,
+      status: 200,
+      count: 1,
+    });
     const users = ["f3-master", "f3-leitor"];
     for (const user of users) {
-      const {org, id} = await selectContract(user);
+      const { org, id } = await selectContract(user);
       const result = await readConsumer(org, id);
       expect(result.itens).toHaveLength(1);
       expect(result.itens[0].id).toBe(ROW);
       expect(result.total).toBe(1);
       checkConsumer(org, id);
     }
-    expect(m.calls.map(c => c.table)).toEqual(["contratos", CONSUMER, "contratos", CONSUMER]);
+    expect(m.calls.map((c) => c.table)).toEqual(["contratos", CONSUMER, "contratos", CONSUMER]);
     observations.push({
-      caseId: CASE_ID, consumer: CONSUMER, producerOrder: 3, kind: "positive",
+      caseId: CASE_ID,
+      consumer: CONSUMER,
+      producerOrder: 3,
+      kind: "positive",
       testId: "src/test/f3-code-case-0051.test.ts:positive",
-      state: "EXECUTED", assertion: "PASS", organizationId: ORG, producerEntityId: ORG,
-      network: {method: "GET", status: 200, table: CONSUMER, fixture: true},
-      readback: {matched: true, contractId: CONTRACT, rowId: ROW, authorizedLocalIdentities: users.length},
+      state: "EXECUTED",
+      assertion: "PASS",
+      organizationId: ORG,
+      producerEntityId: ORG,
+      network: { method: "GET", status: 200, table: CONSUMER, fixture: true },
+      readback: {
+        matched: true,
+        contractId: CONTRACT,
+        rowId: ROW,
+        authorizedLocalIdentities: users.length,
+      },
     });
   });
 
   it("negative: stale organization preference cannot override a denied consumer response", async () => {
-    const {org, id} = await selectContract("f3-outsider");
+    const { org, id } = await selectContract("f3-outsider");
     expect(obterPreferenciaOrganizacao("unrelated-user")).toBeNull();
-    m.responses.set(CONSUMER, {data: null, error: {code: "42501"}, status: 403});
-    await expect(readConsumer(org, id)).rejects.toMatchObject({tipo: "negado"});
+    m.responses.set(CONSUMER, { data: null, error: { code: "42501" }, status: 403 });
+    await expect(readConsumer(org, id)).rejects.toMatchObject({ tipo: "negado" });
     checkConsumer(org, id);
-    expect(m.calls.map(c => c.table)).toEqual(["contratos", CONSUMER]);
+    expect(m.calls.map((c) => c.table)).toEqual(["contratos", CONSUMER]);
     observations.push({
-      caseId: CASE_ID, consumer: CONSUMER, producerOrder: 3, kind: "negative",
+      caseId: CASE_ID,
+      consumer: CONSUMER,
+      producerOrder: 3,
+      kind: "negative",
       testId: "src/test/f3-code-case-0051.test.ts:negative",
-      state: "EXECUTED", assertion: "PASS", organizationId: ORG, producerEntityId: ORG,
-      network: {method: "GET", status: 403, table: CONSUMER, fixture: true},
-      readback: {outcome: "DENY", contractId: CONTRACT, preferenceNotAuthorization: true},
+      state: "EXECUTED",
+      assertion: "PASS",
+      organizationId: ORG,
+      producerEntityId: ORG,
+      network: { method: "GET", status: 403, table: CONSUMER, fixture: true },
+      readback: { outcome: "DENY", contractId: CONTRACT, preferenceNotAuthorization: true },
     });
   });
 
   afterAll(() => {
     const target = process.env.F3_CODE_C0051_OBSERVATIONS;
     if (target) {
-      expect(observations.map(o => o.kind)).toEqual(["positive", "negative"]);
-      writeFileSync(target, JSON.stringify(observations) + "\n", {flag: "wx"});
+      expect(observations.map((o) => o.kind)).toEqual(["positive", "negative"]);
+      writeFileSync(target, JSON.stringify(observations) + "\n", { flag: "wx" });
     }
   });
 });

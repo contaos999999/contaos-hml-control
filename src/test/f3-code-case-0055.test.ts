@@ -13,7 +13,9 @@ const m = vi.hoisted(() => ({
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    rpc: vi.fn(() => { throw new Error("unexpected RPC"); }),
+    rpc: vi.fn(() => {
+      throw new Error("unexpected RPC");
+    }),
     from: (table: string) => {
       const call: Call = { table, ops: [] };
       m.calls.push(call);
@@ -34,19 +36,28 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
-import { definirPreferenciaOrganizacao, obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
+import {
+  definirPreferenciaOrganizacao,
+  obterPreferenciaOrganizacao,
+} from "@/lib/organizacao/preferenciaOrganizacao";
 import { listarContratos } from "@/lib/contratos/contratosDados";
-import { listarDocumentos, obterResumos, COLUNAS_DOCUMENTO, FILTROS_VAZIOS } from "@/lib/contratos/documentosDados";
+import {
+  listarDocumentos,
+  obterResumos,
+  COLUNAS_DOCUMENTO,
+  FILTROS_VAZIOS,
+} from "@/lib/contratos/documentosDados";
 
 const CASE_ID = "IFV1-F3-C0055";
 const CONSUMER = "documentos_contrato";
 const ORG = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const CONTRACT = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 const ROW = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
-const VERSION="b1111111-1111-4111-8111-111111111111";
-const FILE="b2222222-2222-4222-8222-222222222222";
+const VERSION = "b1111111-1111-4111-8111-111111111111";
+const FILE = "b2222222-2222-4222-8222-222222222222";
 const observations: Record<string, unknown>[] = [];
-const ops = (call: Call, name: string) => call.ops.filter(([op]) => op === name).map(([, args]) => args);
+const ops = (call: Call, name: string) =>
+  call.ops.filter(([op]) => op === name).map(([, args]) => args);
 
 async function selectContract(user: string) {
   definirPreferenciaOrganizacao(user, ORG);
@@ -58,7 +69,7 @@ async function selectContract(user: string) {
   const contract = result.itens[0];
   expect(contract.id_organizacao).toBe(org);
   expect(ops(m.calls.at(-1)!, "eq")).toEqual([["id_organizacao", org]]);
-  return {org, id: contract.id};
+  return { org, id: contract.id };
 }
 
 async function readConsumer(org: string, id: string) {
@@ -70,7 +81,10 @@ function checkConsumer(org: string, id: string) {
   expect(call.table).toBe(CONSUMER);
   expect(ops(call, "select")).toEqual([[COLUNAS_DOCUMENTO, { count: "exact" }]]);
   expect(ops(call, "eq")).toEqual([["id_contrato", id]]);
-  expect(ops(call, "order")).toEqual([["atualizado_em", { ascending: false }], ["id", { ascending: false }]]);
+  expect(ops(call, "order")).toEqual([
+    ["atualizado_em", { ascending: false }],
+    ["id", { ascending: false }],
+  ]);
   expect(ops(call, "range")).toEqual([[0, 24]]);
 }
 
@@ -79,65 +93,127 @@ describe("F3 CODE C0055: preference, linked contract and documentos_contrato", (
     sessionStorage.clear();
     m.calls.length = 0;
     m.responses.clear();
-    m.responses.set("contratos", {data: [{id: CONTRACT, id_organizacao: ORG}], error: null, status: 200, count: 1});
+    m.responses.set("contratos", {
+      data: [{ id: CONTRACT, id_organizacao: ORG }],
+      error: null,
+      status: 200,
+      count: 1,
+    });
   });
 
   it("positive: both local authorized identities query the selected contract", async () => {
-    m.responses.set(CONSUMER, {data: [{id: ROW, id_contrato: CONTRACT, titulo: "Documento F3", tipo: "contrato", versao_atual: 2}], error: null, status: 200, count: 1});
-    m.responses.set("versoes_documento",{data:[{id:VERSION,id_documento_contrato:ROW,numero_versao:2,id_arquivo:FILE}],error:null,status:200});
-    m.responses.set("arquivos",{data:[{id:FILE,status_seguranca:"aprovado"}],error:null,status:200});
-    for(const table of ["processamentos_documento","sugestoes_extracao_documento"])m.responses.set(table,{data:[],error:null,status:200});
+    m.responses.set(CONSUMER, {
+      data: [
+        {
+          id: ROW,
+          id_contrato: CONTRACT,
+          titulo: "Documento F3",
+          tipo: "contrato",
+          versao_atual: 2,
+        },
+      ],
+      error: null,
+      status: 200,
+      count: 1,
+    });
+    m.responses.set("versoes_documento", {
+      data: [{ id: VERSION, id_documento_contrato: ROW, numero_versao: 2, id_arquivo: FILE }],
+      error: null,
+      status: 200,
+    });
+    m.responses.set("arquivos", {
+      data: [{ id: FILE, status_seguranca: "aprovado" }],
+      error: null,
+      status: 200,
+    });
+    for (const table of ["processamentos_documento", "sugestoes_extracao_documento"])
+      m.responses.set(table, { data: [], error: null, status: 200 });
     const users = ["f3-master", "f3-leitor"];
     for (const user of users) {
-      const {org, id} = await selectContract(user);
+      const { org, id } = await selectContract(user);
       const result = await readConsumer(org, id);
       expect(result.itens).toHaveLength(1);
       expect(result.itens[0].id).toBe(ROW);
       expect(result.itens[0].id_contrato).toBe(id);
       expect(result.total).toBe(1);
       checkConsumer(org, id);
-      const summary=await obterResumos(result.itens);
-      expect(summary[ROW].versao).toMatchObject({id:VERSION,numero_versao:2,id_arquivo:FILE});
-      expect(summary[ROW].arquivo).toMatchObject({id:FILE,status_seguranca:"aprovado"});
-      const query=m.calls.findLast(c=>c.table==="versoes_documento")!;
-      expect(ops(query,"or")).toEqual([["and(id_documento_contrato.eq."+ROW+",numero_versao.eq.2)"]]);
+      const summary = await obterResumos(result.itens);
+      expect(summary[ROW].versao).toMatchObject({
+        id: VERSION,
+        numero_versao: 2,
+        id_arquivo: FILE,
+      });
+      expect(summary[ROW].arquivo).toMatchObject({ id: FILE, status_seguranca: "aprovado" });
+      const query = m.calls.findLast((c) => c.table === "versoes_documento")!;
+      expect(ops(query, "or")).toEqual([
+        ["and(id_documento_contrato.eq." + ROW + ",numero_versao.eq.2)"],
+      ]);
     }
-    expect(m.calls.filter(c=>c.table==="versoes_documento")).toHaveLength(2);
+    expect(m.calls.filter((c) => c.table === "versoes_documento")).toHaveLength(2);
     observations.push({
-      caseId: CASE_ID, consumer: CONSUMER, producerOrder: 3, kind: "positive",
+      caseId: CASE_ID,
+      consumer: CONSUMER,
+      producerOrder: 3,
+      kind: "positive",
       testId: "src/test/f3-code-case-0055.test.ts:positive",
-      state: "EXECUTED", assertion: "PASS", organizationId: ORG, producerEntityId: ORG,
-      network: {method: "GET", status: 200, table: CONSUMER, fixture: true},
-      readback: {matched: true, contractId: CONTRACT, rowId: ROW, versionId: VERSION, fileId: FILE, authorizedLocalIdentities: users.length},
+      state: "EXECUTED",
+      assertion: "PASS",
+      organizationId: ORG,
+      producerEntityId: ORG,
+      network: { method: "GET", status: 200, table: CONSUMER, fixture: true },
+      readback: {
+        matched: true,
+        contractId: CONTRACT,
+        rowId: ROW,
+        versionId: VERSION,
+        fileId: FILE,
+        authorizedLocalIdentities: users.length,
+      },
     });
   });
 
   it("negative: stale organization preference cannot override a denied consumer response", async () => {
-    const {org, id} = await selectContract("f3-outsider");
+    const { org, id } = await selectContract("f3-outsider");
     expect(obterPreferenciaOrganizacao("unrelated-user")).toBeNull();
-    m.responses.set(CONSUMER, {data: null, error: {code: "42501"}, status: 403});
-    await expect(readConsumer(org, id)).rejects.toMatchObject({tipo: "negado"});
+    m.responses.set(CONSUMER, { data: null, error: { code: "42501" }, status: 403 });
+    await expect(readConsumer(org, id)).rejects.toMatchObject({ tipo: "negado" });
     checkConsumer(org, id);
-    expect(m.calls.map(c => c.table)).toEqual(["contratos", CONSUMER]);
-    m.responses.set(CONSUMER,{data:[{id:ROW,id_contrato:CONTRACT,versao_atual:2}],error:null,status:200,count:1});
-    const page=await readConsumer(org,id);
-    m.responses.set("versoes_documento",{data:null,error:{code:"42501"},status:403});
-    await expect(obterResumos(page.itens)).rejects.toMatchObject({tipo:"negado"});
+    expect(m.calls.map((c) => c.table)).toEqual(["contratos", CONSUMER]);
+    m.responses.set(CONSUMER, {
+      data: [{ id: ROW, id_contrato: CONTRACT, versao_atual: 2 }],
+      error: null,
+      status: 200,
+      count: 1,
+    });
+    const page = await readConsumer(org, id);
+    m.responses.set("versoes_documento", { data: null, error: { code: "42501" }, status: 403 });
+    await expect(obterResumos(page.itens)).rejects.toMatchObject({ tipo: "negado" });
     expect(m.calls.at(-1)?.table).toBe("versoes_documento");
     observations.push({
-      caseId: CASE_ID, consumer: CONSUMER, producerOrder: 3, kind: "negative",
+      caseId: CASE_ID,
+      consumer: CONSUMER,
+      producerOrder: 3,
+      kind: "negative",
       testId: "src/test/f3-code-case-0055.test.ts:negative",
-      state: "EXECUTED", assertion: "PASS", organizationId: ORG, producerEntityId: ORG,
-      network: {method: "GET", status: 403, table: CONSUMER, fixture: true},
-      readback: {outcome: "DENY", contractId: CONTRACT, preferenceNotAuthorization: true, versionDenied: true},
+      state: "EXECUTED",
+      assertion: "PASS",
+      organizationId: ORG,
+      producerEntityId: ORG,
+      network: { method: "GET", status: 403, table: CONSUMER, fixture: true },
+      readback: {
+        outcome: "DENY",
+        contractId: CONTRACT,
+        preferenceNotAuthorization: true,
+        versionDenied: true,
+      },
     });
   });
 
   afterAll(() => {
     const target = process.env.F3_CODE_C0055_OBSERVATIONS;
     if (target) {
-      expect(observations.map(o => o.kind)).toEqual(["positive", "negative"]);
-      writeFileSync(target, JSON.stringify(observations) + "\n", {flag: "wx"});
+      expect(observations.map((o) => o.kind)).toEqual(["positive", "negative"]);
+      writeFileSync(target, JSON.stringify(observations) + "\n", { flag: "wx" });
     }
   });
 });

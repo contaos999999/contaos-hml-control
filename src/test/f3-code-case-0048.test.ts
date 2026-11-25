@@ -33,10 +33,7 @@ import {
   definirPreferenciaOrganizacao,
   obterPreferenciaOrganizacao,
 } from "@/lib/organizacao/preferenciaOrganizacao";
-import {
-  listarContratos,
-  COLUNAS_CONTRATO,
-} from "@/lib/contratos/contratosDados";
+import { listarContratos, COLUNAS_CONTRATO } from "@/lib/contratos/contratosDados";
 
 const CASE_ID = "IFV1-F3-C0048";
 const CONSUMER = "contratos";
@@ -57,14 +54,22 @@ describe("F3 CODE C0048: consulta de contratos filtrada pela preferência", () =
     const org = obterPreferenciaOrganizacao(USER);
     expect(org).toBe(ORG);
     m.response = {
-      data: [{
-        id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
-        id_organizacao: ORG,
-        numero: "F3-001",
-        objeto: "Teste integracao", situacao: "ativo",
-        criticidade: "baixa", inicio: null, fim: null, valor_global: 100,
-      }],
-      error: null, status: 200, count: 1,
+      data: [
+        {
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          id_organizacao: ORG,
+          numero: "F3-001",
+          objeto: "Teste integracao",
+          situacao: "ativo",
+          criticidade: "baixa",
+          inicio: null,
+          fim: null,
+          valor_global: 100,
+        },
+      ],
+      error: null,
+      status: 200,
+      count: 1,
     };
     const result = await listarContratos({ idOrganizacao: org!, pagina: 1 });
     expect(result.itens).toHaveLength(1);
@@ -75,12 +80,18 @@ describe("F3 CODE C0048: consulta de contratos filtrada pela preferência", () =
     expect(operations("eq")).toEqual([["id_organizacao", ORG]]);
     expect(operations("range")).toEqual([[0, 24]]);
     expect(operations("order")).toEqual([
-      ["numero", { ascending: true }], ["id", { ascending: true }],
+      ["numero", { ascending: true }],
+      ["id", { ascending: true }],
     ]);
     observations.push({
-      caseId: CASE_ID, consumer: CONSUMER, producerOrder: 3,
-      kind: "positive", testId: "src/test/f3-code-case-0048.test.ts:positive",
-      state: "EXECUTED", assertion: "PASS", organizationId: ORG,
+      caseId: CASE_ID,
+      consumer: CONSUMER,
+      producerOrder: 3,
+      kind: "positive",
+      testId: "src/test/f3-code-case-0048.test.ts:positive",
+      state: "EXECUTED",
+      assertion: "PASS",
+      organizationId: ORG,
       producerEntityId: ORG,
       network: { method: "GET", status: 200, table: CONSUMER, fixture: true },
       readback: { matched: true, filteredOrganization: ORG, contractCount: 1 },
@@ -92,7 +103,9 @@ describe("F3 CODE C0048: consulta de contratos filtrada pela preferência", () =
     expect(org).toBe(ORG);
     expect(obterPreferenciaOrganizacao("usuario-externo")).toBeNull();
     m.response = {
-      data: null, error: { code: "42501", message: "Negado" }, status: 403,
+      data: null,
+      error: { code: "42501", message: "Negado" },
+      status: 403,
     };
     await expect(listarContratos({ idOrganizacao: org!, pagina: 1 })).rejects.toMatchObject({
       tipo: "negado",
@@ -100,9 +113,14 @@ describe("F3 CODE C0048: consulta de contratos filtrada pela preferência", () =
     expect(m.calls.map((call) => call.table)).toEqual(["contratos"]);
     expect(operations("eq")).toEqual([["id_organizacao", ORG]]);
     observations.push({
-      caseId: CASE_ID, consumer: CONSUMER, producerOrder: 3,
-      kind: "negative", testId: "src/test/f3-code-case-0048.test.ts:negative",
-      state: "EXECUTED", assertion: "PASS", organizationId: ORG,
+      caseId: CASE_ID,
+      consumer: CONSUMER,
+      producerOrder: 3,
+      kind: "negative",
+      testId: "src/test/f3-code-case-0048.test.ts:negative",
+      state: "EXECUTED",
+      assertion: "PASS",
+      organizationId: ORG,
       producerEntityId: ORG,
       network: { method: "GET", status: 403, table: CONSUMER, fixture: true },
       readback: { outcome: "DENY", preferenceNotAuthorization: true },
