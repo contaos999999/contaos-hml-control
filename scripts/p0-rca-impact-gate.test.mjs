@@ -701,3 +701,21 @@ test("P0 RCA NR003: nome legitimo parecido com arquivo exige teste real sem zero
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+
+test("F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 producers", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const catalogue = JSON.parse(await readFile(new URL("../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json", import.meta.url), "utf8"));
+  assert.equal(catalogue.cases.length, 138);
+  assert.equal(new Set(catalogue.cases.map(c => c.caseId)).size, 138);
+  const executor = await import("./hml/integracao-v1-fase3-functional-138.mjs");
+  const drivers = await import("./hml/f3-code-functional-drivers.mjs");
+  assert.equal(typeof executor.executeF3Functional138, "function");
+  assert.equal(typeof executor.validateF3AutomaticGate, "function");
+  assert.equal(Object.keys(drivers.producerDrivers).length, 20);
+  for (const c of catalogue.cases) {
+    assert.equal(typeof drivers.producerDrivers[c.producerOrder], "function", c.caseId);
+    assert.equal(typeof drivers.consumerDrivers[c.consumer], "function", c.caseId);
+    assert.equal(typeof drivers.negativeDrivers[c.consumer], "function", c.caseId);
+  }
+});
