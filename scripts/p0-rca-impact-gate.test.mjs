@@ -724,3 +724,6 @@ test("F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 produ
     assert.equal(typeof drivers.negativeDrivers[c.consumer], "function", c.caseId);
   }
 });
+
+// RED/GREEN F4: exercita o verificador de identidade realmente usado no CI.
+import "./hml/f4-code-material-evidence.test.mjs";
