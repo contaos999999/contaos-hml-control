@@ -1,0 +1,38 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 756,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Validar a promoção do ledger CODE F3 a partir do artefato real da PR #754, preservando a matriz e ledger histórico; nenhuma aprovação por contador, edição manual ou fixture de comportamento essencial.",
+  "files": [
+    "scripts/hml/integracao-v1-fase3-code-promotion.mjs",
+    "scripts/hml/integracao-v1-fase3-code-promotion.test.mjs",
+    ".github/workflows/contaos-f3-code-promotion.yml"
+  ],
+  "source_pr": 754,
+  "source_head": "b26ece8c0b03485aeeb7091aaed548ec284986cd",
+  "source_merge": "a162574386e752d3f9b928dbf8e3296d3a62255b",
+  "baseline_main": "a162574386e752d3f9b928dbf8e3296d3a62255b",
+  "candidate": {
+    "run": 45530510437,
+    "job": 138924335258,
+    "artifact": 14985165418,
+    "sha256": "de6fdd18468868fc163574fccda016322a2eb7e412bb984a0212fb783c770c06"
+  },
+  "authorization": "Titular determinou execução integral da certificação F3; eficácia após CI, revisão e merge deste PLAN documental.",
+  "acceptance": [
+    "Conferir metadados GitHub reais: PR #754 merged, HEAD/revisão, sete workflows SUCCESS, jobs e artefato atestado.",
+    "Reexecutar verificador #754 a partir do artefato original e comparar bytes com ledger candidato versionado.",
+    "Conferir catálogo exato, casos 138 únicos, 276 provas únicas, pares positivo/negativo, fonte, expectativa, SHA e proveniência; não aceitar adulteração ou falta de evidência.",
+    "Testar negativos de alteração de bytes, omissão/duplicação de caso, troca de prova, origem/revisão/CI incorreta.",
+    "Emitir somente recibo de promoção verificável, separado de certificado final; nenhum PASS sem gate, revisão e integração real."
+  ],
+  "constraints": [
+    "Não alterar produto, backend, ledger LIVE, matriz histórica, gate de inventário ou guard.",
+    "Não qualificar revisão técnica assistida como auditoria humana independente; registrar limites e exigir disposição formal conforme governança aplicável.",
+    "Sem F4 ou PROD, sem certificação antecipada.",
+    "Preservar rollback por rejeição da PR #756."
+  ],
+  "certification": "F3_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
