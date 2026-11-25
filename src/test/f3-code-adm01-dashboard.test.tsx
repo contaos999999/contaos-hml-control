@@ -80,7 +80,9 @@ function rpc(name: string, args: Record<string, unknown>) {
       args["p_id_organizacao"] !== ORG ||
       !(
         actor === "master" ||
-        (actor === USER && binding?.["ativo"] === true && binding?.["escopo_todos_contratos"] === true)
+        (actor === USER &&
+          binding?.["ativo"] === true &&
+          binding?.["escopo_todos_contratos"] === true)
       )
     )
       return deny();

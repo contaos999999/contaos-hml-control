@@ -358,7 +358,12 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
     });
   }
   if (name === "obter_cadastro_operacional_v1") {
-    if (actor === "outsider" || args["p_id_organizacao"] !== ORG || args["p_id"] !== ID || !contract)
+    if (
+      actor === "outsider" ||
+      args["p_id_organizacao"] !== ORG ||
+      args["p_id"] !== ID ||
+      !contract
+    )
       return deny();
     return ok(cadastro());
   }
@@ -398,7 +403,11 @@ function data(call: (typeof calls)[number], single: boolean) {
   if (actor === "outsider") return deny();
   if (call.table === "contratos" && call.insert) {
     const payload = call.insert as Record<string, unknown>;
-    if (actor !== "master" || payload["id_organizacao"] !== ORG || payload["id_contratante"] !== PARTY)
+    if (
+      actor !== "master" ||
+      payload["id_organizacao"] !== ORG ||
+      payload["id_contratante"] !== PARTY
+    )
       return deny();
     if (contract) throw new Error("duplicate contract");
     contract = row(payload, "ativo");

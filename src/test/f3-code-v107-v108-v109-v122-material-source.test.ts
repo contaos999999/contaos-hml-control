@@ -394,7 +394,11 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
     return ok(order === 20 ? REPORT : { correlation_id: KEY });
   }
   if (name === "obter_lista_operacional_v1") {
-    if (actor === "outsider" || args["p_id_organizacao"] !== ORG || args["p_id_contrato"] !== CONTRACT)
+    if (
+      actor === "outsider" ||
+      args["p_id_organizacao"] !== ORG ||
+      args["p_id_contrato"] !== CONTRACT
+    )
       return deny();
     return ok({
       schema_versao: "crud-lista-v1",

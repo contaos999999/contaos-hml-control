@@ -348,7 +348,11 @@ async function consume(c: Case, negative: boolean) {
     expect(options.itens).toHaveLength(1);
     expect(options.itens[0]).toMatchObject({ id: ID, razao_social: name });
     expect(calls.at(-1)?.filters).toEqual([["id_organizacao", ORG]]);
-    return { id: options.itens[0]!.id, name: options.itens[0]!.razao_social, options: options.total };
+    return {
+      id: options.itens[0]!.id,
+      name: options.itens[0]!.razao_social,
+      options: options.total,
+    };
   }
   if (c.destination === "V101") {
     if (negative) {

@@ -231,12 +231,16 @@ function rpc(name: string, args: Record<string, unknown>) {
       throw new Error("wrong contract");
     if (
       order === 13 &&
-      (args["p_id_documento"] !== DOC || args["p_motivo"] !== "Atualização F3" || versions.length !== 1)
+      (args["p_id_documento"] !== DOC ||
+        args["p_motivo"] !== "Atualização F3" ||
+        versions.length !== 1)
     )
       throw new Error("wrong version");
     if (
       order === 15 &&
-      (args["p_id_competencia"] !== COMP || args["p_id_requisito"] !== REQ || args["p_titulo"] !== TITLE)
+      (args["p_id_competencia"] !== COMP ||
+        args["p_id_requisito"] !== REQ ||
+        args["p_titulo"] !== TITLE)
     )
       throw new Error("wrong competence");
     versions.push(newVersion());
@@ -351,7 +355,11 @@ function rpc(name: string, args: Record<string, unknown>) {
               situacao: "ativo",
               versao_atual: number(),
               requisito: { id: REQ, codigo: "F3" },
-              versao: { numero_versao: number(), hash: latest["hash"], id_arquivo: latest["id_arquivo"] },
+              versao: {
+                numero_versao: number(),
+                hash: latest["hash"],
+                id_arquivo: latest["id_arquivo"],
+              },
               arquivo: fileRow(String(latest["id_arquivo"])),
             },
           ]

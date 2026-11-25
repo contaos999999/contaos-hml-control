@@ -190,7 +190,8 @@ function rpc(name: string, args: Record<string, unknown>) {
   if (actor === "outsider" || args["p_id_competencia"] !== COMP) return deny();
   if (name === "solicitar_analise_competencia") {
     if (actor !== "master") return deny();
-    if (args["p_tipo"] !== "completa" || writes !== 0) throw new Error("unexpected analysis command");
+    if (args["p_tipo"] !== "completa" || writes !== 0)
+      throw new Error("unexpected analysis command");
     writes++;
     execId = EXEC;
     hash = HASH;
@@ -229,7 +230,11 @@ function rpc(name: string, args: Record<string, unknown>) {
     )
       throw new Error("wrong revision");
     const items = args["p_evidencias"] as Record<string, unknown>[];
-    if (items.length !== 1 || items[0]!["id_versao_documento"] !== VERSION || items[0]!["pagina"] !== 1)
+    if (
+      items.length !== 1 ||
+      items[0]!["id_versao_documento"] !== VERSION ||
+      items[0]!["pagina"] !== 1
+    )
       throw new Error("wrong evidence");
     writes++;
     review = true;
