@@ -509,16 +509,16 @@ describe("F3 ADM01 saved binding -> actual shared permission consumer", () => {
       if (name === "salvar_vinculo_usuario_adm") {
         if (
           actor !== "master" ||
-          args.p_id_organizacao !== ORG ||
-          args.p_id_usuario !== USER ||
-          args.p_perfil !== "leitor"
+          args["p_id_organizacao"] !== ORG ||
+          args["p_id_usuario"] !== USER ||
+          args["p_perfil"] !== "leitor"
         )
           return deny();
         binding = {
           id: LINK,
           perfil: "leitor",
-          ativo: args.p_ativo === true,
-          escopo_todos_contratos: args.p_escopo_todos_contratos === true,
+          ativo: args["p_ativo"] === true,
+          escopo_todos_contratos: args["p_escopo_todos_contratos"] === true,
           versao_registro: 1,
         };
         auditEvent = {
@@ -539,7 +539,7 @@ describe("F3 ADM01 saved binding -> actual shared permission consumer", () => {
         });
       }
       if (name === "listar_usuarios_vinculos_adm") {
-        if (actor !== "master" || args.p_id_organizacao !== ORG) return deny();
+        if (actor !== "master" || args["p_id_organizacao"] !== ORG) return deny();
         return ok({
           schema_versao: "adm01-v2",
           pagina: 1,
@@ -568,11 +568,11 @@ describe("F3 ADM01 saved binding -> actual shared permission consumer", () => {
         );
       }
       if (name === "pode_consultar_auditoria_organizacao")
-        return ok(actor === "master" && args.p_id_organizacao === ORG);
+        return ok(actor === "master" && args["p_id_organizacao"] === ORG);
       if (name === RPC) {
         if (
-          args.p_id_organizacao !== ORG ||
-          (args.p_id_contrato !== null && args.p_id_contrato !== CONTRACT)
+          args["p_id_organizacao"] !== ORG ||
+          (args["p_id_contrato"] !== null && args["p_id_contrato"] !== CONTRACT)
         )
           return deny();
         if (actor === "leitor" && (!binding?.ativo || !binding.escopo_todos_contratos))
@@ -591,11 +591,11 @@ describe("F3 ADM01 saved binding -> actual shared permission consumer", () => {
       auditFilters.length = 0;
       const q: Record<string, unknown> = {};
       for (const op of ["select", "order", "range"]) q[op] = () => q;
-      q.eq = (...args: unknown[]) => {
+      q["eq"] = (...args: unknown[]) => {
         auditFilters.push(args);
         return q;
       };
-      q.then = (resolve: (value: unknown) => unknown, reject: (error: unknown) => unknown) =>
+      q["then"] = (resolve: (value: unknown) => unknown, reject: (error: unknown) => unknown) =>
         Promise.resolve()
           .then(() => {
             if (actor !== "master") return deny();
@@ -629,7 +629,7 @@ describe("F3 ADM01 saved binding -> actual shared permission consumer", () => {
       id_usuario: USER,
       vinculo: { id: LINK, perfil: "leitor", ativo: true },
     });
-    producerEntityId = saved.itens[0].vinculo.id;
+    producerEntityId = saved.itens[0]!.vinculo.id;
     expect(
       fixture.rpc.mock.calls.filter(([name]) => name === "salvar_vinculo_usuario_adm"),
     ).toHaveLength(1);
@@ -807,7 +807,7 @@ describe("F3 ADM01 saved binding -> actual shared permission consumer", () => {
         matched: true,
         bindingId: producerEntityId,
         correlationId: KEY,
-        eventId: result.eventos[0].id,
+        eventId: result.eventos[0]!.id,
       },
     });
   });
@@ -839,7 +839,7 @@ describe("F3 ADM01 saved binding -> actual shared permission consumer", () => {
     expect(
       fixture.rpc.mock.calls.filter(([name]) => name === "salvar_vinculo_usuario_adm"),
     ).toHaveLength(1);
-    const path = process.env.F3_CODE_ADM01_RBAC_OBSERVATIONS;
+    const path = process.env["F3_CODE_ADM01_RBAC_OBSERVATIONS"];
     if (path) {
       expect(observations).toHaveLength(matrix.length * 2 + 4);
       writeFileSync(path, JSON.stringify(observations) + "\n", { flag: "wx" });

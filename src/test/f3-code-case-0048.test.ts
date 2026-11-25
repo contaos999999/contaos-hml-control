@@ -22,7 +22,7 @@ vi.mock("@/integrations/supabase/client", () => ({
           return builder;
         };
       }
-      builder.then = (onResolved: (v: unknown) => unknown, onError: (e: unknown) => unknown) =>
+      builder["then"] = (onResolved: (v: unknown) => unknown, onError: (e: unknown) => unknown) =>
         Promise.resolve(m.response).then(onResolved, onError);
       return builder;
     },
@@ -128,10 +128,10 @@ describe("F3 CODE C0048: consulta de contratos filtrada pela preferência", () =
   });
 
   afterAll(() => {
-    const target = process.env.F3_CODE_C0048_OBSERVATIONS;
+    const target = process.env["F3_CODE_C0048_OBSERVATIONS"];
     if (target) {
       expect(observations).toHaveLength(2);
-      expect(observations.map((o) => o.kind)).toEqual(["positive", "negative"]);
+      expect(observations.map((o) => o["kind"])).toEqual(["positive", "negative"]);
       writeFileSync(target, JSON.stringify(observations) + "\n", { flag: "wx" });
     }
   });

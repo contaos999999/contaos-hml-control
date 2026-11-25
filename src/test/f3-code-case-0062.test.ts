@@ -26,7 +26,7 @@ vi.mock("@/integrations/supabase/client", () => ({
           return builder;
         };
       }
-      builder.then = (ok: (v: unknown) => unknown, fail: (e: unknown) => unknown) => {
+      builder["then"] = (ok: (v: unknown) => unknown, fail: (e: unknown) => unknown) => {
         const response = m.responses.get(table);
         if (!response) return Promise.reject(new Error("unexpected table")).then(ok, fail);
         return Promise.resolve(response).then(ok, fail);
@@ -62,14 +62,14 @@ async function selectContract(user: string) {
   const result = await listarContratos({ idOrganizacao: org, pagina: 1 });
   expect(result.itens).toHaveLength(1);
   const contract = result.itens[0];
-  expect(contract.id_organizacao).toBe(org);
+  expect(contract!.id_organizacao).toBe(org);
   expect(ops(m.calls.at(-1)!, "eq")).toEqual([["id_organizacao", org]]);
-  const selected = await listarCompetencias(contract.id, FILTROS_COMPETENCIA_VAZIOS, 0);
+  const selected = await listarCompetencias(contract!.id, FILTROS_COMPETENCIA_VAZIOS, 0);
   expect(selected.itens).toHaveLength(1);
-  expect(ops(m.calls.at(-1)!, "eq")).toEqual([["id_contrato", contract.id]]);
-  const competence = selected.itens[0].id;
+  expect(ops(m.calls.at(-1)!, "eq")).toEqual([["id_contrato", contract!.id]]);
+  const competence = selected.itens[0]!.id;
   expect(competence).toBe(COMP);
-  return { org, id: contract.id, competence };
+  return { org, id: contract!.id, competence };
 }
 
 async function readConsumer(org: string, id: string, competence: string) {
@@ -138,7 +138,7 @@ describe("F3 CODE C0062: preference, linked contract and pareceres_internos", ()
       const { org, id, competence } = await selectContract(user);
       const result = await readConsumer(org, id, competence);
       expect(result.itens).toHaveLength(1);
-      expect(result.itens[0].id).toBe(ROW);
+      expect(result.itens[0]!.id).toBe(ROW);
       expect(result.itens[0]).toMatchObject({
         id_organizacao: org,
         id_contrato: id,
@@ -200,9 +200,9 @@ describe("F3 CODE C0062: preference, linked contract and pareceres_internos", ()
   });
 
   afterAll(() => {
-    const target = process.env.F3_CODE_C0062_OBSERVATIONS;
+    const target = process.env["F3_CODE_C0062_OBSERVATIONS"];
     if (target) {
-      expect(observations.map((o) => o.kind)).toEqual(["positive", "negative"]);
+      expect(observations.map((o) => o["kind"])).toEqual(["positive", "negative"]);
       writeFileSync(target, JSON.stringify(observations) + "\n", { flag: "wx" });
     }
   });

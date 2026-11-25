@@ -222,21 +222,21 @@ const fileRow = (id: string) => ({
 });
 function rpc(name: string, args: Record<string, unknown>) {
   if (name === "pode_consultar_auditoria_organizacao")
-    return ok(actor === "master" && args.p_id_organizacao === ORG);
+    return ok(actor === "master" && args["p_id_organizacao"] === ORG);
   if (name === command()) {
     if (actor !== "master") return deny();
-    if (args.p_id_arquivo !== FILE || args.p_chave_idempotencia !== KEY || writes !== 0)
+    if (args["p_id_arquivo"] !== FILE || args["p_chave_idempotencia"] !== KEY || writes !== 0)
       throw new Error("wrong document command");
-    if (order === 12 && (args.p_id_contrato !== CONTRACT || args.p_titulo !== TITLE))
+    if (order === 12 && (args["p_id_contrato"] !== CONTRACT || args["p_titulo"] !== TITLE))
       throw new Error("wrong contract");
     if (
       order === 13 &&
-      (args.p_id_documento !== DOC || args.p_motivo !== "Atualização F3" || versions.length !== 1)
+      (args["p_id_documento"] !== DOC || args["p_motivo"] !== "Atualização F3" || versions.length !== 1)
     )
       throw new Error("wrong version");
     if (
       order === 15 &&
-      (args.p_id_competencia !== COMP || args.p_id_requisito !== REQ || args.p_titulo !== TITLE)
+      (args["p_id_competencia"] !== COMP || args["p_id_requisito"] !== REQ || args["p_titulo"] !== TITLE)
     )
       throw new Error("wrong competence");
     versions.push(newVersion());
@@ -253,7 +253,7 @@ function rpc(name: string, args: Record<string, unknown>) {
     };
     return ok({ id_documento: DOC, id_versao: VERSION, numero_versao: number(), id_arquivo: FILE });
   }
-  if (actor === "outsider" || args.p_id_competencia !== COMP) return deny();
+  if (actor === "outsider" || args["p_id_competencia"] !== COMP) return deny();
   const latest = versions.at(-1),
     changed = writes > 0;
   const competence = {
@@ -351,8 +351,8 @@ function rpc(name: string, args: Record<string, unknown>) {
               situacao: "ativo",
               versao_atual: number(),
               requisito: { id: REQ, codigo: "F3" },
-              versao: { numero_versao: number(), hash: latest.hash, id_arquivo: latest.id_arquivo },
-              arquivo: fileRow(String(latest.id_arquivo)),
+              versao: { numero_versao: number(), hash: latest["hash"], id_arquivo: latest["id_arquivo"] },
+              arquivo: fileRow(String(latest["id_arquivo"])),
             },
           ]
         : [],
@@ -402,7 +402,7 @@ function rpc(name: string, args: Record<string, unknown>) {
       apontamentos_paginacao: pag(25),
     });
   if (name === "obter_detalhe_requisito_v117") {
-    if (args.p_id_requisito !== REQ) return deny();
+    if (args["p_id_requisito"] !== REQ) return deny();
     return ok({
       schema_versao: "v117-v1",
       competencia: competence,
@@ -439,7 +439,7 @@ function response(call: (typeof calls)[number], single: boolean) {
               id_contrato: CONTRACT,
               tipo: "contrato",
               titulo: TITLE,
-              versao_atual: latest.numero_versao,
+              versao_atual: latest["numero_versao"],
             },
           ]
         : [],
@@ -451,7 +451,7 @@ function response(call: (typeof calls)[number], single: boolean) {
     const rows = versions.filter(
       (v) =>
         typeof or === "string" &&
-        or.includes("numero_versao.eq." + v.numero_versao) &&
+        or.includes("numero_versao.eq." + v["numero_versao"]) &&
         or.includes(DOC),
     );
     return ok(rows, rows.length);
@@ -481,20 +481,20 @@ function response(call: (typeof calls)[number], single: boolean) {
   }
   if (call.table === "versoes_fontes_normativas") {
     const rows = versions.map((v) => ({
-      id: v.id,
+      id: v["id"],
       id_fonte: SOURCE_ID,
-      versao: v.numero_versao,
-      id_arquivo: v.id_arquivo,
-      hash: v.hash,
+      versao: v["numero_versao"],
+      id_arquivo: v["id_arquivo"],
+      hash: v["hash"],
     }));
     if (single) {
       const id = call.ops.find(([op, a]) => op === "eq" && a[0] === "id")?.[1][1];
-      const found = versions.find((v) => v.id === id);
+      const found = versions.find((v) => v["id"] === id);
       return ok(
         found
           ? {
-              conteudo_texto: found.id === OLD ? "Trecho anterior" : TEXT,
-              metadados: found.metadados_extraidos,
+              conteudo_texto: found["id"] === OLD ? "Trecho anterior" : TEXT,
+              metadados: found["metadados_extraidos"],
             }
           : null,
       );
@@ -524,10 +524,10 @@ async function readDocs() {
   expect(docs.itens[0]).toMatchObject({ id: DOC, id_contrato: CONTRACT });
   const summary = await obterResumos(docs.itens);
   const actual = summary[DOC];
-  expect(actual.versao?.id).toBe(versions.at(-1)?.id);
-  expect(actual.versao?.hash).toBe(versions.at(-1)?.hash);
-  expect(actual.arquivo?.sha256).toBe(versions.at(-1)?.hash);
-  expect(actual.arquivo?.status_seguranca).toBe("aprovado");
+  expect(actual!.versao?.id).toBe(versions.at(-1)?.["id"]);
+  expect(actual!.versao?.hash).toBe(versions.at(-1)?.["hash"]);
+  expect(actual!.arquivo?.sha256).toBe(versions.at(-1)?.["hash"]);
+  expect(actual!.arquivo?.status_seguranca).toBe("aprovado");
   return actual;
 }
 async function readCompetence() {
@@ -573,7 +573,7 @@ async function produce(c: Case) {
   order = c.order;
   if (order === 13) {
     versions = [oldVersion];
-    expect((await readDocs()).versao?.id).toBe(OLD);
+    expect((await readDocs())!.versao?.id).toBe(OLD);
   } else expect(versions).toHaveLength(0);
   const r = await mutate();
   expect(r).toEqual({
@@ -613,9 +613,9 @@ async function consume(c: Case, negative: boolean) {
       evento: command(),
     });
     return {
-      eventId: v.eventos[0].id,
-      entity: v.eventos[0].id_entidade,
-      correlation: v.eventos[0].correlation_id,
+      eventId: v.eventos[0]!.id,
+      entity: v.eventos[0]!.id_entidade,
+      correlation: v.eventos[0]!.correlation_id,
     };
   }
   if (["V110", "V111"].includes(c.destination)) {
@@ -626,17 +626,17 @@ async function consume(c: Case, negative: boolean) {
       return null;
     }
     const v = await readDocs();
-    expect(v.versao).toMatchObject({
+    expect(v!.versao).toMatchObject({
       id: VERSION,
       numero_versao: number(),
       hash: HASH,
       id_arquivo: FILE,
     });
     return {
-      version: v.versao?.id,
-      file: v.arquivo?.id,
-      hash: v.arquivo?.sha256,
-      number: v.versao?.numero_versao,
+      version: v!.versao?.id,
+      file: v!.arquivo?.id,
+      hash: v!.arquivo?.sha256,
+      number: v!.versao?.numero_versao,
     };
   }
   if (c.destination === "V107") {
@@ -654,20 +654,20 @@ async function consume(c: Case, negative: boolean) {
       id_contrato: CONTRACT,
       id_organizacao: ORG,
     });
-    const v = await listarVersoes(sources.itens[0].id, 0, signal);
+    const v = await listarVersoes(sources.itens[0]!.id, 0, signal);
     expect(v.itens).toMatchObject([
       { id: VERSION, hash: HASH, id_arquivo: FILE },
       { id: OLD, hash: OLD_HASH, id_arquivo: OLD_FILE },
     ]);
-    const text = await obterTextoVersao(v.itens[0].id, signal);
+    const text = await obterTextoVersao(v.itens[0]!.id, signal);
     expect(text.texto).toBe(TEXT);
     expect(JSON.parse(text.metadados!)).toEqual({ pagina: 2, trecho: TEXT });
-    const previous = await obterTextoVersao(v.itens[1].id, signal);
+    const previous = await obterTextoVersao(v.itens[1]!.id, signal);
     expect(previous.texto).toBe("Trecho anterior");
     return {
-      version: v.itens[0].id,
-      old: v.itens[1].id,
-      hash: v.itens[0].hash,
+      version: v.itens[0]!.id,
+      old: v.itens[1]!.id,
+      hash: v.itens[0]!.hash,
       text: text.texto,
       page: 2,
     };
@@ -704,8 +704,8 @@ async function consume(c: Case, negative: boolean) {
     });
     return {
       scope: v?.competencia.id,
-      oldVersion: v?.evidencias[0].documento?.id_versao_documento,
-      oldHash: v?.evidencias[0].documento?.hash_versao,
+      oldVersion: v?.evidencias[0]!.documento?.id_versao_documento,
+      oldHash: v?.evidencias[0]!.documento?.hash_versao,
       current: v?.resultado_atual,
     };
   }
@@ -762,8 +762,8 @@ describe("V110/V111/V115 document writes and consumers", () => {
           call.ops.push([n, args]);
           return b;
         };
-      b.maybeSingle = () => Promise.resolve().then(() => response(call, true));
-      b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
+      b["maybeSingle"] = () => Promise.resolve().then(() => response(call, true));
+      b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
         Promise.resolve()
           .then(() => response(call, false))
           .then(res, rej);
@@ -860,7 +860,7 @@ describe("V110/V111/V115 document writes and consumers", () => {
     );
   }
   afterAll(() => {
-    const path = process.env.F3_CODE_DOCUMENT_OBSERVATIONS;
+    const path = process.env["F3_CODE_DOCUMENT_OBSERVATIONS"];
     if (path) {
       expect(observations).toHaveLength(cases.length * 2);
       writeFileSync(path, JSON.stringify(observations) + "\n", { flag: "wx" });

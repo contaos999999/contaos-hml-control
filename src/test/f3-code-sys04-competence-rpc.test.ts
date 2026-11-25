@@ -88,7 +88,7 @@ const action = () => ({
 });
 const ok = (data: unknown, count = 1) => ({ data, error: null, status: 200, count });
 function response(name: string, args: Record<string, unknown>) {
-  if (args.p_id_competencia !== COMP) throw new Error("wrong competence");
+  if (args["p_id_competencia"] !== COMP) throw new Error("wrong competence");
   if (name === m.denied) return { data: null, error: { code: "42501" }, status: 403 };
   switch (name) {
     case "obter_visao_geral_competencia": {
@@ -180,7 +180,7 @@ function response(name: string, args: Record<string, unknown>) {
         apontamentos_paginacao: pag(25),
       });
     case "obter_detalhe_requisito_v117":
-      if (args.p_id_requisito !== REQ) throw new Error("wrong requirement");
+      if (args["p_id_requisito"] !== REQ) throw new Error("wrong requirement");
       return ok({
         schema_versao: "v117-v1",
         competencia: competence,
@@ -209,13 +209,13 @@ async function selectContext(user: string) {
   const contracts = await listarContratos({ idOrganizacao: org, pagina: 1 });
   expect(contracts.itens).toHaveLength(1);
   const contract = contracts.itens[0];
-  expect(contract.id_organizacao).toBe(org);
+  expect(contract!.id_organizacao).toBe(org);
   expect(calls.at(-1)?.filters).toEqual([["id_organizacao", org]]);
-  const comp = await listarCompetencias(contract.id, FILTROS_COMPETENCIA_VAZIOS, 0);
+  const comp = await listarCompetencias(contract!.id, FILTROS_COMPETENCIA_VAZIOS, 0);
   expect(comp.itens).toHaveLength(1);
-  expect(calls.at(-1)?.filters).toEqual([["id_contrato", contract.id]]);
-  expect(comp.itens[0].id).toBe(COMP);
-  return { org, contract: contract.id, competence: comp.itens[0].id };
+  expect(calls.at(-1)?.filters).toEqual([["id_contrato", contract!.id]]);
+  expect(comp.itens[0]!.id).toBe(COMP);
+  return { org, contract: contract!.id, competence: comp.itens[0]!.id };
 }
 async function consume(c: Case, id: string, denied: boolean) {
   const signal = new AbortController().signal;
@@ -255,7 +255,7 @@ async function consume(c: Case, id: string, denied: boolean) {
     expect(res.error).toBeNull();
     const parsed = parseLeituraV115(res.data);
     expect(parsed?.competencia).toMatchObject({ id, id_organizacao: ORG, id_contrato: CONTRACT });
-    expect(parsed?.documentos[0].id).toBe(ROW);
+    expect(parsed?.documentos[0]!.id).toBe(ROW);
     expect(parsed?.capacidades.pode_enviar).toBe(m.actor === "master");
     return parsed?.competencia.id;
   }
@@ -283,12 +283,12 @@ async function consume(c: Case, id: string, denied: boolean) {
   expect(analysis.error).toBeNull();
   const parsed = parseAnaliseV116(analysis.data);
   expect(parsed?.competencia.id).toBe(id);
-  expect(parsed?.resultados[0].id_requisito).toBe(REQ);
+  expect(parsed?.resultados[0]!.id_requisito).toBe(REQ);
   expect(parsed?.mecanismos?.deterministico).toBe(1);
   expect(parsed?.allowed_actions.executar_analise).toBe(m.actor === "master");
   if (!parsed) throw new Error("invalid analysis");
   if (c.destination === "V116") return parsed.competencia.id;
-  const requirement = parsed.resultados[0].id_requisito;
+  const requirement = parsed.resultados[0]!.id_requisito;
   const detail = await obterDetalheRequisito(id, requirement, OFFSETS_DETALHE_ZERO, signal);
   expect(m.rpc).toHaveBeenLastCalledWith(c.rpc, {
     p_id_competencia: id,
@@ -328,11 +328,11 @@ describe("SYS04 -> five competence RPC contracts", () => {
       calls.push(call);
       const builder: Record<string, unknown> = {};
       for (const method of ["select", "order", "range"]) builder[method] = () => builder;
-      builder.eq = (...args: unknown[]) => {
+      builder["eq"] = (...args: unknown[]) => {
         call.filters.push(args);
         return builder;
       };
-      builder.then = (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
+      builder["then"] = (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
         Promise.resolve()
           .then(() => {
             if (table === "contratos") return ok([{ id: CONTRACT, id_organizacao: ORG }]);
@@ -398,7 +398,7 @@ describe("SYS04 -> five competence RPC contracts", () => {
     });
   }
   afterAll(() => {
-    const path = process.env.F3_CODE_SYS04_COMPETENCE_RPC_OBSERVATIONS;
+    const path = process.env["F3_CODE_SYS04_COMPETENCE_RPC_OBSERVATIONS"];
     if (path) {
       expect(observations).toHaveLength(cases.length * 2);
       writeFileSync(path, JSON.stringify(observations) + "\n", { flag: "wx" });

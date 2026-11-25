@@ -46,13 +46,13 @@ const ok = (data: unknown) => ({ data, error: null, status: 200 }),
 function rpc(name: string, args: Record<string, unknown>) {
   if (name === "salvar_vinculo_usuario_adm") {
     if (actor !== "master") return deny();
-    expect(args.p_id_organizacao).toBe(ORG);
-    expect(args.p_id_usuario).toBe(USER);
+    expect(args["p_id_organizacao"]).toBe(ORG);
+    expect(args["p_id_usuario"]).toBe(USER);
     binding = {
       id: LINK,
       perfil: "leitor",
-      ativo: args.p_ativo === true,
-      escopo_todos_contratos: args.p_escopo_todos_contratos === true,
+      ativo: args["p_ativo"] === true,
+      escopo_todos_contratos: args["p_escopo_todos_contratos"] === true,
       versao_registro: 1,
     };
     writes++;
@@ -64,7 +64,7 @@ function rpc(name: string, args: Record<string, unknown>) {
     });
   }
   if (name === "listar_usuarios_vinculos_adm") {
-    if (actor !== "master" || args.p_id_organizacao !== ORG) return deny();
+    if (actor !== "master" || args["p_id_organizacao"] !== ORG) return deny();
     return ok({
       schema_versao: "adm01-v2",
       pagina: 1,
@@ -77,10 +77,10 @@ function rpc(name: string, args: Record<string, unknown>) {
   }
   if (name === CONSUMER) {
     if (
-      args.p_id_organizacao !== ORG ||
+      args["p_id_organizacao"] !== ORG ||
       !(
         actor === "master" ||
-        (actor === USER && binding?.ativo === true && binding?.escopo_todos_contratos === true)
+        (actor === USER && binding?.["ativo"] === true && binding?.["escopo_todos_contratos"] === true)
       )
     )
       return deny();
@@ -121,7 +121,7 @@ async function produce() {
     vinculo: { id: LINK, ativo: true, perfil: "leitor" },
   });
   expect(writes).toBe(1);
-  return v.itens[0].vinculo.id;
+  return v.itens[0]!.vinculo.id;
 }
 function mount(user: string, org: string) {
   actor = user;
@@ -184,7 +184,7 @@ describe("ADM01 binding to SYS05 actual dashboard", () => {
       ["outsider", ORG],
       [USER, OTHER],
     ]) {
-      const view = mount(user, org);
+      const view = mount(user!, org!);
       expect(await screen.findByText(MENSAGENS_SYS05.negado)).toBeTruthy();
       expect(screen.queryByRole("region", { name: "Indicadores de resumo" })).toBeNull();
       expect(screen.queryByText("3")).toBeNull();
@@ -213,7 +213,7 @@ describe("ADM01 binding to SYS05 actual dashboard", () => {
     });
   });
   afterAll(() => {
-    const p = process.env.F3_CODE_ADM_DASH_OBSERVATIONS;
+    const p = process.env["F3_CODE_ADM_DASH_OBSERVATIONS"];
     if (p) {
       expect(observations).toHaveLength(2);
       writeFileSync(p, JSON.stringify(observations) + "\n", { flag: "wx" });

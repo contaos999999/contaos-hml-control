@@ -149,10 +149,10 @@ describe("F3 CODE C0043: dashboard recebe contexto organizacional do SYS04", () 
   });
 
   afterAll(() => {
-    const target = process.env.F3_CODE_C0043_OBSERVATIONS;
+    const target = process.env["F3_CODE_C0043_OBSERVATIONS"];
     if (target) {
       expect(observations).toHaveLength(2);
-      expect(observations.map((event) => event.kind)).toEqual(["positive", "negative"]);
+      expect(observations.map((event) => event["kind"])).toEqual(["positive", "negative"]);
       writeFileSync(target, JSON.stringify(observations) + "\n", { flag: "wx" });
     }
   });

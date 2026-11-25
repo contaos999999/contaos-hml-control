@@ -83,10 +83,10 @@ describe("F3 CODE C0036: execução da RPC e decisão da tela SYS04", () => {
 
   afterAll(() => {
     // O artefato só pode ser usado quando o processo Vitest termina em 0.
-    const output = process.env.F3_CODE_C0036_OBSERVATIONS;
+    const output = process.env["F3_CODE_C0036_OBSERVATIONS"];
     if (output) {
       expect(observations).toHaveLength(2);
-      expect(observations.map((o) => o.kind)).toEqual(["positive", "negative"]);
+      expect(observations.map((o) => o["kind"])).toEqual(["positive", "negative"]);
       writeFileSync(output, JSON.stringify(observations) + "\n", { flag: "wx" });
     }
   });

@@ -114,17 +114,17 @@ function audit(order: number) {
 }
 function rpc(name: string, args: Record<string, unknown>) {
   if (name === "pode_consultar_auditoria_organizacao")
-    return ok(actor === "master" && args.p_id_organizacao === ORG);
+    return ok(actor === "master" && args["p_id_organizacao"] === ORG);
   if (name === "aprovar_parecer_interno") {
-    if (actor !== "master" || args.p_id_parecer !== OPINION) return deny();
-    if (args.p_aprovar !== true) throw new Error("unexpected approval command");
+    if (actor !== "master" || args["p_id_parecer"] !== OPINION) return deny();
+    if (args["p_aprovar"] !== true) throw new Error("unexpected approval command");
     approved = true;
     opinionWrites++;
     audit(18);
     return ok(null);
   }
   if (name === "aprovar_apresentacao") {
-    if (actor !== "master" || args.p_id_competencia !== COMP || !gateClear || !approved)
+    if (actor !== "master" || args["p_id_competencia"] !== COMP || !gateClear || !approved)
       return deny();
     approval = true;
     return ok({
@@ -134,12 +134,12 @@ function rpc(name: string, args: Record<string, unknown>) {
     });
   }
   if (name === "registrar_apresentacao") {
-    if (actor !== "master" || args.p_id_competencia !== COMP || !approval || !gateClear)
+    if (actor !== "master" || args["p_id_competencia"] !== COMP || !approval || !gateClear)
       return deny();
     if (
-      args.p_idempotency_key !== KEY ||
-      args.p_protocolo !== "F3-119" ||
-      args.p_forma_apresentacao !== "eletronica"
+      args["p_idempotency_key"] !== KEY ||
+      args["p_protocolo"] !== "F3-119" ||
+      args["p_forma_apresentacao"] !== "eletronica"
     )
       throw new Error("wrong intent");
     if (!presented) {
@@ -149,8 +149,8 @@ function rpc(name: string, args: Record<string, unknown>) {
         id: PRESENTATION,
         ...scope,
         id_pacote: PACKAGE,
-        protocolo: String(args.p_protocolo),
-        forma_apresentacao: String(args.p_forma_apresentacao),
+        protocolo: String(args["p_protocolo"]),
+        forma_apresentacao: String(args["p_forma_apresentacao"]),
         apresentado_em: DATE,
         tipo: "original",
         numero_rodada: 1,
@@ -170,7 +170,7 @@ function rpc(name: string, args: Record<string, unknown>) {
     return ok(PRESENTATION);
   }
   if (name === "obter_visao_geral_competencia") {
-    if (actor === "outsider" || args.p_id_competencia !== COMP) return deny();
+    if (actor === "outsider" || args["p_id_competencia"] !== COMP) return deny();
     const pending = gateClear ? 0 : 1,
       counts = {
         pendentes: pending,
@@ -226,7 +226,7 @@ function data(table: string, filters: unknown[][], single: boolean) {
   if (actor === "outsider" || !has("id_organizacao", ORG)) return deny();
   if (table === "eventos_auditoria") {
     if (actor !== "master") return deny();
-    const selected = events.filter((e) => has("correlation_id", String(e.correlation_id)));
+    const selected = events.filter((e) => has("correlation_id", String(e["correlation_id"])));
     return ok(selected, selected.length);
   }
   if (!has("id_competencia", COMP) || !has("id_contrato", CONTRACT)) return deny();
@@ -320,13 +320,13 @@ async function readProtocol() {
     packageId: p.pacote.id,
     hash: p.pacote.hash_pacote,
     protocol: p.apresentacao.protocolo,
-    versionId: p.itens[0].versao_id,
+    versionId: p.itens[0]!.versao_id,
   };
 }
 async function produce(c: Case) {
   actor = "master";
   if (c.order === 18) {
-    expect((await readOpinion()).status).toBe("pendente");
+    expect((await readOpinion())!.status).toBe("pendente");
     expect((await overview()).blocking_summary.parecer_aprovado).toBe(false);
     await decidirParecer(OPINION, true, "Fundamento F3");
     expect(m.rpc).toHaveBeenLastCalledWith(command(18), {
@@ -334,7 +334,7 @@ async function produce(c: Case) {
       p_aprovar: true,
       p_fundamento: "Fundamento F3",
     });
-    expect((await readOpinion()).status).toBe("aprovado");
+    expect((await readOpinion())!.status).toBe("aprovado");
     expect(opinionWrites).toBe(1);
     return OPINION;
   }
@@ -376,9 +376,9 @@ async function consume(c: Case, negative: boolean) {
       correlation_id: id,
     });
     return {
-      eventId: v.eventos[0].id,
-      entity: v.eventos[0].id_entidade,
-      correlation: v.eventos[0].correlation_id,
+      eventId: v.eventos[0]!.id,
+      entity: v.eventos[0]!.id_entidade,
+      correlation: v.eventos[0]!.correlation_id,
     };
   }
   if (c.destination === "V120") {
@@ -447,12 +447,12 @@ describe("V118/V119 material commands and consumers", () => {
       const filters: unknown[][] = [],
         b: Record<string, unknown> = {};
       for (const n of ["select", "order", "range", "abortSignal"]) b[n] = () => b;
-      b.eq = (...args: unknown[]) => {
+      b["eq"] = (...args: unknown[]) => {
         filters.push(args);
         return b;
       };
-      b.maybeSingle = () => Promise.resolve().then(() => data(table, filters, true));
-      b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
+      b["maybeSingle"] = () => Promise.resolve().then(() => data(table, filters, true));
+      b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
         Promise.resolve()
           .then(() => data(table, filters, false))
           .then(res, rej);
@@ -510,7 +510,7 @@ describe("V118/V119 material commands and consumers", () => {
       expect(await consume(c, true)).toBeNull();
       actor = "master";
       if (c.order === 18) {
-        expect((await readOpinion()).status).toBe("aprovado");
+        expect((await readOpinion())!.status).toBe("aprovado");
         expect(opinionWrites).toBe(1);
       } else {
         await readProtocol();
@@ -546,7 +546,7 @@ describe("V118/V119 material commands and consumers", () => {
     });
   }
   afterAll(() => {
-    const path = process.env.F3_CODE_MATERIAL_OBSERVATIONS;
+    const path = process.env["F3_CODE_MATERIAL_OBSERVATIONS"];
     if (path) {
       expect(observations).toHaveLength(cases.length * 2);
       writeFileSync(path, JSON.stringify(observations) + "\n", { flag: "wx" });

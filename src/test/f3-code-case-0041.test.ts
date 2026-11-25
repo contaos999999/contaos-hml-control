@@ -102,10 +102,10 @@ describe("F3 CODE C0041: preferência SYS04 → autorização ADM01", () => {
   });
 
   afterAll(() => {
-    const target = process.env.F3_CODE_C0041_OBSERVATIONS;
+    const target = process.env["F3_CODE_C0041_OBSERVATIONS"];
     if (target) {
       expect(observations).toHaveLength(2);
-      expect(observations.map((x) => x.kind)).toEqual(["positive", "negative"]);
+      expect(observations.map((x) => x["kind"])).toEqual(["positive", "negative"]);
       writeFileSync(target, JSON.stringify(observations) + "\n", { flag: "wx" });
     }
   });

@@ -25,7 +25,7 @@ vi.mock("@/integrations/supabase/client", () => ({
           return builder;
         };
       }
-      builder.then = (done: (v: unknown) => unknown, fail: (e: unknown) => unknown) => {
+      builder["then"] = (done: (v: unknown) => unknown, fail: (e: unknown) => unknown) => {
         try {
           return Promise.resolve(m.handlers[table]?.(call)).then(done, fail);
         } catch (error) {
@@ -68,12 +68,12 @@ describe("F3 CODE C0045: preferência alimenta V101, mas autorização vem da Da
     const selected = obterPreferenciaOrganizacao(USER);
     expect(selected).toBe(ORG);
     expect(obterPreferenciaOrganizacao("outro-usuario")).toBeNull();
-    m.handlers.organizacoes = () => ({
+    m.handlers["organizacoes"] = () => ({
       data: { id: ORG },
       error: null,
       status: 200,
     });
-    m.handlers.contratantes = () => ({
+    m.handlers["contratantes"] = () => ({
       data: [
         {
           id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
@@ -123,7 +123,7 @@ describe("F3 CODE C0045: preferência alimenta V101, mas autorização vem da Da
   it("negative: preferência estrangeira não concede leitura, Data API nega sem consultar dados", async () => {
     definirPreferenciaOrganizacao(USER, ORG);
     expect(obterPreferenciaOrganizacao("outro-usuario")).toBeNull();
-    m.handlers.organizacoes = () => ({
+    m.handlers["organizacoes"] = () => ({
       data: null,
       error: { code: "42501", message: "Negado" },
       status: 403,
@@ -149,10 +149,10 @@ describe("F3 CODE C0045: preferência alimenta V101, mas autorização vem da Da
   });
 
   afterAll(() => {
-    const target = process.env.F3_CODE_C0045_OBSERVATIONS;
+    const target = process.env["F3_CODE_C0045_OBSERVATIONS"];
     if (target) {
       expect(observations).toHaveLength(2);
-      expect(observations.map((x) => x.kind)).toEqual(["positive", "negative"]);
+      expect(observations.map((x) => x["kind"])).toEqual(["positive", "negative"]);
       writeFileSync(target, JSON.stringify(observations) + "\n", { flag: "wx" });
     }
   });

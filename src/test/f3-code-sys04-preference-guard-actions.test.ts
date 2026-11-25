@@ -162,7 +162,7 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
           ],
     );
   if (name === "consultar_permissoes_efetivas") {
-    if (actor === "outsider" || args.p_id_organizacao !== org) return deny();
+    if (actor === "outsider" || args["p_id_organizacao"] !== org) return deny();
     return ok({
       schema_versao: "rbac-v1",
       versao: 1,
@@ -180,7 +180,7 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
     });
   }
   if (name === "pode_consultar_auditoria_organizacao")
-    return ok(actor === "master" && args.p_id_organizacao === org);
+    return ok(actor === "master" && args["p_id_organizacao"] === org);
   if (name === "atualizar_contratante") {
     if (actor !== "master") return deny();
     throw new Error("unexpected edit");
@@ -275,8 +275,8 @@ async function consume(c: Case, negative: boolean) {
       return null;
     }
     const v = await buscarOpcoesContratantes({ idOrganizacao: selected, busca: "", pagina: 1 });
-    expect(v.itens[0].id).toBe(PARTY);
-    return { id: v.itens[0].id, allowed: true };
+    expect(v.itens[0]!.id).toBe(PARTY);
+    return { id: v.itens[0]!.id, allowed: true };
   }
   if (c.destination === "V103") {
     expect(await consultarCapacidadeEdicaoContratante(selected)).toBe(!negative);
@@ -306,7 +306,7 @@ async function consume(c: Case, negative: boolean) {
       return null;
     }
     const v = await buscarOpcoesContratantes({ idOrganizacao: selected, busca: "", pagina: 1 });
-    expect(v.itens[0].id).toBe(PARTY);
+    expect(v.itens[0]!.id).toBe(PARTY);
     return { id: PARTY, allowed: true };
   }
   if (c.destination === "V113") {
@@ -369,8 +369,8 @@ describe("SYS04 selected context and denied consumer actions", () => {
           call.ops.push([n, args]);
           return b;
         };
-      b.single = b.maybeSingle = () => Promise.resolve().then(() => response(call, true));
-      b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
+      b["single"] = b["maybeSingle"] = () => Promise.resolve().then(() => response(call, true));
+      b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
         Promise.resolve()
           .then(() => response(call, false))
           .then(res, rej);
@@ -439,7 +439,7 @@ describe("SYS04 selected context and denied consumer actions", () => {
     });
   }
   afterAll(() => {
-    const p = process.env.F3_CODE_PREF_GUARD_OBSERVATIONS;
+    const p = process.env["F3_CODE_PREF_GUARD_OBSERVATIONS"];
     if (p) {
       expect(observations).toHaveLength(cases.length * 2);
       writeFileSync(p, JSON.stringify(observations) + "\n", { flag: "wx" });

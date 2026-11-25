@@ -371,7 +371,7 @@ const commandArgs = () =>
         : { p_id_arquivo: FILE, p_competencia: "2026-10-01", p_tipo: "relatorio_contratante" };
 function rpc(name: string, args: Record<string, unknown> = {}) {
   if (name === "pode_consultar_auditoria_organizacao")
-    return ok(actor === "master" && args.p_id_organizacao === ORG);
+    return ok(actor === "master" && args["p_id_organizacao"] === ORG);
   if (name === command()) {
     if (actor !== "master") return deny();
     expect(args).toEqual(commandArgs());
@@ -394,7 +394,7 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
     return ok(order === 20 ? REPORT : { correlation_id: KEY });
   }
   if (name === "obter_lista_operacional_v1") {
-    if (actor === "outsider" || args.p_id_organizacao !== ORG || args.p_id_contrato !== CONTRACT)
+    if (actor === "outsider" || args["p_id_organizacao"] !== ORG || args["p_id_contrato"] !== CONTRACT)
       return deny();
     return ok({
       schema_versao: "crud-lista-v1",
@@ -428,13 +428,13 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
     });
   }
   if (name === "criar_competencia") {
-    if (actor !== "master" || args.p_id_contrato !== CONTRACT) return deny();
-    expect(args.p_competencia_referencia).toBe(REF);
+    if (actor !== "master" || args["p_id_contrato"] !== CONTRACT) return deny();
+    expect(args["p_competencia_referencia"]).toBe(REF);
     expect(order === 10 ? applicable : listPublished).toBe(true);
     compCreated = true;
     return ok(COMP);
   }
-  if (actor === "outsider" || args.p_id_competencia !== COMP) return deny();
+  if (actor === "outsider" || args["p_id_competencia"] !== COMP) return deny();
   const stale = order !== 20 && writes > 0,
     materialized = (order === 11 && listPublished) || (order === 10 && applicable);
   const competence = {
@@ -563,7 +563,7 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
       apontamentos_paginacao: pag(25),
     });
   if (name === "obter_detalhe_requisito_v117") {
-    if (args.p_id_requisito !== REQ) return deny();
+    if (args["p_id_requisito"] !== REQ) return deny();
     return ok({
       schema_versao: "v117-v1",
       competencia: competence,
@@ -788,8 +788,8 @@ async function readMaterial(after: boolean) {
   const signal = new AbortController().signal;
   if (order === 9) {
     const p = await listarPropostas(CONTRACT, 0, signal),
-      v = await listarVersoesProposta(p.itens[0].id, 0, signal),
-      rows = await listarRubricas(v.itens[0].id, 0, signal);
+      v = await listarVersoesProposta(p.itens[0]!.id, 0, signal),
+      rows = await listarRubricas(v.itens[0]!.id, 0, signal);
     expect(p.itens[0]).toMatchObject({ id: PROPOSAL, id_contrato: CONTRACT });
     expect(v.itens[0]).toMatchObject({
       id: VERSION,
@@ -877,9 +877,9 @@ async function consume(c: Case, negative: boolean) {
       correlation_id: KEY,
     });
     return {
-      event: v.eventos[0].id,
-      entity: v.eventos[0].id_entidade,
-      correlation: v.eventos[0].correlation_id,
+      event: v.eventos[0]!.id,
+      entity: v.eventos[0]!.id_entidade,
+      correlation: v.eventos[0]!.correlation_id,
     };
   }
   if (c.destination === "V109") {
@@ -889,18 +889,18 @@ async function consume(c: Case, negative: boolean) {
       return null;
     }
     const a = await p,
-      v = await listarVersoesLista(a.itens[0].id, 0, signal),
-      items = await listarItens(v.itens[0].id, 0, signal);
+      v = await listarVersoesLista(a.itens[0]!.id, 0, signal),
+      items = await listarItens(v.itens[0]!.id, 0, signal);
     expect(items.itens[0]).toMatchObject({
       id: ITEM,
       id_fonte_versao: SOURCE_VERSION,
       aplicavel: true,
     });
-    expect(v.itens[0].vigencia_inicio).toBe(REF);
+    expect(v.itens[0]!.vigencia_inicio).toBe(REF);
     return {
-      item: items.itens[0].id,
-      source: items.itens[0].id_fonte_versao,
-      validFrom: v.itens[0].vigencia_inicio,
+      item: items.itens[0]!.id,
+      source: items.itens[0]!.id_fonte_versao,
+      validFrom: v.itens[0]!.vigencia_inicio,
     };
   }
   if (c.destination === "V113") {
@@ -944,11 +944,11 @@ async function consume(c: Case, negative: boolean) {
       desfechos: [{ id: OUTCOME, id_apontamento: APO }],
     });
     return {
-      report: a.itens[0].id,
-      origin: a.itens[0].origem_temporal,
-      point: b.itens[0].id,
-      response: b.itens[0].respostas[0].id,
-      outcome: b.itens[0].desfechos[0].id,
+      report: a.itens[0]!.id,
+      origin: a.itens[0]!.origem_temporal,
+      point: b.itens[0]!.id,
+      response: b.itens[0]!.respostas[0]!.id,
+      outcome: b.itens[0]!.desfechos[0]!.id,
     };
   }
   if (c.destination === "V118") {
@@ -979,8 +979,8 @@ async function consume(c: Case, negative: boolean) {
     });
     return {
       scope: a?.competencia.id,
-      requirement: a?.requisitos[0].id,
-      missing: a?.requisitos[0].atendido === false,
+      requirement: a?.requisitos[0]!.id,
+      missing: a?.requisitos[0]!.atendido === false,
     };
   }
   if (c.destination === "V116") {
@@ -999,7 +999,7 @@ async function consume(c: Case, negative: boolean) {
       scope: a?.competencia.id,
       stale: a?.stale,
       hash: a?.execucao_atual?.hash_entrada,
-      source: a?.resultados[0].fonte_referencia,
+      source: a?.resultados[0]!.fonte_referencia,
     };
   }
   if (c.destination === "V117") {
@@ -1072,8 +1072,8 @@ describe("material sources and governed historical context", () => {
           call.ops.push([n, args]);
           return b;
         };
-      b.maybeSingle = () => Promise.resolve().then(() => response(call, true));
-      b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
+      b["maybeSingle"] = () => Promise.resolve().then(() => response(call, true));
+      b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
         Promise.resolve()
           .then(() => response(call, false))
           .then(res, rej);
@@ -1154,7 +1154,7 @@ describe("material sources and governed historical context", () => {
     });
   }
   afterAll(() => {
-    const p = process.env.F3_CODE_SOURCE_OBSERVATIONS;
+    const p = process.env["F3_CODE_SOURCE_OBSERVATIONS"];
     if (p) {
       expect(observations).toHaveLength(cases.length * 2);
       writeFileSync(p, JSON.stringify(observations) + "\n", { flag: "wx" });

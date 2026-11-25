@@ -303,7 +303,7 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
           ],
     );
   if (name === "consultar_permissoes_efetivas") {
-    if (actor === "outsider" || args.p_id_organizacao !== ORG || args.p_id_contrato !== ID)
+    if (actor === "outsider" || args["p_id_organizacao"] !== ORG || args["p_id_contrato"] !== ID)
       return deny();
     const read = [
       "contratos",
@@ -331,9 +331,9 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
     });
   }
   if (name === "pode_consultar_auditoria_organizacao")
-    return ok(actor === "master" && args.p_id_organizacao === ORG);
+    return ok(actor === "master" && args["p_id_organizacao"] === ORG);
   if (name === "obter_resumo_dashboard") {
-    if (actor === "outsider" || args.p_id_organizacao !== ORG) return deny();
+    if (actor === "outsider" || args["p_id_organizacao"] !== ORG) return deny();
     return ok({
       schema_versao: "sys05-v1",
       gerado_em: "01/11/2026 12:00",
@@ -345,50 +345,50 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
       },
       resumo: {
         contratos_visiveis: contract ? 1 : 0,
-        contratos_ativos: contract?.situacao === "ativo" ? 1 : 0,
+        contratos_ativos: contract?.["situacao"] === "ativo" ? 1 : 0,
         competencias_em_fluxo: 0,
         competencias_exigem_atencao: 0,
         itens_com_prazo_vencido: 0,
         atencoes_abertas: 0,
       },
-      contratos_por_situacao: contract ? [{ situacao: contract.situacao, quantidade: 1 }] : [],
+      contratos_por_situacao: contract ? [{ situacao: contract["situacao"], quantidade: 1 }] : [],
       competencias_por_situacao: [],
       proximos_prazos: [],
       atencoes_prioritarias: [],
     });
   }
   if (name === "obter_cadastro_operacional_v1") {
-    if (actor === "outsider" || args.p_id_organizacao !== ORG || args.p_id !== ID || !contract)
+    if (actor === "outsider" || args["p_id_organizacao"] !== ORG || args["p_id"] !== ID || !contract)
       return deny();
     return ok(cadastro());
   }
   if (["atualizar_contrato_v1", "alterar_situacao_contrato_v1"].includes(name)) {
     if (
       actor !== "master" ||
-      args.p_id_organizacao !== ORG ||
-      args.p_id_contrato !== ID ||
+      args["p_id_organizacao"] !== ORG ||
+      args["p_id_contrato"] !== ID ||
       !contract
     )
       return deny();
-    if (args.p_versao_esperada !== contract.versao_registro)
+    if (args["p_versao_esperada"] !== contract["versao_registro"])
       return { data: null, error: { code: "PT409" }, status: 409 };
     if (name === "atualizar_contrato_v1") {
       contract = {
         ...contract,
-        ...(args.p_alteracoes as object),
-        versao_registro: Number(contract.versao_registro) + 1,
+        ...(args["p_alteracoes"] as object),
+        versao_registro: Number(contract["versao_registro"]) + 1,
       };
       writes++;
     } else {
       contract = {
         ...contract,
-        situacao: args.p_situacao,
-        versao_registro: Number(contract.versao_registro) + 1,
+        situacao: args["p_situacao"],
+        versao_registro: Number(contract["versao_registro"]) + 1,
       };
       statusWrites++;
     }
-    record(name, String(args.p_request_id));
-    return ok(cadastro(args.p_request_id));
+    record(name, String(args["p_request_id"]));
+    return ok(cadastro(args["p_request_id"]));
   }
   throw new Error("unexpected RPC " + name);
 }
@@ -398,7 +398,7 @@ function data(call: (typeof calls)[number], single: boolean) {
   if (actor === "outsider") return deny();
   if (call.table === "contratos" && call.insert) {
     const payload = call.insert as Record<string, unknown>;
-    if (actor !== "master" || payload.id_organizacao !== ORG || payload.id_contratante !== PARTY)
+    if (actor !== "master" || payload["id_organizacao"] !== ORG || payload["id_contratante"] !== PARTY)
       return deny();
     if (contract) throw new Error("duplicate contract");
     contract = row(payload, "ativo");
@@ -431,7 +431,7 @@ function data(call: (typeof calls)[number], single: boolean) {
   }
   if (call.table === "eventos_auditoria") {
     if (actor !== "master" || !has("id_organizacao", ORG)) return deny();
-    const selected = events.filter((e) => has("correlation_id", String(e.correlation_id)));
+    const selected = events.filter((e) => has("correlation_id", String(e["correlation_id"])));
     return ok(selected, selected.length);
   }
   throw new Error("unexpected table " + call.table);
@@ -472,14 +472,14 @@ async function produce(c: Case) {
     expect((await listarContratos({ idOrganizacao: ORG, pagina: 1 })).total).toBe(0);
     if (c.destination === "SYS05") await dashboard(0, 0, null);
     const options = await buscarOpcoesContratantes({ idOrganizacao: ORG, busca: "", pagina: 1 });
-    expect(options.itens[0].id).toBe(PARTY);
+    expect(options.itens[0]!.id).toBe(PARTY);
     expect(validarFormularioContrato(form)).toEqual([]);
     const payload = montarPayloadContrato(ORG, form);
     await inserirContrato(payload);
     expect(calls.at(-1)?.insert).toEqual(payload);
     const list = await listarContratos({ idOrganizacao: ORG, pagina: 1 });
     expect(list.total).toBe(1);
-    expect(list.itens[0].id).toBe(ID);
+    expect(list.itens[0]!.id).toBe(ID);
     expect((await detail()).objeto).toBe(form.objeto);
     return ID;
   }
@@ -572,9 +572,9 @@ async function consume(c: Case, negative: boolean) {
       evento: c.order === 7 ? "contratos.insert" : "atualizar_contrato_v1",
     });
     return {
-      entity: a.eventos[0].id_entidade,
-      eventId: a.eventos[0].id,
-      correlation: a.eventos[0].correlation_id,
+      entity: a.eventos[0]!.id_entidade,
+      eventId: a.eventos[0]!.id,
+      correlation: a.eventos[0]!.correlation_id,
     };
   }
   let route: string | null = null;
@@ -596,7 +596,7 @@ async function consume(c: Case, negative: boolean) {
     }
     const page = await list;
     expect(page.total).toBe(1);
-    expect(page.itens[0].id).toBe(ID);
+    expect(page.itens[0]!.id).toBe(ID);
   }
   if (negative) {
     await expect(obterContrato(ID)).rejects.toMatchObject({ tipo: "negado" });
@@ -636,16 +636,16 @@ describe("V105/V106 contract commands and screen consumer contracts", () => {
       calls.push(call);
       const b: Record<string, unknown> = {};
       for (const n of ["select", "order", "range", "abortSignal"]) b[n] = () => b;
-      b.eq = (...args: unknown[]) => {
+      b["eq"] = (...args: unknown[]) => {
         call.filters.push(args);
         return b;
       };
-      b.insert = (payload: unknown) => {
+      b["insert"] = (payload: unknown) => {
         call.insert = payload;
         return b;
       };
-      b.maybeSingle = () => Promise.resolve().then(() => data(call, true));
-      b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
+      b["maybeSingle"] = () => Promise.resolve().then(() => data(call, true));
+      b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
         Promise.resolve()
           .then(() => data(call, false))
           .then(res, rej);
@@ -700,7 +700,7 @@ describe("V105/V106 contract commands and screen consumer contracts", () => {
       else {
         const cmd = montarComando(
           ctx,
-          Number(contract?.versao_registro),
+          Number(contract?.["versao_registro"]),
           "editar",
           { objeto: "Não permitido" },
           "Negado F3",
@@ -742,7 +742,7 @@ describe("V105/V106 contract commands and screen consumer contracts", () => {
     });
   }
   afterAll(() => {
-    const path = process.env.F3_CODE_CONTRACT_OBSERVATIONS;
+    const path = process.env["F3_CODE_CONTRACT_OBSERVATIONS"];
     if (path) {
       expect(observations).toHaveLength(cases.length * 2);
       writeFileSync(path, JSON.stringify(observations) + "\n", { flag: "wx" });

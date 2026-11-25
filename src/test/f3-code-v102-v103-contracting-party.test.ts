@@ -162,7 +162,7 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
           ],
     );
   if (name === "consultar_permissoes_efetivas") {
-    if (actor === "outsider" || args.p_id_organizacao !== ORG) return deny();
+    if (actor === "outsider" || args["p_id_organizacao"] !== ORG) return deny();
     return ok({
       schema_versao: "rbac-v1",
       versao: 6,
@@ -180,20 +180,20 @@ function rpc(name: string, args: Record<string, unknown> = {}) {
     });
   }
   if (name === "pode_consultar_auditoria_organizacao")
-    return ok(actor === "master" && args.p_id_organizacao === ORG);
+    return ok(actor === "master" && args["p_id_organizacao"] === ORG);
   if (name === "atualizar_contratante") {
     if (
       actor !== "master" ||
-      args.p_id_organizacao !== ORG ||
-      args.p_id_contratante !== ID ||
+      args["p_id_organizacao"] !== ORG ||
+      args["p_id_contratante"] !== ID ||
       !party
     )
       return deny();
-    if (args.p_versao_esperada !== party.versao_registro)
+    if (args["p_versao_esperada"] !== party.versao_registro)
       return { data: null, error: { code: "PT409" }, status: 409 };
     party = {
       ...party,
-      razao_social: String(args.p_razao_social),
+      razao_social: String(args["p_razao_social"]),
       versao_registro: party.versao_registro + 1,
     };
     record(6);
@@ -315,9 +315,9 @@ async function consume(c: Case, negative: boolean) {
       evento: c.order === 5 ? "contratantes.insert" : "atualizar_contratante",
     });
     return {
-      entity: a.eventos[0].id_entidade,
-      eventId: a.eventos[0].id,
-      correlation: a.eventos[0].correlation_id,
+      entity: a.eventos[0]!.id_entidade,
+      eventId: a.eventos[0]!.id,
+      correlation: a.eventos[0]!.correlation_id,
     };
   }
   if (c.destination === "V103") {
@@ -348,7 +348,7 @@ async function consume(c: Case, negative: boolean) {
     expect(options.itens).toHaveLength(1);
     expect(options.itens[0]).toMatchObject({ id: ID, razao_social: name });
     expect(calls.at(-1)?.filters).toEqual([["id_organizacao", ORG]]);
-    return { id: options.itens[0].id, name: options.itens[0].razao_social, options: options.total };
+    return { id: options.itens[0]!.id, name: options.itens[0]!.razao_social, options: options.total };
   }
   if (c.destination === "V101") {
     if (negative) {
@@ -368,7 +368,7 @@ async function consume(c: Case, negative: boolean) {
     expect(list.itens).toHaveLength(1);
     expect(list.itens[0]).toMatchObject({ id: ID, razao_social: name });
     expect(calls.at(-1)?.filters).toEqual([["id_organizacao", ORG]]);
-    return { id: list.itens[0].id, name: list.itens[0].razao_social };
+    return { id: list.itens[0]!.id, name: list.itens[0]!.razao_social };
   }
   if (c.destination === "V104") {
     const list = listarContratos({ idOrganizacao: ORG, pagina: 1 });
@@ -419,16 +419,16 @@ describe("V102/V103 create/edit -> real linked consumers", () => {
       calls.push(call);
       const b: Record<string, unknown> = {};
       for (const n of ["select", "order", "range", "abortSignal"]) b[n] = () => b;
-      b.eq = (...args: unknown[]) => {
+      b["eq"] = (...args: unknown[]) => {
         call.filters.push(args);
         return b;
       };
-      b.insert = (payload: unknown) => {
+      b["insert"] = (payload: unknown) => {
         call.insert = payload;
         return b;
       };
-      b.single = b.maybeSingle = () => Promise.resolve().then(() => read(call, true));
-      b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
+      b["single"] = b["maybeSingle"] = () => Promise.resolve().then(() => read(call, true));
+      b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
         Promise.resolve()
           .then(() => read(call, false))
           .then(res, rej);
@@ -524,7 +524,7 @@ describe("V102/V103 create/edit -> real linked consumers", () => {
     });
   }
   afterAll(() => {
-    const path = process.env.F3_CODE_PARTY_OBSERVATIONS;
+    const path = process.env["F3_CODE_PARTY_OBSERVATIONS"];
     if (path) {
       expect(observations).toHaveLength(cases.length * 2);
       writeFileSync(path, JSON.stringify(observations) + "\n", { flag: "wx" });

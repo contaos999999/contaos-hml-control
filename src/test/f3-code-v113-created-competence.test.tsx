@@ -140,14 +140,14 @@ const deny = () => ({ data: null, error: { code: "42501" }, status: 403, count: 
 const pag = (limite: number, total = 0) => ({ offset: 0, limite, total });
 function rpc(name: string, args: Record<string, unknown>) {
   if (name === "criar_competencia") {
-    if (actor !== "master" || args.p_id_contrato !== CONTRACT) return deny();
-    if (args.p_competencia_referencia !== REF) throw new Error("wrong month");
+    if (actor !== "master" || args["p_id_contrato"] !== CONTRACT) return deny();
+    if (args["p_competencia_referencia"] !== REF) throw new Error("wrong month");
     if (stored) throw new Error("duplicate fixture mutation");
     stored = {
       id: COMP,
-      id_contrato: String(args.p_id_contrato),
+      id_contrato: String(args["p_id_contrato"]),
       id_organizacao: ORG,
-      competencia_referencia: String(args.p_competencia_referencia),
+      competencia_referencia: String(args["p_competencia_referencia"]),
       situacao: "rascunho",
       data_limite: DATE,
     };
@@ -164,9 +164,9 @@ function rpc(name: string, args: Record<string, unknown>) {
     return ok(stored.id);
   }
   if (name === "pode_consultar_auditoria_organizacao")
-    return ok(actor === "master" && args.p_id_organizacao === ORG);
+    return ok(actor === "master" && args["p_id_organizacao"] === ORG);
   if (name === "obter_resumo_dashboard") {
-    if (actor === "outsider" || args.p_id_organizacao !== ORG) return deny();
+    if (actor === "outsider" || args["p_id_organizacao"] !== ORG) return deny();
     return ok({
       schema_versao: "sys05-v1",
       gerado_em: "01/11/2026 12:00",
@@ -202,7 +202,7 @@ function rpc(name: string, args: Record<string, unknown>) {
       atencoes_prioritarias: [],
     });
   }
-  if (actor === "outsider" || !stored || args.p_id_competencia !== stored.id) return deny();
+  if (actor === "outsider" || !stored || args["p_id_competencia"] !== stored.id) return deny();
   const c = stored;
   const counts = {
     pendentes: 1,
@@ -380,10 +380,10 @@ async function consume(c: Case, id: string, negative: boolean) {
     }
     const page = await p;
     expect(page.itens).toHaveLength(1);
-    expect(page.itens[0].id).toBe(id);
-    expect(page.itens[0].competencia_referencia).toBe(REF);
+    expect(page.itens[0]!.id).toBe(id);
+    expect(page.itens[0]!.competencia_referencia).toBe(REF);
     expect(calls.at(-1)?.filters).toEqual([["id_contrato", CONTRACT]]);
-    return { rowId: page.itens[0].id, reference: page.itens[0].competencia_referencia };
+    return { rowId: page.itens[0]!.id, reference: page.itens[0]!.competencia_referencia };
   }
   if (c.destination === "V114" || c.destination === "V119") {
     const res = await obterVisaoGeral(id, signal);
@@ -478,9 +478,9 @@ async function consume(c: Case, id: string, negative: boolean) {
       evento: "criar_competencia",
     });
     return {
-      eventId: data.eventos[0].id,
-      entity: data.eventos[0].id_entidade,
-      correlation: data.eventos[0].correlation_id,
+      eventId: data.eventos[0]!.id,
+      entity: data.eventos[0]!.id_entidade,
+      correlation: data.eventos[0]!.correlation_id,
     };
   }
   const read =
@@ -521,12 +521,12 @@ describe("V113 -> consumers of newly created competence", () => {
       calls.push(call);
       const b: Record<string, unknown> = {};
       for (const method of ["select", "order", "range", "abortSignal"]) b[method] = () => b;
-      b.eq = (...args: unknown[]) => {
+      b["eq"] = (...args: unknown[]) => {
         call.filters.push(args);
         return b;
       };
-      b.maybeSingle = () => Promise.resolve().then(() => tableResponse(call, true));
-      b.then = (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
+      b["maybeSingle"] = () => Promise.resolve().then(() => tableResponse(call, true));
+      b["then"] = (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
         Promise.resolve()
           .then(() => tableResponse(call, false))
           .then(resolve, reject);
@@ -614,7 +614,7 @@ describe("V113 -> consumers of newly created competence", () => {
     );
   }
   afterAll(() => {
-    const path = process.env.F3_CODE_V113_OBSERVATIONS;
+    const path = process.env["F3_CODE_V113_OBSERVATIONS"];
     if (path) {
       expect(observations).toHaveLength(cases.length * 2);
       writeFileSync(path, JSON.stringify(observations) + "\n", { flag: "wx" });

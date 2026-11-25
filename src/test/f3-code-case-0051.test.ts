@@ -26,7 +26,7 @@ vi.mock("@/integrations/supabase/client", () => ({
           return builder;
         };
       }
-      builder.then = (ok: (v: unknown) => unknown, fail: (e: unknown) => unknown) => {
+      builder["then"] = (ok: (v: unknown) => unknown, fail: (e: unknown) => unknown) => {
         const response = m.responses.get(table);
         if (!response) return Promise.reject(new Error("unexpected table")).then(ok, fail);
         return Promise.resolve(response).then(ok, fail);
@@ -60,9 +60,9 @@ async function selectContract(user: string) {
   const result = await listarContratos({ idOrganizacao: org, pagina: 1 });
   expect(result.itens).toHaveLength(1);
   const contract = result.itens[0];
-  expect(contract.id_organizacao).toBe(org);
+  expect(contract!.id_organizacao).toBe(org);
   expect(ops(m.calls.at(-1)!, "eq")).toEqual([["id_organizacao", org]]);
-  return { org, id: contract.id };
+  return { org, id: contract!.id };
 }
 
 async function readConsumer(org: string, id: string) {
@@ -117,7 +117,7 @@ describe("F3 CODE C0051: preference, linked contract and fontes_normativas", () 
       const { org, id } = await selectContract(user);
       const result = await readConsumer(org, id);
       expect(result.itens).toHaveLength(1);
-      expect(result.itens[0].id).toBe(ROW);
+      expect(result.itens[0]!.id).toBe(ROW);
       expect(result.total).toBe(1);
       checkConsumer(org, id);
     }
@@ -165,9 +165,9 @@ describe("F3 CODE C0051: preference, linked contract and fontes_normativas", () 
   });
 
   afterAll(() => {
-    const target = process.env.F3_CODE_C0051_OBSERVATIONS;
+    const target = process.env["F3_CODE_C0051_OBSERVATIONS"];
     if (target) {
-      expect(observations.map((o) => o.kind)).toEqual(["positive", "negative"]);
+      expect(observations.map((o) => o["kind"])).toEqual(["positive", "negative"]);
       writeFileSync(target, JSON.stringify(observations) + "\n", { flag: "wx" });
     }
   });

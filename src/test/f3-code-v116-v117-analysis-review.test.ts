@@ -186,11 +186,11 @@ function record() {
 }
 function rpc(name: string, args: Record<string, unknown>) {
   if (name === "pode_consultar_auditoria_organizacao")
-    return ok(actor === "master" && args.p_id_organizacao === ORG);
-  if (actor === "outsider" || args.p_id_competencia !== COMP) return deny();
+    return ok(actor === "master" && args["p_id_organizacao"] === ORG);
+  if (actor === "outsider" || args["p_id_competencia"] !== COMP) return deny();
   if (name === "solicitar_analise_competencia") {
     if (actor !== "master") return deny();
-    if (args.p_tipo !== "completa" || writes !== 0) throw new Error("unexpected analysis command");
+    if (args["p_tipo"] !== "completa" || writes !== 0) throw new Error("unexpected analysis command");
     writes++;
     execId = EXEC;
     hash = HASH;
@@ -199,7 +199,7 @@ function rpc(name: string, args: Record<string, unknown>) {
     return ok(EXEC);
   }
   if (name === "obter_contexto_revisao_v117") {
-    if (args.p_id_requisito !== REQ) return deny();
+    if (args["p_id_requisito"] !== REQ) return deny();
     return ok({
       schema_versao: "revisao-v117",
       id_competencia: COMP,
@@ -215,21 +215,21 @@ function rpc(name: string, args: Record<string, unknown>) {
   if (name === "registrar_revisao_requisito_v117") {
     if (actor !== "master") return deny();
     if (
-      args.p_id_execucao_esperada !== execId ||
-      args.p_id_resultado_esperado !== resultId ||
-      args.p_hash_esperado !== hash
+      args["p_id_execucao_esperada"] !== execId ||
+      args["p_id_resultado_esperado"] !== resultId ||
+      args["p_hash_esperado"] !== hash
     )
       return { data: null, error: { code: "PT409" }, status: 409 };
     if (
-      args.p_id_requisito !== REQ ||
-      args.p_resultado !== "conforme" ||
-      args.p_justificativa !== JUST ||
-      args.p_fundamento !== FUND ||
-      args.p_request_id !== KEY
+      args["p_id_requisito"] !== REQ ||
+      args["p_resultado"] !== "conforme" ||
+      args["p_justificativa"] !== JUST ||
+      args["p_fundamento"] !== FUND ||
+      args["p_request_id"] !== KEY
     )
       throw new Error("wrong revision");
-    const items = args.p_evidencias as Record<string, unknown>[];
-    if (items.length !== 1 || items[0].id_versao_documento !== VERSION || items[0].pagina !== 1)
+    const items = args["p_evidencias"] as Record<string, unknown>[];
+    if (items.length !== 1 || items[0]!["id_versao_documento"] !== VERSION || items[0]!["pagina"] !== 1)
       throw new Error("wrong evidence");
     writes++;
     review = true;
@@ -335,7 +335,7 @@ function rpc(name: string, args: Record<string, unknown>) {
       apontamentos_paginacao: pag(25),
     });
   if (name === "obter_detalhe_requisito_v117") {
-    if (args.p_id_requisito !== REQ) return deny();
+    if (args["p_id_requisito"] !== REQ) return deny();
     return ok({
       schema_versao: "v117-v1",
       competencia: competence,
@@ -445,7 +445,7 @@ async function produce(c: Case) {
         resultado: "conforme",
         justificativa: JUST,
         fundamento: FUND,
-        evidencias: [{ id_versao_documento: page.itens[0].id, pagina: 1, trecho: "Trecho F3" }],
+        evidencias: [{ id_versao_documento: page.itens[0]!.id, pagina: 1, trecho: "Trecho F3" }],
       },
       KEY,
     );
@@ -484,9 +484,9 @@ async function consume(c: Case, negative: boolean) {
       evento: cmd(),
     });
     return {
-      eventId: v.eventos[0].id,
-      entity: v.eventos[0].id_entidade,
-      correlation: v.eventos[0].correlation_id,
+      eventId: v.eventos[0]!.id,
+      entity: v.eventos[0]!.id_entidade,
+      correlation: v.eventos[0]!.correlation_id,
     };
   }
   if (c.destination === "V118") {
@@ -520,9 +520,9 @@ async function consume(c: Case, negative: boolean) {
     return {
       scope: v?.competencia.id,
       execution: v?.execucao_atual?.id,
-      result: v?.resultados[0].id_resultado,
-      justification: v?.resultados[0].justificativa,
-      evidence: v?.resultados[0].evidencias[0].id,
+      result: v?.resultados[0]!.id_resultado,
+      justification: v?.resultados[0]!.justificativa,
+      evidence: v?.resultados[0]!.evidencias[0]!.id,
     };
   }
   if (c.destination === "V117") {
@@ -548,8 +548,8 @@ async function consume(c: Case, negative: boolean) {
       scope: v?.competencia.id,
       execution: v?.execucao_atual?.id,
       result: v?.resultado_atual?.id,
-      version: v?.evidencias[0].documento?.id_versao_documento,
-      oldExecution: v?.historico[0].id_execucao,
+      version: v?.evidencias[0]!.documento?.id_versao_documento,
+      oldExecution: v?.historico[0]!.id_execucao,
     };
   }
   const r = await obterVisaoGeral(COMP, signal);
@@ -597,11 +597,11 @@ describe("V116/V117 stateful material commands", () => {
       const filters: unknown[][] = [],
         b: Record<string, unknown> = {};
       for (const n of ["select", "order", "range", "abortSignal"]) b[n] = () => b;
-      b.eq = (...args: unknown[]) => {
+      b["eq"] = (...args: unknown[]) => {
         filters.push(args);
         return b;
       };
-      b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
+      b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
         Promise.resolve()
           .then(() => data(table, filters))
           .then(res, rej);
@@ -661,7 +661,7 @@ describe("V116/V117 stateful material commands", () => {
       actor = "master";
       const next = await analysis();
       expect(next.execucao_atual).toMatchObject({ id: EXEC, hash_entrada: HASH });
-      expect(next.resultados[0].id_resultado).toBe(RESULT);
+      expect(next.resultados[0]!.id_resultado).toBe(RESULT);
       expect(writes).toBe(1);
       observations.push({
         caseId: c.caseId,
@@ -695,7 +695,7 @@ describe("V116/V117 stateful material commands", () => {
     });
   }
   afterAll(() => {
-    const path = process.env.F3_CODE_ANALYSIS_OBSERVATIONS;
+    const path = process.env["F3_CODE_ANALYSIS_OBSERVATIONS"];
     if (path) {
       expect(observations).toHaveLength(cases.length * 2);
       writeFileSync(path, JSON.stringify(observations) + "\n", { flag: "wx" });
