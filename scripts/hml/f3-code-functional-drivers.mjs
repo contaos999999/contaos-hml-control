@@ -1257,7 +1257,143 @@ async function analysisEvidence(c,kind){const spec=analysisCases[c.caseId];if(!s
 function dispatchAnalysis(base,kind){const all=new Set([...Object.keys(base),...Object.values(analysisCases).map(c=>c.consumer)]);return Object.freeze(Object.fromEntries([...all].map(consumer=>[consumer,async args=>{if(Object.hasOwn(analysisCases,args.case.caseId))return analysisEvidence(args.case,kind);if(typeof base[consumer]!=="function")throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"),{code:"F3_CONSUMER_CASE_NOT_IMPLEMENTED"});return base[consumer](args);}])));}
 async function analysisProducer(order){const c=Object.values(analysisCases).find(x=>x.order===order),e=(await runAnalysisCases()).get(c.caseId+":positive");if(!e)throw Object.assign(new Error("F3_ANALYSIS_PRODUCER_MISSING"),{code:"F3_ANALYSIS_PRODUCER_MISSING"});return Object.freeze({state:"UI_OBSERVED_NOT_CERTIFIED",organizationId:e.organizationId,producerEntityId:e.producerEntityId});}
 
+
+const DOCUMENT_SOURCE="src/test/f3-code-v110-v111-v115-document-actions.test.ts";
+const DOC_ORG="c1200000-0000-4000-8000-000000000001",DOC_CONTRACT="c1200000-0000-4000-8000-000000000002",DOC_COMP="c1200000-0000-4000-8000-000000000003",DOC_ID="c1200000-0000-4000-8000-000000000004",DOC_OLD="c1200000-0000-4000-8000-000000000005",DOC_VERSION="c1200000-0000-4000-8000-000000000006",DOC_FILE="c1200000-0000-4000-8000-000000000008";
+const documentCases=Object.freeze({
+  "IFV1-F3-C0288": {
+    "caseId": "IFV1-F3-C0288",
+    "order": 12,
+    "destination": "V111",
+    "consumer": "documentos_contrato",
+    "method": "GET",
+    "reader": true
+  },
+  "IFV1-F3-C0294": {
+    "caseId": "IFV1-F3-C0294",
+    "order": 12,
+    "destination": "V116",
+    "consumer": "obter_analise_competencia_v116",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0297": {
+    "caseId": "IFV1-F3-C0297",
+    "order": 12,
+    "destination": "V123",
+    "consumer": "eventos_auditoria",
+    "method": "GET",
+    "reader": false
+  },
+  "IFV1-F3-C0311": {
+    "caseId": "IFV1-F3-C0311",
+    "order": 13,
+    "destination": "V107",
+    "consumer": "fontes_normativas",
+    "method": "GET",
+    "reader": true
+  },
+  "IFV1-F3-C0315": {
+    "caseId": "IFV1-F3-C0315",
+    "order": 13,
+    "destination": "V110",
+    "consumer": "documentos_contrato",
+    "method": "GET",
+    "reader": true
+  },
+  "IFV1-F3-C0320": {
+    "caseId": "IFV1-F3-C0320",
+    "order": 13,
+    "destination": "V116",
+    "consumer": "obter_analise_competencia_v116",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0321": {
+    "caseId": "IFV1-F3-C0321",
+    "order": 13,
+    "destination": "V117",
+    "consumer": "obter_detalhe_requisito_v117",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0324": {
+    "caseId": "IFV1-F3-C0324",
+    "order": 13,
+    "destination": "V123",
+    "consumer": "eventos_auditoria",
+    "method": "GET",
+    "reader": false
+  },
+  "IFV1-F3-C0410": {
+    "caseId": "IFV1-F3-C0410",
+    "order": 15,
+    "destination": "V114",
+    "consumer": "obter_visao_geral_competencia",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0413": {
+    "caseId": "IFV1-F3-C0413",
+    "order": 15,
+    "destination": "V116",
+    "consumer": "obter_analise_competencia_v116",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0415": {
+    "caseId": "IFV1-F3-C0415",
+    "order": 15,
+    "destination": "V117",
+    "consumer": "obter_detalhe_requisito_v117",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0416": {
+    "caseId": "IFV1-F3-C0416",
+    "order": 15,
+    "destination": "V118",
+    "consumer": "pareceres_internos",
+    "method": "GET",
+    "reader": true
+  },
+  "IFV1-F3-C0418": {
+    "caseId": "IFV1-F3-C0418",
+    "order": 15,
+    "destination": "V119",
+    "consumer": "obter_visao_geral_competencia",
+    "method": "POST",
+    "reader": true
+  },
+  "IFV1-F3-C0420": {
+    "caseId": "IFV1-F3-C0420",
+    "order": 15,
+    "destination": "V123",
+    "consumer": "eventos_auditoria",
+    "method": "GET",
+    "reader": false
+  }
+});
+let documentRun;
+async function runDocumentCases(){
+  if(!documentRun)documentRun=(async()=>{
+    const dir=await mkdtemp(join(tmpdir(),"contaos-f3-documents-")),file=join(dir,"observations.json");
+    try{
+      await exec("bunx",["vitest","run",DOCUMENT_SOURCE,"--reporter=dot"],{cwd:ROOT,env:{...process.env,F3_CODE_DOCUMENT_OBSERVATIONS:file},timeout:60000,maxBuffer:1024*1024});
+      const parsed=JSON.parse(await readFile(file,"utf8")),map=new Map();
+      if(!Array.isArray(parsed)||parsed.length!==Object.keys(documentCases).length*2)throw Object.assign(new Error("F3_DOCUMENT_COUNT"),{code:"F3_DOCUMENT_COUNT"});
+      for(const e of parsed){const c=documentCases[e.caseId],key=e.caseId+":"+e.kind;if(!c||map.has(key)||!["positive","negative"].includes(e.kind)||e.testId!==DOCUMENT_SOURCE+":"+key||e.consumer!==c.consumer||e.producerOrder!==c.order||e.organizationId!==DOC_ORG||e.producerEntityId!==DOC_ID||e.state!=="EXECUTED"||e.assertion!=="PASS")throw Object.assign(new Error("F3_DOCUMENT_OUTPUT"),{code:"F3_DOCUMENT_OUTPUT"});map.set(key,Object.freeze(e));}return map;
+    }finally{await rm(dir,{recursive:true,force:true});}
+  })();return documentRun;
+}
+async function documentEvidence(c,kind){const spec=documentCases[c.caseId];if(!spec||c.producerOrder!==spec.order||c.destination!==spec.destination||c.consumer!==spec.consumer)throw Object.assign(new Error("F3_DOCUMENT_CASE_NOT_IMPLEMENTED"),{code:"F3_DOCUMENT_CASE_NOT_IMPLEMENTED"});const e=(await runDocumentCases()).get(c.caseId+":"+kind);if(!e)throw Object.assign(new Error("F3_DOCUMENT_MISSING"),{code:"F3_DOCUMENT_MISSING"});return structuredClone(e);}
+function dispatchDocument(base,kind){const all=new Set([...Object.keys(base),...Object.values(documentCases).map(c=>c.consumer)]);return Object.freeze(Object.fromEntries([...all].map(consumer=>[consumer,async args=>{if(Object.hasOwn(documentCases,args.case.caseId))return documentEvidence(args.case,kind);if(typeof base[consumer]!=="function")throw Object.assign(new Error("F3_CONSUMER_CASE_NOT_IMPLEMENTED"),{code:"F3_CONSUMER_CASE_NOT_IMPLEMENTED"});return base[consumer](args);}])));}
+async function documentProducer(order){const c=Object.values(documentCases).find(x=>x.order===order),e=(await runDocumentCases()).get(c.caseId+":positive");if(!e)throw Object.assign(new Error("F3_DOCUMENT_PRODUCER_MISSING"),{code:"F3_DOCUMENT_PRODUCER_MISSING"});return Object.freeze({state:"UI_OBSERVED_NOT_CERTIFIED",organizationId:e.organizationId,producerEntityId:e.producerEntityId});}
+
 export const producerDrivers = Object.freeze({
+  12:()=>documentProducer(12),
+  13:()=>documentProducer(13),
+  15:()=>documentProducer(15),
   16:()=>analysisProducer(16),
   17:()=>analysisProducer(17),
   7:()=>contractProducer(7),
@@ -1411,11 +1547,26 @@ const baseNegativeDrivers = Object.freeze({
   },
 });
 
-export const consumerDrivers=dispatchAnalysis(dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseConsumerDrivers,"positive"),"positive"),"positive"),"positive"),"positive");
-export const negativeDrivers=dispatchAnalysis(dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseNegativeDrivers,"negative"),"negative"),"negative"),"negative"),"negative");
+export const consumerDrivers=dispatchDocument(dispatchAnalysis(dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseConsumerDrivers,"positive"),"positive"),"positive"),"positive"),"positive"),"positive");
+export const negativeDrivers=dispatchDocument(dispatchAnalysis(dispatchContract(dispatchParty(dispatchMaterial(dispatchV113(baseNegativeDrivers,"negative"),"negative"),"negative"),"negative"),"negative"),"negative");
 
 /** Contraditório estrutural interno. Não constitui auditoria independente final. */
 export async function independentVerifier(c, observed) {
+  if(Object.hasOwn(documentCases,c.caseId)){
+    const spec=documentCases[c.caseId],{producer,positive,negative}=observed,a=positive.readback,b=negative.readback,key=spec.method==="GET"?"table":"rpc";
+    const {createHash}=await import("node:crypto");
+    const hash=createHash("sha256").update("F3 new file").digest("hex"),old=createHash("sha256").update("F3 previous file").digest("hex");
+    if(!(c.origin===({12:"V110",13:"V111",15:"V115"}[spec.order])&&c.destination===spec.destination&&c.consumer===spec.consumer&&c.expected?.master==="ALLOW"&&c.expected?.leitor===(spec.reader?"ALLOW":"DENY")&&producer.organizationId===DOC_ORG&&producer.producerEntityId===DOC_ID&&positive.testId===DOCUMENT_SOURCE+":"+c.caseId+":positive"&&negative.testId===DOCUMENT_SOURCE+":"+c.caseId+":negative"&&positive.network?.[key]===spec.consumer&&negative.network?.[key]===spec.consumer&&positive.network?.fixture===true&&negative.network?.fixture===true&&positive.network?.status===200&&negative.network?.status===403&&a?.destination===spec.destination&&b?.destination===spec.destination&&a?.competenceId===DOC_COMP&&b?.competenceId===DOC_COMP&&a?.contractId===DOC_CONTRACT&&b?.contractId===DOC_CONTRACT&&a?.version===DOC_VERSION&&b?.version===DOC_VERSION&&a?.file===DOC_FILE&&b?.file===DOC_FILE&&a?.hash===hash&&b?.hash===hash&&a?.number===(spec.order===13?2:1)&&b?.number===a.number&&a?.roles===(spec.reader?2:1)&&a?.writes===1&&b?.writes===1&&b?.outcome==="DENY"&&b?.mutationDenied===true&&b?.entityPreserved===true))return false;
+    const v=a.witness;
+    if(spec.destination==="V123")return v?.entity===DOC_ID&&v.eventId==="c1200000-0000-4000-8000-000000000014"&&v.correlation==="c1200000-0000-4000-8000-000000000015";
+    if(["V110","V111"].includes(spec.destination))return v?.version===DOC_VERSION&&v.file===DOC_FILE&&v.hash===hash&&v.number===a.number;
+    if(spec.destination==="V107")return v?.version===DOC_VERSION&&v.old===DOC_OLD&&v.hash===hash&&v.text==="Trecho documental F3"&&v.page===2;
+    if(v?.scope!==DOC_COMP)return false;
+    if(spec.destination==="V116")return v.stale===true&&v.oldHash===old;
+    if(spec.destination==="V117")return v.oldVersion===DOC_OLD&&v.oldHash===old&&v.current===null;
+    if(spec.destination==="V118")return v.opinions===0;
+    return ["V114","V119"].includes(spec.destination)&&v.current===false&&v.gate===false&&v.canPresent===false;
+  }
   if(Object.hasOwn(analysisCases,c.caseId)){
     const spec=analysisCases[c.caseId],{producer,positive,negative}=observed,a=positive.readback,b=negative.readback,key=spec.method==="GET"?"table":"rpc";
     if(!(c.origin===(spec.order===16?"V116":"V117")&&c.destination===spec.destination&&c.consumer===spec.consumer&&c.expected?.master==="ALLOW"&&c.expected?.leitor===(spec.reader?"ALLOW":"DENY")&&producer.organizationId===ANALYSIS_ORG&&producer.producerEntityId===analysisId(spec.order)&&positive.testId===ANALYSIS_SOURCE+":"+c.caseId+":positive"&&negative.testId===ANALYSIS_SOURCE+":"+c.caseId+":negative"&&positive.network?.[key]===spec.consumer&&negative.network?.[key]===spec.consumer&&positive.network?.fixture===true&&negative.network?.fixture===true&&positive.network?.status===200&&negative.network?.status===403&&a?.destination===spec.destination&&b?.destination===spec.destination&&a?.competenceId===ANALYSIS_COMP&&b?.competenceId===ANALYSIS_COMP&&a?.contractId===ANALYSIS_CONTRACT&&b?.contractId===ANALYSIS_CONTRACT&&a?.executionId===ANALYSIS_EXEC&&b?.executionId===ANALYSIS_EXEC&&a?.resultId===ANALYSIS_RESULT&&b?.resultId===ANALYSIS_RESULT&&a?.hash==="b".repeat(64)&&b?.hash===a.hash&&a?.roles===(spec.reader?2:1)&&a?.writes===1&&b?.writes===1&&b?.outcome==="DENY"&&b?.mutationDenied===true&&b?.entityPreserved===true))return false;
