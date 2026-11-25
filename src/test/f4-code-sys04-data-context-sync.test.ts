@@ -72,11 +72,11 @@ beforeEach(()=>{
     const call:Call={table,filters:[],ors:[],ins:[],single:false};calls.push(call);
     const q:Record<string,unknown>={};
     for(const method of ["select","order","range","abortSignal"])q[method]=()=>q;
-    q.eq=(k:string,v:unknown)=>{call.filters.push([k,v]);return q;};
-    q.or=(v:string)=>{call.ors.push(v);return q;};
-    q.in=(k:string,v:unknown)=>{call.ins.push([k,v]);return q;};
-    q.maybeSingle=q.single=()=>{call.single=true;return Promise.resolve().then(()=>response(call));};
-    q.then=(resolve:(v:unknown)=>unknown,reject:(e:unknown)=>unknown)=>Promise.resolve().then(()=>response(call)).then(resolve,reject);
+    q["eq"]=(k:string,v:unknown)=>{call.filters.push([k,v]);return q;};
+    q["or"]=(v:string)=>{call.ors.push(v);return q;};
+    q["in"]=(k:string,v:unknown)=>{call.ins.push([k,v]);return q;};
+    q["maybeSingle"]=q["single"]=()=>{call.single=true;return Promise.resolve().then(()=>response(call));};
+    q["then"]=(resolve:(v:unknown)=>unknown,reject:(e:unknown)=>unknown)=>Promise.resolve().then(()=>response(call)).then(resolve,reject);
     return q;
   });
 });
@@ -154,4 +154,4 @@ describe("F4.1 real consumer reload after change of organization",()=>{
     });
   }
 });
-afterAll(()=>{const p=process.env.F4_CODE_SYS04_DATA_OBSERVATIONS;if(p){expect(observations).toHaveLength(20);writeFileSync(p,JSON.stringify(observations,null,2)+"\n",{flag:"wx"});}});
+afterAll(()=>{const p=process.env["F4_CODE_SYS"]04_DATA_OBSERVATIONS;if(p){expect(observations).toHaveLength(20);writeFileSync(p,JSON.stringify(observations,null,2)+"\n",{flag:"wx"});}});
