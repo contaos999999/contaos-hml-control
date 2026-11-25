@@ -727,3 +727,6 @@ test("F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 produ
 
 // RED/GREEN F4: exercita o verificador de identidade realmente usado no CI.
 import "./hml/f4-code-material-evidence.test.mjs";
+
+// F5 CODE partial verifier: reject corrupted observations, not a phase certificate.
+import "./hml/f5-code-material-evidence.test.mjs";
