@@ -16,6 +16,28 @@ import {
   pixelContrastDecision,
 } from "./visual-audit.mjs";
 
+test("V2-01 registra a rota Diligencias e a prova visual", async () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/competencias/$id/diligencias"),
+    "FAIL V2-01 registra a rota Diligencias e a prova visual: rota ainda ausente da árvore TanStack",
+  );
+  assert.ok(ROUTES.some((route) => route.id === "V2-01" && route.path.endsWith("/diligencias")));
+  const { diligenciasVisualCases, diligenciasFixtureFiles } =
+    await import("./v2-integracao-visual.mjs");
+  const proof = diligenciasVisualCases(WIDTHS, THEMES);
+  assert.equal(proof.length, 8);
+  assert.equal(new Set(proof.map(({ width, theme }) => width + "/" + theme)).size, 8);
+  const files = diligenciasFixtureFiles("/approved/source", {
+    "client.ts": "export const supabase = {};",
+    "router.tsx": "router",
+    "build.mjs": "build",
+  });
+  assert.ok(files["entry.tsx"].includes("/src/components/competencias/CompetenciaVisaoGeral"));
+  assert.ok(files["entry.tsx"].includes("/src/components/diligencias/DiligenciasCompetencia"));
+  assert.ok(files["client.ts"].includes("ciclos_diligencia"));
+});
+
 test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preservando o drawer", () => {
   const routeDirectory = new URL("../../src/routes/", import.meta.url);
   const normalize = (path) =>
@@ -35,7 +57,7 @@ test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preser
       assert.ok(match, `Rota não reconhecida: ${name}`);
       return normalize(match[1]);
     });
-  assert.equal(pages.length, 28);
+  assert.equal(pages.length, 29);
   assert.equal(new Set(pages).size, pages.length);
   assert.deepEqual([...new Set(ROUTES.map((route) => normalize(route.path)))].sort(), pages.sort());
   assert.equal(ROUTES.filter((route) => route.requiresDrawer).length, 1);
@@ -54,12 +76,13 @@ test("P0 V123: Auditoria possui oito casos privados sem PASS autenticado presumi
   );
 });
 
-test("matriz oficial: 29 superfícies (28 rotas e drawer) × 4 larguras × 2 temas", () => {
-  assert.equal(ROUTES.length, 29);
+test("matriz oficial preserva 29 superfícies V1 e inclui Diligências V2", () => {
+  assert.equal(ROUTES.length, 30);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
-  assert.equal(cases().length, 232);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 232);
+  assert.equal(cases().filter((x) => x.id !== "V2-01").length, 232);
+  assert.equal(cases().filter((x) => x.id === "V2-01").length, 8);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 240);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");
@@ -503,7 +526,7 @@ test("refluxo/texto: 18 casos públicos separados preservam os 232 casos base", 
     extra.filter((x) => x.mode === "TEXT_200" && [390, 1440].includes(x.width)).length,
     12,
   );
-  assert.equal(m.cases().length, 232);
+  assert.equal(m.cases().filter((item) => item.id !== "V2-01").length, 232);
 });
 
 test("refluxo/texto: escala real e amostra estável são obrigatórias", async () => {
@@ -927,7 +950,7 @@ test("F2 delta: exact sixteen-case visual catalogue preserves original route cat
   assert.equal(rows.length, 16);
   assert.equal(new Set(rows.map((r) => `${r.surface}/${r.width}/${r.theme}`)).size, 16);
   assert.deepEqual([...new Set(rows.map((r) => r.surface))], ["V114", "V120"]);
-  assert.equal(cases().length, 232);
+  assert.equal(cases().filter((item) => item.id !== "V2-01").length, 232);
 });
 test("F2 delta: missing duplicate unknown false or forged evidence cannot pass", () => {
   assert.equal(typeof delta.phase2DeltaReportValid, "function");

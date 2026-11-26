@@ -8,6 +8,7 @@ import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { collectDiligenciasVisual } from "./v2-integracao-visual.mjs";
 
 export const WIDTHS = [1440, 1280, 768, 390];
 export const THEMES = ["light", "dark"];
@@ -42,6 +43,7 @@ export const ROUTES = [
   { id: "V121", path: "/contratos/" + UUID + "/historico" },
   { id: "V122", path: "/contratos/" + UUID + "/historico/importar" },
   { id: "V123", path: "/administracao/auditoria" },
+  { id: "V2-01", path: "/competencias/" + UUID + "/diligencias" },
 ];
 export function cases() {
   return ROUTES.flatMap((route) =>
@@ -1530,6 +1532,18 @@ async function run() {
       filename: "phase2-delta/SHA256SUMS",
       sha256: hash(readFileSync(join(output, "phase2-delta/SHA256SUMS"))),
     });
+    await collectDiligenciasVisual(browser, {
+      base,
+      output,
+      headSha: sha,
+      widths: WIDTHS,
+      themes: THEMES,
+      baseFixtures: phase2DeltaFixtureFiles(process.cwd()),
+    });
+    images.push({
+      filename: "v2-diligencias/SHA256SUMS",
+      sha256: hash(readFileSync(join(output, "v2-diligencias/SHA256SUMS"))),
+    });
   } finally {
     await browser.close();
   }
@@ -1540,6 +1554,11 @@ async function run() {
       mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
       cases: 16,
       report: "phase2-delta/report.json",
+    },
+    offline_v2_diligencias: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
     },
     started_utc: started,
     finished_utc: new Date().toISOString(),
