@@ -224,6 +224,14 @@ function Conteudo({ vg }: { vg: VisaoGeral }) {
         <BlockingSummary b={vg.blocking_summary} liberado={vg.portao.liberado} />
       </div>
       <AllowedActions acoes={vg.allowed_actions} vgId={c.id} />
+      <div>
+        <Button asChild variant="outline" className="min-h-11">
+          <Link to="/competencias/$id/diligencias" params={{ id: c.id }}>
+            <ClipboardList className="mr-2 h-4 w-4" aria-hidden="true" />
+            Diligências
+          </Link>
+        </Button>
+      </div>
       <CompetenciaApresentacoesLista
         key={`${c.id}:${c.id_organizacao}:${c.id_contrato}`}
         competencia={c.id}

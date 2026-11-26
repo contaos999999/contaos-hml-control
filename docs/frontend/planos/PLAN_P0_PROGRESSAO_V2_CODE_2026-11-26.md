@@ -2,7 +2,7 @@
 
 ## Causa e recorte
 
-O plano mestre #825 exige recibo do regular antecedente para começar o próximo regular. No P0 vigente, `readP0` incorpora o recibo V1/interna, mas os IDs executados ainda vêm do manifesto histórico protegido P0-LOCK-CERT. A simulação do PLAN 45 com essa base continua bloqueada e o próximo regular elegível é 44. O P0 nativo já autentica certificados finais. É preciso que também reconheça recibos individuais da V2 sem reescrever a evidência histórica. A integração do BUILD 44 e o readback precedem este BUILD de governança.
+O plano mestre #825 exige recibo do regular antecedente para começar o próximo regular. No P0 vigente, `readP0` incorpora o recibo V1/interna, mas os IDs executados ainda vêm do manifesto histórico protegido P0-LOCK-CERT. A simulação do PLAN 45 com essa base continua bloqueada e o próximo regular elegível é 44. O P0 nativo já autentica certificados finais. É preciso que também reconheça recibos individuais da V2 sem reescrever a evidência histórica. A BUILD 44 foi integrada pela PR #827. Foram conferidos o merge `ea5802ce4544abeba7549c70070f121652490054`, a revisão do HEAD e os blobs na main. O Teste C do run 45862841681 e o artefato 15138599369 comprovaram as oito combinações de Diligências.
 
 ## Contrato da leitura efetiva
 
