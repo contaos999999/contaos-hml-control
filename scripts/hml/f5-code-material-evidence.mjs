@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 export const BACKEND = "a1516de1d8949e505d83b5e000eb1cc558b217a7";
 export const BATCHES = Object.freeze({
+  contractdocuments: ["0288", "0294", "0297", "0311", "0315", "0320", "0321", "0324"],
+  competencedocuments: ["0410", "0413", "0415", "0416", "0418", "0420"],
   adm01: [
     "0002",
     "0007",
@@ -209,6 +211,16 @@ const f53Inventory = JSON.parse(
   ),
 );
 const f53Cases = new Map(f53Inventory.cases.map((entry) => [entry.caseId.slice(-4), entry]));
+const f54Inventory = JSON.parse(
+  fs.readFileSync(
+    new URL(
+      "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_4_CASE_CONTRACTS_PROPOSAL.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+const f54Cases = new Map(f54Inventory.cases.map((entry) => [entry.caseId.slice(-4), entry]));
 const normativeStates = {
   V107: {
     ref: 13,
@@ -272,6 +284,26 @@ const contextTitles = {
   ],
 };
 const batchesWithEvidence = {
+  contractdocuments: {
+    file: "f5-code-v110-v111-document-scope-isolation.test.ts",
+    suite: "F5 V110/V111 document scope isolation",
+    title: (_id, index) =>
+      [
+        "document change and lineage remain scoped",
+        "foreign document action has no effect or link",
+      ][index],
+    check: checkDocuments,
+  },
+  competencedocuments: {
+    file: "f5-code-v115-document-scope-isolation.test.ts",
+    suite: "F5 V115 competence document scope isolation",
+    title: (_id, index) =>
+      [
+        "competence document reaches the authorized consumer",
+        "foreign competence document and effects remain hidden",
+      ][index],
+    check: checkDocuments,
+  },
   context: {
     file: "f5-code-context-session-isolation.test.tsx",
     suite: "F5 context material isolation",
@@ -556,6 +588,98 @@ function checkNormative(o, id) {
     (c.destination === "V116" && (b.previousStale !== false || b.stale !== true))
   )
     fail("F5.3 consumer history or current state mismatch");
+}
+function checkDocuments(o, id) {
+  const c = f54Cases.get(id);
+  if (!c) fail("F5.4 canonical connection missing");
+  const competence = c.origin === "V115";
+  const revision = c.origin === "V111";
+  checkScopedChange(o, c, c.producer, revision ? "add_version" : "create", "F5.4");
+  const b = o.readback;
+  const series = competence ? "542" : "541";
+  const a = (n) => fixtureId("a", series, n);
+  const other = (n) => fixtureId("b", series, n);
+  const checksum = (seed) => createHash("sha256").update(seed).digest("hex");
+  const hash = checksum(competence ? "Documento V115 a" : "%PDF-1.4\nF5.4 a");
+  const prior = checksum(competence ? "Evidência anterior V115 a" : "versão anterior a");
+  if (o.kind === "negative") {
+    if (
+      b.ownMaterialId !== other(2) ||
+      b.ownContractId !== other(1) ||
+      b.targetNumber !== Number(revision) ||
+      b.ownSha256 !== checksum(competence ? "Documento V115 b" : "versão anterior b") ||
+      (competence
+        ? b.ownCompetenceId !== other(7)
+        : b.ownVersionId !== other(5) || b.urlOpened !== false) ||
+      (id === "0288" && b.uploadDenied !== true) ||
+      (id === "0315" &&
+        (b.classifiedConflict !== "conflito" || b.classifiedTransport !== "erro")) ||
+      (id === "0415" && b.crossedRequirementRejected !== true)
+    )
+      fail("F5.4 denial or unchanged document scope mismatch");
+    return;
+  }
+  if (
+    b.organizationId !== A ||
+    b.contractId !== a(1) ||
+    b.documentId !== a(2) ||
+    b.versionId !== a(3) ||
+    b.fileId !== a(4) ||
+    b.sha256 !== hash ||
+    b.number !== (revision ? 2 : 1) ||
+    (revision && (b.oldVersionId !== a(5) || b.oldFileId !== a(6) || b.oldHash !== prior)) ||
+    (competence && (b.competenceId !== a(7) || b.requirementId !== a(8)))
+  )
+    fail("F5.4 document, file, checksum or version mismatch");
+  const consumers = {
+    V107: 13,
+    V110: 2,
+    V111: 2,
+    V114: 7,
+    V116: 7,
+    V117: 8,
+    V118: 15,
+    V119: 7,
+    V123: 10,
+  };
+  if (b.resultId !== a(consumers[c.destination])) fail("F5.4 consumer identity mismatch");
+  switch (c.destination) {
+    case "V107":
+      if (b.sourceVersion !== a(14) || b.sourceHash !== hash || b.page !== 2)
+        fail("F5.4 source lineage mismatch");
+      break;
+    case "V110":
+    case "V111":
+      if (b.downloadVerified !== true || (id === "0288" && b.uploadVerified !== true))
+        fail("F5.4 file transport not witnessed");
+      break;
+    case "V114":
+    case "V118":
+    case "V119":
+      if (
+        b.priorCanPresent !== true ||
+        b.canPresent !== false ||
+        (c.destination === "V118" && b.previousHash !== prior)
+      )
+        fail("F5.4 current gate or prior opinion mismatch");
+      break;
+    case "V116":
+      if (b.stale !== true || b.previousHash !== prior || (competence && b.priorStale !== false))
+        fail("F5.4 analysis scope mismatch");
+      break;
+    case "V117":
+      if (b.retainedVersion !== a(5) || (competence ? b.previousHash !== prior : b.page !== 1))
+        fail("F5.4 historical evidence mismatch");
+      break;
+    case "V123":
+      if (
+        b.event !== c.conditionalEvent ||
+        b.entityId !== a(revision ? 3 : 2) ||
+        b.correlation !== a(11)
+      )
+        fail("F5.4 audit lineage mismatch");
+      break;
+  }
 }
 function checkAction(o, id) {
   const [frontier, operation, allowedRole] = actionContracts[id];

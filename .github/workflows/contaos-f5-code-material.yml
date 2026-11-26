@@ -35,6 +35,10 @@ jobs:
             test: src/test/f5-code-v105-v106-scope-isolation.test.tsx
           - batch: normatives
             test: src/test/f5-code-v107-v108-v109-scope-isolation.test.ts
+          - batch: contractdocuments
+            test: src/test/f5-code-v110-v111-document-scope-isolation.test.ts
+          - batch: competencedocuments
+            test: src/test/f5-code-v115-document-scope-isolation.test.ts
     env:
       F5_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
       F5_JOB_NAME: F5 CODE ${{ matrix.batch }} - material e isolamento
