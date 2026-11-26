@@ -1,0 +1,712 @@
+{
+  "schema": "contaos.v2.contract-metadata.v1",
+  "regular": "46",
+  "tela": "V2-03",
+  "frontend_sha": "b372f481c67156d429cbe9fb738990493a924cc7",
+  "backend_normativo": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "backend_main": "cbf247724ecede59fdcba0d18d7b0e37c76f247f",
+  "backend_build": "31f3ef9b95c8dc4e9eadbc786a2125e3c02a266d",
+  "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+  "project_id": "gklhhhyosgasnyoxlrui",
+  "frontend_ancestor": {
+    "pr": 833,
+    "sha": "b372f481c67156d429cbe9fb738990493a924cc7",
+    "regular_elegivel": "46"
+  },
+  "backend_receipt": {
+    "pr": 235,
+    "sha": "cbf247724ecede59fdcba0d18d7b0e37c76f247f",
+    "review": 6081176413,
+    "ci": [
+      [
+        45905856816,
+        "ContaOS Zero-Drift"
+      ]
+    ]
+  },
+  "canonica": {
+    "commit": "cbf247724ecede59fdcba0d18d7b0e37c76f247f",
+    "documentos_confirmados": 25,
+    "catalogo_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
+    "regulares": 100,
+    "atomicos": 97
+  },
+  "consulta": "Somente catálogo de metadados, bytes de fonte e histórico de migrations.",
+  "status": "CONTRATO_DE_LEITURA_VERIFICADO",
+  "i05": {
+    "run": 45905601026,
+    "migration": "20261126221545",
+    "versions": 139,
+    "edge_version": 6,
+    "rpc": "obter_fonte_apontamento_contratante",
+    "args": [
+      "p_id_ciclo",
+      "p_id_apontamento"
+    ],
+    "roles": {
+      "invoker": true,
+      "authenticated": true,
+      "anon": false,
+      "service_role": false
+    },
+    "source": [
+      "REGISTRADA",
+      "ORIGEM_NAO_REGISTRADA",
+      "ORIGEM_INDISPONIVEL"
+    ]
+  },
+  "tabelas": [
+    {
+      "tabela": "analises_apontamentos",
+      "rls": true,
+      "auth_select": true,
+      "auth_insert": true,
+      "anon_select": false,
+      "policies": [
+        [
+          "analises_apontamentos_insert",
+          "INSERT",
+          "PERMISSIVE"
+        ],
+        [
+          "analises_apontamentos_select",
+          "SELECT",
+          "PERMISSIVE"
+        ],
+        [
+          "rbac_v1_insert",
+          "INSERT",
+          "RESTRICTIVE"
+        ],
+        [
+          "rbac_v1_select",
+          "SELECT",
+          "RESTRICTIVE"
+        ]
+      ]
+    },
+    {
+      "tabela": "apontamentos_contratante",
+      "rls": true,
+      "auth_select": true,
+      "auth_insert": false,
+      "anon_select": false,
+      "policies": [
+        [
+          "apontamentos_contratante_select",
+          "SELECT",
+          "PERMISSIVE"
+        ]
+      ]
+    },
+    {
+      "tabela": "desfechos_apontamentos",
+      "rls": true,
+      "auth_select": true,
+      "auth_insert": false,
+      "anon_select": false,
+      "policies": [
+        [
+          "desfechos_apontamentos_select",
+          "SELECT",
+          "PERMISSIVE"
+        ]
+      ]
+    },
+    {
+      "tabela": "eventos_auditoria",
+      "rls": true,
+      "auth_select": true,
+      "auth_insert": false,
+      "anon_select": false,
+      "policies": [
+        [
+          "eventos_select",
+          "SELECT",
+          "PERMISSIVE"
+        ],
+        [
+          "rbac_v1_select",
+          "SELECT",
+          "RESTRICTIVE"
+        ]
+      ]
+    },
+    {
+      "tabela": "evidencias_resultado",
+      "rls": true,
+      "auth_select": true,
+      "auth_insert": false,
+      "anon_select": false,
+      "policies": [
+        [
+          "evidencias_resultado_select",
+          "SELECT",
+          "PERMISSIVE"
+        ],
+        [
+          "rbac_v1_select",
+          "SELECT",
+          "RESTRICTIVE"
+        ]
+      ]
+    },
+    {
+      "tabela": "itens_pacote_competencia",
+      "rls": true,
+      "auth_select": true,
+      "auth_insert": false,
+      "anon_select": false,
+      "policies": [
+        [
+          "itens_pacote_competencia_select",
+          "SELECT",
+          "PERMISSIVE"
+        ],
+        [
+          "rbac_v1_select",
+          "SELECT",
+          "RESTRICTIVE"
+        ]
+      ]
+    },
+    {
+      "tabela": "pacotes_competencia",
+      "rls": true,
+      "auth_select": true,
+      "auth_insert": false,
+      "anon_select": false,
+      "policies": [
+        [
+          "pacotes_competencia_select",
+          "SELECT",
+          "PERMISSIVE"
+        ],
+        [
+          "rbac_v1_select",
+          "SELECT",
+          "RESTRICTIVE"
+        ]
+      ]
+    },
+    {
+      "tabela": "precedentes",
+      "rls": true,
+      "auth_select": true,
+      "auth_insert": false,
+      "anon_select": false,
+      "policies": [
+        [
+          "precedentes_select",
+          "SELECT",
+          "PERMISSIVE"
+        ]
+      ]
+    },
+    {
+      "tabela": "tarefas_diligencia",
+      "rls": true,
+      "auth_select": true,
+      "auth_insert": true,
+      "anon_select": false,
+      "policies": [
+        [
+          "tarefas_diligencia_insert",
+          "INSERT",
+          "PERMISSIVE"
+        ],
+        [
+          "tarefas_diligencia_select",
+          "SELECT",
+          "PERMISSIVE"
+        ]
+      ]
+    },
+    {
+      "tabela": "versoes_documento",
+      "rls": true,
+      "auth_select": true,
+      "auth_insert": false,
+      "anon_select": false,
+      "policies": [
+        [
+          "rbac_v1_insert",
+          "INSERT",
+          "RESTRICTIVE"
+        ],
+        [
+          "rbac_v1_select",
+          "SELECT",
+          "RESTRICTIVE"
+        ],
+        [
+          "versoes_documento_insert",
+          "INSERT",
+          "PERMISSIVE"
+        ],
+        [
+          "versoes_documento_select",
+          "SELECT",
+          "PERMISSIVE"
+        ]
+      ]
+    }
+  ],
+  "colunas": [
+    {
+      "nspname": "public",
+      "tabela": "analises_apontamentos",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_organizacao",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_contrato",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_competencia",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_apontamento",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "classificacao",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "fundamento",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "evidencias",
+          "type": "jsonb",
+          "not_null": true
+        },
+        {
+          "name": "revisado_por",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "revisado_em",
+          "type": "timestamp with time zone",
+          "not_null": false
+        },
+        {
+          "name": "criado_por",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "nspname": "public",
+      "tabela": "documentos_contrato",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_organizacao",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_contrato",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "tipo",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "titulo",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "categoria",
+          "type": "text",
+          "not_null": false
+        },
+        {
+          "name": "situacao",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "versao_atual",
+          "type": "integer",
+          "not_null": true
+        },
+        {
+          "name": "versao_registro",
+          "type": "bigint",
+          "not_null": true
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        },
+        {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        },
+        {
+          "name": "vigencia_inicio",
+          "type": "date",
+          "not_null": false
+        },
+        {
+          "name": "vigencia_fim",
+          "type": "date",
+          "not_null": false
+        },
+        {
+          "name": "observacoes",
+          "type": "text",
+          "not_null": false
+        }
+      ]
+    },
+    {
+      "nspname": "public",
+      "tabela": "eventos_auditoria",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_organizacao",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "id_usuario",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "origem",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "evento",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "entidade",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "id_entidade",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "antes",
+          "type": "jsonb",
+          "not_null": false
+        },
+        {
+          "name": "depois",
+          "type": "jsonb",
+          "not_null": false
+        },
+        {
+          "name": "metadados",
+          "type": "jsonb",
+          "not_null": true
+        },
+        {
+          "name": "correlation_id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "nspname": "public",
+      "tabela": "itens_pacote_competencia",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_organizacao",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_contrato",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_competencia",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_pacote",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "entidade_tipo",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "entidade_id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "versao_id",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "hash",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "ordem",
+          "type": "integer",
+          "not_null": true
+        },
+        {
+          "name": "metadados",
+          "type": "jsonb",
+          "not_null": true
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "nspname": "public",
+      "tabela": "tarefas_diligencia",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_organizacao",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_contrato",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_competencia",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_ciclo",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_plano",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "id_apontamento",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "descricao",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "responsavel",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "prazo",
+          "type": "date",
+          "not_null": false
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "id_evidencia_versao_documento",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "versao_registro",
+          "type": "bigint",
+          "not_null": true
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        },
+        {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        },
+        {
+          "name": "tipo_acao",
+          "type": "text",
+          "not_null": false
+        },
+        {
+          "name": "prioridade",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "depende_de",
+          "type": "uuid[]",
+          "not_null": true
+        },
+        {
+          "name": "validacao_solucao",
+          "type": "text",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "nspname": "public",
+      "tabela": "versoes_documento",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_organizacao",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_contrato",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_documento_contrato",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "id_documento_competencia",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "id_documento",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "numero_versao",
+          "type": "integer",
+          "not_null": true
+        },
+        {
+          "name": "id_arquivo",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "hash",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "motivo_substituicao",
+          "type": "text",
+          "not_null": false
+        },
+        {
+          "name": "metadados_extraidos",
+          "type": "jsonb",
+          "not_null": true
+        },
+        {
+          "name": "enviado_por",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        }
+      ]
+    }
+  ],
+  "operacoes": {
+    "visao_competencia": "Reúso da mesma visao do 45 para confrontar ciclo, competência, contrato e organização.",
+    "parecer": "Usar somente a origem da RPC. Para oferecer V120, confirmar a apresentação sob quatro chaves e RLS.",
+    "revisao": "Ler eventos SolucaoTarefaDiligenciaRevisada para tarefas comprovadamente ligadas ao item quando o perfil pode consultar auditoria. A decisão da tarefa e o desfecho do item têm entidades próprias.",
+    "pacote": "Escopo e RLS de apresentações no pacote e seus itens. Conferir id, tipo, versão e hash em item oficial do pacote exato.",
+    "evidencias": "ID de versão em análise e tarefa. Confirmar par de pertencimento e escopo nas tabelas oficiais antes de habilitar navegação V1."
+  },
+  "live": "NOT_RUN",
+  "prod": "NO-GO"
+}
