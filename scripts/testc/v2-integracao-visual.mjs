@@ -6,6 +6,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const competencia = "44444444-4444-4444-8444-444444444444";
+export const CICLO_V2_FIXTURE = "77777777-7777-4777-8777-777777777777";
+const cicloAnterior = "88888888-8888-4888-8888-888888888888";
+const protocoloId = "33333333-3333-4333-8333-333333333333";
+const cicloPath = "/diligencias/" + CICLO_V2_FIXTURE;
+const protocoloPath = "/competencias/" + competencia + "/apresentacoes/" + protocoloId;
 const overview = "/competencias/" + competencia;
 const diligencias = overview + "/diligencias";
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -20,8 +25,8 @@ export function diligenciasFixtureFiles(root, baseFixtures) {
     "router.tsx": baseFixtures["router.tsx"],
     "build.mjs": baseFixtures["build.mjs"],
     "client.ts": `
-import { C, O, K, supabase as baseline } from "./base-client";
-export { C, O, K };
+import { C, O, K, A, supabase as baseline } from "./base-client";
+export { C, O, K, A };
 
 const comum = {
   id_competencia: C, id_organizacao: O, id_contrato: K,
@@ -29,9 +34,24 @@ const comum = {
   encerrado_em: null, versao_registro: 1,
 };
 const rodadas = [
-  { ...comum, id: "77777777-7777-4777-8777-777777777777", numero_rodada: 2, status: "em_tratamento" },
-  { ...comum, id: "88888888-8888-4888-8888-888888888888", numero_rodada: 1, status: "reapresentado" },
+  { ...comum, id: "${CICLO_V2_FIXTURE}", numero_rodada: 2, status: "em_tratamento" },
+  { ...comum, id: "${cicloAnterior}", numero_rodada: 1, status: "reapresentado" },
 ];
+const chaves = { id_ciclo: rodadas[0].id, id_competencia: C, id_contrato: K, id_organizacao: O };
+const pareceres = [{
+  ...chaves, id: "99999999-9999-4999-8999-999999999999",
+  recebido_em: comum.recebido_em, numero_documento: "PARECER-SINTETICO-02", data_emissao: "2026-11-07",
+  resultado_geral: "Diligência", id_apresentacao: A,
+  apresentacao: { id: A, id_competencia: C, id_contrato: K, id_organizacao: O },
+}];
+const apontamentos = [{
+  ...chaves, id: "abababab-abab-4bab-8bab-abababababab",
+  criado_em: comum.recebido_em, codigo: "AP-02",
+  descricao: "Valor de serviço apontado nesta rodada", classificacao_sugerida: "Financeiro",
+  status: "em_analise", severidade: "alta",
+  valor_questionado: "9999999999999999.99", glosa_potencial: "0.00",
+  valor_aceito: null, impacto_financeiro_estimado: "-0.01",
+}];
 
 export const supabase = {
   ...baseline,
@@ -40,11 +60,16 @@ export const supabase = {
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
   },
   from(table: string) {
-    if (table !== "ciclos_diligencia") return baseline.from(table);
+    if (table !== "ciclos_diligencia" && table !== "pareceres_contratante" &&
+        table !== "apontamentos_contratante") return baseline.from(table);
     const scope = new Map<string, string>();
     const ordem: string[] = [];
+    let select = "";
+    let signal: AbortSignal | undefined;
+    const fixture = () => new URLSearchParams(location.search).get("fixture");
+    const ok = (data: unknown[], status = 200) => ({ data, error: null, status, count: data.length });
     const query = {
-      select() { return query; },
+      select(campos: string) { select = campos; return query; },
       eq(key: string, value: string) { scope.set(key, value); return query; },
       order(key: string, options: { ascending: boolean }) {
         if (options.ascending !== false) throw Error("ORDEM_V2");
@@ -55,16 +80,37 @@ export const supabase = {
         if (from !== 0 || to !== 24) throw Error("PAGINACAO_V2");
         return query;
       },
-      async abortSignal(signal: AbortSignal) {
-        signal.throwIfAborted();
-        if (scope.get("id_competencia") !== C || scope.get("id_contrato") !== K ||
-            scope.get("id_organizacao") !== O || ordem.join(",") !== "numero_rodada,id") {
-          throw Error("ESCOPO_V2");
+      abortSignal(value: AbortSignal) { signal = value; return query; },
+      async maybeSingle() {
+        signal?.throwIfAborted();
+        if (table !== "ciclos_diligencia" || scope.size !== 2 || scope.get("id_organizacao") !== O) {
+          throw Error("ESCOPO_CICLO_V2");
         }
-        if (new URLSearchParams(location.search).get("fixture") === "denied") {
-          return { data: null, error: { code: "42501" }, status: 403, count: null };
-        }
-        return { data: rodadas, error: null, status: 200, count: rodadas.length };
+        const data = fixture() === "cycle-denied" ? null :
+          (rodadas.find((rodada) => rodada.id === scope.get("id")) ?? null);
+        return { data, error: null, status: 200 };
+      },
+      then(resolve: (x: unknown) => unknown, reject: (x: unknown) => unknown) {
+        const consultar = () => {
+          signal?.throwIfAborted();
+          if (scope.get("id_competencia") !== C || scope.get("id_contrato") !== K ||
+              scope.get("id_organizacao") !== O) throw Error("ESCOPO_V2");
+          if (table === "ciclos_diligencia") {
+            if (scope.size !== 3 || ordem.join(",") !== "numero_rodada,id") throw Error("ESCOPO_V2_LISTA");
+            if (fixture() === "denied") return { data: null, error: { code: "42501" }, status: 403, count: null };
+            return ok(rodadas);
+          }
+          if (scope.size !== 4 || scope.get("id_ciclo") !== chaves.id_ciclo) throw Error("ESCOPO_DOS_FILHOS_V2");
+          if (table === "pareceres_contratante") {
+            if (!select.includes("pareceres_contratante_id_apresentacao_fkey") ||
+                ordem.join(",") !== "recebido_em,id") throw Error("CONTRATO_PARECER_V2");
+            return ok(pareceres);
+          }
+          if (!select.includes("valor_questionado::text") ||
+              ordem.join(",") !== "criado_em,id") throw Error("CONTRATO_APONTAMENTO_V2");
+          return ok(apontamentos);
+        };
+        return Promise.resolve().then(consultar).then(resolve, reject);
       },
     };
     return query;
@@ -76,6 +122,8 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { CompetenciaVisaoGeral } from ${JSON.stringify(root + "/src/components/competencias/CompetenciaVisaoGeral.tsx")};
 import { DiligenciasCompetencia } from ${JSON.stringify(root + "/src/components/diligencias/DiligenciasCompetencia.tsx")};
+import { CicloDiligencia } from ${JSON.stringify(root + "/src/components/diligencias/CicloDiligencia.tsx")};
+import { CompetenciaProtocolo } from ${JSON.stringify(root + "/src/components/competencias/CompetenciaProtocolo.tsx")};
 import { definirPreferenciaOrganizacao } from ${JSON.stringify(root + "/src/lib/organizacao/preferenciaOrganizacao.ts")};
 import { C, O } from "./client";
 
@@ -87,9 +135,11 @@ function ApresentacaoFixture() {
     window.addEventListener("popstate", atualizar);
     return () => window.removeEventListener("popstate", atualizar);
   }, []);
-  return path.endsWith("/diligencias")
-    ? <DiligenciasCompetencia id={C} />
-    : <CompetenciaVisaoGeral id={C} />;
+  const [, modulo, id, subrota, origem] = path.split("/");
+  if (modulo === "diligencias") return <CicloDiligencia id={id} />;
+  if (subrota === "diligencias") return <DiligenciasCompetencia id={id} />;
+  if (subrota === "apresentacoes") return <CompetenciaProtocolo id={id} apresentacaoId={origem} />;
+  return <CompetenciaVisaoGeral id={C} />;
 }
 createRoot(document.getElementById("root")!).render(<ApresentacaoFixture />);
 `,
@@ -114,6 +164,7 @@ export async function collectDiligenciasVisual(
   const target = join(output, "v2-diligencias");
   const cases = diligenciasVisualCases(widths, themes);
   const records = [];
+  const cycleRecords = [];
   let server;
 
   try {
@@ -147,7 +198,7 @@ export async function collectDiligenciasVisual(
       } else if (path === "/style.css") {
         reply.setHeader("content-type", "text/css");
         reply.end(css);
-      } else if (path === overview || path === diligencias) {
+      } else if ([overview, diligencias, cicloPath, protocoloPath].includes(path)) {
         reply.setHeader("content-type", "text/html");
         reply.end(html);
       } else {
@@ -212,6 +263,70 @@ export async function collectDiligenciasVisual(
         const screenshot = "screenshots/V2-01_" + width + "_" + theme + ".png";
         const bytes = await page.screenshot({ fullPage: true, animations: "disabled" });
         writeFileSync(join(target, screenshot), bytes);
+        const abrirCiclo = page.getByRole("link", { name: "Abrir rodada 2" });
+        await abrirCiclo.focus();
+        if (!(await abrirCiclo.evaluate((link) => document.activeElement === link)))
+          throw Error("TESTE_C_CICLO_FOCO");
+        await abrirCiclo.press("Enter");
+        await page.waitForURL(origin + cicloPath);
+        const verificarCiclo = async () => {
+          await page.getByRole("heading", { name: "Ciclo de diligência", exact: true }).waitFor();
+          await page.getByRole("heading", { name: "Rodada 2", exact: true }).waitFor();
+          await page.getByText("PARECER-SINTETICO-02", { exact: true }).waitFor();
+          await page.getByText("Valor de serviço apontado nesta rodada", { exact: true }).waitFor();
+          await page.getByText(/R\$\s*9\.999\.999\.999\.999\.999,99/).waitFor();
+          const overflow = await page.evaluate(() =>
+            Math.max(0, document.documentElement.scrollWidth - innerWidth),
+          );
+          if (overflow > 1) throw Error("TESTE_C_V2_CICLO_OVERFLOW");
+          return overflow;
+        };
+        await verificarCiclo();
+        await page.reload();
+        const overflowCiclo = await verificarCiclo();
+        const imagemCiclo = "screenshots/V2-02_" + width + "_" + theme + ".png";
+        const bytesCiclo = await page.screenshot({ fullPage: true, animations: "disabled" });
+        writeFileSync(join(target, imagemCiclo), bytesCiclo);
+        const protocolo = page.getByRole("link", { name: "Ver protocolo de origem" });
+        await protocolo.press("Enter");
+        await page.waitForURL(origin + protocoloPath);
+        await page.getByText("PROTOCOLO-SINTETICO-2026-09", { exact: true }).waitFor();
+        await page.goBack();
+        await page.waitForURL(origin + cicloPath);
+        await verificarCiclo();
+        await page.getByRole("link", { name: "Voltar às diligências" }).press("Enter");
+        await page.waitForURL(origin + diligencias);
+        await page.getByRole("heading", { name: "Rodada 2", exact: true }).waitFor();
+        await page.goto(origin + cicloPath + "?fixture=cycle-denied");
+        await page
+          .getByRole("alert")
+          .filter({ hasText: "Ciclo indisponível para consulta." })
+          .waitFor();
+        if (
+          (await page.getByText("PARECER-SINTETICO-02", { exact: true }).count()) ||
+          (await page
+            .getByText("Valor de serviço apontado nesta rodada", { exact: true })
+            .count()) ||
+          erros ||
+          externa
+        )
+          throw Error("TESTE_C_V2_CICLO_ISOLAMENTO");
+        cycleRecords.push({
+          width,
+          theme,
+          screenshot: imagemCiclo,
+          sha256: digest(bytesCiclo),
+          status: "PASS",
+          foco: true,
+          retorno: true,
+          recarga: true,
+          protocoloV120: true,
+          negacaoSemDados: true,
+          overflow: overflowCiclo,
+          chamadasExternas: externa,
+          errosDePagina: erros,
+        });
+        await page.goto(origin + diligencias);
         await page.getByRole("link", { name: "Voltar à competência" }).click();
         await page.waitForURL(origin + overview);
         await page.goto(origin + diligencias + "?fixture=denied");
@@ -237,9 +352,15 @@ export async function collectDiligenciasVisual(
         await context.close();
       }
     }
-    if (cases.length !== 8 || records.length !== cases.length) throw Error("TESTE_C_V2_COBERTURA");
+    if (
+      cases.length !== 8 ||
+      records.length !== cases.length ||
+      cycleRecords.length !== cases.length
+    ) {
+      throw Error("TESTE_C_V2_COBERTURA");
+    }
     const record = {
-      schema: "contaos.v2-01.offline-visual.v1",
+      schema: "contaos.v2-diligencias.offline-visual.v2",
       mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
       headSha,
       sourceTree: git("rev-parse", "HEAD^{tree}"),
@@ -250,21 +371,26 @@ export async function collectDiligenciasVisual(
           "src/components/competencias/CompetenciaVisaoGeral.tsx",
           "src/components/diligencias/DiligenciasCompetencia.tsx",
           "src/lib/diligencias/diligenciasDados.ts",
+          "src/components/diligencias/CicloDiligencia.tsx",
+          "src/components/competencias/CompetenciaProtocolo.tsx",
+          "src/lib/diligencias/cicloDiligenciaDados.ts",
         ].map((file) => [file, digest(readFileSync(join(root, file)))]),
       ),
       complete: true,
       records,
+      cycleRecords,
     };
     const report = JSON.stringify(record, null, 2) + "\n";
     writeFileSync(join(target, "report.json"), report);
     writeFileSync(
       join(target, "SHA256SUMS"),
       [
-        ...records.map((r) => r.sha256 + "  " + r.screenshot),
+        ...[...records, ...cycleRecords].map((r) => r.sha256 + "  " + r.screenshot),
         digest(report) + "  report.json",
       ].join("\n") + "\n",
     );
     console.log("V2_01_OFFLINE_VISUAL_PASS_8");
+    console.log("V2_02_OFFLINE_VISUAL_PASS_8");
     return record;
   } finally {
     if (server?.listening) await new Promise((resolve) => server.close(resolve));

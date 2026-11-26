@@ -214,6 +214,11 @@ export function DiligenciasCompetencia({ id }: { id: string }) {
                     </div>
                   )}
                 </dl>
+                <Button asChild variant="outline" className="min-h-11">
+                  <Link to="/diligencias/$cicloId" params={{ cicloId: item.id }}>
+                    Abrir rodada {item.numero_rodada}
+                  </Link>
+                </Button>
               </li>
             ))}
           </ul>

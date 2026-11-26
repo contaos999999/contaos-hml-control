@@ -22,6 +22,7 @@ import { Route as CompetenciasIdRouteImport } from './routes/competencias_.$id'
 import { Route as ContratantesNovoRouteImport } from './routes/contratantes_.novo'
 import { Route as ContratosIdRouteImport } from './routes/contratos_.$id'
 import { Route as ContratosNovoRouteImport } from './routes/contratos_.novo'
+import { Route as DiligenciasCicloIdRouteImport } from './routes/diligencias_.$cicloId'
 import { Route as CompetenciasIdAnaliseRouteImport } from './routes/competencias_.$id_.analise'
 import { Route as CompetenciasIdApresentarRouteImport } from './routes/competencias_.$id_.apresentar'
 import { Route as CompetenciasIdDiligenciasRouteImport } from './routes/competencias_.$id_.diligencias'
@@ -102,6 +103,11 @@ const ContratosIdRoute = ContratosIdRouteImport.update({
 const ContratosNovoRoute = ContratosNovoRouteImport.update({
   id: '/contratos_/novo',
   path: '/contratos/novo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiligenciasCicloIdRoute = DiligenciasCicloIdRouteImport.update({
+  id: '/diligencias_/$cicloId',
+  path: '/diligencias/$cicloId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompetenciasIdAnaliseRoute = CompetenciasIdAnaliseRouteImport.update({
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/contratantes/novo': typeof ContratantesNovoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/contratos/novo': typeof ContratosNovoRoute
+  '/diligencias/$cicloId': typeof DiligenciasCicloIdRoute
   '/competencias/$id/analise': typeof CompetenciasIdAnaliseRoute
   '/competencias/$id/apresentar': typeof CompetenciasIdApresentarRoute
   '/competencias/$id/diligencias': typeof CompetenciasIdDiligenciasRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/contratantes/novo': typeof ContratantesNovoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/contratos/novo': typeof ContratosNovoRoute
+  '/diligencias/$cicloId': typeof DiligenciasCicloIdRoute
   '/competencias/$id/analise': typeof CompetenciasIdAnaliseRoute
   '/competencias/$id/apresentar': typeof CompetenciasIdApresentarRoute
   '/competencias/$id/diligencias': typeof CompetenciasIdDiligenciasRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/contratantes_/novo': typeof ContratantesNovoRoute
   '/contratos_/$id': typeof ContratosIdRoute
   '/contratos_/novo': typeof ContratosNovoRoute
+  '/diligencias_/$cicloId': typeof DiligenciasCicloIdRoute
   '/competencias_/$id_/analise': typeof CompetenciasIdAnaliseRoute
   '/competencias_/$id_/apresentar': typeof CompetenciasIdApresentarRoute
   '/competencias_/$id_/diligencias': typeof CompetenciasIdDiligenciasRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/contratantes/novo'
     | '/contratos/$id'
     | '/contratos/novo'
+    | '/diligencias/$cicloId'
     | '/competencias/$id/analise'
     | '/competencias/$id/apresentar'
     | '/competencias/$id/diligencias'
@@ -334,6 +344,7 @@ export interface FileRouteTypes {
     | '/contratantes/novo'
     | '/contratos/$id'
     | '/contratos/novo'
+    | '/diligencias/$cicloId'
     | '/competencias/$id/analise'
     | '/competencias/$id/apresentar'
     | '/competencias/$id/diligencias'
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/contratantes_/novo'
     | '/contratos_/$id'
     | '/contratos_/novo'
+    | '/diligencias_/$cicloId'
     | '/competencias_/$id_/analise'
     | '/competencias_/$id_/apresentar'
     | '/competencias_/$id_/diligencias'
@@ -397,6 +409,7 @@ export interface RootRouteChildren {
   ContratantesNovoRoute: typeof ContratantesNovoRoute
   ContratosIdRoute: typeof ContratosIdRoute
   ContratosNovoRoute: typeof ContratosNovoRoute
+  DiligenciasCicloIdRoute: typeof DiligenciasCicloIdRoute
   CompetenciasIdAnaliseRoute: typeof CompetenciasIdAnaliseRoute
   CompetenciasIdApresentarRoute: typeof CompetenciasIdApresentarRoute
   CompetenciasIdDiligenciasRoute: typeof CompetenciasIdDiligenciasRoute
@@ -506,6 +519,13 @@ declare module '@tanstack/react-router' {
       path: '/contratos/novo'
       fullPath: '/contratos/novo'
       preLoaderRoute: typeof ContratosNovoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diligencias_/$cicloId': {
+      id: '/diligencias_/$cicloId'
+      path: '/diligencias/$cicloId'
+      fullPath: '/diligencias/$cicloId'
+      preLoaderRoute: typeof DiligenciasCicloIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/competencias_/$id_/analise': {
@@ -637,6 +657,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContratantesNovoRoute: ContratantesNovoRoute,
   ContratosIdRoute: ContratosIdRoute,
   ContratosNovoRoute: ContratosNovoRoute,
+  DiligenciasCicloIdRoute: DiligenciasCicloIdRoute,
   CompetenciasIdAnaliseRoute: CompetenciasIdAnaliseRoute,
   CompetenciasIdApresentarRoute: CompetenciasIdApresentarRoute,
   CompetenciasIdDiligenciasRoute: CompetenciasIdDiligenciasRoute,

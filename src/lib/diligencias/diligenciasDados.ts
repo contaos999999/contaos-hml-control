@@ -11,7 +11,7 @@ export const ROTULOS_CICLO = {
 } as const;
 
 type StatusCiclo = keyof typeof ROTULOS_CICLO;
-type TipoErro = "sem_permissao" | "invalido" | "erro";
+type TipoErro = "sem_permissao" | "nao_encontrado" | "invalido" | "erro";
 
 export class ErroDiligencias extends Error {
   constructor(public readonly tipo: TipoErro) {
@@ -33,24 +33,24 @@ export type CicloDiligencia = {
   versao_registro: number;
 };
 
-const COLUNAS =
+export const CAMPOS_CICLO_DILIGENCIA =
   "id,id_competencia,id_organizacao,id_contrato,numero_rodada,status,recebido_em,prazo_resposta,encerrado_em,versao_registro";
 
-function registro(value: unknown): value is Record<string, unknown> {
+export function registro(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function inteiro(value: unknown, minimo: number): value is number {
+export function inteiro(value: unknown, minimo: number): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= minimo;
 }
 
-function dataCalendario(value: unknown): value is string {
+export function dataCalendario(value: unknown): value is string {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const data = new Date(value + "T00:00:00Z");
   return Number.isFinite(data.getTime()) && data.toISOString().slice(0, 10) === value;
 }
 
-function instante(value: unknown): value is string {
+export function instante(value: unknown): value is string {
   return (
     typeof value === "string" &&
     /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value) &&
@@ -63,7 +63,7 @@ function statusCiclo(value: unknown): value is StatusCiclo {
   return typeof value === "string" && Object.hasOwn(ROTULOS_CICLO, value);
 }
 
-function lerCiclo(
+export function lerCiclo(
   value: unknown,
   competencia: string,
   organizacao: string,
@@ -111,6 +111,22 @@ function lerCiclo(
   };
 }
 
+export function offsetDiligenciasValido(offset: number): boolean {
+  return (
+    inteiro(offset, 0) &&
+    offset % PAGINA_DILIGENCIAS === 0 &&
+    Number.isSafeInteger(offset + PAGINA_DILIGENCIAS - 1)
+  );
+}
+
+export function erroLeituraDiligencia(status: number, codigo?: string): ErroDiligencias {
+  const negado =
+    status === 401 ||
+    status === 403 ||
+    (codigo !== undefined && ["42501", "PGRST301", "PGRST303"].includes(codigo));
+  return new ErroDiligencias(negado ? "sem_permissao" : "erro");
+}
+
 export async function listarCiclosDiligencia(
   competencia: string,
   organizacao: string,
@@ -118,12 +134,7 @@ export async function listarCiclosDiligencia(
   offset: number,
   signal: AbortSignal,
 ): Promise<{ itens: CicloDiligencia[]; total: number }> {
-  if (
-    ![competencia, organizacao, contrato].every(uuidValido) ||
-    !inteiro(offset, 0) ||
-    offset % PAGINA_DILIGENCIAS !== 0 ||
-    !Number.isSafeInteger(offset + PAGINA_DILIGENCIAS - 1)
-  ) {
+  if (![competencia, organizacao, contrato].every(uuidValido) || !offsetDiligenciasValido(offset)) {
     throw new ErroDiligencias("invalido");
   }
   signal.throwIfAborted();
@@ -133,7 +144,7 @@ export async function listarCiclosDiligencia(
   try {
     const result = await supabase
       .from("ciclos_diligencia")
-      .select(COLUNAS, { count: "exact" })
+      .select(CAMPOS_CICLO_DILIGENCIA, { count: "exact" })
       .eq("id_competencia", c)
       .eq("id_organizacao", o)
       .eq("id_contrato", co)
@@ -142,13 +153,7 @@ export async function listarCiclosDiligencia(
       .range(offset, offset + PAGINA_DILIGENCIAS - 1)
       .abortSignal(signal);
     signal.throwIfAborted();
-    if (result.error) {
-      const negado =
-        result.status === 401 ||
-        result.status === 403 ||
-        ["42501", "PGRST301", "PGRST303"].includes(result.error.code);
-      throw new ErroDiligencias(negado ? "sem_permissao" : "erro");
-    }
+    if (result.error) throw erroLeituraDiligencia(result.status, result.error.code);
     if (
       !Array.isArray(result.data) ||
       !inteiro(result.count, 0) ||
