@@ -1,3 +1,12 @@
+## Situação atual · V2 CODE, recibo 44 concluído na main · 26/11/2026
+
+O certificado CODE V1 e o recibo de integração interna estão integrados pelas PRs #821 e #822. A V2 segue o plano mestre [#825](https://github.com/contaos999999/contaos-hml-control/pull/825) e sua matriz. Diligências V2-01 entrou pela [BUILD #827](https://github.com/contaos999999/contaos-hml-control/pull/827), merge `ea5802ce4544abeba7549c70070f121652490054`, com oito casos visuais confirmados.
+O controle foi integrado pela [PR #829](https://github.com/contaos999999/contaos-hml-control/pull/829). O recibo 44 foi integrado pela [PR #830](https://github.com/contaos999999/contaos-hml-control/pull/830), merge `55454f9ba2b21f549dc19975fe7f2aa9e3a05357`, revisão assistida 6078249286, CI 45866334980 e readback dos arquivos. O P0 efetivo aponta 45. [Checkpoint GitHub](https://github.com/contaos999999/contaos-hml-control/issues/708#issuecomment-7198853039)
+
+O próximo recorte é o PLAN P0 45 e sua BUILD protegida de Ciclo de diligência. A entrega depende do rito do PLAN, RED, GREEN, Teste C e do recibo do regular. Depois seguem 46, 47, 48, 49, 76 e 77 e as três certificações CODE da V2. Backend normativo `a1516de1d8949e505d83b5e000eb1cc558b217a7`, blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` de types.ts verificado, LIVE NOT_RUN e PROD NO-GO.
+
+Os registros abaixo documentam marcos históricos.
+
 ## Situação atual — código679 consolidado, verificação integrada antes de publicar, 15/11/2026
 
 Fases1/2 continuamENCERRADAS/CERTIFICADAS; semreabertura. Instalação3.1.4concluída. PLAN688R2PASS integrado155ef9b594260e39fcd68f8083c42d8943c3210b, review5911278859APPROVEDEdivan5002 autorizada,4checks pósmergeSUCCESS. Nova linhagem9c→a42→5be recebe688antesdeBUILD; ea62guards,27aPLANpréviosrc,01f3fontesreaplicados. Antiga118/56diagnóstico preservado, nãopublicado.

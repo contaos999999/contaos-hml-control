@@ -1,0 +1,573 @@
+{
+  "schema": "contaos.v2.contract-metadata.v1",
+  "regular": "45",
+  "tela": "V2-02",
+  "frontend_sha": "55454f9ba2b21f549dc19975fe7f2aa9e3a05357",
+  "backend_normativo": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+  "project_id": "gklhhhyosgasnyoxlrui",
+  "frontend_ancestor": {
+    "pr": 830,
+    "sha": "55454f9ba2b21f549dc19975fe7f2aa9e3a05357",
+    "regular_elegivel": "45"
+  },
+  "consulta": "Somente catálogo de metadados pg_catalog e information_schema. Nenhuma linha de negócio ou sessão consultada.",
+  "status": "CONTRATO_DE_LEITURA_VERIFICADO",
+  "tabelas": [
+    {
+      "rls": true,
+      "name": "apontamentos_contratante",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_organizacao",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_contrato",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_competencia",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_ciclo",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "codigo",
+          "type": "text",
+          "not_null": false
+        },
+        {
+          "name": "descricao",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "fundamento",
+          "type": "text",
+          "not_null": false
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "severidade",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "fonte_pagina",
+          "type": "integer",
+          "not_null": false
+        },
+        {
+          "name": "fonte_trecho",
+          "type": "text",
+          "not_null": false
+        },
+        {
+          "name": "versao_registro",
+          "type": "bigint",
+          "not_null": true
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        },
+        {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        },
+        {
+          "name": "valor_questionado",
+          "type": "numeric(18,2)",
+          "not_null": false
+        },
+        {
+          "name": "glosa_potencial",
+          "type": "numeric(18,2)",
+          "not_null": false
+        },
+        {
+          "name": "valor_aceito",
+          "type": "numeric(18,2)",
+          "not_null": false
+        },
+        {
+          "name": "impacto_financeiro_estimado",
+          "type": "numeric(18,2)",
+          "not_null": false
+        },
+        {
+          "name": "classificacao_sugerida",
+          "type": "text",
+          "not_null": false
+        },
+        {
+          "name": "confianca_classificacao",
+          "type": "numeric(6,5)",
+          "not_null": false
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX apontamentos_contratante_pkey ON public.apontamentos_contratante USING btree (id)",
+        "CREATE INDEX apontamentos_contratante_ciclo_idx ON public.apontamentos_contratante USING btree (id_ciclo, status, severidade)",
+        "CREATE INDEX fk_apontamentos_contratante_e214806253_idx ON public.apontamentos_contratante USING btree (id_competencia)",
+        "CREATE INDEX fk_apontamentos_contratante_e9e8064e6e_idx ON public.apontamentos_contratante USING btree (id_contrato)",
+        "CREATE INDEX fk_apontamentos_contratante_fd5140c87f_idx ON public.apontamentos_contratante USING btree (id_organizacao)"
+      ],
+      "policies": [
+        {
+          "name": "apontamentos_contratante_select",
+          "qual": "privado.usuario_tem_acesso_contrato(id_contrato)",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "force_rls": false,
+      "anon_select": false,
+      "constraints": [
+        {
+          "name": "apontamentos_contratante_confianca_classificacao_check",
+          "type": "c",
+          "definition": "CHECK (((confianca_classificacao IS NULL) OR ((confianca_classificacao >= (0)::numeric) AND (confianca_classificacao <= (1)::numeric))))"
+        },
+        {
+          "name": "apontamentos_contratante_id_ciclo_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_ciclo) REFERENCES ciclos_diligencia(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "apontamentos_contratante_id_competencia_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_competencia) REFERENCES competencias(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "apontamentos_contratante_id_contrato_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_contrato) REFERENCES contratos(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "apontamentos_contratante_id_organizacao_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_organizacao) REFERENCES organizacoes(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "apontamentos_contratante_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "apontamentos_contratante_severidade_check",
+          "type": "c",
+          "definition": "CHECK ((severidade = ANY (ARRAY['baixa'::text, 'media'::text, 'alta'::text, 'critica'::text])))"
+        },
+        {
+          "name": "apontamentos_contratante_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['aberto'::text, 'em_analise'::text, 'procedente'::text, 'nao_procedente'::text, 'em_tratamento'::text, 'resolvido'::text, 'contestado'::text, 'contestado_aprovado'::text, 'encerrado'::text])))"
+        },
+        {
+          "name": "fk_tenant_contract_9deb1d569238",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_contrato, id_organizacao) REFERENCES contratos(id, id_organizacao) ON DELETE RESTRICT"
+        }
+      ],
+      "authenticated_select": true
+    },
+    {
+      "rls": true,
+      "name": "ciclos_diligencia",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_organizacao",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_contrato",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_competencia",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "numero_rodada",
+          "type": "integer",
+          "not_null": true
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "not_null": true
+        },
+        {
+          "name": "recebido_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        },
+        {
+          "name": "prazo_resposta",
+          "type": "date",
+          "not_null": false
+        },
+        {
+          "name": "encerrado_em",
+          "type": "timestamp with time zone",
+          "not_null": false
+        },
+        {
+          "name": "versao_registro",
+          "type": "bigint",
+          "not_null": true
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        },
+        {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX ciclos_diligencia_pkey ON public.ciclos_diligencia USING btree (id)",
+        "CREATE UNIQUE INDEX ciclos_diligencia_uk ON public.ciclos_diligencia USING btree (id_competencia, numero_rodada)",
+        "CREATE INDEX ciclos_diligencia_comp_idx ON public.ciclos_diligencia USING btree (id_competencia, numero_rodada DESC)",
+        "CREATE INDEX fk_ciclos_diligencia_f997e4058d_idx ON public.ciclos_diligencia USING btree (id_contrato)",
+        "CREATE INDEX fk_ciclos_diligencia_d0835c0888_idx ON public.ciclos_diligencia USING btree (id_organizacao)"
+      ],
+      "policies": [
+        {
+          "name": "ciclos_diligencia_select",
+          "qual": "privado.usuario_tem_acesso_contrato(id_contrato)",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "force_rls": false,
+      "anon_select": false,
+      "constraints": [
+        {
+          "name": "ciclos_diligencia_id_competencia_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_competencia) REFERENCES competencias(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "ciclos_diligencia_id_contrato_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_contrato) REFERENCES contratos(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "ciclos_diligencia_id_organizacao_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_organizacao) REFERENCES organizacoes(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "ciclos_diligencia_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "ciclos_diligencia_status_check",
+          "type": "c",
+          "definition": "CHECK ((status = ANY (ARRAY['aberto'::text, 'em_tratamento'::text, 'pronto_reapresentar'::text, 'reapresentado'::text, 'encerrado'::text])))"
+        },
+        {
+          "name": "ciclos_diligencia_uk",
+          "type": "u",
+          "definition": "UNIQUE (id_competencia, numero_rodada)"
+        },
+        {
+          "name": "fk_tenant_contract_a5e6e0ce38aa",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_contrato, id_organizacao) REFERENCES contratos(id, id_organizacao) ON DELETE RESTRICT"
+        }
+      ],
+      "authenticated_select": true
+    },
+    {
+      "rls": true,
+      "name": "pareceres_contratante",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_organizacao",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_contrato",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_competencia",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "id_ciclo",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "id_apresentacao",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "id_arquivo",
+          "type": "uuid",
+          "not_null": true
+        },
+        {
+          "name": "resultado_geral",
+          "type": "text",
+          "not_null": false
+        },
+        {
+          "name": "parecer_final_favoravel",
+          "type": "boolean",
+          "not_null": true
+        },
+        {
+          "name": "numero_documento",
+          "type": "text",
+          "not_null": false
+        },
+        {
+          "name": "data_emissao",
+          "type": "date",
+          "not_null": false
+        },
+        {
+          "name": "recebido_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        },
+        {
+          "name": "registrado_por",
+          "type": "uuid",
+          "not_null": false
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX pareceres_contratante_pkey ON public.pareceres_contratante USING btree (id)",
+        "CREATE INDEX pareceres_contratante_comp_idx ON public.pareceres_contratante USING btree (id_competencia, recebido_em DESC)",
+        "CREATE INDEX fk_pareceres_contratante_eeb284a050_idx ON public.pareceres_contratante USING btree (id_apresentacao)",
+        "CREATE INDEX fk_pareceres_contratante_76d8c6a26d_idx ON public.pareceres_contratante USING btree (id_arquivo)",
+        "CREATE INDEX fk_pareceres_contratante_2680d4c16e_idx ON public.pareceres_contratante USING btree (id_ciclo)",
+        "CREATE INDEX fk_pareceres_contratante_5834190383_idx ON public.pareceres_contratante USING btree (id_contrato)",
+        "CREATE INDEX fk_pareceres_contratante_ee5f9eda16_idx ON public.pareceres_contratante USING btree (id_organizacao)",
+        "CREATE INDEX fk_pareceres_contratante_ba29b7f370_idx ON public.pareceres_contratante USING btree (registrado_por)"
+      ],
+      "policies": [
+        {
+          "name": "pareceres_contratante_select",
+          "qual": "privado.usuario_tem_acesso_contrato(id_contrato)",
+          "roles": [
+            "authenticated"
+          ]
+        }
+      ],
+      "force_rls": false,
+      "anon_select": false,
+      "constraints": [
+        {
+          "name": "fk_tenant_contract_9c5e3ebcf137",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_contrato, id_organizacao) REFERENCES contratos(id, id_organizacao) ON DELETE RESTRICT"
+        },
+        {
+          "name": "pareceres_contratante_arquivo_org_contrato_fk",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_arquivo, id_organizacao, id_contrato) REFERENCES arquivos(id, id_organizacao, id_contrato) ON DELETE RESTRICT"
+        },
+        {
+          "name": "pareceres_contratante_arquivo_org_fk",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_arquivo, id_organizacao) REFERENCES arquivos(id, id_organizacao) ON DELETE RESTRICT"
+        },
+        {
+          "name": "pareceres_contratante_id_apresentacao_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_apresentacao) REFERENCES apresentacoes_contratante(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "pareceres_contratante_id_arquivo_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_arquivo) REFERENCES arquivos(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "pareceres_contratante_id_ciclo_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_ciclo) REFERENCES ciclos_diligencia(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "pareceres_contratante_id_competencia_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_competencia) REFERENCES competencias(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "pareceres_contratante_id_contrato_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_contrato) REFERENCES contratos(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "pareceres_contratante_id_organizacao_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (id_organizacao) REFERENCES organizacoes(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "pareceres_contratante_pkey",
+          "type": "p",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "pareceres_contratante_registrado_por_fkey",
+          "type": "f",
+          "definition": "FOREIGN KEY (registrado_por) REFERENCES auth.users(id) ON DELETE SET NULL"
+        }
+      ],
+      "authenticated_select": true
+    }
+  ],
+  "relacoes_entrada": [
+    {
+      "table": "analises_apontamentos",
+      "refers_to": "apontamentos_contratante",
+      "definition": "FOREIGN KEY (id_apontamento) REFERENCES apontamentos_contratante(id) ON DELETE RESTRICT"
+    },
+    {
+      "table": "contestacoes",
+      "refers_to": "apontamentos_contratante",
+      "definition": "FOREIGN KEY (id_apontamento) REFERENCES apontamentos_contratante(id) ON DELETE RESTRICT"
+    },
+    {
+      "table": "desfechos_apontamentos",
+      "refers_to": "apontamentos_contratante",
+      "definition": "FOREIGN KEY (id_apontamento) REFERENCES apontamentos_contratante(id) ON DELETE RESTRICT"
+    },
+    {
+      "table": "tarefas_diligencia",
+      "refers_to": "apontamentos_contratante",
+      "definition": "FOREIGN KEY (id_apontamento) REFERENCES apontamentos_contratante(id) ON DELETE RESTRICT"
+    }
+  ],
+  "relacoes_coluna_parecer_item": [],
+  "rpcs": [
+    {
+      "args": "p_id_ciclo uuid",
+      "name": "avaliar_portao_reapresentacao",
+      "execute_anon": false,
+      "execute_authenticated": true
+    },
+    {
+      "args": "p_id_competencia uuid",
+      "name": "obter_visao_geral_competencia",
+      "execute_anon": false,
+      "execute_authenticated": true
+    },
+    {
+      "args": "p_id_competencia uuid, p_id_apresentacao uuid, p_id_arquivo uuid, p_resultado_geral text, p_parecer_final_favoravel boolean, p_numero_documento text, p_data_emissao date, p_prazo_resposta date",
+      "name": "registrar_parecer_contratante",
+      "execute_anon": false,
+      "execute_authenticated": true
+    }
+  ],
+  "metadados_registro": [
+    {
+      "args": "",
+      "name": "enfileirar_extracao_parecer_contratante",
+      "result": "trigger",
+      "excerpt": []
+    },
+    {
+      "args": "p_id_ciclo uuid, p_descricao text, p_fundamento text, p_codigo text, p_severidade text, p_fonte_pagina integer, p_fonte_trecho text",
+      "name": "registrar_apontamento_contratante",
+      "result": "uuid",
+      "excerpt": []
+    },
+    {
+      "args": "p_id_ciclo uuid, p_descricao text, p_fundamento text, p_codigo text, p_severidade text, p_fonte_pagina integer, p_fonte_trecho text",
+      "name": "registrar_apontamento_contratante",
+      "result": "uuid",
+      "excerpt": [
+        "insert into public.apontamentos_contratante(id_organizacao,id_contrato,id_competencia,id_ciclo,codigo,descricao,fundamento,severidade,fonte_pagina,fonte_trecho)"
+      ]
+    },
+    {
+      "args": "p_id_competencia uuid, p_id_apresentacao uuid, p_id_arquivo uuid, p_resultado_geral text, p_parecer_final_favoravel boolean, p_numero_documento text, p_data_emissao date, p_prazo_resposta date",
+      "name": "registrar_parecer_contratante",
+      "result": "uuid",
+      "excerpt": []
+    },
+    {
+      "args": "p_id_competencia uuid, p_id_apresentacao uuid, p_id_arquivo uuid, p_resultado_geral text, p_parecer_final_favoravel boolean, p_numero_documento text, p_data_emissao date, p_prazo_resposta date",
+      "name": "registrar_parecer_contratante",
+      "result": "uuid",
+      "excerpt": [
+        "insert into public.pareceres_contratante(id_organizacao,id_contrato,id_competencia,id_apresentacao,id_arquivo,resultado_geral,parecer_final_favoravel,numero_documento,data_emissao,registrado_por)",
+        "insert into public.ciclos_diligencia(id_organizacao,id_contrato,id_competencia,numero_rodada,status,prazo_resposta)",
+        "insert into public.pareceres_contratante(id_organizacao,id_contrato,id_competencia,id_ciclo,id_apresentacao,id_arquivo,resultado_geral,parecer_final_favoravel,numero_documento,data_emissao,registrado_por)"
+      ]
+    }
+  ],
+  "fronteira_proveniencia": {
+    "status": "PENDENTE_PROVA_ESPECIFICA_V2_03_V2_07",
+    "relacao": "I05",
+    "descricao": "O parecer possui vínculo oficial com ciclo, arquivo e apresentação. O item tem id_ciclo e registro de página/trecho; a relação direta de um item a um documento entre vários do ciclo não foi confirmada por chave/tabela. Listar pareceres ao nível do ciclo e itens ao nível do próprio item. O frontend não deduz a origem por ordem, nome ou timestamp."
+  },
+  "checagens_code": [
+    "V2-01 → V2-02 → V2-01 e protocolo V120 quando vinculado",
+    "Consulta de ciclo, parecer e página de itens com RLS e chaves compatíveis",
+    "Precisão decimal, zero, nulo, valor negativo, ordem, IDs e consistência dos vínculos",
+    "RLS/negação, registro invisível, contexto trocado, carregando, vazio e erro sem exposição",
+    "Quatro larguras e dois temas com fonte, valores, back e negação"
+  ],
+  "live": "NOT_RUN",
+  "prod": "NO-GO",
+  "referencias": [
+    "https://github.com/contaos999999/contaos-hml-control/pull/825",
+    "https://github.com/contaos999999/contaos-hml-control/pull/827",
+    "https://github.com/contaos999999/contaos-hml-control/pull/830",
+    "https://docs.postgrest.org/en/stable/references/api/tables_views.html#casting-columns"
+  ]
+}
