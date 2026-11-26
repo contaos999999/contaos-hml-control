@@ -3,34 +3,24 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "2f8a8ef2aaf7405c4abc99c63740e5735045b652",
+    "frontend_sha": "8fd813ba246bf97f884f6f465cdf7bd65c01e07d",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f6-code-context-journeys.test.tsx",
+      "arquivo": "src/test/f6-code-party-journeys.test.ts",
       "versao": "V1",
-      "justificativa": "Jornadas de login, seleção, atualização de contexto, expiração e logout."
+      "justificativa": "Comprovar jornadas de cadastro e contrato com persistência, resposta interrompida e leitura íntegra do consumidor."
     },
     {
-      "arquivo": "src/test/f6-code-adm01-journeys.test.tsx",
+      "arquivo": "src/test/f6-code-contract-journeys.test.tsx",
       "versao": "V1",
-      "justificativa": "Jornadas de vínculo, persistência, autorização no consumidor e recuperação."
-    },
-    {
-      "arquivo": "src/test/f6-code-sys04-journeys.test.ts",
-      "versao": "V1",
-      "justificativa": "Jornadas de seleção, ações e consumidores do contexto persistido."
-    },
-    {
-      "arquivo": "src/test/f6-code-journey-fixture.ts",
-      "versao": "V1",
-      "justificativa": "Transporte sintético restrito, associação à matriz e observações da F6."
+      "justificativa": "Comprovar jornadas de cadastro e contrato com persistência, resposta interrompida e leitura íntegra do consumidor."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F6-798-IDENTIDADE-JORNADA",
+      "id": "RCA-F6-800-IDENTIDADE-JORNADA",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -41,55 +31,45 @@
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "O coletor ancestral aceitou troca de ID mantendo a cardinalidade. A F6.1 fixa o caso e os pares e valida a sequência de jornada e a proveniência.",
+        "descricao": "O coletor ancestral aceitava substituição de ID mantendo a cardinalidade. A extensão exige o caso e suas etapas, a prova negativa, recuperação e origem do artefato.",
         "evidencias": [
-          "RED real ancestral 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2, coletor F4 e caso noncanonical case IDs.",
-          "A #797 reconciliou os 138 IDs no blob bb7ce43f9c334f2f03e9aafab405addadfe5e19a e entrou na main em 2720384f1c281cd2e87282884053ba90307bed12.",
-          "A #799 integra o escopo fechado da #798. SHA frontend da base 2f8a8ef2aaf7405c4abc99c63740e5735045b652. HEAD normativo a1516de1d8949e505d83b5e000eb1cc558b217a7.",
-          "O botão Sair do seletor só é exibido nas condições sem vínculo ou negada. A prova de jornada com vínculo passa pelo cabeçalho produtivo, que cancela consultas, limpa cache e encerra a sessão."
+          "RED ancestral real 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2, rejeição de ID não canônico no coletor F4.",
+          "PLAN P0 #801 integrado em 8fd813ba246bf97f884f6f465cdf7bd65c01e07d. BUILD anterior #798 integrado antes desta fatia.",
+          "A #798 integrou 54 jornadas e 108 provas do run 45771946102.",
+          "Em V102/V105 a perda de resposta exige leitura do estado persistido antes de repetir. Em V106 o mesmo request da operação preserva o recibo. A associação cruzada é violação de integridade 23503.",
+          "A matriz ativa agora 78 casos em cinco lotes."
         ],
         "hipoteses_descartadas": [
-          "A contagem isolada não prova identidade nem recuperabilidade.",
-          "Um erro de transporte genérico não comprova autorização."
+          "Cardinalidade não comprova a identidade nem a cadeia da jornada.",
+          "Falha de transporte não substitui uma negativa de autorização."
         ]
       },
       "impacto": {
         "dependencias": [
-          "LoginForm e lista real de organizações",
-          "Organização selecionada e projeções SYS05 e de competência",
-          "ADM01 salvar e persistir vínculo",
-          "Cache e logout no cabeçalho",
-          "Coletor material e CI"
+          "V102/V103 contratantes e consumidores",
+          "V105/V106 contratos e associação",
+          "SYS05 painel, V123 auditoria e consumidores de competência e história"
         ],
         "versoes_afetadas": [
           "V1"
         ],
         "riscos": [
           {
-            "risco": "Resposta do contexto anterior exibida após a troca",
+            "risco": "Alteração por escopo cruzado ou sobrescrita de versão",
             "teste_preventivo": {
-              "id": "NEG-F6-1-C0043",
+              "id": "NEG-F6-2-C0107",
               "runner": "vitest",
-              "arquivo": "src/test/f6-code-context-journeys.test.tsx",
-              "caso": "F6 context journeys IFV1-F6-C0043 negative: blocks stale context and resumes with the authorized identity"
+              "arquivo": "src/test/f6-code-party-journeys.test.ts",
+              "caso": "F6 party journeys IFV1-F6-C0107 negative: denies a foreign change and reloads the preserved party"
             }
           },
           {
-            "risco": "Vínculo de outro tenant altera o painel",
+            "risco": "Vínculo cruzado com contratante de outra organização",
             "teste_preventivo": {
-              "id": "NEG-F6-1-C0005",
+              "id": "NEG-F6-2-C0136",
               "runner": "vitest",
-              "arquivo": "src/test/f6-code-adm01-journeys.test.tsx",
-              "caso": "F6 ADM01 journeys IFV1-F6-C0005 negative: rejects a foreign grant and recovers through an authorized session"
-            }
-          },
-          {
-            "risco": "Comando em competência de contexto anterior",
-            "teste_preventivo": {
-              "id": "NEG-F6-1-C0057",
-              "runner": "vitest",
-              "arquivo": "src/test/f6-code-sys04-journeys.test.ts",
-              "caso": "F6 SYS04 journeys IFV1-F6-C0057 negative: rejects the stale scope, preserves state and reloads the valid context"
+              "arquivo": "src/test/f6-code-contract-journeys.test.tsx",
+              "caso": "F6 contract journeys IFV1-F6-C0136 negative: refuses crossed scope or link and reloads the unchanged contract"
             }
           }
         ]
@@ -107,73 +87,53 @@
         ],
         "green": [
           {
-            "id": "GREEN-F6-1-54",
-            "runner": "node",
-            "arquivo": "scripts/hml/f6-code-material-evidence.test.mjs",
-            "caso": "F6.1 binds all 54 journeys and their paired proofs"
+            "id": "GREEN-F6-2-C0093",
+            "runner": "vitest",
+            "arquivo": "src/test/f6-code-party-journeys.test.ts",
+            "caso": "F6 party journeys IFV1-F6-C0093 positive: reconciles a lost response and reads the linked party twice"
           },
           {
-            "id": "GREEN-F6-1-C0037",
+            "id": "GREEN-F6-2-C0176",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-context-journeys.test.tsx",
-            "caso": "F6 context journeys IFV1-F6-C0037 positive: authenticates, selects or switches and reloads the authorized view"
-          },
-          {
-            "id": "GREEN-F6-1-C0033",
-            "runner": "vitest",
-            "arquivo": "src/test/f6-code-adm01-journeys.test.tsx",
-            "caso": "F6 ADM01 journeys IFV1-F6-C0033 positive: grants access, reaches the consumer and validates persisted state"
-          },
-          {
-            "id": "GREEN-F6-1-C0067",
-            "runner": "vitest",
-            "arquivo": "src/test/f6-code-sys04-journeys.test.ts",
-            "caso": "F6 SYS04 journeys IFV1-F6-C0067 positive: carries the chosen organization through action, readback and reload"
+            "arquivo": "src/test/f6-code-contract-journeys.test.tsx",
+            "caso": "F6 contract journeys IFV1-F6-C0176 positive: reconciles interrupted write and reloads the scoped contract consumer"
           }
         ],
         "negativos": [
           {
-            "id": "NEG-F6-1-C0043",
+            "id": "NEG-F6-2-C0107",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-context-journeys.test.tsx",
-            "caso": "F6 context journeys IFV1-F6-C0043 negative: blocks stale context and resumes with the authorized identity"
+            "arquivo": "src/test/f6-code-party-journeys.test.ts",
+            "caso": "F6 party journeys IFV1-F6-C0107 negative: denies a foreign change and reloads the preserved party"
           },
           {
-            "id": "NEG-F6-1-C0005",
+            "id": "NEG-F6-2-C0136",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-adm01-journeys.test.tsx",
-            "caso": "F6 ADM01 journeys IFV1-F6-C0005 negative: rejects a foreign grant and recovers through an authorized session"
-          },
-          {
-            "id": "NEG-F6-1-C0057",
-            "runner": "vitest",
-            "arquivo": "src/test/f6-code-sys04-journeys.test.ts",
-            "caso": "F6 SYS04 journeys IFV1-F6-C0057 negative: rejects the stale scope, preserves state and reloads the valid context"
+            "arquivo": "src/test/f6-code-contract-journeys.test.tsx",
+            "caso": "F6 contract journeys IFV1-F6-C0136 negative: refuses crossed scope or link and reloads the unchanged contract"
           }
         ],
         "regressao": [
+          {
+            "id": "REG-F6-138",
+            "runner": "node",
+            "arquivo": "scripts/hml/f6-code-material-evidence.test.mjs",
+            "caso": "F6 checks the 138 canonical case bindings"
+          },
           {
             "id": "REG-F5-138",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
             "caso": "F5 exact 138 canonical cases and 276 proofs"
-          },
-          {
-            "id": "REG-F6-SOURCES",
-            "runner": "node",
-            "arquivo": "scripts/hml/f6-code-material-evidence.test.mjs",
-            "caso": "F6 checks the 138 canonical case bindings"
           }
         ]
       },
       "solucao": {
-        "descricao": "Reconciliar o caso à fonte e testar as quatro etapas em transporte sintético e adaptadores reais. Validar provas novas de sessão, perfil, contexto e recuperação no mesmo HEAD.",
-        "rollback": "Reverter o BUILD por PR protegida se houver regressão e suspender o recibo F6.1 até nova prova no HEAD efetivo.",
+        "descricao": "Comprovar jornadas de cadastro e contrato com persistência, resposta interrompida e leitura íntegra do consumidor. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção.",
+        "rollback": "Reverter por PR protegida se houver regressão e suspender o recibo afetado até nova execução material.",
         "arquivos": [
-          "src/test/f6-code-context-journeys.test.tsx",
-          "src/test/f6-code-adm01-journeys.test.tsx",
-          "src/test/f6-code-sys04-journeys.test.ts",
-          "src/test/f6-code-journey-fixture.ts"
+          "src/test/f6-code-party-journeys.test.ts",
+          "src/test/f6-code-contract-journeys.test.tsx"
         ]
       }
     }
