@@ -1971,5 +1971,6 @@
     }
   ],
   "live": "NOT_RUN",
-  "production": "NO-GO"
+  "production": "NO-GO",
+  "candidateSlice": "F6.4"
 }
