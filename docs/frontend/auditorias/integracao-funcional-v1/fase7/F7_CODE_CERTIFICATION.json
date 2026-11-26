@@ -1,0 +1,137 @@
+{
+  "schema": "contaos.ifv1.f7.code-certification.v1",
+  "phase": "IFV1_F7_CODE",
+  "result": "PASS",
+  "scope": "INTEGRACAO_FUNCIONAL_V1_CODE",
+  "date": "2026-11-26",
+  "effectiveCondition": "ONLY_ON_PROTECTED_MAIN_AFTER_CERT_PR_CI_REVIEW_MERGE_READBACK",
+  "certifiedF6": "a8587643ae91e544d869454ff5b7d702d65435e9",
+  "backendNormativeSha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "protectedTypesBlob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+  "predecessors": [
+    {
+      "phase": 1,
+      "pr": 594,
+      "head": "14625812dcd5ac7ab40109c5be9c90c951b0bb32",
+      "merge": "538c52d909a5a9929c10740e6f961e38beb8ee11",
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase1/CERTIFICADO.md",
+        "sha256": "15a1d9c8be22dd29f750f5fdf5508cfdc49d3e2d4574d0f7bb4b8393e62c3ee8",
+        "blob": "751c5e6d8cb53d56be4f51be3fee3cb0feb34f03"
+      }
+    },
+    {
+      "phase": 2,
+      "pr": 652,
+      "head": "9f8ce7a4259a8d23169c34baca71125827eff206",
+      "merge": "b2feca7f5d8976709ba95a2ce44407f910eabe19",
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase2/CERTIFICADO_FASE2_NAVEGACAO_2026-11-13.md",
+        "sha256": "62440c7630d34dfe2e51882d807c6b48af0160b2713f2e57c07c7b35cd0857c2",
+        "blob": "e07d66897d39e8d57b9d6507cf97ba03ed01c7f1"
+      }
+    },
+    {
+      "phase": 3,
+      "pr": 758,
+      "head": "3c8eafbc1bc57ec80e8be91959d5844fc418ff6a",
+      "merge": "019a38e4aca6ec7d09a298875627d9c896f72600",
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase3/CERTIFICADO_FASE3_CODE_2026-11-24.md",
+        "sha256": "5d3c306e79410b299a346afb8d8f43f52e3b526e7ccbeb72beca19dfb088ea29",
+        "blob": "51c49cf20b627768d5758f45e282cbf1151b4244"
+      }
+    },
+    {
+      "phase": 4,
+      "pr": 776,
+      "head": "8d463319662b331b62bba677a20cb791a48ec579",
+      "merge": "e322301e58419e78eb4dfad77a956326b449ecc1",
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase4/CERTIFICADO_FASE4_CODE_2026-11-25.md",
+        "sha256": "73bcefd611ee8a89760d9d763bd1f2b9bbdc370c4a77976765394aa810c3d7d3",
+        "blob": "704461c8dac4b8cc3cf600c740b80bbe7a879d0d"
+      }
+    },
+    {
+      "phase": 5,
+      "pr": 795,
+      "head": "25cacaef63a208c3538141c7ae82dc0634b3fd88",
+      "merge": "4ea895059dcdac2cb2dc2558a9918f5392ecc8b0",
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase5/CERTIFICADO_FASE5_CODE_2026-11-25.md",
+        "sha256": "2181cea9479059af4ba1ee1e6e2cb06273161b805173f0a9079107ee9a52dc06",
+        "blob": "621fb5b22569cac928279262a2818b5643c68a66"
+      }
+    },
+    {
+      "phase": 6,
+      "pr": 815,
+      "head": "d963fd2105ca9fbd239e9fc1b386ba34a74d0d4b",
+      "merge": "a8587643ae91e544d869454ff5b7d702d65435e9",
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase6/CERTIFICADO_FASE6_CODE.md",
+        "sha256": "daeda32f23c418f0175a0550a3d362841267f6f3953d7c360eace2a66698f39b",
+        "blob": "3b752d3c8da701aff2a7aecfd292e7600371befb"
+      }
+    }
+  ],
+  "counts": {
+    "certificates": 6,
+    "navigation": 52,
+    "canonical": 138,
+    "mandatory": 120,
+    "conditional": 18,
+    "codeProofs": 1104,
+    "supplementaryProofs": 8
+  },
+  "verified": {
+    "certificates": 6,
+    "archives": 48,
+    "originalMembers": 10,
+    "checkedRuns": 45
+  },
+  "material": {
+    "pr": 816,
+    "head": "ed01f5bebead913bf0bf66b1933418b400df85cc",
+    "base": "64aeafdb0562e3efc168a40a6fc64b09e5de23b6",
+    "merge": "badffc1e3381e85bd115c04dfc98bb5fc864972b",
+    "tree": "1ac4473437b7c0a203aebf5da998123791be951e",
+    "review": 6073905992,
+    "run": 45816836888,
+    "attempt": 1,
+    "job": 139898635356,
+    "artifact": 15115892489,
+    "zipSha256": "d700382729063f0c20579f421330d0f335cc017867be16d95da851f736351a6d"
+  },
+  "sources": {
+    "path": "docs/frontend/auditorias/integracao-funcional-v1/fase7/F7_CODE_SOURCES.json",
+    "sha256": "63da51596f14ca7fde5771be3220f20da90dcca715e1628912091bce15e312ba"
+  },
+  "traceability": {
+    "path": "docs/frontend/auditorias/integracao-funcional-v1/fase7/F7_CODE_TRACEABILITY.json",
+    "sha256": "79336321adcce1d408bce2841d7e46403014fe107772d348b537314db573bb21"
+  },
+  "receipt": {
+    "path": "docs/frontend/auditorias/integracao-funcional-v1/fase7/F7_CODE_RECONCILIATION_RECEIPT.json",
+    "sha256": "e866606f09d4abddb77d3a07c62132fbf5489cc1c7a8f458a136e83f473a8cbb"
+  },
+  "certificate": "docs/frontend/auditorias/integracao-funcional-v1/fase7/CERTIFICADO_FASE7_CODE.md",
+  "checksums": "docs/frontend/auditorias/integracao-funcional-v1/fase7/SHA256SUMS",
+  "history": {
+    "navigation": "HISTORICAL_CERTIFIED_F2",
+    "historicF1": "STATIC_INVENTORY"
+  },
+  "governance": {
+    "reviewMode": "TECHNICAL_ASSISTED_EDIVAN5002_PR_781",
+    "plan": 817
+  },
+  "live": "NOT_RUN",
+  "production": "NO-GO",
+  "acceptedCaveats": [
+    "R-01",
+    "R-02",
+    "R-03"
+  ],
+  "next": "FASE8_CONSOLIDACAO_V1"
+}
