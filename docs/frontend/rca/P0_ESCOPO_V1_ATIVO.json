@@ -3,24 +3,24 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "5f13e16ef5602efd23e67cea63d37500ccfe195f",
+    "frontend_sha": "eb55cec722b0160d914803584c805b0e9c32817c",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
+      "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
       "versao": "V1",
-      "justificativa": "Provas de isolamento e integridade dos documentos e versões V110/V111."
+      "justificativa": "Provas do isolamento de competências, análise e revisão humana com os consumidores reais."
     },
     {
-      "arquivo": "src/test/f5-code-v115-document-scope-isolation.test.ts",
+      "arquivo": "src/test/f5-code-competence-fixture.ts",
       "versao": "V1",
-      "justificativa": "Provas de isolamento e integridade do documento de competência V115."
+      "justificativa": "Identidades e transporte sintéticos compartilhados pelos casos de competência."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F5-786-IDENTIDADE-MATERIAL",
+      "id": "RCA-F5-788-IDENTIDADE-MATERIAL",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -31,54 +31,54 @@
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "O coletor histórico conferia cardinalidade sem fixar os IDs aceitos. A F5.4 estende essa prevenção às conexões materiais de documentos, com identidade de versão, arquivo, hash, competência e consumidor.",
+        "descricao": "O coletor ancestral aceitava IDs substituídos mantendo a cardinalidade. A F5.5 exige os IDs exatos e reconcilia organização, competência, execução, revisão e fronteira de leitura.",
         "evidencias": [
-          "Run ancestral 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2. Falha do coletor F4 preservada no histórico da PR #760.",
-          "F5.3 integrada no commit b3009b3e5e0e3f776d0e2149b724961c368feb96. O run 45731531442 confirmou 95 casos e 190 provas.",
-          "PLAN #787 integrado em 5f13e16ef5602efd23e67cea63d37500ccfe195f, revisão assistida 6067497018. Escopo prospectivo conferido no blob f432a95edcfa22898385410ec1ed0ad464b1ee45.",
-          "A visão geral exige versao_pacote_atual, mesmo quando nula. A fixture foi alinhada ao parser. No V115, a resposta PT400 de integridade pertence ao tipo erro e é distinguida de 42501 no transporte."
+          "Run ancestral 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2. RED original do coletor F4 na PR #760.",
+          "F5.4 integrada no commit 3ca3baa58b655d8f5f1b31b39526b87ea60b70e9. O run 45739806857 confirmou 109 casos e 218 provas.",
+          "PLAN #789 integrado em eb55cec722b0160d914803584c805b0e9c32817c. Revisão assistida 6067659895 e escopo conferido no blob e050251ec9b0843e8642574932d689924d450ac8.",
+          "O V113 não passa data-limite. O SYS05 atualiza contador e distribuição e preserva os prazos existentes. O parser V116 exibe página e trecho e a resposta da RPC inclui versão e hash, conferidos antes da projeção."
         ],
         "hipoteses_descartadas": [
-          "IDs válidos e cardinalidade sozinhos não provam o vínculo entre documento e arquivo.",
-          "A validação com tenants sintéticos é CODE_FIXTURE. Nenhum resultado foi inferido de Supabase remoto."
+          "Uma recusa por indisponibilidade não prova autorização. A negação exige 42501 e leitura preservada de ambos os escopos.",
+          "Um resultado anterior permanece em histórico durante a análise enfileirada. A execução nova tem hash de entrada próprio."
         ]
       },
       "impacto": {
         "dependencias": [
-          "Contratos V110 e V111, versão e proveniência de fonte",
-          "V115 e requisitos de competência",
-          "Transporte sintético, assinatura e download",
-          "Consumo de análises, pareceres e trilha de auditoria"
+          "V113 e projeções de competência",
+          "V116 e fila de análise",
+          "V117 e revisão com evidência e solicitação idempotente",
+          "Auditoria V123"
         ],
         "versoes_afetadas": [
           "V1"
         ],
         "riscos": [
           {
-            "risco": "Exposição de link ou envio no tenant incorreto",
+            "risco": "Projeção cruzada em contador ou prazo",
             "teste_preventivo": {
-              "id": "NEG-F5-4-C0288",
+              "id": "NEG-F5-5-C0352",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
-              "caso": "F5 V110/V111 document scope isolation IFV1-F5-C0288 negative: foreign document action has no effect or link"
+              "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+              "caso": "F5 competence actions scope isolation IFV1-F5-C0352 negative: foreign competence action has no effect or disclosure"
             }
           },
           {
-            "risco": "Erro de transporte aceito como negação ou integridade",
+            "risco": "Exposição de análise e requisito de outro tenant",
             "teste_preventivo": {
-              "id": "NEG-F5-4-C0315",
+              "id": "NEG-F5-5-C0437",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
-              "caso": "F5 V110/V111 document scope isolation IFV1-F5-C0315 negative: foreign document action has no effect or link"
+              "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+              "caso": "F5 competence actions scope isolation IFV1-F5-C0437 negative: foreign competence action has no effect or disclosure"
             }
           },
           {
-            "risco": "Associação de documento a requisito de outra competência",
+            "risco": "Revisão de outro tenant altera o resultado vigente",
             "teste_preventivo": {
-              "id": "NEG-F5-4-C0415",
+              "id": "NEG-F5-5-C0458",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-v115-document-scope-isolation.test.ts",
-              "caso": "F5 V115 competence document scope isolation IFV1-F5-C0415 negative: foreign competence document and effects remain hidden"
+              "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+              "caso": "F5 competence actions scope isolation IFV1-F5-C0458 negative: foreign competence action has no effect or disclosure"
             }
           }
         ]
@@ -96,50 +96,62 @@
         ],
         "green": [
           {
-            "id": "GREEN-F5-109-IDS",
+            "id": "GREEN-F5-128-IDS",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 exact 109 cumulative canonical ids"
+            "caso": "F5 exact 128 cumulative canonical ids"
           },
           {
-            "id": "GREEN-F5-4-C0311",
+            "id": "GREEN-F5-5-C0352",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
-            "caso": "F5 V110/V111 document scope isolation IFV1-F5-C0311 positive: document change and lineage remain scoped"
+            "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+            "caso": "F5 competence actions scope isolation IFV1-F5-C0352 positive: authorized competence action reaches its consumer"
           },
           {
-            "id": "GREEN-F5-4-C0420",
+            "id": "GREEN-F5-5-C0437",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-v115-document-scope-isolation.test.ts",
-            "caso": "F5 V115 competence document scope isolation IFV1-F5-C0420 positive: competence document reaches the authorized consumer"
+            "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+            "caso": "F5 competence actions scope isolation IFV1-F5-C0437 positive: authorized competence action reaches its consumer"
+          },
+          {
+            "id": "GREEN-F5-5-C0458",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+            "caso": "F5 competence actions scope isolation IFV1-F5-C0458 positive: authorized competence action reaches its consumer"
+          },
+          {
+            "id": "GREEN-F5-5-C0465",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+            "caso": "F5 competence actions scope isolation IFV1-F5-C0465 positive: authorized competence action reaches its consumer"
           }
         ],
         "negativos": [
           {
-            "id": "NEG-F5-4-C0288",
+            "id": "NEG-F5-5-C0352",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
-            "caso": "F5 V110/V111 document scope isolation IFV1-F5-C0288 negative: foreign document action has no effect or link"
+            "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+            "caso": "F5 competence actions scope isolation IFV1-F5-C0352 negative: foreign competence action has no effect or disclosure"
           },
           {
-            "id": "NEG-F5-4-C0315",
+            "id": "NEG-F5-5-C0437",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
-            "caso": "F5 V110/V111 document scope isolation IFV1-F5-C0315 negative: foreign document action has no effect or link"
+            "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+            "caso": "F5 competence actions scope isolation IFV1-F5-C0437 negative: foreign competence action has no effect or disclosure"
           },
           {
-            "id": "NEG-F5-4-C0415",
+            "id": "NEG-F5-5-C0458",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-v115-document-scope-isolation.test.ts",
-            "caso": "F5 V115 competence document scope isolation IFV1-F5-C0415 negative: foreign competence document and effects remain hidden"
+            "arquivo": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+            "caso": "F5 competence actions scope isolation IFV1-F5-C0458 negative: foreign competence action has no effect or disclosure"
           }
         ],
         "regressao": [
           {
-            "id": "REG-F5-95-IDS",
+            "id": "REG-F5-109-IDS",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 exact 95 cumulative canonical ids"
+            "caso": "F5 exact 109 cumulative canonical ids"
           },
           {
             "id": "REG-F4-MATERIAL",
@@ -150,11 +162,11 @@
         ]
       },
       "solucao": {
-        "descricao": "Executar os adaptadores reais com transporte sintético, comparar a versão e sua fonte e confirmar a negação sem efeito ou exposição. O coletor fixa arquivo, caso, título, escopo, SHA, run, job e tentativa.",
-        "rollback": "Reverter a BUILD em PR protegida, preservando os recibos cumulativos anteriores.",
+        "descricao": "Vincular cada par a organização, contrato, competência, execução e consumidor. Reexecutar 128 casos e 256 provas CODE_FIXTURE no mesmo HEAD e conferir os artefatos nativos.",
+        "rollback": "Vincular cada par a organização, contrato, competência, execução e consumidor. Reexecutar 128 casos e 256 provas CODE_FIXTURE no mesmo HEAD e conferir os artefatos nativos.",
         "arquivos": [
-          "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
-          "src/test/f5-code-v115-document-scope-isolation.test.ts"
+          "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+          "src/test/f5-code-competence-fixture.ts"
         ]
       }
     }

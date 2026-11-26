@@ -5,6 +5,27 @@ import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 export const BACKEND = "a1516de1d8949e505d83b5e000eb1cc558b217a7";
 export const BATCHES = Object.freeze({
+  competenceactions: [
+    "0352",
+    "0365",
+    "0368",
+    "0369",
+    "0370",
+    "0371",
+    "0372",
+    "0373",
+    "0376",
+    "0433",
+    "0437",
+    "0439",
+    "0441",
+    "0443",
+    "0455",
+    "0458",
+    "0461",
+    "0463",
+    "0465",
+  ],
   contractdocuments: ["0288", "0294", "0297", "0311", "0315", "0320", "0321", "0324"],
   competencedocuments: ["0410", "0413", "0415", "0416", "0418", "0420"],
   adm01: [
@@ -221,6 +242,16 @@ const f54Inventory = JSON.parse(
   ),
 );
 const f54Cases = new Map(f54Inventory.cases.map((entry) => [entry.caseId.slice(-4), entry]));
+const f55Inventory = JSON.parse(
+  fs.readFileSync(
+    new URL(
+      "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_5_CASE_CONTRACTS_PROPOSAL.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+const f55Cases = new Map(f55Inventory.cases.map((entry) => [entry.caseId.slice(-4), entry]));
 const normativeStates = {
   V107: {
     ref: 13,
@@ -284,6 +315,16 @@ const contextTitles = {
   ],
 };
 const batchesWithEvidence = {
+  competenceactions: {
+    file: "f5-code-competence-actions-scope-isolation.test.tsx",
+    suite: "F5 competence actions scope isolation",
+    title: (_id, index) =>
+      [
+        "authorized competence action reaches its consumer",
+        "foreign competence action has no effect or disclosure",
+      ][index],
+    check: checkCompetenceActions,
+  },
   contractdocuments: {
     file: "f5-code-v110-v111-document-scope-isolation.test.ts",
     suite: "F5 V110/V111 document scope isolation",
@@ -407,6 +448,135 @@ function checkScopedChange(o, canonical, producer, operation, label, association
   )
     fail(label + " authorization denial missing or produced an effect");
   return canonical;
+}
+const competenceActions = {
+  V113: ["create", "CompetenciaCriada", "competencias", 2],
+  V116: ["request", "AnaliseSolicitada", "execucoes_analise", 5],
+  V117: ["review", "RevisaoRequisitoRegistrada", "resultados_requisitos", 7],
+};
+
+function checkCompetenceActions(o, id) {
+  const canonical = f55Cases.get(id);
+  const [operation, event, entity, entityOffset] = competenceActions[canonical?.origin] ?? [];
+  checkScopedChange(o, canonical, canonical?.producer, operation, "F5.5");
+  const b = o.readback;
+  const a = (n) => fixtureId("a", "550", n);
+  if (o.kind === "negative") {
+    if (b.ownCompetenceId !== fixtureId("b", "550", 2) || b.preservedCompetenceId !== a(2))
+      fail("F5.5 negative readback did not preserve each competence");
+    return;
+  }
+  if (
+    b.organizationId !== A ||
+    b.contractId !== a(1) ||
+    b.competenceId !== a(2) ||
+    b.mutationCount !== 1 ||
+    !record(b.observed)
+  )
+    fail("F5.5 competence or effect mismatch");
+
+  const observed = b.observed;
+  if (
+    operation !== "create" &&
+    (b.previousExecution !== a(4) ||
+      b.currentExecution !== a(5) ||
+      !/^[a-f0-9]{64}$/.test(b.previousHash) ||
+      !/^[a-f0-9]{64}$/.test(b.currentHash))
+  )
+    fail("F5.5 execution provenance missing");
+  if (
+    operation === "request" &&
+    (b.previousHash === b.currentHash || b.executionState !== "queued")
+  )
+    fail("F5.5 analysis reused obsolete input or failed to queue");
+  if (
+    operation === "review" &&
+    (b.previousHash !== b.currentHash ||
+      b.executionState !== "complete" ||
+      b.requestId !== a(13) ||
+      b.revision?.resultId !== a(7) ||
+      b.revision?.requirementId !== a(3) ||
+      b.revision?.versionId !== a(9) ||
+      b.revision?.page !== 2 ||
+      !b.revision?.excerpt ||
+      !b.revision?.justification)
+  )
+    fail("F5.5 review provenance or evidence lost");
+
+  switch (canonical.destination) {
+    case "SYS05":
+      if (
+        b.before?.count !== 1 ||
+        observed.count !== 2 ||
+        b.before.deadlineId !== a(14) ||
+        observed.deadlineId !== a(14) ||
+        !observed.groups?.some((g) => g.situacao === "rascunho" && g.quantidade === 1)
+      )
+        fail("F5.5 dashboard count, grouping or deadlines mismatch");
+      break;
+    case "V112":
+      if (observed.id !== a(2) || observed.reference !== "2026-11-01")
+        fail("F5.5 competence listing mismatch");
+      break;
+    case "V115":
+      if (observed.requirementId !== a(3) || observed.documents !== 0)
+        fail("F5.5 initial documentary scope mismatch");
+      break;
+    case "V116":
+      if (
+        operation === "review"
+          ? observed.status !== "complete" || observed.resultId !== a(7)
+          : observed.status !== "not_analyzed" || observed.resultId !== null
+      )
+        fail("F5.5 current analysis result mismatch");
+      break;
+    case "V117":
+      if (
+        observed.previousResult !== a(6) ||
+        observed.currentResult !== null ||
+        observed.version !== a(9)
+      )
+        fail("F5.5 queued analysis reused a previous result as current");
+      break;
+    case "V118":
+      if (
+        observed.currentApproval !== false ||
+        observed.status !==
+          (operation === "create" ? null : operation === "request" ? "aprovado" : "substituido")
+      )
+        fail("F5.5 opinion current approval or history mismatch");
+      break;
+    case "V120":
+      if (observed.count !== 0 || observed.canPresent !== false)
+        fail("F5.5 new competence exposes a protocol");
+      break;
+    case "V123":
+      if (
+        observed.id !== a(11) ||
+        observed.evento !== event ||
+        observed.entidade !== entity ||
+        observed.id_entidade !== a(entityOffset) ||
+        observed.id_usuario !== U ||
+        observed.correlation_id !== a(12) ||
+        observed.origem !== "usuario"
+      )
+        fail("F5.5 audit event, subject or correlation mismatch");
+      break;
+    default:
+      if (
+        observed.id !== a(2) ||
+        observed.canPresent !== false ||
+        observed.currentApproval !== false ||
+        observed.analysisCurrent !== (operation === "review") ||
+        observed.situation !==
+          (operation === "create"
+            ? "rascunho"
+            : operation === "request"
+              ? "em_analise"
+              : "pendente_correcao")
+      )
+        fail("F5.5 overview, analysis or presentation gate mismatch");
+  }
 }
 function checkScopeF52(o, id, producer, operation, association = false) {
   return checkScopedChange(o, f52Cases.get(id), producer, operation, "F5.2", association);
