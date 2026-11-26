@@ -2,5 +2,11 @@
   "schema": "contaos.p0.v2-code-progress.v1",
   "versao": "V2",
   "modalidade": "CODE",
-  "recibos": []
+  "recibos": [
+    {
+      "regular_id": "44",
+      "arquivo": "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-44.json",
+      "sha256": "64da5545fa68f0f250c2fdc4445e3f03b6504bb1836ac8a4f3b485df52ae7238"
+    }
+  ]
 }
