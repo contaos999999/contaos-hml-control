@@ -50,6 +50,10 @@
     "closing": {
       "file": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
       "suite": "F6 opinion, presentation and history journeys"
+    },
+    "transversal": {
+      "file": "src/test/f6-code-transversal-journeys.test.tsx",
+      "suite": "F6 transversal journeys"
     }
   },
   "cases": [
@@ -1987,5 +1991,79 @@
     }
   ],
   "live": "NOT_RUN",
-  "production": "NO-GO"
+  "production": "NO-GO",
+  "transversal": [
+    {
+      "caseId": "IFV1-F6-T0001",
+      "sourceConnectionId": "T0001",
+      "relatedCaseIds": [
+        "IFV1-F6-C0433",
+        "IFV1-F6-C0437"
+      ],
+      "journeyId": "F6.7-V116-V116-T0001",
+      "slice": "F6.7",
+      "batch": "transversal",
+      "origin": "V116",
+      "destination": "V116",
+      "classification": "COMPLEMENTAR",
+      "producer": "obter_analise_competencia_v116",
+      "consumer": "CompetenciaAnalise",
+      "normativeSource": "docs/frontend/planos/INTEGRACAO_V1_FASE6_PLANO_UNICO_2026-11-26.md",
+      "expected": "Timeout 504 preserva o recurso e permite recarga. O acesso cruzado continua negado com 403."
+    },
+    {
+      "caseId": "IFV1-F6-T0002",
+      "sourceConnectionId": "T0002",
+      "relatedCaseIds": [
+        "IFV1-F6-C0264",
+        "IFV1-F6-C0458"
+      ],
+      "journeyId": "F6.7-V116-V116-T0002",
+      "slice": "F6.7",
+      "batch": "transversal",
+      "origin": "V116",
+      "destination": "V116",
+      "classification": "COMPLEMENTAR",
+      "producer": "obter_analise_competencia_v116",
+      "consumer": "CompetenciaAnalise",
+      "normativeSource": "docs/frontend/planos/INTEGRACAO_V1_FASE6_PLANO_UNICO_2026-11-26.md",
+      "expected": "Resposta 200 inválida é rejeitada pelo parser. Nenhum comando aparece até uma leitura válida."
+    },
+    {
+      "caseId": "IFV1-F6-T0003",
+      "sourceConnectionId": "T0003",
+      "relatedCaseIds": [
+        "IFV1-F6-C0437",
+        "IFV1-F6-C0443"
+      ],
+      "journeyId": "F6.7-V116-V123-T0003",
+      "slice": "F6.7",
+      "batch": "transversal",
+      "origin": "V116",
+      "destination": "V123",
+      "classification": "COMPLEMENTAR",
+      "producer": "solicitar_analise_competencia",
+      "consumer": "obter_analise_competencia_v116 e eventos_auditoria",
+      "normativeSource": "docs/frontend/planos/INTEGRACAO_V1_FASE6_PLANO_UNICO_2026-11-26.md",
+      "expected": "Após resposta perdida e duplo clique, a reconciliação exibe uma execução. O evento correlacionado é único e a leitura cruzada é recusada."
+    },
+    {
+      "caseId": "IFV1-F6-T0004",
+      "sourceConnectionId": "T0004",
+      "relatedCaseIds": [
+        "IFV1-F6-C0043",
+        "IFV1-F6-C0202"
+      ],
+      "journeyId": "F6.7-SYS04-V116-T0004",
+      "slice": "F6.7",
+      "batch": "transversal",
+      "origin": "SYS04",
+      "destination": "V116",
+      "classification": "COMPLEMENTAR",
+      "producer": "definirPreferenciaOrganizacao e rota de análise",
+      "consumer": "CompetenciaAnalise",
+      "normativeSource": "docs/frontend/planos/INTEGRACAO_V1_FASE6_PLANO_UNICO_2026-11-26.md",
+      "expected": "A leitura anterior é cancelada quando muda a rota. A sessão expirada vai à entrada sem consultar o recurso e o novo contexto é revalidado."
+    }
+  ]
 }

@@ -126,8 +126,11 @@ export function journeyRecorder(batch: string) {
   const matrix = JSON.parse(readFileSync(matrixPath, "utf8")) as {
     backendSha: string;
     cases: Journey[];
+    transversal?: Journey[];
   };
-  const cases = matrix.cases.filter((item) => item.batch === batch);
+  const cases = (batch === "transversal" ? (matrix.transversal ?? []) : matrix.cases).filter(
+    (item) => item.batch === batch,
+  );
   const byId = new Map(cases.map((item) => [item.sourceConnectionId, item]));
   const observations: object[] = [];
   return {

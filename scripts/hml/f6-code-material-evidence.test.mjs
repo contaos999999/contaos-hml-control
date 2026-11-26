@@ -130,3 +130,16 @@ test("F6.1 binds all 54 journeys and their paired proofs", () => {
     108,
   );
 });
+
+test("F6.7 supplementary evidence stays outside the canonical ledger", () => {
+  const matrix = loadMatrix();
+  assert.equal(matrix.cases.length, 138);
+  assert.equal(matrix.transversal.length, 4);
+  assert(matrix.cases.every((row) => row.batch !== "transversal"));
+  const drifted = structuredClone(matrix);
+  drifted.transversal[0].relatedCaseIds[0] = "IFV1-F6-C9999";
+  assert.throws(() => loadMatrix(JSON.stringify(drifted)), /Unbound supplementary/);
+  drifted.transversal = matrix.transversal;
+  drifted.cases[0].batch = "transversal";
+  assert.throws(() => loadMatrix(JSON.stringify(drifted)), /Unconfigured active batch/);
+});
