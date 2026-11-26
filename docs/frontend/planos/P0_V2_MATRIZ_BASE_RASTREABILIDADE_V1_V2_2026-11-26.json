@@ -1,0 +1,2394 @@
+{
+  "finalidade": "Linha de base de planejamento, a reconciliar com os contratos e o código de cada BUILD.",
+  "schema": "contaos.v2.rastreabilidade-planejada.v1",
+  "estado": "PLANEJADO",
+  "baseline": {
+    "frontend": "67d663c5aef546212fca15cccdc8d6eefafa122a",
+    "backendNormativo": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+    "typesBlob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+    "v1": {
+      "inventario": {
+        "caminho": "docs/frontend/auditorias/integracao-funcional-v1/fase1/inventario.json",
+        "sha256": "81f56088977b9d874c2e2a3678a1df185dcccf0e0f16b99629fb2862f411d302"
+      },
+      "matriz": {
+        "caminho": "docs/frontend/auditorias/integracao-funcional-v1/fase7/F7_CODE_TRACEABILITY.json",
+        "sha256": "79336321adcce1d408bce2841d7e46403014fe107772d348b537314db573bb21"
+      },
+      "certificadoCODE": {
+        "caminho": "docs/frontend/auditorias/integracao-funcional-v1/fase8/V1_INTEGRACAO_FUNCIONAL_CODE_CERTIFICATION.json",
+        "sha256": "82ade19f490c43ed597b413b32eb02964e8b41178f1f11942b8455783bca593d"
+      },
+      "reciboP0": {
+        "caminho": "docs/frontend/governanca/P0_RECIBO_INTEGRACAO_INTERNA_V1_CODE.json",
+        "sha256": "36695922982a348d892066e6aa6610742f7076146995f703c371fd2a7d96fe15"
+      }
+    },
+    "fonte": {
+      "snapshot": "docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json",
+      "sha256": "0493257324bb69fae538a8896e9073f25b62845bc25706b8521b064c18748b5c",
+      "documentos": [
+        {
+          "path": "00_AI_LEIA_ANTES_DE_ALTERAR.md",
+          "blob_sha": "58b4192f81d413ba08f2a3f220070c109e445e0c"
+        },
+        {
+          "path": "01_PRD_MESTRE_4_1.md",
+          "blob_sha": "9b195117be78e7daa0e8b8111e0434e5fbd641b9"
+        },
+        {
+          "path": "02_PREMISSAS_FUNCIONAIS_TECNICAS_4_1.md",
+          "blob_sha": "ec41b2a6dd0eb05f31834ad4aa130b4d0cc165eb"
+        },
+        {
+          "path": "03_ARQUITETURA_OFICIAL_4_1.md",
+          "blob_sha": "e6ae96dfbccdac6f321b9d073233c87ae4a9f922"
+        },
+        {
+          "path": "04_MANUAL_AMBIENTE_E_PROMOCAO_4_1.md",
+          "blob_sha": "4f67575673a3d36d682716794dd794187a229531"
+        },
+        {
+          "path": "05_BACKEND_SUPABASE_CERTIFICADO_4_1.md",
+          "blob_sha": "3628f7d39bcc886e2e40a6a4be9ba8aeebadb15c"
+        },
+        {
+          "path": "06_FRONTEND_LOVABLE_ESPECIFICACAO_4_1.md",
+          "blob_sha": "c5d91e774f6ae7f356ea2608cfbb437057a545bb"
+        },
+        {
+          "path": "07_ZERO_DRIFT_GOVERNANCA_4_1.md",
+          "blob_sha": "8983971ff65addc75bc0638cb5886d54b3780877"
+        },
+        {
+          "path": "08_REQUISITOS_96_E_CRITERIOS_ACEITE_4_1.md",
+          "blob_sha": "6c647b120ce2584bb7c61d68aa3561cd70c666f8"
+        },
+        {
+          "path": "08A_REQUISITOS_001_024_4_1.md",
+          "blob_sha": "0cfcffeda97244f62f2c7a3886987778c072e4d2"
+        },
+        {
+          "path": "08B_REQUISITOS_025_048_4_1.md",
+          "blob_sha": "6d6059512954d48a9345aab24d4aad09ebbf95ce"
+        },
+        {
+          "path": "08C_REQUISITOS_049_072_4_1.md",
+          "blob_sha": "336e16653b121ed1462646ccfca507e4ff3bb9ee"
+        },
+        {
+          "path": "08D_REQUISITOS_073_096_4_1.md",
+          "blob_sha": "46d720921f27cdf9ff15c5730d7b67a6005ca34b"
+        },
+        {
+          "path": "09_RASTREABILIDADE_FONTES_AUDITORIA_4_1.md",
+          "blob_sha": "8aeb6c650d0373a491a4367393cecb52756eea2f"
+        },
+        {
+          "path": "10_IA_OCR_RAG_E_PRECEDENTES_4_1.md",
+          "blob_sha": "9d49f59ca840d92d7e381bbb84255a54228ce538"
+        },
+        {
+          "path": "11_RNF_PERFORMANCE_CONCORRENCIA_RESILIENCIA_4_1.md",
+          "blob_sha": "0bf4eeaa33b9d44c744b0b38eb4481a2ccd5d6b5"
+        },
+        {
+          "path": "12_PROMPTS_PROTOCOLO_IMPLEMENTACAO_4_1.md",
+          "blob_sha": "a199be35a87647220ed60a35a4ed9696581f5f68"
+        },
+        {
+          "path": "13_MAPA_DOCUMENTOS_PACOTE_4_1.md",
+          "blob_sha": "5143fbba70a56932ee09f67d7caac74211b26e58"
+        },
+        {
+          "path": "14_CHECKLIST_PRE_ALTERACAO.md",
+          "blob_sha": "ebf7f3348b4b0f409845649495c50670828d0f00"
+        },
+        {
+          "path": "15_ESTADO_CERTIFICADO_HML_4_1.md",
+          "blob_sha": "0f7974ccc2f7b3ff9d0e72056029387e89970c55"
+        },
+        {
+          "path": "16_CUSTOS_E_PLANOS_REFERENCIA_4_1.md",
+          "blob_sha": "5618a8ef93973ad8093005ef8525f2d2b34125c4"
+        },
+        {
+          "path": "17_FONTES_TECNICAS_E_QA_4_1.md",
+          "blob_sha": "31c580b014338349251e622d8c9fe9e13607ed64"
+        },
+        {
+          "path": "18_SCHEMA_RLS_EDGE_QUEUES_CRON_4_1.md",
+          "blob_sha": "b5fd6b94c2894aed87ae73076c47dadba20def3a"
+        },
+        {
+          "path": "19_IDENTIDADE_VISUAL_OFICIAL_BRAND_1_0.md",
+          "blob_sha": "a5e26aa52bee5b3184443b5c9f13728501eee701"
+        },
+        {
+          "path": "20_PROMPT_000_BRAND_01.md",
+          "blob_sha": "44aa2b4cde873f1a218ef8e705fc2b5f07d4cdc5"
+        }
+      ],
+      "catalogo": "docs/prompts/PROMPT_TRACKS_4_1.json",
+      "blobCatalogo": "e54e49e626e65a9c94c81709180fd192a1f0c079",
+      "arquivoOriginalSha256": "5ee115d12e263d98068288b6bb722f5f303f2d19e1e4c0b5e930e69da03621da",
+      "manualSha256": "8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e",
+      "cadernoSha256": "d9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8"
+    }
+  },
+  "coberturaPrevista": {
+    "v1": 29,
+    "v2": 8,
+    "regularesV2": 8,
+    "atômicosV2": 19,
+    "arestasIniciaisV2": 20,
+    "arestasIniciaisCumulativas": 36,
+    "jornadas": 14,
+    "v1Canonicas": 138
+  },
+  "telasV1": [
+    {
+      "versao": "V1",
+      "id": "SYS01",
+      "nome": "Login",
+      "rota": "/login",
+      "arquivoRota": "src/routes/login.tsx",
+      "componenteExistente": "src/components/auth/LoginForm.tsx",
+      "nucleo": true,
+      "impacto": "TRANSVERSAL",
+      "criterio": "Sessão, logout e retorno seguro da V2.",
+      "jornadas": [
+        "J01",
+        "J13"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "SYS02",
+      "nome": "Esqueci a senha",
+      "rota": "/esqueci-senha",
+      "arquivoRota": "src/routes/esqueci-senha.tsx",
+      "componenteExistente": "src/components/auth/ForgotPasswordForm.tsx",
+      "nucleo": false,
+      "impacto": "REGRESSAO",
+      "criterio": "Recuperação de acesso integra o percurso de sessão.",
+      "jornadas": [
+        "J13"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "SYS03",
+      "nome": "Redefinir senha",
+      "rota": "/redefinir-senha",
+      "arquivoRota": "src/routes/redefinir-senha.tsx",
+      "componenteExistente": "src/components/auth/ResetPasswordForm.tsx",
+      "nucleo": false,
+      "impacto": "REGRESSAO",
+      "criterio": "Redefinição exige nova sessão válida e estado privado limpo.",
+      "jornadas": [
+        "J13"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "SYS04",
+      "nome": "Organizações",
+      "rota": "/selecionar-organizacao",
+      "arquivoRota": "src/routes/selecionar-organizacao.tsx",
+      "componenteExistente": "src/components/organizacao/OrganizationSelector.tsx",
+      "nucleo": true,
+      "impacto": "TRANSVERSAL",
+      "criterio": "Organização efetiva e troca de escopo.",
+      "jornadas": [
+        "J01",
+        "J13"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "SYS05",
+      "nome": "Painel",
+      "rota": "/",
+      "arquivoRota": "src/routes/index.tsx",
+      "componenteExistente": "src/components/dashboard/Dashboard.tsx",
+      "nucleo": true,
+      "impacto": "TRANSVERSAL",
+      "criterio": "Painel/menus por permissão e regressão de navegação.",
+      "jornadas": [
+        "J13"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "ADM01",
+      "nome": "Usuários e vínculos",
+      "rota": "/administracao/usuarios",
+      "arquivoRota": "src/routes/administracao.usuarios.tsx",
+      "componenteExistente": "src/components/administracao/usuarios/AdminUsuarios.tsx",
+      "nucleo": true,
+      "impacto": "TRANSVERSAL",
+      "criterio": "Vínculos e papéis efetivos em cada acesso ou mutação.",
+      "jornadas": [
+        "J01",
+        "J12"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V101",
+      "nome": "Contratantes",
+      "rota": "/contratantes",
+      "arquivoRota": "src/routes/contratantes.tsx",
+      "componenteExistente": "src/components/contratantes/ListaContratantes.tsx",
+      "nucleo": true,
+      "impacto": "REGRESSAO",
+      "criterio": "Contratante identificado pelo contrato; preservar filtros e vínculos.",
+      "jornadas": [
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V102",
+      "nome": "Novo contratante",
+      "rota": "/contratantes/novo",
+      "arquivoRota": "src/routes/contratantes_.novo.tsx",
+      "componenteExistente": "src/components/contratantes/NovoContratante.tsx",
+      "nucleo": true,
+      "impacto": "REGRESSAO",
+      "criterio": "Cadastro válido precede vínculo contratual e mantém ID rastreável.",
+      "jornadas": [
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V103",
+      "nome": "Editar contratante",
+      "rota": "/contratantes/$id/editar",
+      "arquivoRota": "src/routes/contratantes_.$id.editar.tsx",
+      "componenteExistente": "src/components/contratantes/EditarContratante.tsx",
+      "nucleo": true,
+      "impacto": "REGRESSAO",
+      "criterio": "Edição cadastral não reinterpreta pacote, parecer ou regra históricos.",
+      "jornadas": [
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V104",
+      "nome": "Contratos",
+      "rota": "/contratos",
+      "arquivoRota": "src/routes/contratos.tsx",
+      "componenteExistente": "src/components/contratos/ListaContratos.tsx",
+      "nucleo": true,
+      "impacto": "REGRESSAO",
+      "criterio": "Listagem e escopo do contrato antecedem a competência.",
+      "jornadas": [
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V105",
+      "nome": "Novo contrato",
+      "rota": "/contratos/novo",
+      "arquivoRota": "src/routes/contratos_.novo.tsx",
+      "componenteExistente": "src/components/contratos/NovoContrato.tsx",
+      "nucleo": true,
+      "impacto": "REGRESSAO",
+      "criterio": "Novo contrato preserva identidade e autorização das competências futuras.",
+      "jornadas": [
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V106",
+      "nome": "Visão geral do contrato",
+      "rota": "/contratos/$id",
+      "arquivoRota": "src/routes/contratos_.$id.tsx",
+      "componenteExistente": "src/components/contratos/VisaoGeralContrato.tsx",
+      "nucleo": true,
+      "impacto": "DIRETA",
+      "criterio": "Origem contratual, contratante e contexto das competências.",
+      "jornadas": [
+        "J02",
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V107",
+      "nome": "Base normativa",
+      "rota": "/contratos/$id/base-normativa",
+      "arquivoRota": "src/routes/contratos_.$id_.base-normativa.tsx",
+      "componenteExistente": "src/components/contratos/BaseNormativaContrato.tsx",
+      "nucleo": true,
+      "impacto": "DIRETA",
+      "criterio": "Norma, versão, artigo e vigência como fundamento rastreável.",
+      "jornadas": [
+        "J06",
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V108",
+      "nome": "Orçamento",
+      "rota": "/contratos/$id/orcamento",
+      "arquivoRota": "src/routes/contratos_.$id_.orcamento.tsx",
+      "componenteExistente": "src/components/contratos/OrcamentoContrato.tsx",
+      "nucleo": true,
+      "impacto": "CONDICIONAL",
+      "criterio": "Evidência orçamentária quando a diligência questionar rubrica/valor.",
+      "jornadas": [
+        "J05",
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V109",
+      "nome": "Listas e regras",
+      "rota": "/contratos/$id/regras",
+      "arquivoRota": "src/routes/contratos_.$id_.regras.tsx",
+      "componenteExistente": "src/components/contratos/RegrasContrato.tsx",
+      "nucleo": true,
+      "impacto": "CONDICIONAL",
+      "criterio": "Listas e regras vigentes ligadas à análise; histórico preservado.",
+      "jornadas": [
+        "J06",
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V110",
+      "nome": "Documentos do contrato",
+      "rota": "/contratos/$id/documentos",
+      "arquivoRota": "src/routes/contratos_.$id_.documentos.tsx",
+      "componenteExistente": "src/components/contratos/DocumentosContrato.tsx",
+      "nucleo": true,
+      "impacto": "CONDICIONAL",
+      "criterio": "Documentos contratuais que comprovem o item no escopo permitido.",
+      "jornadas": [
+        "J06",
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V111",
+      "nome": "Detalhe e versões do documento",
+      "rota": "/contratos/$id/documentos/$idDocumento",
+      "arquivoRota": "src/routes/contratos_.$id_.documentos_.$idDocumento.tsx",
+      "componenteExistente": "src/components/contratos/DocumentoDetalhe.tsx",
+      "nucleo": true,
+      "impacto": "DIRETA",
+      "criterio": "Versão, página, trecho e hash da evidência apontada.",
+      "jornadas": [
+        "J06",
+        "J07",
+        "J08"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V112",
+      "nome": "Competências do contrato",
+      "rota": "/contratos/$id/competencias",
+      "arquivoRota": "src/routes/contratos_.$id_.competencias.tsx",
+      "componenteExistente": "src/components/contratos/CompetenciasContrato.tsx",
+      "nucleo": true,
+      "impacto": "DIRETA",
+      "criterio": "Percurso de competências e retorno ao contrato certo.",
+      "jornadas": [
+        "J02",
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V113",
+      "nome": "Nova competência",
+      "rota": "/contratos/$id/competencias/nova",
+      "arquivoRota": "src/routes/contratos_.$id_.competencias_.nova.tsx",
+      "componenteExistente": "src/components/contratos/NovaCompetencia.tsx",
+      "nucleo": true,
+      "impacto": "REGRESSAO",
+      "criterio": "Nova competência cria origem no domínio V1 e conserva a proteção de escopo.",
+      "jornadas": [
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V114",
+      "nome": "Visão geral da competência",
+      "rota": "/competencias/$id",
+      "arquivoRota": "src/routes/competencias_.$id.tsx",
+      "componenteExistente": "src/components/competencias/CompetenciaVisaoGeral.tsx",
+      "nucleo": true,
+      "impacto": "DIRETA",
+      "criterio": "Entrada nas diligências e releitura de portões e apresentações.",
+      "jornadas": [
+        "J01",
+        "J02",
+        "J09",
+        "J10"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V115",
+      "nome": "Documentos da competência",
+      "rota": "/competencias/$id/documentos",
+      "arquivoRota": "src/routes/competencias_.$id_.documentos.tsx",
+      "componenteExistente": "src/components/competencias/CompetenciaDocumentos.tsx",
+      "nucleo": true,
+      "impacto": "CONDICIONAL",
+      "criterio": "Documento da competência e versão de nova evidência usada na ação.",
+      "jornadas": [
+        "J06",
+        "J07"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V116",
+      "nome": "Análise da competência",
+      "rota": "/competencias/$id/analise",
+      "arquivoRota": "src/routes/competencias_.$id_.analise.tsx",
+      "componenteExistente": "src/components/competencias/CompetenciaAnalise.tsx",
+      "nucleo": true,
+      "impacto": "CONDICIONAL",
+      "criterio": "Análise e snapshot usados para confrontar evidência existente.",
+      "jornadas": [
+        "J06",
+        "J09"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V117",
+      "nome": "Requisito e evidências",
+      "rota": "/competencias/$id/analise",
+      "arquivoRota": "src/routes/competencias_.$id_.analise.tsx",
+      "componenteExistente": "src/components/competencias/RequirementDrawer.tsx",
+      "nucleo": true,
+      "impacto": "CONDICIONAL",
+      "criterio": "Requisito e evidência de origem no painel da análise.",
+      "jornadas": [
+        "J06",
+        "J08"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V118",
+      "nome": "Parecer interno",
+      "rota": "/competencias/$id/parecer",
+      "arquivoRota": "src/routes/competencias_.$id_.parecer.tsx",
+      "componenteExistente": "src/components/competencias/CompetenciaParecer.tsx",
+      "nucleo": true,
+      "impacto": "CONDICIONAL",
+      "criterio": "Parecer interno vigente como fonte e decisão distinta do parecer externo.",
+      "jornadas": [
+        "J06",
+        "J09"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V119",
+      "nome": "Apresentação",
+      "rota": "/competencias/$id/apresentar",
+      "arquivoRota": "src/routes/competencias_.$id_.apresentar.tsx",
+      "componenteExistente": "src/components/competencias/CompetenciaApresentar.tsx",
+      "nucleo": true,
+      "impacto": "DIRETA",
+      "criterio": "Apresentação inicial e autorização própria preservadas.",
+      "jornadas": [
+        "J02",
+        "J10"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V120",
+      "nome": "Protocolo e pacote",
+      "rota": "/competencias/$id/apresentacoes/$apresentacaoId",
+      "arquivoRota": "src/routes/competencias_.$id_.apresentacoes_.$apresentacaoId.tsx",
+      "componenteExistente": "src/components/competencias/CompetenciaProtocolo.tsx",
+      "nucleo": true,
+      "impacto": "DIRETA",
+      "criterio": "Protocolo e pacote da apresentação exata observáveis nos dois sentidos.",
+      "jornadas": [
+        "J02",
+        "J06",
+        "J10",
+        "J11"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V121",
+      "nome": "Histórico",
+      "rota": "/contratos/$id/historico",
+      "arquivoRota": "src/routes/contratos_.$id_.historico.tsx",
+      "componenteExistente": "src/components/contratos/HistoricoContrato.tsx",
+      "nucleo": true,
+      "impacto": "DIRETA",
+      "criterio": "Histórico e precedentes vinculados quando a origem e a permissão se confirmam.",
+      "jornadas": [
+        "J06",
+        "J11",
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V122",
+      "nome": "Importação histórica",
+      "rota": "/contratos/$id/historico/importar",
+      "arquivoRota": "src/routes/contratos_.$id_.historico_.importar.tsx",
+      "componenteExistente": "src/components/contratos/ImportarHistorico.tsx",
+      "nucleo": true,
+      "impacto": "CONDICIONAL",
+      "criterio": "Histórico importado recebe rastreio quando usado como fonte de precedente.",
+      "jornadas": [
+        "J11",
+        "J14"
+      ]
+    },
+    {
+      "versao": "V1",
+      "id": "V123",
+      "nome": "Trilha de auditoria",
+      "rota": "/administracao/auditoria",
+      "arquivoRota": "src/routes/administracao.auditoria.tsx",
+      "componenteExistente": "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
+      "nucleo": true,
+      "impacto": "TRANSVERSAL",
+      "criterio": "Eventos materiais correlacionados, filtrados pelo acesso e sem dados sensíveis.",
+      "jornadas": [
+        "J12"
+      ]
+    }
+  ],
+  "telasV2": [
+    {
+      "versao": "V2",
+      "id": "V2-01",
+      "nome": "Diligências",
+      "regular": "44",
+      "rota": "/competencias/:id/diligencias",
+      "tipoRota": "MANUAL",
+      "acesso": "Acesso à competência conferido pelo backend",
+      "entrega": "Listar ciclos/rodadas só da competência autorizada, com estados e retorno à origem. Ativar o link para o detalhe quando a 45 entregar o destino.",
+      "requisitosCrosswalk": [
+        "000",
+        "025",
+        "026",
+        "027",
+        "028"
+      ],
+      "informacaoDeContrato": [
+        "ciclos_diligencia",
+        "pareceres_contratante",
+        "apontamentos_contratante"
+      ],
+      "textoOriginalSha256": "4300cc77e31ae925db3483b16158d106b06a185d24c9803a164276d29998249b",
+      "criterioTesteOriginal": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "caminhosProspectivos": [
+        "src/components/competencias/CompetenciaVisaoGeral.tsx",
+        "src/components/diligencias/DiligenciasCompetencia.tsx",
+        "src/lib/diligencias/diligenciasDados.ts",
+        "src/routeTree.gen.ts",
+        "src/routes/competencias_.$id_.diligencias.tsx",
+        "src/test/v2-44-contrato.test.ts",
+        "src/test/v2-44-tela.test.tsx"
+      ]
+    },
+    {
+      "versao": "V2",
+      "id": "V2-02",
+      "nome": "Ciclo de diligência",
+      "regular": "45",
+      "rota": "/diligencias/:cicloId",
+      "tipoRota": "MANUAL",
+      "acesso": "Acesso ao ciclo e ao escopo da competência",
+      "entrega": "Exibir número de rodada, situação, prazo, valores por natureza, fonte e apontamentos. O ciclo deve resolver a competência e a apresentação de origem autorizadas.",
+      "requisitosCrosswalk": [
+        "000",
+        "026",
+        "027",
+        "028"
+      ],
+      "informacaoDeContrato": [
+        "ciclos_diligencia",
+        "apontamentos_contratante",
+        "pareceres_contratante"
+      ],
+      "textoOriginalSha256": "822857ba6788d97dd8b0d544f27b4fd3aba71ae9ef636820829f0c09d653162f",
+      "criterioTesteOriginal": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "caminhosProspectivos": [
+        "src/components/diligencias/CicloDiligencia.tsx",
+        "src/components/diligencias/DiligenciasCompetencia.tsx",
+        "src/lib/diligencias/cicloDiligenciaDados.ts",
+        "src/routeTree.gen.ts",
+        "src/routes/diligencias_.$cicloId.tsx",
+        "src/test/v2-45-contrato.test.ts",
+        "src/test/v2-45-tela.test.tsx"
+      ]
+    },
+    {
+      "versao": "V2",
+      "id": "V2-03",
+      "nome": "Apontamento, detalhe",
+      "regular": "46",
+      "rota": "/diligencias/:cicloId/apontamentos/:id",
+      "tipoRota": "MANUAL",
+      "acesso": "Acesso ao item. Análise, classificação e revisão com os papéis do contrato",
+      "entrega": "Encadear item, trecho de origem, análise e versão da evidência. Confrontar documento da apresentação, regra vigente e precedente com indicação da força de cada fonte.",
+      "requisitosCrosswalk": [
+        "000",
+        "026",
+        "027",
+        "028",
+        "029",
+        "030",
+        "031",
+        "032",
+        "040",
+        "041",
+        "042"
+      ],
+      "informacaoDeContrato": [
+        "apontamentos_contratante",
+        "analises_apontamentos",
+        "evidencias_resultado",
+        "precedentes"
+      ],
+      "textoOriginalSha256": "2dedf03d45f2b003ee93ddcf8d1d11438d2f568cf338e001fcb4718f1374a7ea",
+      "criterioTesteOriginal": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "caminhosProspectivos": [
+        "src/components/diligencias/ApontamentoDiligencia.tsx",
+        "src/components/diligencias/CicloDiligencia.tsx",
+        "src/lib/diligencias/apontamentoDiligenciaDados.ts",
+        "src/routeTree.gen.ts",
+        "src/routes/diligencias_.$cicloId_.apontamentos_.$id.tsx",
+        "src/test/v2-46-contrato.test.ts",
+        "src/test/v2-46-tela.test.tsx"
+      ]
+    },
+    {
+      "versao": "V2",
+      "id": "V2-04",
+      "nome": "Plano de ação",
+      "regular": "47",
+      "rota": null,
+      "tipoRota": "PAINEL_NO_APONTAMENTO",
+      "acesso": "Responsável e revisor nos limites autorizados",
+      "entrega": "Ligar ação ao item, responsável, prazo, prioridade, dependências e prova. Separar conclusão da tarefa da validação da solução pelo backend.",
+      "requisitosCrosswalk": [
+        "000",
+        "033",
+        "034",
+        "035",
+        "036"
+      ],
+      "informacaoDeContrato": [
+        "planos_acao",
+        "tarefas_diligencia",
+        "desfechos_apontamentos"
+      ],
+      "textoOriginalSha256": "63f3f68ad233499c70371b230f947ced82431f3c38177a08706283640e7efa43",
+      "criterioTesteOriginal": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "caminhosProspectivos": [
+        "src/components/diligencias/ApontamentoDiligencia.tsx",
+        "src/components/diligencias/PlanoAcaoDiligencia.tsx",
+        "src/lib/diligencias/planoAcaoDiligenciaDados.ts",
+        "src/test/v2-47-contrato.test.ts",
+        "src/test/v2-47-tela.test.tsx"
+      ]
+    },
+    {
+      "versao": "V2",
+      "id": "V2-05",
+      "nome": "Contestação",
+      "regular": "48",
+      "rota": null,
+      "tipoRota": "PAINEL_NO_APONTAMENTO",
+      "acesso": "Jurídico/aprovador conforme ação e permissão efetiva",
+      "entrega": "Identificar recomendação, minuta, versão, aprovação humana e mapa por afirmação. Revalidar vínculo, assinatura de versão e permissão antes de aprovar.",
+      "requisitosCrosswalk": [
+        "000",
+        "037",
+        "038",
+        "039"
+      ],
+      "informacaoDeContrato": [
+        "contestacoes",
+        "mapas_evidencias_contestacao",
+        "desfechos_apontamentos"
+      ],
+      "textoOriginalSha256": "60ab44911ff688f72bf6a9f31715d1dd6a58b298a8a5a0f8b66a8b1dba871b83",
+      "criterioTesteOriginal": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "caminhosProspectivos": [
+        "src/components/diligencias/ApontamentoDiligencia.tsx",
+        "src/components/diligencias/ContestacaoDiligencia.tsx",
+        "src/lib/diligencias/contestacaoDiligenciaDados.ts",
+        "src/test/v2-48-contrato.test.ts",
+        "src/test/v2-48-tela.test.tsx"
+      ]
+    },
+    {
+      "versao": "V2",
+      "id": "V2-06",
+      "nome": "Wizard de reapresentação",
+      "regular": "49",
+      "rota": "/diligencias/:cicloId/reapresentar",
+      "tipoRota": "MANUAL",
+      "acesso": "Aprovador com escopo e portão válidos",
+      "entrega": "Avaliar portão oficial, congelar pacote e registrar reapresentação pelo RPC. Religar a prova à competência, ao ciclo e ao protocolo correspondente.",
+      "requisitosCrosswalk": [
+        "000",
+        "037",
+        "038",
+        "039"
+      ],
+      "informacaoDeContrato": [
+        "pacotes_reapresentacao",
+        "apresentacoes_contratante",
+        "ciclos_diligencia",
+        "desfechos_apontamentos"
+      ],
+      "textoOriginalSha256": "335ff8d79ad31186284904fc0729d3a146429a3b6762f8eaea6cc010011756ff",
+      "criterioTesteOriginal": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "caminhosProspectivos": [
+        "src/components/diligencias/CicloDiligencia.tsx",
+        "src/components/diligencias/ReapresentacaoDiligencia.tsx",
+        "src/lib/diligencias/reapresentacaoDiligenciaDados.ts",
+        "src/routeTree.gen.ts",
+        "src/routes/diligencias_.$cicloId_.reapresentar.tsx",
+        "src/test/v2-49-contrato.test.ts",
+        "src/test/v2-49-tela.test.tsx"
+      ]
+    },
+    {
+      "versao": "V2",
+      "id": "V2-07",
+      "nome": "Pareceres do contratante",
+      "regular": "76",
+      "rota": "/competencias/:id/pareceres-contratante",
+      "tipoRota": "PROPOSTA_PARA_PLAN_76",
+      "acesso": "Leitura autorizada e registro/classificação conforme matriz de acesso",
+      "entrega": "Receber arquivo privado, registrar apresentação de origem exata, classificar na competência e acompanhar a extração assíncrona, com prazo e trilha.",
+      "requisitosCrosswalk": [
+        "000",
+        "025",
+        "026",
+        "027",
+        "028",
+        "029",
+        "030",
+        "031",
+        "032"
+      ],
+      "informacaoDeContrato": [
+        "pareceres_contratante",
+        "ciclos_diligencia",
+        "apontamentos_contratante",
+        "arquivos",
+        "apresentacoes_contratante"
+      ],
+      "textoOriginalSha256": "54cb828a7ba53eaea388bce59101ee6e06a9fff1ddbf887a5afa0d8829df54ab",
+      "criterioTesteOriginal": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "caminhosProspectivos": [
+        "src/components/diligencias/DiligenciasCompetencia.tsx",
+        "src/components/diligencias/PareceresContratante.tsx",
+        "src/lib/diligencias/pareceresContratanteDados.ts",
+        "src/routeTree.gen.ts",
+        "src/routes/competencias_.$id_.pareceres-contratante.tsx",
+        "src/test/v2-76-contrato.test.ts",
+        "src/test/v2-76-tela.test.tsx"
+      ]
+    },
+    {
+      "versao": "V2",
+      "id": "V2-08",
+      "nome": "Linha do tempo externa",
+      "regular": "77",
+      "rota": "/competencias/:id/linha-do-tempo-externa",
+      "tipoRota": "PROPOSTA_PARA_PLAN_77",
+      "acesso": "Consulta autorizada no escopo. Decisão externa registrada por perfil autorizado",
+      "entrega": "Ler apresentações, pareceres, ciclos, reapresentações e desfechos em ordem reproduzível, preservando vínculo com as fontes e as rodadas anteriores.",
+      "requisitosCrosswalk": [
+        "000",
+        "037",
+        "038",
+        "039",
+        "040",
+        "041",
+        "042",
+        "043"
+      ],
+      "informacaoDeContrato": [
+        "ciclos_diligencia",
+        "apresentacoes_contratante",
+        "pareceres_contratante",
+        "pacotes_reapresentacao",
+        "desfechos_apontamentos",
+        "precedentes"
+      ],
+      "textoOriginalSha256": "8d32236360bed8b918f743c60d5442cb7da30a9efbc688fae4b0220ee5c467bd",
+      "criterioTesteOriginal": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "caminhosProspectivos": [
+        "src/components/competencias/CompetenciaVisaoGeral.tsx",
+        "src/components/diligencias/LinhaTempoExterna.tsx",
+        "src/lib/diligencias/linhaTempoExternaDados.ts",
+        "src/routeTree.gen.ts",
+        "src/routes/competencias_.$id_.linha-do-tempo-externa.tsx",
+        "src/test/v2-77-contrato.test.ts",
+        "src/test/v2-77-tela.test.tsx"
+      ]
+    }
+  ],
+  "requisitosV2": [
+    {
+      "atomico": "025",
+      "requisito": "V2-DIL-001",
+      "descricao": "Anexação e classificação: Permitir anexar parecer, diligência, relatório ou ofício e classificá-lo na competência correta.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:9",
+      "telas": [
+        "V2-07",
+        "V2-01"
+      ],
+      "regular": [
+        "44",
+        "76"
+      ],
+      "aceiteCanonico": "A-V2-DIL-001",
+      "jornadas": [
+        "J03",
+        "J05"
+      ],
+      "provaPositiva": "Classificar parecer íntegro na competência e apresentação certas.",
+      "provaNegativa": "Recusar arquivo, escopo ou vínculo divergente."
+    },
+    {
+      "atomico": "026",
+      "requisito": "V2-DIL-002",
+      "descricao": "Extração por item: IA deve separar os apontamentos, mesmo quando o relatório não estiver numerado de forma consistente.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:10",
+      "telas": [
+        "V2-01",
+        "V2-02",
+        "V2-03",
+        "V2-07"
+      ],
+      "regular": [
+        "44",
+        "45",
+        "46",
+        "76"
+      ],
+      "aceiteCanonico": "A-V2-DIL-002",
+      "jornadas": [
+        "J04"
+      ],
+      "provaPositiva": "Separar itens não numerados e guardar fonte por item.",
+      "provaNegativa": "Resposta inválida ou entrega duplicada não gera item falso."
+    },
+    {
+      "atomico": "027",
+      "requisito": "V2-DIL-003",
+      "descricao": "Valores envolvidos: Identificar quando houver valor questionado, glosa potencial, valor aceito ou impacto financeiro estimado.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:11",
+      "telas": [
+        "V2-01",
+        "V2-02",
+        "V2-03",
+        "V2-07"
+      ],
+      "regular": [
+        "44",
+        "45",
+        "46",
+        "76"
+      ],
+      "aceiteCanonico": "A-V2-DIL-003",
+      "jornadas": [
+        "J05"
+      ],
+      "provaPositiva": "Exibir quatro naturezas monetárias com a fonte.",
+      "provaNegativa": "Valor ausente ou contraditório não vira zero nem soma fiscal criativa."
+    },
+    {
+      "atomico": "028",
+      "requisito": "V2-DIL-004",
+      "descricao": "Prazo externo: Registrar prazo de resposta e calcular vencimento conforme regra configurada, sem substituir interpretação jurídica de prazo quando houver dúvida.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:12",
+      "telas": [
+        "V2-01",
+        "V2-02",
+        "V2-03",
+        "V2-07"
+      ],
+      "regular": [
+        "44",
+        "45",
+        "46",
+        "76"
+      ],
+      "aceiteCanonico": "A-V2-DIL-004",
+      "jornadas": [
+        "J05"
+      ],
+      "provaPositiva": "Ler prazo calculado pelo contrato configurado e registrar a data fonte.",
+      "provaNegativa": "Sem configuração confirmada, mostrar revisão requerida e não presumir prazo."
+    },
+    {
+      "atomico": "029",
+      "requisito": "V2-PRO-001",
+      "descricao": "Classificação assistida: Para cada apontamento, sugerir: procede, procede parcialmente, não procede ou requer análise humana.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:13",
+      "telas": [
+        "V2-03",
+        "V2-07"
+      ],
+      "regular": [
+        "46",
+        "76"
+      ],
+      "aceiteCanonico": "A-V2-PRO-001",
+      "jornadas": [
+        "J06"
+      ],
+      "provaPositiva": "Apresentar as quatro classes assistidas e a revisão.",
+      "provaNegativa": "Indício insuficiente ou classificação sem fonte segue para análise humana."
+    },
+    {
+      "atomico": "030",
+      "requisito": "V2-PRO-002",
+      "descricao": "Fundamentação: A sugestão deve confrontar documentos da competência, regras contratuais/normativas e precedentes históricos.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:14",
+      "telas": [
+        "V2-03",
+        "V2-07"
+      ],
+      "regular": [
+        "46",
+        "76"
+      ],
+      "aceiteCanonico": "A-V2-PRO-002",
+      "jornadas": [
+        "J06"
+      ],
+      "provaPositiva": "Relacionar versão documental, norma vigente e precedente aplicável.",
+      "provaNegativa": "Negar versão/escopo incompatível e evitar precedente como regra formal."
+    },
+    {
+      "atomico": "031",
+      "requisito": "V2-PRO-003",
+      "descricao": "Evidência contrária: Quando o apontamento indicar documento ausente, sistema deve verificar se o documento já existia na versão apresentada e onde estava.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:15",
+      "telas": [
+        "V2-03",
+        "V2-07"
+      ],
+      "regular": [
+        "46",
+        "76"
+      ],
+      "aceiteCanonico": "A-V2-PRO-003",
+      "jornadas": [
+        "J02",
+        "J06"
+      ],
+      "provaPositiva": "Mostrar onde o documento constava no pacote congelado.",
+      "provaNegativa": "Documento incluído depois não constitui prova da versão original."
+    },
+    {
+      "atomico": "032",
+      "requisito": "V2-PRO-004",
+      "descricao": "Precedente conflitante: Se o contratante adotar posição diferente de precedente anterior, sistema deve sinalizar mudança de entendimento e impedir atualização automática da regra preventiva sem revisão.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:16",
+      "telas": [
+        "V2-03",
+        "V2-07"
+      ],
+      "regular": [
+        "46",
+        "76"
+      ],
+      "aceiteCanonico": "A-V2-PRO-004",
+      "jornadas": [
+        "J06",
+        "J11"
+      ],
+      "provaPositiva": "Sinalizar precedente conflitante e mudança de entendimento.",
+      "provaNegativa": "Não alterar regra preventiva sem revisão humana."
+    },
+    {
+      "atomico": "033",
+      "requisito": "V2-ACT-001",
+      "descricao": "Ação por apontamento: Cada item deve ter uma ou mais ações com responsável, prazo, prioridade, dependência e situação.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:17",
+      "telas": [
+        "V2-04"
+      ],
+      "regular": [
+        "47"
+      ],
+      "aceiteCanonico": "A-V2-ACT-001",
+      "jornadas": [
+        "J07"
+      ],
+      "provaPositiva": "Salvar ação com responsável, prazo, prioridade e dependência.",
+      "provaNegativa": "Sem escopo, com dependência inválida ou edição concorrente, o backend nega ou retorna conflito."
+    },
+    {
+      "atomico": "034",
+      "requisito": "V2-ACT-002",
+      "descricao": "Tipos de ação: Corrigir documento, anexar complemento, refazer planilha, justificar, contestar, obter assinatura, reconciliar valor, solicitar documento a terceiro, entre outros configuráveis.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:18",
+      "telas": [
+        "V2-04"
+      ],
+      "regular": [
+        "47"
+      ],
+      "aceiteCanonico": "A-V2-ACT-002",
+      "jornadas": [
+        "J07"
+      ],
+      "provaPositiva": "Preservar o tipo configurado e o documento/anexo vinculado.",
+      "provaNegativa": "Não concluir a ação com tipo ou fonte inválidos."
+    },
+    {
+      "atomico": "035",
+      "requisito": "V2-ACT-003",
+      "descricao": "Prazos operacionais e alertas: Painel deve priorizar itens por prazo e criticidade; notificações podem ser configuradas por usuário e papel.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:19",
+      "telas": [
+        "V2-04"
+      ],
+      "regular": [
+        "47"
+      ],
+      "aceiteCanonico": "A-V2-ACT-003",
+      "jornadas": [
+        "J05",
+        "J07"
+      ],
+      "provaPositiva": "Priorizar conforme prazo, criticidade e preferências permitidas.",
+      "provaNegativa": "Não notificar perfil ou organização alheios."
+    },
+    {
+      "atomico": "036",
+      "requisito": "V2-ACT-004",
+      "descricao": "Validação da solução: Item não pode ser marcado resolvido apenas porque uma tarefa foi concluída; o motor deve revalidar se a nova evidência efetivamente resolve o apontamento.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:20",
+      "telas": [
+        "V2-04"
+      ],
+      "regular": [
+        "47"
+      ],
+      "aceiteCanonico": "A-V2-ACT-004",
+      "jornadas": [
+        "J07",
+        "J09"
+      ],
+      "provaPositiva": "Solução aceita só após revalidação das evidências.",
+      "provaNegativa": "Tarefa concluída isoladamente continua impedindo a reapresentação."
+    },
+    {
+      "atomico": "037",
+      "requisito": "V2-CONTEST-001",
+      "descricao": "Recomendação de contestação: Quando evidências e regras indicarem improcedência, sistema pode sugerir contestar.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:21",
+      "telas": [
+        "V2-05",
+        "V2-06",
+        "V2-08"
+      ],
+      "regular": [
+        "48",
+        "49",
+        "77"
+      ],
+      "aceiteCanonico": "A-V2-CONTEST-001",
+      "jornadas": [
+        "J08"
+      ],
+      "provaPositiva": "Sugerir contestação quando a improcedência tiver suporte.",
+      "provaNegativa": "Sem base suficiente, não aprovar nem recomendar automaticamente."
+    },
+    {
+      "atomico": "038",
+      "requisito": "V2-CONTEST-002",
+      "descricao": "Minuta assistida: Gerar estrutura de manifestação com identificação do item, síntese, fundamento, evidências e pedido, sempre sujeita a revisão humana.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:22",
+      "telas": [
+        "V2-05",
+        "V2-06",
+        "V2-08"
+      ],
+      "regular": [
+        "48",
+        "49",
+        "77"
+      ],
+      "aceiteCanonico": "A-V2-CONTEST-002",
+      "jornadas": [
+        "J08"
+      ],
+      "provaPositiva": "Gerar minuta com síntese, fundamento, evidências, pedido e revisão.",
+      "provaNegativa": "Mudança depois da aprovação invalida a revisão anterior."
+    },
+    {
+      "atomico": "039",
+      "requisito": "V2-CONTEST-003",
+      "descricao": "Mapa de evidências: Cada afirmação da contestação deve apontar documento/página/dado de suporte.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:23",
+      "telas": [
+        "V2-05",
+        "V2-06",
+        "V2-08"
+      ],
+      "regular": [
+        "48",
+        "49",
+        "77"
+      ],
+      "aceiteCanonico": "A-V2-CONTEST-003",
+      "jornadas": [
+        "J08",
+        "J12"
+      ],
+      "provaPositiva": "Cada afirmação aponta documento, página/trecho ou dado original.",
+      "provaNegativa": "Uma afirmação sem suporte impede a promoção da minuta."
+    },
+    {
+      "atomico": "040",
+      "requisito": "V2-CONTEST-004",
+      "descricao": "Resultado da contestação: Registrar se aceita, rejeitada, parcialmente aceita ou pendente e atualizar o precedente histórico.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:24",
+      "telas": [
+        "V2-08",
+        "V2-03"
+      ],
+      "regular": [
+        "46",
+        "77"
+      ],
+      "aceiteCanonico": "A-V2-CONTEST-004",
+      "jornadas": [
+        "J11"
+      ],
+      "provaPositiva": "Preservar aceita, rejeitada, parcialmente aceita e pendente com fonte.",
+      "provaNegativa": "Pendente ou resultado sem autoridade não valida a competência."
+    },
+    {
+      "atomico": "041",
+      "requisito": "V2-KB-001",
+      "descricao": "Resultado como retorno: Ao encerrar apontamento, atualizar confiança do precedente relacionado.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:25",
+      "telas": [
+        "V2-03",
+        "V2-08",
+        "V4-01"
+      ],
+      "regular": [
+        "46",
+        "77"
+      ],
+      "aceiteCanonico": "A-V2-KB-001",
+      "jornadas": [
+        "J11"
+      ],
+      "provaPositiva": "Atualizar retorno de confiança pelo desfecho e pela origem autorizados.",
+      "provaNegativa": "Processamento repetido não multiplica a confirmação nem atualiza regra sozinho."
+    },
+    {
+      "atomico": "042",
+      "requisito": "V2-KB-002",
+      "descricao": "Reincidência: Identificar quando novo apontamento repete falha já considerada resolvida em competência anterior.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:26",
+      "telas": [
+        "V2-03",
+        "V2-08",
+        "V4-01"
+      ],
+      "regular": [
+        "46",
+        "77"
+      ],
+      "aceiteCanonico": "A-V2-KB-002",
+      "jornadas": [
+        "J06",
+        "J11"
+      ],
+      "provaPositiva": "Detectar reincidência ligada à competência e ao apontamento anterior.",
+      "provaNegativa": "Sem identidade/escopo compatíveis, não inferir reincidência."
+    },
+    {
+      "atomico": "043",
+      "requisito": "V2-KB-003",
+      "descricao": "Mudança de entendimento: Detectar quando o contratante passa a exigir requisito diferente do histórico e abrir alerta de revisão das regras preventivas.",
+      "fonte": "08B_REQUISITOS_025_048_4_1.md:27",
+      "telas": [
+        "V2-08",
+        "V4-05"
+      ],
+      "regular": [
+        "77"
+      ],
+      "aceiteCanonico": "A-V2-KB-003",
+      "jornadas": [
+        "J11",
+        "J12"
+      ],
+      "provaPositiva": "Registrar mudança de entendimento e proposta de revisão com proveniência.",
+      "provaNegativa": "Fonte histórica conflitante não promove regra impeditiva sem aprovação."
+    }
+  ],
+  "jornadas": [
+    {
+      "id": "J01",
+      "nome": "Identidade e escopo autorizado",
+      "telas": [
+        "SYS01",
+        "SYS04",
+        "ADM01",
+        "V114",
+        "V2-01",
+        "V2-02",
+        "V2-03",
+        "V2-06",
+        "V2-07",
+        "V2-08"
+      ],
+      "casoPositivo": "Sessão habilitada abre a própria competência e os vínculos permitidos.",
+      "casoNegativo": "Trocar sessão/organização, revogar vínculo ou usar IDs de outro contrato. Negar no contrato de acesso sem renderizar dados do contexto anterior.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J02",
+      "nome": "Apresentação original e retorno à fonte",
+      "telas": [
+        "V114",
+        "V119",
+        "V120",
+        "V2-01",
+        "V2-02",
+        "V2-07",
+        "V2-08"
+      ],
+      "casoPositivo": "Da competência e da apresentação original, abrir o ciclo e voltar à versão exata do pacote.",
+      "casoNegativo": "Duas apresentações da mesma competência e IDs trocados. A mais recente jamais substitui o ID de origem.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J03",
+      "nome": "Recebimento e vínculo do parecer externo",
+      "telas": [
+        "V106",
+        "V114",
+        "V120",
+        "V2-07",
+        "V2-01",
+        "V2-02"
+      ],
+      "casoPositivo": "Registrar versão do arquivo privado com hash, apresentação, competência, ator e data. O novo ciclo aparece uma vez.",
+      "casoNegativo": "Escopo divergente, arquivo inválido ou resposta perdida. Preservar a validação e não criar parecer, ciclo ou efeito duplicado.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J04",
+      "nome": "Extração, estados e reconciliação",
+      "telas": [
+        "V2-07",
+        "V2-01",
+        "V2-02",
+        "V2-03"
+      ],
+      "casoPositivo": "Documento não numerado produz itens identificados por fonte e estados de processamento conferíveis.",
+      "casoNegativo": "Resposta inválida, job duplicado e retomada após timeout. Exibir falha/pendência, sem item duplicado ou conclusão fabricada.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J05",
+      "nome": "Prazo, valores e prioridades",
+      "telas": [
+        "V108",
+        "V2-01",
+        "V2-02",
+        "V2-03",
+        "V2-04",
+        "V2-07"
+      ],
+      "casoPositivo": "Mostrar prazo oficial configurado e os valores questionado, aceito, potencial e estimado com suas naturezas.",
+      "casoNegativo": "Ausência de configuração, zero legítimo, revisão de prazo e valores conflitantes. Sem vencimento presumido ou soma de naturezas diferentes.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J06",
+      "nome": "Procedência e evidência contrária",
+      "telas": [
+        "V107",
+        "V109",
+        "V110",
+        "V111",
+        "V115",
+        "V116",
+        "V117",
+        "V118",
+        "V120",
+        "V121",
+        "V2-03",
+        "V2-07"
+      ],
+      "casoPositivo": "Conferir o item, a norma vigente, o trecho e a versão efetivamente apresentada. Classificar com evidência e revisão.",
+      "casoNegativo": "Documento só existente em versão posterior, precedente conflitante ou confiança insuficiente. Preservar a análise histórica, exigir revisão e impedir regra automática.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J07",
+      "nome": "Plano de ação e validação",
+      "telas": [
+        "V111",
+        "V115",
+        "V2-02",
+        "V2-03",
+        "V2-04",
+        "V2-06"
+      ],
+      "casoPositivo": "Vincular responsável, prazo, prioridade, dependência e nova versão de evidência. O backend revalida a solução.",
+      "casoNegativo": "Tarefa concluída sem prova, evidência cruzada ou conflito de versão. O apontamento permanece impeditivo conforme portão.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J08",
+      "nome": "Contestação, evidência por afirmação e aprovação",
+      "telas": [
+        "V107",
+        "V111",
+        "V117",
+        "V120",
+        "V2-03",
+        "V2-05",
+        "V2-06",
+        "V2-08"
+      ],
+      "casoPositivo": "Gerar minuta assistida, mapear suporte por afirmação e aprovar a revisão vigente por pessoa habilitada.",
+      "casoNegativo": "Negar aprovação sem suporte, com versão antiga ou por função indevida. O motor não promove minuta a decisão humana.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J09",
+      "nome": "Portão por rodada e contexto",
+      "telas": [
+        "V114",
+        "V116",
+        "V118",
+        "V2-02",
+        "V2-03",
+        "V2-04",
+        "V2-05",
+        "V2-06"
+      ],
+      "casoPositivo": "Todos os itens tratados e validados no contexto atual retornam liberação oficial.",
+      "casoNegativo": "Um item pendente, solução não validada, conflito, decisão revista ou evidência desatualizada bloqueia a reapresentação.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J10",
+      "nome": "Reapresentação, recibo e efeito único",
+      "telas": [
+        "V114",
+        "V119",
+        "V120",
+        "V2-02",
+        "V2-06",
+        "V2-08"
+      ],
+      "casoPositivo": "Registrar pacote, rodada, protocolo externo e releitura autorizada do recibo, mantendo o pacote anterior íntegro.",
+      "casoNegativo": "Duplo clique, concorrência, timeout após commit e chave reaproveitada com outro conteúdo. Há um único efeito ou conflito explícito.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J11",
+      "nome": "Desfechos, precedentes e linha do tempo",
+      "telas": [
+        "V120",
+        "V121",
+        "V122",
+        "V2-02",
+        "V2-03",
+        "V2-05",
+        "V2-07",
+        "V2-08"
+      ],
+      "casoPositivo": "Reconstituir em ordem a origem e o desfecho de mais de uma rodada. Provar origem do precedente e decisão do contratante.",
+      "casoNegativo": "Empate temporal, rodada anterior tardia ou precedente incompatível. Exibir ordem estável, histórico íntegro e proposta de revisão sem promover regra.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J12",
+      "nome": "Auditoria e reprodução da linhagem",
+      "telas": [
+        "ADM01",
+        "V123",
+        "V2-03",
+        "V2-04",
+        "V2-05",
+        "V2-06",
+        "V2-07",
+        "V2-08"
+      ],
+      "casoPositivo": "Correlacionar mudanças materiais, ator, contexto, IDs e versão. Reconstruir a decisão nos dois sentidos.",
+      "casoNegativo": "Leitura de auditoria indevida, assinatura adulterada ou evidência de outro HEAD. Reprovar ou negar a relação e evitar log sensível.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J13",
+      "nome": "Resiliência, navegação e cache",
+      "telas": [
+        "SYS01",
+        "SYS02",
+        "SYS03",
+        "SYS04",
+        "SYS05",
+        "V114",
+        "V2-01",
+        "V2-02",
+        "V2-03",
+        "V2-04",
+        "V2-05",
+        "V2-06",
+        "V2-07",
+        "V2-08"
+      ],
+      "casoPositivo": "Recarregar, navegar de volta, recuperar sessão e reconciliar retorno com estados e foco consistentes.",
+      "casoNegativo": "Troca de rota ou sessão em trânsito, 403, conflito ou erro de transporte. Limpar estado privado e rejeitar resposta atrasada sem confundir negação com vazio.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "J14",
+      "nome": "Regressão de cadastro, normativos e histórico",
+      "telas": [
+        "V101",
+        "V102",
+        "V103",
+        "V104",
+        "V105",
+        "V106",
+        "V107",
+        "V108",
+        "V109",
+        "V112",
+        "V113",
+        "V114",
+        "V120",
+        "V121",
+        "V122",
+        "V2-01",
+        "V2-03",
+        "V2-07",
+        "V2-08"
+      ],
+      "casoPositivo": "Cadastros, fontes, orçamento, listas, competências e história V1 preservam IDs e versões consumidos pela V2.",
+      "casoNegativo": "Vínculo órfão, contrato de outra organização, mudança de nome ou configuração posterior. Não remapear a origem nem abrir acesso.",
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    }
+  ],
+  "arestasIniciais": [
+    {
+      "id": "I01",
+      "origem": "V2-01",
+      "destino": "V2-02",
+      "tipo": "NAVEGACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_ciclo/id_competencia",
+      "invariante": "Abrir e voltar ao ciclo da competência.",
+      "jornadas": [
+        "J01",
+        "J02",
+        "J13"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I02",
+      "origem": "V2-02",
+      "destino": "V2-03",
+      "tipo": "NAVEGACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_ciclo/id_apontamento",
+      "invariante": "Detalhar e voltar ao mesmo item e rodada.",
+      "jornadas": [
+        "J01",
+        "J04"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I03",
+      "origem": "V2-07",
+      "destino": "V2-01",
+      "tipo": "DADOS",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_parecer/id_ciclo/id_competencia",
+      "invariante": "Projetar o recebimento e estado da extração.",
+      "jornadas": [
+        "J03",
+        "J04"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I04",
+      "origem": "V2-07",
+      "destino": "V2-02",
+      "tipo": "DADOS",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_ciclo/numero_rodada/prazo_resposta",
+      "invariante": "Abrir ciclo criado, com prazo e fonte.",
+      "jornadas": [
+        "J03",
+        "J05"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I05",
+      "origem": "V2-07",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_parecer/id_ciclo/id_apontamento",
+      "invariante": "Rastrear item extraído ao documento; confirmar o vínculo quando houver múltiplos pareceres no mesmo ciclo.",
+      "jornadas": [
+        "J04",
+        "J06"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I06",
+      "origem": "V2-03",
+      "destino": "V2-04",
+      "tipo": "MUTACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_apontamento/id_plano/id_tarefa",
+      "invariante": "Abrir painel com escopo e salvar a ação.",
+      "jornadas": [
+        "J07",
+        "J13"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I07",
+      "origem": "V2-04",
+      "destino": "V2-03",
+      "tipo": "DADOS",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_tarefa/versao_registro/id_versao_documento",
+      "invariante": "Reconsultar o item após validação da solução.",
+      "jornadas": [
+        "J07"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I08",
+      "origem": "V2-04",
+      "destino": "V2-02",
+      "tipo": "DADOS",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_ciclo/id_apontamento/estado_oficial",
+      "invariante": "Atualizar plano, item e pendências da rodada.",
+      "jornadas": [
+        "J07",
+        "J09"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I09",
+      "origem": "V2-03",
+      "destino": "V2-05",
+      "tipo": "MUTACAO",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_apontamento/id_contestacao",
+      "invariante": "Abrir contestação com elegibilidade e permissão comprovadas.",
+      "jornadas": [
+        "J08"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I10",
+      "origem": "V2-05",
+      "destino": "V2-03",
+      "tipo": "DADOS",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_contestacao/versao/hash",
+      "invariante": "Reler revisão, aprovação e resultado no item.",
+      "jornadas": [
+        "J08",
+        "J11"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I11",
+      "origem": "V2-02",
+      "destino": "V2-06",
+      "tipo": "NAVEGACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_ciclo/numero_rodada",
+      "invariante": "Abrir o wizard no ciclo e reconsultar o portão.",
+      "jornadas": [
+        "J09",
+        "J13"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I12",
+      "origem": "V2-04",
+      "destino": "V2-06",
+      "tipo": "DADOS",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_apontamento/validacao_solucao",
+      "invariante": "Portão considera provas e correções da rodada.",
+      "jornadas": [
+        "J07",
+        "J09"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I13",
+      "origem": "V2-05",
+      "destino": "V2-06",
+      "tipo": "DADOS",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_contestacao/versao/estado_aprovacao",
+      "invariante": "Portão usa a última revisão elegível e aprovada.",
+      "jornadas": [
+        "J08",
+        "J09"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I14",
+      "origem": "V2-06",
+      "destino": "V2-02",
+      "tipo": "DADOS",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_ciclo/id_pacote_reapresentacao",
+      "invariante": "Releitura do resultado e do estado oficial.",
+      "jornadas": [
+        "J09",
+        "J10"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I15",
+      "origem": "V2-06",
+      "destino": "V2-08",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_ciclo/id_pacote_reapresentacao/id_apresentacao",
+      "invariante": "Expor a reapresentação com o próprio recibo.",
+      "jornadas": [
+        "J10",
+        "J11"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I16",
+      "origem": "V2-07",
+      "destino": "V2-08",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_parecer/id_apresentacao/id_ciclo",
+      "invariante": "Expor parecer e origem em ordem temporal.",
+      "jornadas": [
+        "J03",
+        "J11"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I17",
+      "origem": "V2-08",
+      "destino": "V2-02",
+      "tipo": "NAVEGACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_organizacao/id_competencia/id_ciclo",
+      "invariante": "Cada evento retorna ao ciclo da rodada exata, se autorizado.",
+      "jornadas": [
+        "J02",
+        "J11"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I18",
+      "origem": "V2-08",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_apontamento/id_desfecho",
+      "invariante": "Navegar ao item e ao resultado de origem quando presentes.",
+      "jornadas": [
+        "J11",
+        "J12"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I19",
+      "origem": "V2-05",
+      "destino": "V2-08",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_contestacao/id_apontamento/resultado_final",
+      "invariante": "Ler decisão externa sem transformar rascunho em desfecho.",
+      "jornadas": [
+        "J08",
+        "J11"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "I20",
+      "origem": "V2-02",
+      "destino": "V2-01",
+      "tipo": "DADOS",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_ciclo/id_competencia",
+      "invariante": "Projetar situação oficial atualizada em lista paginada.",
+      "jornadas": [
+        "J05",
+        "J09",
+        "J13"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C01",
+      "origem": "SYS01",
+      "destino": "V2-01",
+      "tipo": "AUTORIZACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "sessao/identidade",
+      "invariante": "Resolver acesso V2 após autenticação e logout.",
+      "jornadas": [
+        "J01",
+        "J13"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C02",
+      "origem": "SYS04",
+      "destino": "V2-01",
+      "tipo": "AUTORIZACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_organizacao/escopo",
+      "invariante": "Trocar contexto e retirar resultados da organização anterior.",
+      "jornadas": [
+        "J01",
+        "J13"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C03",
+      "origem": "ADM01",
+      "destino": "V2-05",
+      "tipo": "AUTORIZACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "vinculo/papel/escopo",
+      "invariante": "Aplicar papéis de consulta, execução, revisão e aprovação sem escalar por navegação.",
+      "jornadas": [
+        "J01",
+        "J08",
+        "J12"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C04",
+      "origem": "ADM01",
+      "destino": "V2-06",
+      "tipo": "AUTORIZACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "vinculo/aprovador/id_organizacao",
+      "invariante": "Negar mudança crítica sem escopo de aprovador.",
+      "jornadas": [
+        "J01",
+        "J09"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C05",
+      "origem": "V106",
+      "destino": "V2-01",
+      "tipo": "DADOS",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_contratante/id_contrato/id_competencia",
+      "invariante": "O contrato e a competência V1 delimitam ciclos da V2.",
+      "jornadas": [
+        "J02",
+        "J14"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C06",
+      "origem": "V112",
+      "destino": "V2-01",
+      "tipo": "NAVEGACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_contrato/id_competencia",
+      "invariante": "Acessar via visão geral da competência, com retorno ao contrato.",
+      "jornadas": [
+        "J02",
+        "J14"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C07",
+      "origem": "V114",
+      "destino": "V2-01",
+      "tipo": "NAVEGACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_competencia/id_contrato/id_organizacao",
+      "invariante": "Entrada para Diligências na competência autorizada.",
+      "jornadas": [
+        "J01",
+        "J02"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C08",
+      "origem": "V119",
+      "destino": "V2-07",
+      "tipo": "LINHAGEM",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_apresentacao/id_competencia",
+      "invariante": "A apresentação registrada torna-se fonte selecionável do parecer externo.",
+      "jornadas": [
+        "J02",
+        "J03"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C09",
+      "origem": "V120",
+      "destino": "V2-07",
+      "tipo": "LINHAGEM",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_apresentacao/id_pacote/hash",
+      "invariante": "Vincular à versão apresentada exata, inclusive havendo várias rodadas.",
+      "jornadas": [
+        "J02",
+        "J03"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C10",
+      "origem": "V2-07",
+      "destino": "V120",
+      "tipo": "LINHAGEM",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_parecer/id_apresentacao/id_competencia",
+      "invariante": "Reabrir a prova original pelo identificador do parecer.",
+      "jornadas": [
+        "J02",
+        "J03"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C11",
+      "origem": "V120",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_apresentacao/id_pacote/id_versao_documento",
+      "invariante": "Conferir se a evidência constava do pacote original.",
+      "jornadas": [
+        "J02",
+        "J06"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C12",
+      "origem": "V107",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_fonte/versao/vigencia",
+      "invariante": "Usar a fonte normativa aplicável conforme data, escopo e hierarquia.",
+      "jornadas": [
+        "J06",
+        "J14"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C13",
+      "origem": "V108",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_contrato/versao_orcamento/rubrica",
+      "invariante": "Ligar item financeiro à linha vigente quando houver base comprovada.",
+      "jornadas": [
+        "J05",
+        "J14"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C14",
+      "origem": "V109",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_lista/id_versao/id_regra",
+      "invariante": "Preservar regra ou checklist aplicável à data da prova.",
+      "jornadas": [
+        "J06",
+        "J14"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C15",
+      "origem": "V110",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_documento/id_versao_documento",
+      "invariante": "Usar documentos do contrato apenas se aplicáveis e autorizados.",
+      "jornadas": [
+        "J06",
+        "J14"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C16",
+      "origem": "V111",
+      "destino": "V2-05",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_documento/id_versao_documento/pagina/hash",
+      "invariante": "Mapear cada afirmação à versão e ao trecho que a suporta.",
+      "jornadas": [
+        "J06",
+        "J08"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C17",
+      "origem": "V115",
+      "destino": "V2-04",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_competencia/id_versao_documento",
+      "invariante": "Vincular nova versão da competência à ação que a usa.",
+      "jornadas": [
+        "J07"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C18",
+      "origem": "V116",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_requisito/id_analise/hash_contexto",
+      "invariante": "Referir a análise interna que de fato fundamenta a resposta.",
+      "jornadas": [
+        "J06"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C19",
+      "origem": "V117",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_requisito/id_evidencia/id_versao_documento",
+      "invariante": "Consultar detalhe e evidências da verificação original.",
+      "jornadas": [
+        "J06",
+        "J08"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C20",
+      "origem": "V118",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_parecer_interno/id_competencia/hash",
+      "invariante": "Ler o parecer interno versionado quando for fonte, com autoridade própria.",
+      "jornadas": [
+        "J06"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C21",
+      "origem": "V2-03",
+      "destino": "V111",
+      "tipo": "LINHAGEM",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_documento/id_versao_documento/pagina",
+      "invariante": "Voltar à versão citada pelo apontamento ou sua análise, quando houver documento.",
+      "jornadas": [
+        "J06",
+        "J07"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C22",
+      "origem": "V121",
+      "destino": "V2-03",
+      "tipo": "EVIDENCIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_precedente/fonte_id/vigencia",
+      "invariante": "Recuperar precedente rastreável do contrato conforme escopo normativo.",
+      "jornadas": [
+        "J06",
+        "J11"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C23",
+      "origem": "V122",
+      "destino": "V121",
+      "tipo": "CONTINUIDADE_V1",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_relatorio/id_apontamento_historico/id_precedente",
+      "invariante": "Confirmar origem da evidência histórica importada antes de usá-la na V2.",
+      "jornadas": [
+        "J11",
+        "J14"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C24",
+      "origem": "V2-06",
+      "destino": "V114",
+      "tipo": "DADOS",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_competencia/estado_oficial/id_apresentacao",
+      "invariante": "Reler situação e apresentações na competência após a reapresentação.",
+      "jornadas": [
+        "J09",
+        "J10"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C25",
+      "origem": "V2-06",
+      "destino": "V119",
+      "tipo": "CONTINUIDADE_V1",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_competencia/id_apresentacao/tipo",
+      "invariante": "Manter a apresentação inicial e o fluxo de reapresentação distinguíveis.",
+      "jornadas": [
+        "J10"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C26",
+      "origem": "V2-06",
+      "destino": "V120",
+      "tipo": "LINHAGEM",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_apresentacao/id_pacote/tipo/numero_rodada",
+      "invariante": "Reler protocolo e prova quando o contrato de reapresentação os expuser em V120. Confirmar o caminho canônico da prova antes do BUILD 49.",
+      "jornadas": [
+        "J10"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C27",
+      "origem": "V120",
+      "destino": "V2-08",
+      "tipo": "LINHAGEM",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_apresentacao/protocolo/numero_rodada",
+      "invariante": "Alimentar a linha do tempo com apresentações preservadas.",
+      "jornadas": [
+        "J02",
+        "J11"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C28",
+      "origem": "V2-08",
+      "destino": "V120",
+      "tipo": "LINHAGEM",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_apresentacao/id_pacote",
+      "invariante": "Reconstruir o protocolo pelo evento certo e seu tipo.",
+      "jornadas": [
+        "J10",
+        "J11"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C29",
+      "origem": "V2-08",
+      "destino": "V121",
+      "tipo": "LINHAGEM",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_desfecho/id_precedente/fonte_id",
+      "invariante": "Associar resultado externo ao histórico quando houver precedente elegível.",
+      "jornadas": [
+        "J11",
+        "J14"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C30",
+      "origem": "V2-07",
+      "destino": "V123",
+      "tipo": "AUDITORIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_evento/id_parecer/correlation_id",
+      "invariante": "Provar registro do parecer e o fluxo material de processamento.",
+      "jornadas": [
+        "J03",
+        "J12"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C31",
+      "origem": "V2-04",
+      "destino": "V123",
+      "tipo": "AUDITORIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_evento/id_tarefa/correlation_id",
+      "invariante": "Provar mudança de tarefa e revisão da solução.",
+      "jornadas": [
+        "J07",
+        "J12"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C32",
+      "origem": "V2-05",
+      "destino": "V123",
+      "tipo": "AUDITORIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_evento/id_contestacao/correlation_id",
+      "invariante": "Provar revisão humana, aprovação e resultado material.",
+      "jornadas": [
+        "J08",
+        "J12"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C33",
+      "origem": "V2-06",
+      "destino": "V123",
+      "tipo": "AUDITORIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_evento/id_apresentacao/correlation_id",
+      "invariante": "Provar portão, pacote e reapresentação sem segredo no registro.",
+      "jornadas": [
+        "J10",
+        "J12"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C34",
+      "origem": "V2-03",
+      "destino": "V123",
+      "tipo": "AUDITORIA",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_evento/id_apontamento/correlation_id",
+      "invariante": "Provar análise, classificação, evidência e fase humana quando aplicável.",
+      "jornadas": [
+        "J06",
+        "J12"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C35",
+      "origem": "V2-08",
+      "destino": "V123",
+      "tipo": "AUDITORIA",
+      "aplicabilidade": "CONDICIONAL",
+      "identificadores": "id_evento/id_desfecho/correlation_id",
+      "invariante": "Rastrear eventos materiais do desfecho até a auditoria autorizada.",
+      "jornadas": [
+        "J11",
+        "J12"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    },
+    {
+      "id": "C36",
+      "origem": "V2-01",
+      "destino": "V114",
+      "tipo": "NAVEGACAO",
+      "aplicabilidade": "OBRIGATORIA",
+      "identificadores": "id_competencia",
+      "invariante": "Voltar à competência da qual a diligência foi aberta.",
+      "jornadas": [
+        "J02",
+        "J13"
+      ],
+      "resultado": "PENDENTE_DE_EXECUCAO"
+    }
+  ]
+}
