@@ -57,7 +57,7 @@ test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preser
       assert.ok(match, `Rota não reconhecida: ${name}`);
       return normalize(match[1]);
     });
-  assert.equal(pages.length, 29);
+  assert.equal(pages.length, 30);
   assert.equal(new Set(pages).size, pages.length);
   assert.deepEqual([...new Set(ROUTES.map((route) => normalize(route.path)))].sort(), pages.sort());
   assert.equal(ROUTES.filter((route) => route.requiresDrawer).length, 1);
@@ -76,13 +76,14 @@ test("P0 V123: Auditoria possui oito casos privados sem PASS autenticado presumi
   );
 });
 
-test("matriz oficial preserva 29 superfícies V1 e inclui Diligências V2", () => {
-  assert.equal(ROUTES.length, 30);
+test("matriz oficial preserva 29 superfícies V1 e inclui lista e ciclo de diligência V2", () => {
+  assert.equal(ROUTES.length, 31);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
-  assert.equal(cases().filter((x) => x.id !== "V2-01").length, 232);
+  assert.equal(cases().filter((x) => !x.id.startsWith("V2-")).length, 232);
   assert.equal(cases().filter((x) => x.id === "V2-01").length, 8);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 240);
+  assert.equal(cases().filter((x) => x.id === "V2-02").length, 8);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 248);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");
@@ -526,7 +527,7 @@ test("refluxo/texto: 18 casos públicos separados preservam os 232 casos base", 
     extra.filter((x) => x.mode === "TEXT_200" && [390, 1440].includes(x.width)).length,
     12,
   );
-  assert.equal(m.cases().filter((item) => item.id !== "V2-01").length, 232);
+  assert.equal(m.cases().filter((item) => !item.id.startsWith("V2-")).length, 232);
 });
 
 test("refluxo/texto: escala real e amostra estável são obrigatórias", async () => {
@@ -950,7 +951,7 @@ test("F2 delta: exact sixteen-case visual catalogue preserves original route cat
   assert.equal(rows.length, 16);
   assert.equal(new Set(rows.map((r) => `${r.surface}/${r.width}/${r.theme}`)).size, 16);
   assert.deepEqual([...new Set(rows.map((r) => r.surface))], ["V114", "V120"]);
-  assert.equal(cases().filter((item) => item.id !== "V2-01").length, 232);
+  assert.equal(cases().filter((item) => !item.id.startsWith("V2-")).length, 232);
 });
 test("F2 delta: missing duplicate unknown false or forged evidence cannot pass", () => {
   assert.equal(typeof delta.phase2DeltaReportValid, "function");

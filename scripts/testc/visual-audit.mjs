@@ -8,7 +8,7 @@ import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { collectDiligenciasVisual } from "./v2-integracao-visual.mjs";
+import { CICLO_V2_FIXTURE, collectDiligenciasVisual } from "./v2-integracao-visual.mjs";
 
 export const WIDTHS = [1440, 1280, 768, 390];
 export const THEMES = ["light", "dark"];
@@ -44,6 +44,7 @@ export const ROUTES = [
   { id: "V122", path: "/contratos/" + UUID + "/historico/importar" },
   { id: "V123", path: "/administracao/auditoria" },
   { id: "V2-01", path: "/competencias/" + UUID + "/diligencias" },
+  { id: "V2-02", path: "/diligencias/" + CICLO_V2_FIXTURE },
 ];
 export function cases() {
   return ROUTES.flatMap((route) =>
@@ -1559,6 +1560,12 @@ async function run() {
       mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
       cases: 8,
       report: "v2-diligencias/report.json",
+    },
+    offline_v2_ciclo: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+      records: "cycleRecords",
     },
     started_utc: started,
     finished_utc: new Date().toISOString(),
