@@ -3,19 +3,34 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "05069867adc863344c9222c8aab863bbce6edb45",
+    "frontend_sha": "2f8a8ef2aaf7405c4abc99c63740e5735045b652",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
+      "arquivo": "src/test/f6-code-context-journeys.test.tsx",
       "versao": "V1",
-      "justificativa": "Provas materiais de autoria, pacote imutável, origem histórica e isolamento da F5.6."
+      "justificativa": "Jornadas de login, seleção, atualização de contexto, expiração e logout."
+    },
+    {
+      "arquivo": "src/test/f6-code-adm01-journeys.test.tsx",
+      "versao": "V1",
+      "justificativa": "Jornadas de vínculo, persistência, autorização no consumidor e recuperação."
+    },
+    {
+      "arquivo": "src/test/f6-code-sys04-journeys.test.ts",
+      "versao": "V1",
+      "justificativa": "Jornadas de seleção, ações e consumidores do contexto persistido."
+    },
+    {
+      "arquivo": "src/test/f6-code-journey-fixture.ts",
+      "versao": "V1",
+      "justificativa": "Transporte sintético restrito, associação à matriz e observações da F6."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F5-790-IDENTIDADE-MATERIAL",
+      "id": "RCA-F6-798-IDENTIDADE-JORNADA",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -26,55 +41,55 @@
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "O coletor ancestral aceitava a substituição de IDs com cardinalidade preservada. A F5.6 fixa os IDs e pares e exige autoria, contexto e identidade material no consumidor.",
+        "descricao": "O coletor ancestral aceitou troca de ID mantendo a cardinalidade. A F6.1 fixa o caso e os pares e valida a sequência de jornada e a proveniência.",
         "evidencias": [
-          "Run ancestral 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2. RED original do coletor F4 na PR #760.",
-          "F5.5 integrada em 332ebbc507efb79a30936afb9a3afd692e03a51f. Run 45741878374 comprovou 128 casos e 256 provas.",
-          "PLAN #791 integrado em 05069867adc863344c9222c8aab863bbce6edb45. Revisão assistida 6067774953 e escopo no blob e592b5485ff28648f7bda22a976fe640dcc8454e.",
-          "A regra de autoria de parecer rejeita a autoaprovação. Registro de apresentação congela pacote e reapresenta o recibo da mesma chave. Relatório recém-importado se encontra pendente e conserva origem pré-implantação."
+          "RED real ancestral 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2, coletor F4 e caso noncanonical case IDs.",
+          "A #797 reconciliou os 138 IDs no blob bb7ce43f9c334f2f03e9aafab405addadfe5e19a e entrou na main em 2720384f1c281cd2e87282884053ba90307bed12.",
+          "A #799 integra o escopo fechado da #798. SHA frontend da base 2f8a8ef2aaf7405c4abc99c63740e5735045b652. HEAD normativo a1516de1d8949e505d83b5e000eb1cc558b217a7.",
+          "O botão Sair do seletor só é exibido nas condições sem vínculo ou negada. A prova de jornada com vínculo passa pelo cabeçalho produtivo, que cancela consultas, limpa cache e encerra a sessão."
         ],
         "hipoteses_descartadas": [
-          "A aprovação do parecer não dispensa os impeditivos do portão de apresentação.",
-          "A importação de relatório em estado pendente não muda o resultado da competência ou materializa uma regra preventiva."
+          "A contagem isolada não prova identidade nem recuperabilidade.",
+          "Um erro de transporte genérico não comprova autorização."
         ]
       },
       "impacto": {
         "dependencias": [
-          "V118 aprovação e autoria",
-          "V119/V120 apresentação e pacote",
-          "V122/V121 histórico de contrato",
-          "V116/V117 análise e requisito",
-          "V123 auditoria"
+          "LoginForm e lista real de organizações",
+          "Organização selecionada e projeções SYS05 e de competência",
+          "ADM01 salvar e persistir vínculo",
+          "Cache e logout no cabeçalho",
+          "Coletor material e CI"
         ],
         "versoes_afetadas": [
           "V1"
         ],
         "riscos": [
           {
-            "risco": "Liberação com impeditivo ou autor sem segregação",
+            "risco": "Resposta do contexto anterior exibida após a troca",
             "teste_preventivo": {
-              "id": "NEG-F5-6-C0482",
+              "id": "NEG-F6-1-C0043",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
-              "caso": "F5 closure scope isolation IFV1-F5-C0482 negative: foreign material remains hidden and unchanged"
+              "arquivo": "src/test/f6-code-context-journeys.test.tsx",
+              "caso": "F6 context journeys IFV1-F6-C0043 negative: blocks stale context and resumes with the authorized identity"
             }
           },
           {
-            "risco": "Mutação ou exposição de pacote congelado",
+            "risco": "Vínculo de outro tenant altera o painel",
             "teste_preventivo": {
-              "id": "NEG-F5-6-C0502",
+              "id": "NEG-F6-1-C0005",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
-              "caso": "F5 closure scope isolation IFV1-F5-C0502 negative: foreign material remains hidden and unchanged"
+              "arquivo": "src/test/f6-code-adm01-journeys.test.tsx",
+              "caso": "F6 ADM01 journeys IFV1-F6-C0005 negative: rejects a foreign grant and recovers through an authorized session"
             }
           },
           {
-            "risco": "Vazamento de histórico entre contratos",
+            "risco": "Comando em competência de contexto anterior",
             "teste_preventivo": {
-              "id": "NEG-F5-6-C0564",
+              "id": "NEG-F6-1-C0057",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
-              "caso": "F5 closure scope isolation IFV1-F5-C0564 negative: foreign material remains hidden and unchanged"
+              "arquivo": "src/test/f6-code-sys04-journeys.test.ts",
+              "caso": "F6 SYS04 journeys IFV1-F6-C0057 negative: rejects the stale scope, preserves state and reloads the valid context"
             }
           }
         ]
@@ -92,76 +107,73 @@
         ],
         "green": [
           {
-            "id": "GREEN-F5-138-IDS",
+            "id": "GREEN-F6-1-54",
+            "runner": "node",
+            "arquivo": "scripts/hml/f6-code-material-evidence.test.mjs",
+            "caso": "F6.1 binds all 54 journeys and their paired proofs"
+          },
+          {
+            "id": "GREEN-F6-1-C0037",
+            "runner": "vitest",
+            "arquivo": "src/test/f6-code-context-journeys.test.tsx",
+            "caso": "F6 context journeys IFV1-F6-C0037 positive: authenticates, selects or switches and reloads the authorized view"
+          },
+          {
+            "id": "GREEN-F6-1-C0033",
+            "runner": "vitest",
+            "arquivo": "src/test/f6-code-adm01-journeys.test.tsx",
+            "caso": "F6 ADM01 journeys IFV1-F6-C0033 positive: grants access, reaches the consumer and validates persisted state"
+          },
+          {
+            "id": "GREEN-F6-1-C0067",
+            "runner": "vitest",
+            "arquivo": "src/test/f6-code-sys04-journeys.test.ts",
+            "caso": "F6 SYS04 journeys IFV1-F6-C0067 positive: carries the chosen organization through action, readback and reload"
+          }
+        ],
+        "negativos": [
+          {
+            "id": "NEG-F6-1-C0043",
+            "runner": "vitest",
+            "arquivo": "src/test/f6-code-context-journeys.test.tsx",
+            "caso": "F6 context journeys IFV1-F6-C0043 negative: blocks stale context and resumes with the authorized identity"
+          },
+          {
+            "id": "NEG-F6-1-C0005",
+            "runner": "vitest",
+            "arquivo": "src/test/f6-code-adm01-journeys.test.tsx",
+            "caso": "F6 ADM01 journeys IFV1-F6-C0005 negative: rejects a foreign grant and recovers through an authorized session"
+          },
+          {
+            "id": "NEG-F6-1-C0057",
+            "runner": "vitest",
+            "arquivo": "src/test/f6-code-sys04-journeys.test.ts",
+            "caso": "F6 SYS04 journeys IFV1-F6-C0057 negative: rejects the stale scope, preserves state and reloads the valid context"
+          }
+        ],
+        "regressao": [
+          {
+            "id": "REG-F5-138",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
             "caso": "F5 exact 138 canonical cases and 276 proofs"
           },
           {
-            "id": "GREEN-F5-6-C0482",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
-            "caso": "F5 closure scope isolation IFV1-F5-C0482 positive: scoped material reaches the authorized consumer"
-          },
-          {
-            "id": "GREEN-F5-6-C0502",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
-            "caso": "F5 closure scope isolation IFV1-F5-C0502 positive: scoped material reaches the authorized consumer"
-          },
-          {
-            "id": "GREEN-F5-6-C0563",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
-            "caso": "F5 closure scope isolation IFV1-F5-C0563 positive: scoped material reaches the authorized consumer"
-          },
-          {
-            "id": "GREEN-F5-6-C0567",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
-            "caso": "F5 closure scope isolation IFV1-F5-C0567 positive: scoped material reaches the authorized consumer"
-          }
-        ],
-        "negativos": [
-          {
-            "id": "NEG-F5-6-C0482",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
-            "caso": "F5 closure scope isolation IFV1-F5-C0482 negative: foreign material remains hidden and unchanged"
-          },
-          {
-            "id": "NEG-F5-6-C0502",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
-            "caso": "F5 closure scope isolation IFV1-F5-C0502 negative: foreign material remains hidden and unchanged"
-          },
-          {
-            "id": "NEG-F5-6-C0564",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-closure-scope-isolation.test.ts",
-            "caso": "F5 closure scope isolation IFV1-F5-C0564 negative: foreign material remains hidden and unchanged"
-          }
-        ],
-        "regressao": [
-          {
-            "id": "REG-F5-128-IDS",
+            "id": "REG-F6-SOURCES",
             "runner": "node",
-            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 exact 128 cumulative canonical ids"
-          },
-          {
-            "id": "REG-F4-MATERIAL",
-            "runner": "node",
-            "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
-            "caso": "F4 CODE material verifier accepts exact canonical ID pairs"
+            "arquivo": "scripts/hml/f6-code-material-evidence.test.mjs",
+            "caso": "F6 checks the 138 canonical case bindings"
           }
         ]
       },
       "solucao": {
-        "descricao": "Fixar o par de provas e oráculos materiais por caso. Reexecutar os 138 casos e 276 provas no mesmo HEAD com CI e conferência dos artefatos oficiais.",
-        "rollback": "Fixar o par de provas e oráculos materiais por caso. Reexecutar os 138 casos e 276 provas no mesmo HEAD com CI e conferência dos artefatos oficiais.",
+        "descricao": "Reconciliar o caso à fonte e testar as quatro etapas em transporte sintético e adaptadores reais. Validar provas novas de sessão, perfil, contexto e recuperação no mesmo HEAD.",
+        "rollback": "Reverter o BUILD por PR protegida se houver regressão e suspender o recibo F6.1 até nova prova no HEAD efetivo.",
         "arquivos": [
-          "src/test/f5-code-closure-scope-isolation.test.ts"
+          "src/test/f6-code-context-journeys.test.tsx",
+          "src/test/f6-code-adm01-journeys.test.tsx",
+          "src/test/f6-code-sys04-journeys.test.ts",
+          "src/test/f6-code-journey-fixture.ts"
         ]
       }
     }
