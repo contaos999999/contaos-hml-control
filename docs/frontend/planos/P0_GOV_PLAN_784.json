@@ -1,0 +1,33 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 784,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "F5.3 CODE_FIXTURE. Normativos, orçamento e listas de verificação. Dezessete casos e 34 provas materiais.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_3_CASE_CONTRACTS_PROPOSAL.json",
+    "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+    ".github/workflows/contaos-f5-code-material.yml",
+    "scripts/hml/f5-code-material-evidence.mjs",
+    "scripts/hml/f5-code-material-evidence.test.mjs",
+    "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json"
+  ],
+  "baseline_main": "955b3f52598fa2cbee3e8d45a00c7cb94a71626a",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 777,
+  "authorization": "F5.3 prevista no PLAN #777. A #782 integrou a F5.2 e a #784 fixa o inventário desta fatia. A eficácia depende do CI, da revisão assistida conforme #781, do merge protegido e da conferência deste PLAN P0 na main.",
+  "acceptance": [
+    "Reconciliar os 17 IDs exatos do PLAN #777 com a matriz bb7ce43f9c334f2f03e9aafab405addadfe5e19a. São 14 obrigatórios e três condicionais de auditoria. Confirmar V107AplicabilidadeDefinida, V108VersaoPublicada e ListaOperacionalAlterada no contrato normativo e na leitura material com entidade, organização e correlação ou requisição rastreável.",
+    "Executar os produtores reais V107, V108 e V109 e o consumidor real de cada conexão. Provar a vinculação da fonte e da versão ao contrato, o hash da proposta publicada e a materialização dos itens da lista. Ler a versão, a vigência e a origem pelos contratos aplicáveis, preservando a semântica dos registros históricos.",
+    "Executar com dois tenants e identidades exclusivamente sintéticas. Validar a ação autorizada em A e a tentativa indevida com a sessão de B. Observar a decisão de autorização, a ausência de exposição no consumidor e o readback dos registros. Distinguir conflito, integridade de hash e falha de transporte da negação de autorização.",
+    "Produzir 34 provas materiais de F5.3 e reexecutar 78 casos anteriores no mesmo HEAD, totalizando 95 casos e 190 provas. Requerer o par positivo e negativo exato por ID, run, job e tentativa. Conferir relatório, recibo, SHA256SUMS e os artefatos originais. Manter os recibos existentes.",
+    "Atualizar a ficha RCA conforme os caminhos src do diff e os HEADs reais. Associar os testes GREEN, negativos e de regressão ao RED ancestral aplicável do coletor. Exigir RCA e PLAN próprios para eventual falha de produto. Aprovar o CI integral, a revisão assistida e o readback."
+  ],
+  "constraints": [
+    "Escopo fechado na PR #784. A restrição por PR vale a partir da base protegida. Preservar as restrições históricas de #778 e #782 e a allowlist geral.",
+    "Testes e evidências CODE_FIXTURE, coletor, workflow material e ficha causal nos seis caminhos previstos. Zero-Drift, LOCK-TYPES, Anti-Reincidência, Teste C e proteção de main são obrigatórios.",
+    "Transporte sintético, artefatos sanitizados e backend normativo consultado em leitura. Configurações de HML, produto, dados reais e produção fora do escopo do BUILD."
+  ],
+  "certification": "F5_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

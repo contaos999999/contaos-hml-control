@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { validateMaterial, BATCHES, BACKEND, A, B } from "./f5-code-material-evidence.mjs";
 const U = "a3333333-3333-4333-8333-333333333333",
@@ -192,7 +193,8 @@ const { cases: contractCases } = JSON.parse(
   ),
 );
 test("F5 exact 78 cumulative canonical ids", () => {
-  const all = Object.values(BATCHES).flat();
+  const slices = ["adm01", "context", "competence", "data", "actions", "parties", "contracts"];
+  const all = slices.flatMap((batch) => BATCHES[batch]);
   assert.equal(all.length, 78);
   assert.equal(new Set(all).size, 78);
   for (const [batch, origins] of [
@@ -205,8 +207,213 @@ test("F5 exact 78 cumulative canonical ids", () => {
     );
   }
 });
-const proofId = (side, series, index) =>
-  side + series + "0000-0000-4000-8000-" + String(index).padStart(12, "0");
+
+const normativeCases = JSON.parse(
+  readFileSync(
+    new URL(
+      "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_3_CASE_CONTRACTS_PROPOSAL.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+).cases;
+test("F5 exact 95 cumulative canonical ids", () => {
+  const ids = Object.values(BATCHES).flat();
+  assert.equal(ids.length, 95);
+  assert.equal(new Set(ids).size, 95);
+  assert.deepEqual(
+    BATCHES.normatives,
+    normativeCases.map((row) => row.caseId.slice(-4)),
+  );
+  assert.equal(normativeCases.filter((row) => row.classification === "CONDICIONAL").length, 3);
+});
+function normativeFixture() {
+  const a = (n) => proofId("a", "530", n);
+  const b = (n) => proofId("b", "530", n);
+  const digest = (text) => createHash("sha256").update(text).digest("hex");
+  const specs = {
+    V107: [13, 12, "nao_aplicavel", "aplicavel", "Fonte F5.3 a"],
+    V108: [22, 22, "rascunho", "publicada", "Orçamento F5.3 a"],
+    V109: [31, 32, "rascunho", "publicada", "Fonte F5.3 a"],
+  };
+  const consumer = {
+    V109: 33,
+    V113: 42,
+    V114: 41,
+    V115: 42,
+    V116: 42,
+    V117: 42,
+    V118: 45,
+    V119: 41,
+    V123: 50,
+  };
+  const observations = normativeCases.flatMap((row) => {
+    const { caseId, origin, destination } = row;
+    const [ref, version, before, after, hashSeed] = specs[origin];
+    const producer = "rpc/" + row.producer;
+    const common = {
+      ...identity,
+      caseId,
+      origin,
+      destination,
+      mode: "CODE_FIXTURE",
+      target: A,
+      frontier: row.consumer,
+      operation: origin === "V107" ? "apply" : "publish",
+    };
+    const positive = {
+      producer,
+      organizationId: A,
+      contractId: a(1),
+      ref: a(ref),
+      version: a(version),
+      previousState: before,
+      state: after,
+      validFrom: "2026-11-01",
+      checksum: digest(hashSeed),
+      downstreamId: a(consumer[destination]),
+      foreignVisible: false,
+      ...(origin !== "V109" || destination === "V123" ? { correlation: a(51) } : {}),
+      ...(origin === "V108" ? { linkedItem: a(23), sourceDocId: a(24) } : {}),
+      ...(origin === "V109" ? { linkedItem: a(33), sourceRef: a(12), requestId: a(52) } : {}),
+      ...(["V109", "V113", "V116", "V117"].includes(destination)
+        ? { downstreamSource: a(12) }
+        : {}),
+      ...(["V113", "V116", "V117", "V118"].includes(destination)
+        ? { snapshot: digest("Histórico F5.3 a") }
+        : {}),
+      ...(["V114", "V118", "V119"].includes(destination)
+        ? { canPresent: false, previousCanPresent: true }
+        : {}),
+      ...(destination === "V115" ? { missing: true } : {}),
+      ...(destination === "V116" ? { stale: true, previousStale: false } : {}),
+      ...(destination === "V123" ? { eventName: row.conditionalEvent, eventEntity: a(ref) } : {}),
+    };
+    const negative = {
+      producer,
+      ownOrganizationId: B,
+      ownContractId: b(1),
+      ownMaterialId: b(ref),
+      ownVersionId: b(version),
+      targetMaterialId: a(ref),
+      targetState: before,
+      foreignVisible: false,
+      mutationCount: 0,
+      status: 403,
+      code: "42501",
+      ...(caseId.endsWith("0232") ? { rejectedHashAsConflict: true } : {}),
+      ...(caseId.endsWith("0264") ? { transportSeparated: true } : {}),
+    };
+    return [
+      {
+        ...common,
+        kind: "positive",
+        role: "administrador",
+        actor: U,
+        tenant: A,
+        decision: "ALLOW",
+        readback: positive,
+      },
+      {
+        ...common,
+        kind: "negative",
+        role: "leitor",
+        actor: V,
+        tenant: B,
+        decision: "DENY",
+        readback: negative,
+      },
+    ];
+  });
+  const report = {
+    success: true,
+    numTotalTests: 34,
+    numPassedTests: 34,
+    numFailedTests: 0,
+    numPendingTests: 0,
+    numTodoTests: 0,
+    testResults: [
+      {
+        name: "/workspace/src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+        status: "passed",
+        assertionResults: observations.map((o) => ({
+          status: "passed",
+          ancestorTitles: ["F5 V107/V108/V109 normative scope isolation"],
+          title:
+            o.caseId +
+            " " +
+            o.kind +
+            ": " +
+            (o.kind === "positive"
+              ? "authorized material change reaches the scoped consumer"
+              : "foreign material change is denied and remains hidden"),
+        })),
+      },
+    ],
+  };
+  return { observations, report };
+}
+test("F5.3 verifier accepts the exact normative pairs as a partial receipt", () => {
+  const { observations, report } = normativeFixture();
+  const receipt = validateMaterial("normatives", observations, report, identity);
+  assert.deepEqual(
+    [receipt.covered, receipt.proofs, receipt.certification],
+    [17, 34, "NOT_CERTIFIED"],
+  );
+});
+for (const [label, id, kind, field, value, error] of [
+  [
+    "a source from another tenant",
+    "0200",
+    "positive",
+    "downstreamSource",
+    proofId("b", "530", 12),
+    /consumer history/,
+  ],
+  [
+    "an altered budget checksum",
+    "0237",
+    "positive",
+    "checksum",
+    "0".repeat(64),
+    /checksum or consumer/,
+  ],
+  [
+    "a different audit entity",
+    "0268",
+    "positive",
+    "eventEntity",
+    proofId("b", "530", 31),
+    /audit lineage/,
+  ],
+  [
+    "a version conflict presented as authorization denial",
+    "0232",
+    "negative",
+    "code",
+    "PT409",
+    /authorization denial/,
+  ],
+  ["a foreign state change", "0264", "negative", "targetState", "publicada", /changed target/],
+  [
+    "an unclassified transport failure",
+    "0264",
+    "negative",
+    "transportSeparated",
+    false,
+    /missing denial controls/,
+  ],
+]) {
+  test("F5.3 rejects " + label, () => {
+    const { observations, report } = normativeFixture();
+    const proof = observations.find((o) => o.caseId.endsWith(id) && o.kind === kind);
+    proof.readback[field] = value;
+    assert.throws(() => validateMaterial("normatives", observations, report, identity), error);
+  });
+}
+function proofId(side, series, index) {
+  return side + series + "0000-0000-4000-8000-" + String(index).padStart(12, "0");
+}
 function partyFixture() {
   const ids = BATCHES.parties;
   const suite = "F5 V102/V103 party scope isolation";

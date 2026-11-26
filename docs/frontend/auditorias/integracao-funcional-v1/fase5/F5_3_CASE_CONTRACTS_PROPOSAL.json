@@ -1,6 +1,6 @@
 {
   "schema": "contaos.ifv1.f5.case-contract-proposal.v1",
-  "status": "PREPARATORY_NOT_AUTHORIZED_BUILD",
+  "status": "IMPLEMENTED_CANDIDATE_PENDING_CI",
   "scope": "F5.3",
   "planPr": 777,
   "f52BuildPr": 782,
@@ -29,7 +29,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Aplicar uma versão de fonte aprovada pelo adaptador real, conferir o vínculo e a vigência no contrato de A e passar pelo consumidor da conexão. Conferir versão e hash onde o contrato de leitura os expõe.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0200",
@@ -45,7 +45,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Aplicar uma versão de fonte aprovada pelo adaptador real, conferir o vínculo e a vigência no contrato de A e passar pelo consumidor da conexão. Conferir versão e hash onde o contrato de leitura os expõe.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0202",
@@ -61,7 +61,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Aplicar uma versão de fonte aprovada pelo adaptador real, conferir o vínculo e a vigência no contrato de A e passar pelo consumidor da conexão. Conferir versão e hash onde o contrato de leitura os expõe.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0203",
@@ -77,7 +77,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Aplicar uma versão de fonte aprovada pelo adaptador real, conferir o vínculo e a vigência no contrato de A e passar pelo consumidor da conexão. Conferir versão e hash onde o contrato de leitura os expõe.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0204",
@@ -93,7 +93,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Aplicar uma versão de fonte aprovada pelo adaptador real, conferir o vínculo e a vigência no contrato de A e passar pelo consumidor da conexão. Conferir versão e hash onde o contrato de leitura os expõe.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0205",
@@ -109,7 +109,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Aplicar uma versão de fonte aprovada pelo adaptador real, conferir o vínculo e a vigência no contrato de A e passar pelo consumidor da conexão. Conferir versão e hash onde o contrato de leitura os expõe.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0208",
@@ -125,7 +125,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Executar a operação autorizada em A e conferir no consumidor V123 o evento, a entidade de origem, o tenant e a correlação ou a vinculação rastreável da requisição.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD",
       "conditionalEvent": "V107AplicabilidadeDefinida"
     },
     {
@@ -142,7 +142,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Publicar pelo RPC real a versão da proposta de A com o hash esperado. Conferir a proposta, a versão e as rubricas do contrato e consultar o consumidor da conexão no mesmo contexto.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0233",
@@ -158,7 +158,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Publicar pelo RPC real a versão da proposta de A com o hash esperado. Conferir a proposta, a versão e as rubricas do contrato e consultar o consumidor da conexão no mesmo contexto.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0234",
@@ -174,7 +174,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Publicar pelo RPC real a versão da proposta de A com o hash esperado. Conferir a proposta, a versão e as rubricas do contrato e consultar o consumidor da conexão no mesmo contexto.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0237",
@@ -190,7 +190,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Executar a operação autorizada em A e conferir no consumidor V123 o evento, a entidade de origem, o tenant e a correlação ou a vinculação rastreável da requisição.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD",
       "conditionalEvent": "V108VersaoPublicada"
     },
     {
@@ -207,7 +207,7 @@
       "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Publicar a versão da lista aplicável pelo comando real, reconciliar a lista e a versão do contrato de A e acompanhar os vínculos do item aos requisitos pelo consumidor da conexão.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0262",
@@ -223,7 +223,7 @@
       "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Publicar a versão da lista aplicável pelo comando real, reconciliar a lista e a versão do contrato de A e acompanhar os vínculos do item aos requisitos pelo consumidor da conexão.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0263",
@@ -239,7 +239,7 @@
       "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Publicar a versão da lista aplicável pelo comando real, reconciliar a lista e a versão do contrato de A e acompanhar os vínculos do item aos requisitos pelo consumidor da conexão.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0264",
@@ -255,7 +255,7 @@
       "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Publicar a versão da lista aplicável pelo comando real, reconciliar a lista e a versão do contrato de A e acompanhar os vínculos do item aos requisitos pelo consumidor da conexão.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0265",
@@ -271,7 +271,7 @@
       "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Publicar a versão da lista aplicável pelo comando real, reconciliar a lista e a versão do contrato de A e acompanhar os vínculos do item aos requisitos pelo consumidor da conexão.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0268",
@@ -287,8 +287,10 @@
       "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Executar a operação autorizada em A e conferir no consumidor V123 o evento, a entidade de origem, o tenant e a correlação ou a vinculação rastreável da requisição.",
       "negativeProposal": "Executar a tentativa com a identidade sintética de B contra o escopo de A. Observar a negação pelo contrato de autorização, reconsultar o consumidor e conferir os dados e vínculos próprios de B e a ausência de efeito no registro de A.",
-      "proofState": "NOT_RUN",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD",
       "conditionalEvent": "ListaOperacionalAlterada"
     }
-  ]
+  ],
+  "scopePlanPr": 785,
+  "scopePlanIntegration": "964d005b57ec95b28571a6dc39146ae2525d5aea"
 }
