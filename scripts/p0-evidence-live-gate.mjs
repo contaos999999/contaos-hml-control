@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { fileURLToPath } from "node:url";
+import { pathToFileURL } from "node:url";
 import { readP0 } from "./p0-version-order-gate.mjs";
 
 export { P0 as P0_MANIFEST } from "./p0-version-order-gate.mjs";
@@ -427,5 +427,4 @@ async function main() {
   console.log("P0 " + gate + " PASS: " + result.checked +
     " certificados não legados ou recibos de regular validados em GitHub REST; casos PENDENTE não foram presumidos certificados.");
 }
-if (process.argv[1] && fileURLToPath(import.meta.url) ===
-  fileURLToPath(new URL("file://" + process.argv[1]))) main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

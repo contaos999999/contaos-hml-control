@@ -11,3 +11,7 @@ O PLAN #828 integra a extensão aditiva para os dois gates do P0. Sem a extensã
 | Certificados | Regulares não ativam A, B ou C. Base V1 permanece válida e V3 continua condicionada às três certificações. LIVE NOT_RUN. PROD NO-GO. |
 
 Os autotestes exercitam leitura ausente ou corrompida e autenticidade negativa, inclusive quando jobs genéricos ficam verdes. O arquivo de progressão entra vazio. O primeiro recibo passa por PR documental própria, após confirmar o material oficial e os blobs na main.
+
+## Reprodução do modo isolado do RCA
+
+O primeiro GREEN candidato executou as suítes de ordem e proveniência normalmente. O RCA falhou ao selecionar os casos com `--experimental-test-isolation=none`. Nesse modo, `process.argv[1]` chega com um caminho relativo. Prefixá-lo com `file://` transformava `scripts` em host inválido em Linux antes da declaração do subteste. O segundo RED comprovou `ERR_INVALID_FILE_URL_HOST` no GitHub. Os dois pontos de entrada agora convertem o argumento com `pathToFileURL`. A prova usa o comando isolado e exige a linha TAP dos dois casos nomeados. [Primeiro candidato](https://github.com/contaos999999/contaos-hml-control/actions/runs/45865235014) · [RED do runner](https://github.com/contaos999999/contaos-hml-control/actions/runs/45865583578)

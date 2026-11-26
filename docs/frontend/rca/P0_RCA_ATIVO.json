@@ -37,14 +37,15 @@
         "sintoma": "O recibo de conclusão não muda o próximo regular no manifesto efetivo.",
         "esperado": "O recibo 44 válido move a sequência para 45, com a prova tendo sido autenticada no GitHub.",
         "observado": "O subteste nomeado esperou 45 e recebeu 44 com a BUILD 44 já integrada.",
-        "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45864497542"
+        "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45864497542 | https://github.com/contaos999999/contaos-hml-control/actions/runs/45865583578"
       },
       "causa": {
         "status": "CONFIRMADA",
         "descricao": "Apenas a integração V1 tem leitor complementar. Os regulares da V2 são derivados dos IDs da âncora P0 revisada na V1, sem consumir recibos da V2.",
         "evidencias": [
           "Leitor na base d8041ec7cfe978bcb8981f78347ed96bb43766e7",
-          "Run RED https://github.com/contaos999999/contaos-hml-control/actions/runs/45864497542 e teste P0 V2 incorpora prova sequencial do regular 44 e libera 45"
+          "Run RED https://github.com/contaos999999/contaos-hml-control/actions/runs/45864497542 e teste P0 V2 incorpora prova sequencial do regular 44 e libera 45",
+          "O modo isolado preserva argv[1] relativo, e uma URL file construída por concatenação produz ERR_INVALID_FILE_URL_HOST no Linux: https://github.com/contaos999999/contaos-hml-control/actions/runs/45865583578."
         ],
         "hipoteses_descartadas": [
           "PROD ou contraprovas LIVE não controlam a sequência de regulares CODE.",
@@ -52,7 +53,7 @@
         ]
       },
       "solucao": {
-        "descricao": "Extensão aditiva ao leitor compartilhado, com ordem, hashes e recibos CODE autenticados no GitHub REST.",
+        "descricao": "Extensão aditiva ao leitor compartilhado, com ordem, hashes e recibos CODE autenticados no GitHub REST. Entradas CLI usam pathToFileURL para preservar invocação direta e imports dos testes isolados.",
         "rollback": "Reverter por PR protegido o leitor e registro aditivos e verificar a leitura do P0 V1. Manter os recibos e os blobs históricos para auditoria.",
         "arquivos": [
           "scripts/p0-version-order-gate.mjs",
@@ -114,6 +115,14 @@
             "caso": "P0 V2 incorpora prova sequencial do regular 44 e libera 45",
             "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45864497542",
             "run_sha": "87c478cea636c363ec327ee76cf3b5b80a736800"
+          },
+          {
+            "id": "V2-PROGRESSO-RUNNER",
+            "runner": "node",
+            "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
+            "caso": "P0 V2 executa as provas nomeadas no modo isolado do RCA",
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45865583578",
+            "run_sha": "76feade95858da798270d65dc35e74337f986060"
           }
         ],
         "green": [
@@ -168,6 +177,12 @@
             "runner": "node",
             "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
             "caso": "P0 separation — CODE_CERTIFICATION accepts verified CI without authenticated HML LIVE"
+          },
+          {
+            "id": "V2-PROGRESSO-RUNNER",
+            "runner": "node",
+            "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
+            "caso": "P0 V2 executa as provas nomeadas no modo isolado do RCA"
           }
         ]
       }

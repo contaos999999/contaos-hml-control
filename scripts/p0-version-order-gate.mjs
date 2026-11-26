@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { pathToFileURL } from "node:url";
 
 export const P0 = "docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json";
 export const V1_INTEGRATION_RECEIPT =
@@ -389,5 +389,4 @@ function main() {
     "; próximo regular elegível: " + result.next +
     "; PLAN atualmente registrado: " + plan.prompt_id + ".");
 }
-if (process.argv[1] && fileURLToPath(import.meta.url) ===
-    fileURLToPath(new URL("file://" + process.argv[1]))) main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
