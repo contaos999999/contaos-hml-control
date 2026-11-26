@@ -1,0 +1,30 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 819,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase8/F8_CODE_SOURCES.json",
+    "scripts/hml/integracao-v1-fase8-code-close.mjs",
+    "scripts/hml/integracao-v1-fase8-code-close.test.mjs",
+    ".github/workflows/contaos-f8-code-close.yml"
+  ],
+  "baseline_main": "f4395961bc7ccf2d66260ea61c97befa4e6f29f2",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 653,
+  "purpose": "Fase 8. Consolidação final da Integração Funcional V1 no escopo CODE.",
+  "authorization": "Titular autorizou a execução da Fase 8 após F7, revisão técnica assistida Edivan5002 e merges protegidos com CI aprovado no HEAD revisado.",
+  "acceptance": [
+    "Conferir a Fase 7 CODE efetiva e seu recibo original. Validar os sete certificados da cadeia de Integração Funcional V1, os hashes, o merge, a revisão, o CI e o readback.",
+    "Reconciliar a Fase 8 histórica #591 e os sete checkpoints do GATE backend #138 com o certificado atual de integração. Validar origem, árvore e CI histórico, sem converter prova histórica em execução nova.",
+    "Comparar 488 chaves e textos com o inventário P0 atual, composto por 416 critérios legados e 72 normalizados. Preservar 473 registros PASS_REAL históricos e 15 aceitações históricas R-03. Verificar os 45 regulares, 25 atômicos V1/BRAND e 12 NFR e seus limites.",
+    "Confirmar as cinco mudanças de produto historicamente integradas até o baseline certificado de navegação da F2. Demonstrar a compatibilidade de produto da F2 com o HEAD auditado e preservar os blobs históricos, o backend normativo e LOCK-TYPES.",
+    "Executar testes positivos e contraprovas de omissão, escopo, exceção ampliada, adulteração de hash, review ou proveniência. Publicar recibo de CI no HEAD exato e integrar certificado documental com revisão assistida Edivan5002, CI, merge protegido, SHA256SUMS e readback.",
+    "Preservar as ressalvas R-01, R-02 e R-03 e sua incidência histórica. LIVE NOT_RUN nesta consolidação. PROD NO-GO. O certificado histórico e a sua matriz não serão reescritos."
+  ],
+  "constraints": [
+    "Somente verificação, CI e documentação. Preservar P0-LOCK-CERT, produto, types.ts e backend."
+  ],
+  "certification": "F8_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
