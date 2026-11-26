@@ -1,0 +1,52 @@
+name: ContaOS F7 CODE - reconciliacao de evidencias
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/hml/integracao-v1-fase7-code-reconcile*.mjs"
+      - ".github/workflows/contaos-f7-code-reconcile.yml"
+      - "docs/frontend/auditorias/integracao-funcional-v1/fase7/F7_CODE_SOURCES.json"
+      - "docs/frontend/auditorias/integracao-funcional-v1/fase7/F7_CODE_TRACEABILITY.json"
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+  issues: read
+jobs:
+  reconcile:
+    name: F7 CODE - conferir cadeia e cobertura
+    runs-on: ubuntu-22.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+      - name: Contraprovas da cadeia V1
+        run: node --test scripts/hml/integracao-v1-fase7-code-reconcile.test.mjs
+      - name: Reconciliar certificados e artefatos nativos
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F7_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set -euo pipefail
+          proof="$RUNNER_TEMP/f7-code"
+          mkdir -p "$proof"
+          node scripts/hml/integracao-v1-fase7-code-reconcile.mjs --verify "$proof/F7_CODE_RECONCILIATION_RECEIPT.json"
+          cd "$proof"
+          sha256sum F7_CODE_RECONCILIATION_RECEIPT.json > SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - name: Preservar recibo de reconciliacao
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: f7-code-reconciliation-${{ github.event.pull_request.head.sha }}-r${{ github.run_attempt }}
+          path: ${{ runner.temp }}/f7-code/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Conferir checkout imutavel
+        run: git diff --exit-code
