@@ -1023,3 +1023,22 @@ test("F2 delta: invalid identity or nonlocal CSS source rejects before any brows
   );
   assert.equal(effects, 0);
 });
+
+test("V2-02 registra a rota Ciclo de diligencia e a prova visual", async () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/diligencias/$cicloId"),
+    "FAIL V2-02 registra a rota Ciclo de diligencia e a prova visual: rota ainda ausente da árvore TanStack",
+  );
+  assert.ok(ROUTES.some((route) => route.id === "V2-02" && route.path.startsWith("/diligencias/")));
+  const { diligenciasFixtureFiles } = await import("./v2-integracao-visual.mjs");
+  const files = diligenciasFixtureFiles("/approved/source", {
+    "client.ts": "export const supabase = {};",
+    "router.tsx": "router",
+    "build.mjs": "build",
+  });
+  assert.ok(files["entry.tsx"].includes("/src/components/diligencias/CicloDiligencia"));
+  assert.ok(files["entry.tsx"].includes("/src/components/competencias/CompetenciaProtocolo"));
+  assert.ok(files["client.ts"].includes("apontamentos_contratante"));
+  assert.ok(files["client.ts"].includes("pareceres_contratante"));
+});
