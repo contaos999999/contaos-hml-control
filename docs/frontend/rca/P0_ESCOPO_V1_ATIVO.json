@@ -3,19 +3,24 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "e3c3fb9ad0c1eaf12c8a536f563c821e3f1122e5",
+    "frontend_sha": "4d0c15f074a6ee583ced1d79f0afdbc04fd27663",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
+      "arquivo": "src/test/f6-code-transversal-journeys.test.tsx",
       "versao": "V1",
-      "justificativa": "Comprovar pareceres, apresentação e histórico com publicação persistida, recuperação e leitura restrita."
+      "justificativa": "Comprovar recuperações de ponta a ponta na interface de análise, cancelamento de leitura, controle de escopo, reconciliação de fila sintética e trilha."
+    },
+    {
+      "arquivo": "src/test/f6-code-journey-fixture.ts",
+      "versao": "V1",
+      "justificativa": "Comprovar recuperações de ponta a ponta na interface de análise, cancelamento de leitura, controle de escopo, reconciliação de fila sintética e trilha."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F6-808-IDENTIDADE-JORNADA",
+      "id": "RCA-F6-810-IDENTIDADE-JORNADA",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -29,10 +34,11 @@
         "descricao": "O coletor ancestral aceitava substituição de ID mantendo a cardinalidade. A extensão exige o caso e suas etapas, a prova negativa, recuperação e origem do artefato.",
         "evidencias": [
           "RED ancestral real 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2, rejeição de ID não canônico no coletor F4.",
-          "PLAN P0 #809 integrado em e3c3fb9ad0c1eaf12c8a536f563c821e3f1122e5. BUILD anterior #806 integrado antes desta fatia.",
-          "A #806 integrou 128 jornadas e 256 provas em uma tentativa do run 45778253129.",
-          "As 10 jornadas de V118, V119 e V122 passaram no Vitest e no validador de material, com 20 provas novas. Lint, TypeScript, 48 testes dos verificadores F5/F6 e 276 regressões cumulativas passaram.",
-          "A interrupção preserva o estado anterior. O comando retomado publica o parecer, a versão de apresentação ou o evento de histórico, que os consumidores autorizados releem. A negativa distingue o 403/42501 e mantém a versão protegida."
+          "PLAN P0 #811 integrado em 4d0c15f074a6ee583ced1d79f0afdbc04fd27663. BUILD anterior #808 integrado antes desta fatia.",
+          "A #808 integrou os 138 casos e 276 provas do run 45779480294. Os 138 descritores e a classificação original permanecem idênticos.",
+          "A regressão local confirmou 284 testes em 11 arquivos. As quatro jornadas transversais e suas oito provas materiais foram validadas fora da contagem canônica, com lint, TypeScript e 49 testes dos verificadores.",
+          "A reprodução local TS2339 localizou a inferência circular na declaração do componente da rota sintética. Separar a criação da rota de registrar o componente preservou a leitura tipada de id e corrigiu o TypeScript. O mesmo conjunto de 284 testes passou após a correção.",
+          "O componente real revalida sessão, redireciona antes da leitura protegida e cancela a leitura antiga na mudança de rota. As provas exercitam retorno de timeout, resposta inválida, fila sintética e trilha com uma única mutação."
         ],
         "hipoteses_descartadas": [
           "Cardinalidade não comprova a identidade nem a cadeia da jornada.",
@@ -41,22 +47,31 @@
       },
       "impacto": {
         "dependencias": [
-          "V118 parecer interno",
-          "V119 apresentação protegida",
-          "V122 histórico e versões",
-          "Consumidores de revisão, apresentação, recibos e trilha"
+          "SYS04 preferência e sessão",
+          "V116 análise e fila por adaptador",
+          "V123 trilha de auditoria",
+          "Teste C desktop, tablet e mobile"
         ],
         "versoes_afetadas": [
           "V1"
         ],
         "riscos": [
           {
-            "risco": "Consulta cruzada de histórico e alteração de versão congelada",
+            "risco": "Exposição de conteúdo ou comando em resposta malformada",
             "teste_preventivo": {
-              "id": "NEG-F6-6-C0564",
+              "id": "NEG-F6-7-T0002",
               "runner": "vitest",
-              "arquivo": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
-              "caso": "F6 opinion, presentation and history journeys IFV1-F6-C0564 negative: refuses the foreign action and reloads the preserved published state"
+              "arquivo": "src/test/f6-code-transversal-journeys.test.tsx",
+              "caso": "F6 transversal journeys IFV1-F6-T0002 negative: withholds a malformed view from a reader before valid reread"
+            }
+          },
+          {
+            "risco": "Leitura de rota protegida depois de expirar a sessão",
+            "teste_preventivo": {
+              "id": "NEG-F6-7-T0004",
+              "runner": "vitest",
+              "arquivo": "src/test/f6-code-transversal-journeys.test.tsx",
+              "caso": "F6 transversal journeys IFV1-F6-T0004 negative: redirects an expired session before the protected read and accepts the restored reader"
             }
           }
         ]
@@ -74,24 +89,30 @@
         ],
         "green": [
           {
-            "id": "GREEN-F6-6-C0482",
+            "id": "GREEN-F6-7-T0001",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
-            "caso": "F6 opinion, presentation and history journeys IFV1-F6-C0482 positive: recovers from interruption and follows the scoped outcome through reload"
+            "arquivo": "src/test/f6-code-transversal-journeys.test.tsx",
+            "caso": "F6 transversal journeys IFV1-F6-T0001 positive: recovers the same protected analysis after a gateway timeout"
           },
           {
-            "id": "GREEN-F6-6-C0502",
+            "id": "GREEN-F6-7-T0003",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
-            "caso": "F6 opinion, presentation and history journeys IFV1-F6-C0502 positive: recovers from interruption and follows the scoped outcome through reload"
+            "arquivo": "src/test/f6-code-transversal-journeys.test.tsx",
+            "caso": "F6 transversal journeys IFV1-F6-T0003 positive: reconciles one queued execution and one audit event after a double click and lost response"
           }
         ],
         "negativos": [
           {
-            "id": "NEG-F6-6-C0564",
+            "id": "NEG-F6-7-T0002",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
-            "caso": "F6 opinion, presentation and history journeys IFV1-F6-C0564 negative: refuses the foreign action and reloads the preserved published state"
+            "arquivo": "src/test/f6-code-transversal-journeys.test.tsx",
+            "caso": "F6 transversal journeys IFV1-F6-T0002 negative: withholds a malformed view from a reader before valid reread"
+          },
+          {
+            "id": "NEG-F6-7-T0004",
+            "runner": "vitest",
+            "arquivo": "src/test/f6-code-transversal-journeys.test.tsx",
+            "caso": "F6 transversal journeys IFV1-F6-T0004 negative: redirects an expired session before the protected read and accepts the restored reader"
           }
         ],
         "regressao": [
@@ -110,10 +131,11 @@
         ]
       },
       "solucao": {
-        "descricao": "Comprovar pareceres, apresentação e histórico com publicação persistida, recuperação e leitura restrita. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção.",
+        "descricao": "Comprovar recuperações de ponta a ponta na interface de análise, cancelamento de leitura, controle de escopo, reconciliação de fila sintética e trilha. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção.",
         "rollback": "Reverter por PR protegida se houver regressão e suspender o recibo afetado até nova execução material.",
         "arquivos": [
-          "src/test/f6-code-opinion-presentation-history-journeys.test.ts"
+          "src/test/f6-code-transversal-journeys.test.tsx",
+          "src/test/f6-code-journey-fixture.ts"
         ]
       }
     }

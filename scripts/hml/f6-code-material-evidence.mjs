@@ -67,6 +67,44 @@ export function loadMatrix(json = source(matrixPath), csv = source(canonPath)) {
     );
     paths.add(spec.file);
   }
+  const extras = matrix.transversal ?? [];
+  assert(Array.isArray(extras), "Invalid supplementary journeys");
+  if (Object.hasOwn(matrix.activeBatches, "transversal")) {
+    sameMembers(
+      extras.map((c) => c.caseId),
+      ["T0001", "T0002", "T0003", "T0004"].map((id) => "IFV1-F6-" + id),
+      "Supplementary journeys",
+    );
+    for (const c of extras) {
+      assert(
+        c.classification === "COMPLEMENTAR" &&
+          c.slice === "F6.7" &&
+          c.batch === "transversal" &&
+          c.caseId === "IFV1-F6-" + c.sourceConnectionId,
+        "Invalid supplementary binding",
+      );
+      assert.equal(c.journeyId, [c.slice, c.origin, c.destination, c.sourceConnectionId].join("-"));
+      assert.equal(
+        c.normativeSource,
+        "docs/frontend/planos/INTEGRACAO_V1_FASE6_PLANO_UNICO_2026-11-26.md",
+      );
+      assert(
+        Array.isArray(c.relatedCaseIds) &&
+          c.relatedCaseIds.length >= 2 &&
+          new Set(c.relatedCaseIds).size === c.relatedCaseIds.length &&
+          c.relatedCaseIds.every((id) => canon.has(id)),
+        "Unbound supplementary journey",
+      );
+      assert(
+        [c.producer, c.consumer, c.expected].every(
+          (value) => typeof value === "string" && value.trim().length > 0,
+        ),
+        "Incomplete supplementary journey",
+      );
+    }
+  } else {
+    assert.equal(extras.length, 0, "Inactive supplementary journeys");
+  }
   for (const c of matrix.cases) {
     const row = canon.get(c.caseId);
     assert.deepEqual(
@@ -95,7 +133,7 @@ export function loadMatrix(json = source(matrixPath), csv = source(canonPath)) {
     assert.equal(c.journeyId, [c.slice, c.origin, c.destination, c.sourceConnectionId].join("-"));
     if (c.batch !== null)
       assert(
-        Object.hasOwn(matrix.activeBatches, c.batch),
+        c.batch !== "transversal" && Object.hasOwn(matrix.activeBatches, c.batch),
         "Unconfigured active batch for " + c.caseId,
       );
     counts.set(c.slice, (counts.get(c.slice) ?? 0) + 1);
@@ -122,7 +160,8 @@ export function validateMaterial(matrix, batch, observations, report, identity) 
       [identity.runId, identity.attempt, identity.jobId].every(number),
     "Invalid execution identity",
   );
-  const expected = matrix.cases.filter((c) => c.batch === batch);
+  const expected =
+    batch === "transversal" ? matrix.transversal : matrix.cases.filter((c) => c.batch === batch);
   assert(expected.length > 0, "Empty F6 batch");
   const cases = new Map(expected.map((c) => [c.caseId, c]));
   const pairs = expected.flatMap((c) =>
@@ -210,7 +249,7 @@ export function validateMaterial(matrix, batch, observations, report, identity) 
         test.ancestorTitles[0] === spec.suite,
       "Unverified test",
     );
-    const title = /^(IFV1-F6-C\d{4}) (positive|negative): .+$/.exec(test.title);
+    const title = /^(IFV1-F6-[CT]\d{4}) (positive|negative): .+$/.exec(test.title);
     assert(title, "Invalid material title");
     return title[1] + ":" + title[2];
   });
