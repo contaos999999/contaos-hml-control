@@ -217,10 +217,21 @@ const normativeCases = JSON.parse(
     "utf8",
   ),
 ).cases;
+const batchesF53 = [
+  "adm01",
+  "context",
+  "competence",
+  "data",
+  "actions",
+  "parties",
+  "contracts",
+  "normatives",
+];
+const batchesF54 = [...batchesF53, "contractdocuments", "competencedocuments"];
+const batchesF55 = [...batchesF54, "competenceactions"];
+
 test("F5 exact 95 cumulative canonical ids", () => {
-  const ids = Object.entries(BATCHES)
-    .filter(([batch]) => !["contractdocuments", "competencedocuments"].includes(batch))
-    .flatMap(([, values]) => values);
+  const ids = batchesF53.flatMap((batch) => BATCHES[batch]);
   assert.equal(ids.length, 95);
   assert.equal(new Set(ids).size, 95);
   assert.deepEqual(
@@ -240,7 +251,7 @@ test("F5 exact 109 cumulative canonical ids", () => {
       "utf8",
     ),
   ).cases;
-  const all = Object.values(BATCHES).flat();
+  const all = batchesF54.flatMap((batch) => BATCHES[batch]);
   assert.equal(all.length, 109);
   assert.equal(new Set(all).size, 109);
   for (const [batch, origins] of [
@@ -254,6 +265,26 @@ test("F5 exact 109 cumulative canonical ids", () => {
   }
   assert.equal(inventory.filter((row) => row.classification === "CONDICIONAL").length, 3);
 });
+test("F5 exact 128 cumulative canonical ids", () => {
+  const inventory = JSON.parse(
+    readFileSync(
+      new URL(
+        "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_5_CASE_CONTRACTS_PROPOSAL.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ).cases;
+  const all = batchesF55.flatMap((batch) => BATCHES[batch]);
+  assert.equal(all.length, 128);
+  assert.equal(new Set(all).size, 128);
+  assert.deepEqual(
+    BATCHES.competenceactions,
+    inventory.map((row) => row.caseId.slice(-4)),
+  );
+  assert.equal(inventory.filter((row) => row.classification === "CONDICIONAL").length, 3);
+});
+
 function normativeFixture() {
   const a = (n) => proofId("a", "530", n);
   const b = (n) => proofId("b", "530", n);

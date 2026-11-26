@@ -1,6 +1,6 @@
 {
   "schema": "contaos.ifv1.f5.case-contract-proposal.v1",
-  "status": "PROPOSAL_PENDING_P0",
+  "status": "IMPLEMENTED_CANDIDATE_PENDING_CI",
   "scope": "F5.5",
   "planPr": 777,
   "f54BuildPr": 786,
@@ -25,7 +25,7 @@
       "consumer": "obter_resumo_dashboard",
       "normativeExpectation": "Competência criada reflete contadores, agrupamentos e prazos do resumo da organização.",
       "sourceReferences": "src/lib/contratos/novaCompetenciaDados.ts:71;src/components/dashboard/Dashboard.tsx:70",
-      "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+      "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Criar competência e reconciliar organização, contrato, competência e projeção no consumidor autorizado, incluindo os agregados quando aplicável.",
       "negativeProposal": "Com identidade de B, exercer o produtor e o consumidor direcionados a A. Conferir recusa específica, ausência de exposição e leitura íntegra do escopo próprio e do registro legítimo de A.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
@@ -40,7 +40,7 @@
       "consumer": "competencias",
       "normativeExpectation": "Competência criada pertence ao contrato; conservar competencias.id/id_contrato/id_organizacao em todas as etapas.",
       "sourceReferences": "src/lib/contratos/novaCompetenciaDados.ts:71;src/lib/contratos/competenciasDados.ts:79",
-      "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+      "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Criar competência e reconciliar organização, contrato, competência e projeção no consumidor autorizado, incluindo os agregados quando aplicável.",
       "negativeProposal": "Com identidade de B, exercer o produtor e o consumidor direcionados a A. Conferir recusa específica, ausência de exposição e leitura íntegra do escopo próprio e do registro legítimo de A.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
@@ -55,7 +55,7 @@
       "consumer": "obter_visao_geral_competencia",
       "normativeExpectation": "Competência criada pertence ao contrato; conservar competencias.id/id_contrato/id_organizacao em todas as etapas.",
       "sourceReferences": "src/lib/contratos/novaCompetenciaDados.ts:71;src/lib/competencias/competenciaVisaoGeralDados.ts:19",
-      "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+      "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Criar competência e reconciliar organização, contrato, competência e projeção no consumidor autorizado, incluindo os agregados quando aplicável.",
       "negativeProposal": "Com identidade de B, exercer o produtor e o consumidor direcionados a A. Conferir recusa específica, ausência de exposição e leitura íntegra do escopo próprio e do registro legítimo de A.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
@@ -70,7 +70,7 @@
       "consumer": "obter_documentos_competencia_v115",
       "normativeExpectation": "Competência criada pertence ao contrato; conservar competencias.id/id_contrato/id_organizacao em todas as etapas.",
       "sourceReferences": "src/lib/contratos/novaCompetenciaDados.ts:71;src/lib/competencias/competenciaDocumentosDados.ts:116",
-      "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+      "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Criar competência e reconciliar organização, contrato, competência e projeção no consumidor autorizado, incluindo os agregados quando aplicável.",
       "negativeProposal": "Com identidade de B, exercer o produtor e o consumidor direcionados a A. Conferir recusa específica, ausência de exposição e leitura íntegra do escopo próprio e do registro legítimo de A.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
@@ -85,7 +85,7 @@
       "consumer": "obter_analise_competencia_v116",
       "normativeExpectation": "Competência criada pertence ao contrato; conservar competencias.id/id_contrato/id_organizacao em todas as etapas.",
       "sourceReferences": "src/lib/contratos/novaCompetenciaDados.ts:71;src/lib/competencias/competenciaAnaliseDados.ts:158",
-      "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+      "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Criar competência e reconciliar organização, contrato, competência e projeção no consumidor autorizado, incluindo os agregados quando aplicável.",
       "negativeProposal": "Com identidade de B, exercer o produtor e o consumidor direcionados a A. Conferir recusa específica, ausência de exposição e leitura íntegra do escopo próprio e do registro legítimo de A.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
@@ -100,7 +100,7 @@
       "consumer": "pareceres_internos",
       "normativeExpectation": "Competência criada pertence ao contrato; conservar competencias.id/id_contrato/id_organizacao em todas as etapas.",
       "sourceReferences": "src/lib/contratos/novaCompetenciaDados.ts:71;src/lib/competencias/parecerInternoDados.ts:113",
-      "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+      "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Criar competência e reconciliar organização, contrato, competência e projeção no consumidor autorizado, incluindo os agregados quando aplicável.",
       "negativeProposal": "Com identidade de B, exercer o produtor e o consumidor direcionados a A. Conferir recusa específica, ausência de exposição e leitura íntegra do escopo próprio e do registro legítimo de A.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
@@ -115,7 +115,7 @@
       "consumer": "obter_visao_geral_competencia",
       "normativeExpectation": "Competência criada pertence ao contrato; conservar competencias.id/id_contrato/id_organizacao em todas as etapas.",
       "sourceReferences": "src/lib/contratos/novaCompetenciaDados.ts:71;src/lib/competencias/competenciaVisaoGeralDados.ts:19",
-      "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+      "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Criar competência e reconciliar organização, contrato, competência e projeção no consumidor autorizado, incluindo os agregados quando aplicável.",
       "negativeProposal": "Com identidade de B, exercer o produtor e o consumidor direcionados a A. Conferir recusa específica, ausência de exposição e leitura íntegra do escopo próprio e do registro legítimo de A.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
@@ -130,7 +130,7 @@
       "consumer": "apresentacoes_contratante",
       "normativeExpectation": "Competência criada pertence ao contrato; conservar competencias.id/id_contrato/id_organizacao em todas as etapas.",
       "sourceReferences": "src/lib/contratos/novaCompetenciaDados.ts:71;src/lib/competencias/protocoloDados.ts:92",
-      "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+      "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Criar competência e reconciliar organização, contrato, competência e projeção no consumidor autorizado, incluindo os agregados quando aplicável.",
       "negativeProposal": "Com identidade de B, exercer o produtor e o consumidor direcionados a A. Conferir recusa específica, ausência de exposição e leitura íntegra do escopo próprio e do registro legítimo de A.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
@@ -145,7 +145,7 @@
       "consumer": "eventos_auditoria",
       "normativeExpectation": "Ação material deve produzir evento rastreável no escopo autorizado; verificar conteúdo e correlation/request ID nas fases 3–6.",
       "sourceReferences": "src/lib/contratos/novaCompetenciaDados.ts:71;src/lib/administracao/auditoriaDados.ts:33",
-      "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+      "backendContract": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
       "positiveProposal": "Criar competência e reconciliar organização, contrato, competência e projeção no consumidor autorizado, incluindo os agregados quando aplicável.",
       "negativeProposal": "Com identidade de B, exercer o produtor e o consumidor direcionados a A. Conferir recusa específica, ausência de exposição e leitura íntegra do escopo próprio e do registro legítimo de A.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
@@ -300,5 +300,7 @@
       "negativeProposal": "Com identidade de B, exercer o produtor e o consumidor direcionados a A. Conferir recusa específica, ausência de exposição e leitura íntegra do escopo próprio e do registro legítimo de A.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
     }
-  ]
+  ],
+  "scopePlanPr": 789,
+  "scopePlanIntegration": "eb55cec722b0160d914803584c805b0e9c32817c"
 }
