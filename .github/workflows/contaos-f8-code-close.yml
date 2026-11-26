@@ -1,0 +1,50 @@
+name: ContaOS F8 CODE - consolidacao V1
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/hml/integracao-v1-fase8-code-close*.mjs"
+      - ".github/workflows/contaos-f8-code-close.yml"
+      - "docs/frontend/auditorias/integracao-funcional-v1/fase8/F8_CODE_SOURCES.json"
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+  issues: read
+jobs:
+  consolidate:
+    name: F8 CODE - conferir consolidacao V1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+      - name: Contraprovas da consolidacao V1
+        run: node --test scripts/hml/integracao-v1-fase8-code-close.test.mjs scripts/p0-v1-traceability-gate.test.mjs
+      - name: Reconciliar a Fase 8 historica com a F7 CODE
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F8_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          proof="$RUNNER_TEMP/f8-code"
+          mkdir -p "$proof"
+          node scripts/hml/integracao-v1-fase8-code-close.mjs --verify "$proof/F8_CODE_CONSOLIDATION_RECEIPT.json"
+          cd "$proof"
+          sha256sum F8_CODE_CONSOLIDATION_RECEIPT.json > SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - name: Preservar recibo da consolidacao
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: f8-code-consolidation-${{ github.event.pull_request.head.sha }}-r${{ github.run_attempt }}
+          path: ${{ runner.temp }}/f8-code/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Conferir checkout imutavel
+        run: git diff --exit-code
