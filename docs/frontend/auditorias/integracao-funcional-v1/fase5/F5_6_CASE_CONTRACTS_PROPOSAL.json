@@ -1,6 +1,6 @@
 {
   "schema": "contaos.ifv1.f5.case-contract-proposal.v1",
-  "status": "PROPOSAL_PENDING_P0",
+  "status": "IMPLEMENTED_CANDIDATE_PENDING_CI",
   "scope": "F5.6",
   "planPr": 777,
   "f55BuildPr": 788,
@@ -165,5 +165,7 @@
       "negativeProposal": "Com identidade de B, tentar o produtor e a leitura em A. Conferir 42501 da mutação, ausência de exposição, estado preservado de A e leitura do escopo próprio de B.",
       "proofState": "PENDING_CI_AT_BUILD_HEAD"
     }
-  ]
+  ],
+  "scopePlanPr": 791,
+  "scopePlanIntegration": "05069867adc863344c9222c8aab863bbce6edb45"
 }

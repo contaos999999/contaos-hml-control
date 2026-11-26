@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 export const BACKEND = "a1516de1d8949e505d83b5e000eb1cc558b217a7";
 export const BATCHES = Object.freeze({
+  closure: ["0477", "0482", "0484", "0496", "0502", "0504", "0562", "0563", "0564", "0567"],
   competenceactions: [
     "0352",
     "0365",
@@ -252,6 +253,16 @@ const f55Inventory = JSON.parse(
   ),
 );
 const f55Cases = new Map(f55Inventory.cases.map((entry) => [entry.caseId.slice(-4), entry]));
+const f56Inventory = JSON.parse(
+  fs.readFileSync(
+    new URL(
+      "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_6_CASE_CONTRACTS_PROPOSAL.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+const f56Cases = new Map(f56Inventory.cases.map((entry) => [entry.caseId.slice(-4), entry]));
 const normativeStates = {
   V107: {
     ref: 13,
@@ -315,6 +326,16 @@ const contextTitles = {
   ],
 };
 const batchesWithEvidence = {
+  closure: {
+    file: "f5-code-closure-scope-isolation.test.ts",
+    suite: "F5 closure scope isolation",
+    title: (_id, index) =>
+      [
+        "scoped material reaches the authorized consumer",
+        "foreign material remains hidden and unchanged",
+      ][index],
+    check: checkClosure,
+  },
   competenceactions: {
     file: "f5-code-competence-actions-scope-isolation.test.tsx",
     suite: "F5 competence actions scope isolation",
@@ -576,6 +597,126 @@ function checkCompetenceActions(o, id) {
               : "pendente_correcao")
       )
         fail("F5.5 overview, analysis or presentation gate mismatch");
+  }
+}
+const closureActions = {
+  V118: ["approve", "ParecerInternoRevisado", "pareceres_internos", 23],
+  V119: ["register", "ApresentacaoRegistrada", "apresentacoes_contratante", 25],
+  V122: ["import", "HistoricoImportacaoRegistrada", "relatorios_historicos_contratante", 30],
+};
+function checkClosure(o, id) {
+  const canonical = f56Cases.get(id);
+  const [operation, event, entity, offset] = closureActions[canonical?.origin] ?? [];
+  checkScopedChange(o, canonical, canonical?.producer, operation, "F5.6");
+  const b = o.readback;
+  const a = (n) => fixtureId("a", "550", n);
+  if (o.kind === "negative") {
+    if (b.ownCompetenceId !== fixtureId("b", "550", 22) || b.preservedCompetenceId !== a(22))
+      fail("F5.6 negative competence readback mismatch");
+    return;
+  }
+  const { material: m, observed: x } = b;
+  if (
+    b.organizationId !== A ||
+    b.contractId !== a(21) ||
+    b.competenceId !== a(22) ||
+    b.mutationCount !== 1 ||
+    !record(m) ||
+    !record(x)
+  )
+    fail("F5.6 scope or mutation mismatch");
+  if (
+    operation === "approve" &&
+    (m.opinion?.id !== a(23) ||
+      m.opinion?.id_competencia !== a(22) ||
+      m.opinion?.autor !== a(24) ||
+      m.opinion?.aprovado_por !== U ||
+      m.opinion?.status !== "aprovado" ||
+      m.canPresent !== false ||
+      m.compliant !== 50)
+  )
+    fail("F5.6 authorship or blocking gate mismatch");
+
+  if (operation === "register") {
+    const p = m.snapshot?.pacote;
+    const r = m.snapshot?.apresentacao;
+    const [item] = m.snapshot?.itens ?? [];
+    const sha256 = (v) => createHash("sha256").update(v).digest("hex");
+    const digest = sha256(
+      sha256("parecer F5.6 " + A) + "|" + sha256("versão documental F5.6 " + A),
+    );
+    if (
+      r?.id !== a(25) ||
+      r.id_pacote !== a(26) ||
+      r.protocolo !== "PROTOCOLO-F56" ||
+      p?.id !== a(26) ||
+      p.id_competencia !== a(22) ||
+      p.status !== "apresentado" ||
+      !p.congelado_em ||
+      p.hash_pacote !== digest ||
+      item?.versao_id !== a(28) ||
+      item.id_pacote !== a(26) ||
+      item.hash !== sha256("versão documental F5.6 " + A) ||
+      m.requestId !== a(29) ||
+      m.currentVersion !== a(41)
+    )
+      fail("F5.6 immutable package or protocol mismatch");
+  }
+  if (
+    operation === "import" &&
+    (m.report?.id !== a(30) ||
+      m.report?.id_arquivo !== a(31) ||
+      m.report?.competencia_referencia !== "2026-10-01" ||
+      m.report?.id_contrato !== a(21) ||
+      m.report?.origem_temporal !== "pre_implantacao" ||
+      m.report?.status_processamento !== "pendente" ||
+      m.generatedRules !== 0 ||
+      m.beforeResult !== a(35) ||
+      m.afterResult !== a(35) ||
+      !/^[a-f0-9]{64}$/.test(m.beforeHash) ||
+      m.beforeHash !== m.afterHash)
+  )
+    fail("F5.6 historical origin or current evidence changed");
+
+  switch (canonical.destination) {
+    case "V123":
+      if (
+        x.id !== a(32) ||
+        x.id_entidade !== a(offset) ||
+        x.evento !== event ||
+        x.entidade !== entity ||
+        x.correlation_id !== a(33) ||
+        x.id_usuario !== U ||
+        x.origem !== "usuario"
+      )
+        fail("F5.6 audit event or correlation mismatch");
+      break;
+    case "V120":
+      if (JSON.stringify(x) !== JSON.stringify(m.snapshot))
+        fail("F5.6 presentation consumer returned a different snapshot");
+      break;
+    case "V121":
+      if (JSON.stringify(x) !== JSON.stringify(m.report))
+        fail("F5.6 historical consumer returned a different report");
+      break;
+    case "V116":
+      if (x.resultId !== a(35) || x.execution !== a(34) || x.hash !== m.afterHash)
+        fail("F5.6 analysis changed during historical import");
+      break;
+    case "V117":
+      if (x.resultId !== a(35) || x.requirementId !== a(36) || x.versionId !== a(28))
+        fail("F5.6 requirement evidence changed during historical import");
+      break;
+    default:
+      if (
+        x.id !== a(22) ||
+        x.canPresent !== false ||
+        x.approvedOpinion !== true ||
+        (operation === "approve"
+          ? x.blocked !== 1
+          : x.status !== "aguardando_contratante" || x.packageVersion !== 1)
+      )
+        fail("F5.6 overview or presentation gate mismatch");
   }
 }
 function checkScopeF52(o, id, producer, operation, association = false) {

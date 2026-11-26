@@ -285,6 +285,31 @@ test("F5 exact 128 cumulative canonical ids", () => {
   assert.equal(inventory.filter((row) => row.classification === "CONDICIONAL").length, 3);
 });
 
+test("F5 exact 138 canonical cases and 276 proofs", () => {
+  const inventory = Array.from(
+    { length: 6 },
+    (_, index) =>
+      JSON.parse(
+        readFileSync(
+          new URL(
+            "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_" +
+              (index + 1) +
+              "_CASE_CONTRACTS_PROPOSAL.json",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      ).cases,
+  ).flat();
+  const all = Object.values(BATCHES).flat();
+  assert.equal(all.length, 138);
+  assert.equal(new Set(all).size, 138);
+  assert.deepEqual(all.toSorted(), inventory.map((row) => row.caseId.slice(-4)).toSorted());
+  assert.equal(inventory.filter((row) => row.classification === "CONDICIONAL").length, 18);
+  assert.equal(inventory.filter((row) => row.classification === "OBRIGATORIA").length, 120);
+  assert.equal(all.flatMap((id) => [id + ":positive", id + ":negative"]).length, 276);
+});
+
 function normativeFixture() {
   const a = (n) => proofId("a", "530", n);
   const b = (n) => proofId("b", "530", n);
