@@ -568,6 +568,45 @@
     "https://github.com/contaos999999/contaos-hml-control/pull/825",
     "https://github.com/contaos999999/contaos-hml-control/pull/827",
     "https://github.com/contaos999999/contaos-hml-control/pull/830",
-    "https://docs.postgrest.org/en/stable/references/api/tables_views.html#casting-columns"
-  ]
+    "https://docs.postgrest.org/en/stable/references/api/tables_views.html#casting-columns",
+    "https://docs.postgrest.org/en/stable/references/api/resource_embedding.html"
+  ],
+  "apresentacao_projetada_para_V120": {
+    "rls": true,
+    "authenticated_select": true,
+    "anon_select": false,
+    "policies": [
+      {
+        "qual": "privado.usuario_tem_acesso_contrato(id_contrato)",
+        "role": [
+          "authenticated"
+        ]
+      },
+      {
+        "qual": "privado.rbac_permite(id_organizacao, 'apresentacoes'::text, 'consultar'::text, id_contrato)",
+        "role": [
+          "authenticated"
+        ]
+      }
+    ],
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "id_competencia",
+        "type": "uuid"
+      },
+      {
+        "name": "id_contrato",
+        "type": "uuid"
+      },
+      {
+        "name": "id_organizacao",
+        "type": "uuid"
+      }
+    ],
+    "official_foreign_key": "FOREIGN KEY (id_apresentacao) REFERENCES apresentacoes_contratante(id) ON DELETE RESTRICT"
+  }
 }
