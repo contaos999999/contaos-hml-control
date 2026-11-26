@@ -1,0 +1,28 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 793,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Promover de forma imutável o candidato oficial atestado da Fase 5 CODE_FIXTURE.",
+  "files": [
+    "scripts/hml/integracao-v1-fase5-code-promotion.mjs",
+    "scripts/hml/integracao-v1-fase5-code-promotion.test.mjs",
+    ".github/workflows/contaos-f5-code-promotion.yml",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_CODE_ATTESTATION_CANDIDATE.json",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_CODE_PROMOTION_SOURCE.json"
+  ],
+  "acceptance": [
+    "Somente após atestação #792 com revisão assistida, CI, merge e readback. Fixar HEAD, árvore, revisão, run, tentativa, job, artefato e digests reais.",
+    "Reproduzir as 276 provas e conferir igualdade byte a byte do candidato original, reproduzido e versionado.",
+    "Conferir que o ledger não existia na base protegida. Publicar recibo LEDGER_VERIFIED_CERTIFICATE_PENDING e manter o candidato original imutável."
+  ],
+  "baseline_main": "ee46e1ddde75b24954e61b0081b8ab6b167c127f",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 777,
+  "authorization": "Fechamento previsto nos itens 4 a 6 da seção 4 do PLAN #777. Revisão assistida conforme #781. A autorização é eficaz após CI, merge protegido e readback deste PLAN.",
+  "constraints": [
+    "Sem alterações em src, no backend normativo, nos controles existentes ou na produção. Cada BUILD exige CI completo, revisão e merge protegido. CERT documental em PR separada após promoção comprovada."
+  ],
+  "certification": "F5_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
