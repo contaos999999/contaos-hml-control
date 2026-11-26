@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -463,5 +464,23 @@ test("P0 LIVE rejeita proveniencia divergente do regular V2", async () => {
     const result = await x.run("CODE_CERTIFICATION");
     assert.match(result.errors.join(" "), expected);
     assert.deepEqual(result.checks, []);
+  }
+});
+
+test("P0 V2 executa as provas nomeadas no modo isolado do RCA", () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const proofs = [
+    ["scripts/p0-version-order-gate.test.mjs", "P0 V2 incorpora prova sequencial do regular 44 e libera 45"],
+    ["scripts/p0-evidence-live-gate.test.mjs", "P0 LIVE autentica regular V2 no HEAD revisado com Teste C material"],
+  ];
+  for (const [file, title] of proofs) {
+    const actual = spawnSync(process.execPath, [
+      "--test", "--experimental-test-isolation=none", "--test-reporter=tap",
+      "--test-name-pattern=^" + title + "$", file,
+    ], { env, encoding: "utf8" });
+    assert.equal(actual.status, 0, actual.stdout + actual.stderr);
+    assert.ok(actual.stdout.includes("# Subtest: " + title));
+    assert.match(actual.stdout, /# pass 1/);
   }
 });
