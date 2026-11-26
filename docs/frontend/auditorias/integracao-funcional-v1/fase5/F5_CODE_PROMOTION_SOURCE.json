@@ -1,0 +1,8 @@
+{
+  "state": "AWAITING_VERIFIED_ATTESTATION",
+  "materialPr": 790,
+  "materialHead": "aa5640e52cec265e2b250fce9b1d85452763d0b0",
+  "certification": "NOT_CERTIFIED",
+  "live": "NOT_RUN",
+  "production": "NO-GO"
+}
