@@ -7,9 +7,11 @@ import { join } from "node:path";
 
 const competencia = "44444444-4444-4444-8444-444444444444";
 export const CICLO_V2_FIXTURE = "77777777-7777-4777-8777-777777777777";
+export const APONTAMENTO_V2_FIXTURE = "abababab-abab-4bab-8bab-abababababab";
 const cicloAnterior = "88888888-8888-4888-8888-888888888888";
 const protocoloId = "33333333-3333-4333-8333-333333333333";
 const cicloPath = "/diligencias/" + CICLO_V2_FIXTURE;
+const itemPath = cicloPath + "/apontamentos/" + APONTAMENTO_V2_FIXTURE;
 const protocoloPath = "/competencias/" + competencia + "/apresentacoes/" + protocoloId;
 const overview = "/competencias/" + competencia;
 const diligencias = overview + "/diligencias";
@@ -25,7 +27,7 @@ export function diligenciasFixtureFiles(root, baseFixtures) {
     "router.tsx": baseFixtures["router.tsx"],
     "build.mjs": baseFixtures["build.mjs"],
     "client.ts": `
-import { C, O, K, A, supabase as baseline } from "./base-client";
+import { C, O, K, A, P, supabase as baseline } from "./base-client";
 export { C, O, K, A };
 
 const comum = {
@@ -45,7 +47,7 @@ const pareceres = [{
   apresentacao: { id: A, id_competencia: C, id_contrato: K, id_organizacao: O },
 }];
 const apontamentos = [{
-  ...chaves, id: "abababab-abab-4bab-8bab-abababababab",
+  ...chaves, id: "${APONTAMENTO_V2_FIXTURE}", fundamento: "Fundamento registrado no parecer",
   criado_em: comum.recebido_em, codigo: "AP-02",
   descricao: "Valor de serviço apontado nesta rodada", classificacao_sugerida: "Financeiro",
   status: "em_analise", severidade: "alta",
@@ -53,13 +55,89 @@ const apontamentos = [{
   valor_aceito: null, impacto_financeiro_estimado: "-0.01",
 }];
 
+const identificador = (n: number) => "46000000-0000-4000-8000-" + String(n).padStart(12, "0");
+const arquivo = identificador(1);
+const analise = identificador(2);
+const tarefa = identificador(3);
+const revisor = identificador(4);
+const evento = identificador(5);
+const documento = identificador(6);
+const versao1 = identificador(7);
+const versao2 = identificador(8);
+const ref = { ...chaves, id_apontamento: apontamentos[0].id };
+const hashVersao = "c".repeat(64);
+const versao = (id: string, numero: number, criado: string) => ({
+  id, id_organizacao: O, id_contrato: K, id_documento_contrato: null, id_documento_competencia: documento,
+  numero_versao: numero, hash: hashVersao, criado_em: criado, documentoContrato: null,
+  documentoCompetencia: { ...chaves, id: documento, titulo: "Comprovante da competência" },
+});
+const tabelas: Record<string, unknown[]> = {
+  analises_apontamentos: [{ ...ref, id: analise, classificacao: "inconclusivo",
+    fundamento: "Análise documentada para revisão", evidencias: [{ id_versao_documento: versao1 }],
+    criado_em: comum.recebido_em }],
+  tarefas_diligencia: [{ ...ref, id: tarefa, descricao: "Conferir a versão juntada", id_evidencia_versao_documento: versao2 }],
+  eventos_auditoria: [{ id: evento, id_organizacao: O, id_usuario: revisor, id_entidade: tarefa,
+    entidade: "tarefas_diligencia", evento: "SolucaoTarefaDiligenciaRevisada",
+    criado_em: "2026-11-12T14:00:00Z", depois: { aprovada: true, fundamento: "Conferência humana registrada", revisor } }],
+  desfechos_apontamentos: [],
+  versoes_documento: [versao(versao1, 1, "2026-11-09T12:00:00Z"), versao(versao2, 2, "2026-11-12T12:00:00Z")],
+  itens_pacote_competencia: [{ ...chaves, id: identificador(9), id_pacote: P,
+    entidade_tipo: "documento_competencia", entidade_id: documento, versao_id: versao1, hash: hashVersao }],
+};
+
 export const supabase = {
   ...baseline,
   auth: {
     ...baseline.auth,
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
   },
+  rpc(name: string, args: Record<string, string>) {
+    if (name !== "obter_fonte_apontamento_contratante") return baseline.rpc(name);
+    if (args.p_id_ciclo !== rodadas[0].id || args.p_id_apontamento !== apontamentos[0].id)
+      throw Error("ESCOPO_ORIGEM_APONTAMENTO");
+    return { async abortSignal(signal: AbortSignal) {
+      signal.throwIfAborted();
+      return { data: { ...ref, estado: "REGISTRADA", fonte: { id_parecer: pareceres[0].id,
+        id_arquivo: arquivo, id_apresentacao: A, nome_original: "parecer-de-origem-02.pdf",
+        numero_documento: pareceres[0].numero_documento, arquivo_sha256: "a".repeat(64),
+        pagina: 3, trecho: "Trecho do parecer de origem" } }, error: null, status: 200 };
+    } };
+  },
   from(table: string) {
+    if (Object.hasOwn(tabelas, table) && (table !== "itens_pacote_competencia" || location.pathname === "${itemPath}")) {
+      const filtros = new Map<string, string>();
+      const listas = new Map<string, string[]>();
+      let signal: AbortSignal | undefined;
+      const consulta = {
+        select() { return consulta; },
+        eq(chave: string, valor: string) { filtros.set(chave, valor); return consulta; },
+        in(chave: string, valores: string[]) { listas.set(chave, valores); return consulta; },
+        order() { return consulta; },
+        limit() { return consulta; },
+        abortSignal(valor: AbortSignal) { signal = valor; return consulta; },
+        then(resolve: (x: unknown) => unknown, reject: (x: unknown) => unknown) {
+          return Promise.resolve().then(() => {
+            signal?.throwIfAborted();
+            if (filtros.get("id_organizacao") !== O) throw Error("ESCOPO_EVIDENCIAS_ORG");
+            if (table === "eventos_auditoria") {
+              if (!listas.get("id_entidade")?.includes(tarefa) || filtros.get("evento") !== "SolucaoTarefaDiligenciaRevisada")
+                throw Error("ESCOPO_REVISAO_AUDITORIA");
+            } else {
+              if (filtros.get("id_contrato") !== K) throw Error("ESCOPO_EVIDENCIAS_CONTRATO");
+              if (table !== "versoes_documento" && filtros.get("id_competencia") !== C)
+                throw Error("ESCOPO_EVIDENCIAS_COMPETENCIA");
+              if (table === "itens_pacote_competencia" && filtros.get("id_pacote") !== P)
+                throw Error("ESCOPO_PACOTE_APONTAMENTO");
+              if (["analises_apontamentos", "tarefas_diligencia", "desfechos_apontamentos"].includes(table) &&
+                  filtros.get("id_apontamento") !== apontamentos[0].id)
+                throw Error("ESCOPO_ITEM_APONTAMENTO");
+            }
+            return { data: tabelas[table], error: null, status: 200 };
+          }).then(resolve, reject);
+        },
+      };
+      return consulta;
+    }
     if (table !== "ciclos_diligencia" && table !== "pareceres_contratante" &&
         table !== "apontamentos_contratante") return baseline.from(table);
     const scope = new Map<string, string>();
@@ -83,6 +161,13 @@ export const supabase = {
       abortSignal(value: AbortSignal) { signal = value; return query; },
       async maybeSingle() {
         signal?.throwIfAborted();
+        if (table === "apontamentos_contratante") {
+          if (scope.size !== 5 || scope.get("id_ciclo") !== chaves.id_ciclo || scope.get("id_competencia") !== C ||
+              scope.get("id_contrato") !== K || scope.get("id_organizacao") !== O || scope.get("id") !== apontamentos[0].id)
+            throw Error("ESCOPO_DETALHE_APONTAMENTO");
+          if (fixture() === "item-denied") return { data: null, error: { code: "42501" }, status: 403 };
+          return { data: apontamentos[0], error: null, status: 200 };
+        }
         if (table !== "ciclos_diligencia" || scope.size !== 2 || scope.get("id_organizacao") !== O) {
           throw Error("ESCOPO_CICLO_V2");
         }
@@ -122,6 +207,7 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { CompetenciaVisaoGeral } from ${JSON.stringify(root + "/src/components/competencias/CompetenciaVisaoGeral.tsx")};
 import { DiligenciasCompetencia } from ${JSON.stringify(root + "/src/components/diligencias/DiligenciasCompetencia.tsx")};
+import { ApontamentoDiligencia } from ${JSON.stringify(root + "/src/components/diligencias/ApontamentoDiligencia.tsx")};
 import { CicloDiligencia } from ${JSON.stringify(root + "/src/components/diligencias/CicloDiligencia.tsx")};
 import { CompetenciaProtocolo } from ${JSON.stringify(root + "/src/components/competencias/CompetenciaProtocolo.tsx")};
 import { definirPreferenciaOrganizacao } from ${JSON.stringify(root + "/src/lib/organizacao/preferenciaOrganizacao.ts")};
@@ -129,14 +215,19 @@ import { C, O } from "./client";
 
 definirPreferenciaOrganizacao("fixture-user", O);
 function ApresentacaoFixture() {
-  const [path, setPath] = useState(location.pathname);
+  const [path, setPath] = useState(location.pathname + location.search);
   useEffect(() => {
-    const atualizar = () => setPath(location.pathname);
+    const atualizar = () => setPath(location.pathname + location.search);
     window.addEventListener("popstate", atualizar);
     return () => window.removeEventListener("popstate", atualizar);
   }, []);
-  const [, modulo, id, subrota, origem] = path.split("/");
-  if (modulo === "diligencias") return <CicloDiligencia id={id} />;
+  const endereco = new URL(path, location.origin);
+  const [, modulo, id, subrota, origem] = endereco.pathname.split("/");
+  const foco = endereco.searchParams.get("foco") ?? undefined;
+  const offset = Number(endereco.searchParams.get("offset")) || undefined;
+  if (modulo === "diligencias" && subrota === "apontamentos")
+    return <ApontamentoDiligencia cicloId={id} id={origem} offset={offset} />;
+  if (modulo === "diligencias") return <CicloDiligencia id={id} foco={foco} offset={offset} />;
   if (subrota === "diligencias") return <DiligenciasCompetencia id={id} />;
   if (subrota === "apresentacoes") return <CompetenciaProtocolo id={id} apresentacaoId={origem} />;
   return <CompetenciaVisaoGeral id={C} />;
@@ -165,6 +256,7 @@ export async function collectDiligenciasVisual(
   const cases = diligenciasVisualCases(widths, themes);
   const records = [];
   const cycleRecords = [];
+  const itemRecords = [];
   let server;
 
   try {
@@ -198,7 +290,7 @@ export async function collectDiligenciasVisual(
       } else if (path === "/style.css") {
         reply.setHeader("content-type", "text/css");
         reply.end(css);
-      } else if ([overview, diligencias, cicloPath, protocoloPath].includes(path)) {
+      } else if ([overview, diligencias, cicloPath, protocoloPath, itemPath].includes(path)) {
         reply.setHeader("content-type", "text/html");
         reply.end(html);
       } else {
@@ -234,6 +326,9 @@ export async function collectDiligenciasVisual(
         }, theme);
         const page = await context.newPage();
         page.on("pageerror", () => erros++);
+        page.on("console", (message) => {
+          if (message.type() === "error") erros++;
+        });
         await page.goto(origin + overview);
         const atalho = page.getByRole("link", { name: "Diligências", exact: true });
         await atalho.focus();
@@ -293,6 +388,69 @@ export async function collectDiligenciasVisual(
         await page.getByText("PROTOCOLO-SINTETICO-2026-09", { exact: true }).waitFor();
         await page.goBack();
         await page.waitForURL(origin + cicloPath);
+        await verificarCiclo();
+        const abrirItem = page.getByRole("link", { name: "Abrir apontamento AP-02" });
+        await abrirItem.focus();
+        if (!(await abrirItem.evaluate((element) => document.activeElement === element)))
+          throw Error("TESTE_C_V2_APONTAMENTO_FOCO");
+        await abrirItem.press("Enter");
+        await page.waitForURL(origin + itemPath);
+        const verificarItem = async () => {
+          await page.getByRole("heading", { name: "Detalhe do apontamento" }).waitFor();
+          await page.getByText("parecer-de-origem-02.pdf", { exact: true }).waitFor();
+          await page.getByText("Versão presente no pacote de origem", { exact: true }).waitFor();
+          await page.getByText("Versão criada após o congelamento", { exact: true }).waitFor();
+          await page
+            .getByRole("region", { name: "Revisões humanas das tarefas" })
+            .getByText("Solução validada", { exact: true })
+            .waitFor();
+          const largura = await page.evaluate(() =>
+            Math.max(0, document.documentElement.scrollWidth - innerWidth),
+          );
+          if (largura > 1) throw Error("TESTE_C_V2_APONTAMENTO_OVERFLOW");
+          return largura;
+        };
+        await verificarItem();
+        await page.reload();
+        const overflowItem = await verificarItem();
+        const imagemItem = "screenshots/V2-03_" + width + "_" + theme + ".png";
+        const bytesItem = await page.screenshot({ fullPage: true, animations: "disabled" });
+        writeFileSync(join(target, imagemItem), bytesItem);
+        await page.getByRole("link", { name: "Voltar ao ciclo" }).press("Enter");
+        await page.waitForURL(
+          (url) =>
+            url.pathname === cicloPath && url.searchParams.get("foco") === APONTAMENTO_V2_FIXTURE,
+        );
+        await page.waitForFunction(
+          (id) => document.activeElement?.id === "abrir-apontamento-" + id,
+          APONTAMENTO_V2_FIXTURE,
+        );
+        await page.goto(origin + itemPath + "?fixture=item-denied");
+        await page.getByRole("alert").filter({ hasText: "não possui permissão" }).waitFor();
+        if (
+          (await page.getByText("parecer-de-origem-02.pdf", { exact: true }).count()) ||
+          erros ||
+          externa
+        )
+          throw Error("TESTE_C_V2_APONTAMENTO_ISOLAMENTO");
+        itemRecords.push({
+          width,
+          theme,
+          screenshot: imagemItem,
+          sha256: digest(bytesItem),
+          status: "PASS",
+          foco: true,
+          retorno: true,
+          recarga: true,
+          origemVerificada: true,
+          pacoteVerificado: true,
+          revisaoVerificada: true,
+          negacaoSemDados: true,
+          overflow: overflowItem,
+          chamadasExternas: externa,
+          errosDePagina: erros,
+        });
+        await page.goto(origin + cicloPath);
         await verificarCiclo();
         await page.getByRole("link", { name: "Voltar às diligências" }).press("Enter");
         await page.waitForURL(origin + diligencias);
@@ -355,12 +513,13 @@ export async function collectDiligenciasVisual(
     if (
       cases.length !== 8 ||
       records.length !== cases.length ||
-      cycleRecords.length !== cases.length
+      cycleRecords.length !== cases.length ||
+      itemRecords.length !== cases.length
     ) {
       throw Error("TESTE_C_V2_COBERTURA");
     }
     const record = {
-      schema: "contaos.v2-diligencias.offline-visual.v2",
+      schema: "contaos.v2-diligencias.offline-visual.v3",
       mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
       headSha,
       sourceTree: git("rev-parse", "HEAD^{tree}"),
@@ -374,23 +533,29 @@ export async function collectDiligenciasVisual(
           "src/components/diligencias/CicloDiligencia.tsx",
           "src/components/competencias/CompetenciaProtocolo.tsx",
           "src/lib/diligencias/cicloDiligenciaDados.ts",
+          "src/components/diligencias/ApontamentoDiligencia.tsx",
+          "src/lib/diligencias/apontamentoDiligenciaDados.ts",
+          "src/lib/diligencias/apontamentoEvidenciasDados.ts",
+          "src/routes/diligencias_.$cicloId_.apontamentos_.$id.tsx",
         ].map((file) => [file, digest(readFileSync(join(root, file)))]),
       ),
       complete: true,
       records,
       cycleRecords,
+      itemRecords,
     };
     const report = JSON.stringify(record, null, 2) + "\n";
     writeFileSync(join(target, "report.json"), report);
     writeFileSync(
       join(target, "SHA256SUMS"),
       [
-        ...[...records, ...cycleRecords].map((r) => r.sha256 + "  " + r.screenshot),
+        ...[...records, ...cycleRecords, ...itemRecords].map((r) => r.sha256 + "  " + r.screenshot),
         digest(report) + "  report.json",
       ].join("\n") + "\n",
     );
     console.log("V2_01_OFFLINE_VISUAL_PASS_8");
     console.log("V2_02_OFFLINE_VISUAL_PASS_8");
+    console.log("V2_03_OFFLINE_VISUAL_PASS_8");
     return record;
   } finally {
     if (server?.listening) await new Promise((resolve) => server.close(resolve));

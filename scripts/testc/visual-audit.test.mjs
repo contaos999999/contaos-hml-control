@@ -57,7 +57,7 @@ test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preser
       assert.ok(match, `Rota não reconhecida: ${name}`);
       return normalize(match[1]);
     });
-  assert.equal(pages.length, 30);
+  assert.equal(pages.length, 31);
   assert.equal(new Set(pages).size, pages.length);
   assert.deepEqual([...new Set(ROUTES.map((route) => normalize(route.path)))].sort(), pages.sort());
   assert.equal(ROUTES.filter((route) => route.requiresDrawer).length, 1);
@@ -76,14 +76,15 @@ test("P0 V123: Auditoria possui oito casos privados sem PASS autenticado presumi
   );
 });
 
-test("matriz oficial preserva 29 superfícies V1 e inclui lista e ciclo de diligência V2", () => {
-  assert.equal(ROUTES.length, 31);
+test("matriz oficial preserva 29 superfícies V1 e inclui lista, ciclo e apontamento V2", () => {
+  assert.equal(ROUTES.length, 32);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
   assert.equal(cases().filter((x) => !x.id.startsWith("V2-")).length, 232);
   assert.equal(cases().filter((x) => x.id === "V2-01").length, 8);
   assert.equal(cases().filter((x) => x.id === "V2-02").length, 8);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 248);
+  assert.equal(cases().filter((x) => x.id === "V2-03").length, 8);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 256);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");

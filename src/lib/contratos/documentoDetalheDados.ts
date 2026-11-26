@@ -7,6 +7,8 @@
 import { consultarPermissoesEfetivas, temPermissao } from "@/lib/administracao/rbacRpc";
 import { supabase } from "@/integrations/supabase/client";
 import type { Pagina } from "@/lib/contratos/baseNormativaDados";
+import { uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";
+import { offsetDiligenciasValido } from "@/lib/diligencias/diligenciasDados";
 import {
   COLUNAS_DOCUMENTO,
   COLUNAS_REQUISITO,
@@ -178,6 +180,63 @@ export async function listarVersoes(
     );
   }
   return { itens, total: r.count ?? itens.length, arquivos };
+}
+
+export async function consultarVersaoCitada(
+  documento: Documento,
+  organizacao: string,
+  id: string,
+  signal: AbortSignal,
+): Promise<{ v: VersaoDetalhe; a: ArquivoDetalhe | undefined }> {
+  if (!uuidValido(id)) throw new ErroDoc("nao_encontrado");
+  const r = await executar(
+    supabase
+      .from("versoes_documento")
+      .select(COLUNAS_VERSAO_DETALHE + ",id_organizacao,id_contrato")
+      .eq("id", id)
+      .eq("id_documento_contrato", documento.id)
+      .eq("id_contrato", documento.id_contrato)
+      .eq("id_organizacao", organizacao)
+      .abortSignal(signal)
+      .maybeSingle(),
+    signal,
+  );
+  signal.throwIfAborted();
+  const v = r.data as (VersaoDetalhe & { id_organizacao: string; id_contrato: string }) | null;
+  if (
+    !v ||
+    v.id !== id ||
+    v.id_documento_contrato !== documento.id ||
+    v.id_contrato !== documento.id_contrato ||
+    v.id_organizacao !== organizacao ||
+    !uuidValido(v.id_arquivo) ||
+    !Number.isSafeInteger(v.numero_versao) ||
+    v.numero_versao < 1
+  )
+    throw new ErroDoc("nao_encontrado");
+
+  const arquivo = await executar(
+    supabase
+      .from("arquivos")
+      .select(COLUNAS_ARQUIVO_DETALHE + ",id_organizacao,id_contrato")
+      .eq("id", v.id_arquivo)
+      .eq("id_contrato", documento.id_contrato)
+      .eq("id_organizacao", organizacao)
+      .abortSignal(signal)
+      .maybeSingle(),
+    signal,
+  );
+  signal.throwIfAborted();
+  const a = arquivo.data as
+    (ArquivoDetalhe & { id_organizacao: string; id_contrato: string }) | null;
+  if (
+    a &&
+    (a.id !== v.id_arquivo ||
+      a.id_contrato !== documento.id_contrato ||
+      a.id_organizacao !== organizacao)
+  )
+    throw new ErroDoc("nao_encontrado");
+  return { v, a: a ?? undefined };
 }
 
 export async function listarProcessamentos(
@@ -530,4 +589,31 @@ export function lerBuscaCentral(s: Record<string, unknown>): BuscaCentral {
   const p = Number(s["pagina"]);
   if (Number.isInteger(p) && p > 0 && p < 100000) r.pagina = p;
   return r;
+}
+
+export type BuscaDetalheDocumento = BuscaCentral & {
+  versao?: string;
+  ciclo?: string;
+  apontamento?: string;
+  offset?: number;
+};
+
+export function lerBuscaDetalheDocumento(s: Record<string, unknown>): BuscaDetalheDocumento {
+  const busca: BuscaDetalheDocumento = lerBuscaCentral(s);
+  if (Object.hasOwn(s, "versao")) {
+    busca.versao =
+      typeof s["versao"] === "string" && uuidValido(s["versao"]) ? uuidCanonico(s["versao"]) : "";
+  }
+  if (
+    typeof s["ciclo"] === "string" &&
+    uuidValido(s["ciclo"]) &&
+    typeof s["apontamento"] === "string" &&
+    uuidValido(s["apontamento"])
+  ) {
+    busca.ciclo = uuidCanonico(s["ciclo"]);
+    busca.apontamento = uuidCanonico(s["apontamento"]);
+    if (typeof s["offset"] === "number" && offsetDiligenciasValido(s["offset"]))
+      busca.offset = s["offset"];
+  }
+  return busca;
 }

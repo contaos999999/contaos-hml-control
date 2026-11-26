@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 
@@ -35,15 +35,27 @@ type Estado =
 const PAGINA_INICIAL = { pareceres: 0, apontamentos: 0 };
 type Offsets = typeof PAGINA_INICIAL;
 
-export function CicloDiligencia({ id }: { id: string }) {
+export function CicloDiligencia({
+  id,
+  offset,
+  foco,
+}: {
+  id: string;
+  offset?: number | undefined;
+  foco?: string | undefined;
+}) {
   const navigate = useNavigate();
   const valido = uuidValido(id);
   const cicloId = valido ? uuidCanonico(id) : id;
   const atual = useRef<AbortController | null>(null);
   const [revisao, setRevisao] = useState(0);
-  const chave = cicloId + ":" + revisao;
-  const [pagina, setPagina] = useState({ chave, offsets: PAGINA_INICIAL });
-  const offsets = pagina.chave === chave ? pagina.offsets : PAGINA_INICIAL;
+  const offsetsIniciais = useMemo(
+    () => (offset ? { ...PAGINA_INICIAL, apontamentos: offset } : PAGINA_INICIAL),
+    [offset],
+  );
+  const chave = cicloId + ":" + revisao + ":" + (offset ?? 0) + ":" + (foco ?? "");
+  const [pagina, setPagina] = useState({ chave, offsets: offsetsIniciais });
+  const offsets = pagina.chave === chave ? pagina.offsets : offsetsIniciais;
   const [resposta, setResposta] = useState<{
     chave: string;
     offsets: Offsets;
@@ -116,6 +128,15 @@ export function CicloDiligencia({ id }: { id: string }) {
   const mudarPagina = (grupo: keyof Offsets, offset: number) =>
     setPagina({ chave, offsets: { ...offsets, [grupo]: offset } });
   const dados = estado.tipo === "ok" ? estado.dados : null;
+  const retornoAplicado = useRef("");
+  useEffect(() => {
+    if (!dados || !foco) return;
+    const alvo = document.getElementById("abrir-apontamento-" + foco);
+    const chaveRetorno = cicloId + ":" + foco + ":" + (offset ?? 0);
+    if (!alvo || retornoAplicado.current === chaveRetorno) return;
+    retornoAplicado.current = chaveRetorno;
+    alvo.focus();
+  }, [cicloId, dados, foco, offset]);
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 px-4 py-6 sm:px-6">
@@ -268,6 +289,16 @@ function ConteudoCiclo({
                     valor={formatarValorDiligencia(item.impactoEstimado)}
                   />
                 </dl>
+                <Button asChild variant="outline" className="min-h-11">
+                  <Link
+                    id={"abrir-apontamento-" + item.id}
+                    to="/diligencias/$cicloId/apontamentos/$id"
+                    params={{ cicloId: ciclo.id, id: item.id }}
+                    search={{ offset: offsets.apontamentos || undefined }}
+                  >
+                    {item.codigo ? `Abrir apontamento ${item.codigo}` : "Abrir apontamento"}
+                  </Link>
+                </Button>
               </li>
             ))}
           </ul>
