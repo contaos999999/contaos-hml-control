@@ -5,6 +5,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { validateP0, readP0, P0, V1_INTEGRATION_RECEIPT } from "./p0-version-order-gate.mjs";
 import { validateProdReadiness } from "./p0-evidence-live-gate.mjs";
 
+const progressPath = "docs/frontend/governanca/P0_PROGRESSO_V2_CODE.json";
 const original = JSON.parse(readFileSync(P0, "utf8"));
 const clone = () => JSON.parse(JSON.stringify(original));
 const plan = (id) => ({ prompt_id: id, status: "VALIDADO" });
@@ -62,6 +63,7 @@ const receiptRecord = () => ({
 function readWithReceipt(receipt, manifest = original) {
   return readP0((path) => {
     if (path === P0) return JSON.stringify(manifest);
+    if (path === progressPath) throw Object.assign(new Error("Ausente"), { code: "ENOENT" });
     assert.equal(path, V1_INTEGRATION_RECEIPT);
     if (receipt === undefined) throw Object.assign(new Error("Ausente"), { code: "ENOENT" });
     if (receipt instanceof Error) throw receipt;
@@ -313,7 +315,6 @@ test("P0 — V1 RCA causal nao pode ser removida apos emenda X", () => {
   assert.match(check(m2, plan("75")).errors.join(" "), /P0 RCA/);
 });
 
-const progressPath = "docs/frontend/governanca/P0_PROGRESSO_V2_CODE.json";
 const receipt44Path = "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-44.json";
 const sampleSha = (value) => value.repeat(40);
 const sampleHash = (value) => value.repeat(64);
@@ -375,4 +376,79 @@ test("P0 V2 incorpora prova sequencial do regular 44 e libera 45", () => {
   const m = read();
   assert.equal(check(m, plan("44")).next, "45");
   assert.deepEqual(check(m, plan("45")).errors, []);
+});
+
+test("P0 V2 progresso vazio mantem 44 e V3 bloqueada", () => {
+  const { read, progress } = progressFixture();
+  progress.recibos = [];
+  const m = read();
+  assert.equal(check(m, plan("44")).next, "44");
+  assert.deepEqual(check(m, plan("44")).errors, []);
+  assert.match(check(m, plan("50")).errors.join(" "), /falta certificado da V2/);
+});
+
+test("P0 V2 rejeita salto duplicata e ausencia do recibo V1", () => {
+  const missing = progressFixture();
+  missing.files.delete(V1_INTEGRATION_RECEIPT);
+  assert.throws(missing.read, /exige o recibo V1/);
+
+  const jump = progressFixture();
+  jump.record.regular_id = "45";
+  assert.throws(jump.read, /fora da sequência/);
+
+  const repeated = progressFixture();
+  repeated.progress.recibos.push(repeated.record);
+  assert.throws(repeated.read, /fora da sequência/);
+});
+
+test("P0 V2 rejeita recibo ausente fora do caminho ou com bytes divergentes", () => {
+  const offPath = progressFixture();
+  offPath.record.arquivo = receipt44Path.replace("/fase3/", "/fase2/");
+  assert.throws(offPath.read, /Caminho ou digest inválido/);
+
+  const absent = progressFixture();
+  absent.files.delete(receipt44Path);
+  assert.throws(absent.read, { code: "ENOENT" });
+
+  const changed = progressFixture();
+  changed.files.set(receipt44Path, Buffer.from("{}"));
+  assert.throws(changed.read, /Digest divergente/);
+});
+
+test("P0 V2 nao aceita promocao ou PROD dentro de recibo regular", () => {
+  for (const patch of [
+    { prod: "GO" },
+    { live: "PASS" },
+    { regular_id: "45" },
+    { certificados_por_versao: { V2: "PASS" } },
+  ]) {
+    const { read, receipt, record, files } = progressFixture();
+    const replacement = Buffer.from(JSON.stringify({ ...receipt, ...patch }));
+    record.sha256 = createHash("sha256").update(replacement).digest("hex");
+    files.set(receipt44Path, replacement);
+    assert.throws(read, /Recibo CODE incompatível/);
+  }
+  const { read, progress } = progressFixture();
+  progress.certificados_por_versao = { V2: "PASS" };
+  assert.throws(read, /Progresso V2 CODE inválido/);
+});
+
+test("P0 V2 oito recibos ainda exigem tres certificados antes do PLAN 50", () => {
+  const { read, progress, record, files, receipt } = progressFixture();
+  for (const id of ["45", "46", "47", "48", "49", "76", "77"]) {
+    const newPath = receipt44Path.replace("regular-44", "regular-" + id);
+    const content = Buffer.from(JSON.stringify({ ...receipt, regular_id: id }));
+    files.set(newPath, content);
+    progress.recibos.push({
+      ...record,
+      regular_id: id,
+      arquivo: newPath,
+      sha256: createHash("sha256").update(content).digest("hex"),
+    });
+  }
+  const m = read();
+  assert.equal(check(m, plan("50")).next, "50");
+  assert.match(check(m, plan("50")).errors.join(" "), /falta certificado da V2/);
+  assert.match(check(m, plan("50")).errors.join(" "), /integracao interna da V2/);
+  assert.match(check(m, plan("50")).errors.join(" "), /integracao cumulativa da V2/);
 });
