@@ -2,6 +2,8 @@
 
 26/11/2026. O [plano mestre #825](https://github.com/contaos999999/contaos-hml-control/pull/825) e o [recibo 45 #833](https://github.com/contaos999999/contaos-hml-control/pull/833) habilitam o próximo regular. A [proveniência I05](https://github.com/contaos999999/develop/pull/232) e o [recibo HML #235](https://github.com/contaos999999/develop/pull/235) estão integrados. O contexto da leitura aponta para `cbf247724ecede59fdcba0d18d7b0e37c76f247f`. Os 25 blobs normativos e o catálogo 100/97 continuam com os hashes já versionados. O certificado anterior referencia a fonte original `a1516de1d8949e505d83b5e000eb1cc558b217a7`. O blob de `types.ts` segue `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`. [Checkpoint oficial](https://github.com/contaos999999/contaos-hml-control/issues/708#issuecomment-7204850136)
 
+O candidato documental desta PR passou nos seis workflows. A autorização da BUILD passa a valer após CI no HEAD de validação, revisão assistida e integração deste PLAN. [CI documental](https://github.com/contaos999999/contaos-hml-control/actions/runs/45906238700)
+
 ## Contrato e navegação
 
 - Regular 46, rota `/diligencias/:cicloId/apontamentos/:id`. Cobrir os 12 critérios originais e as leituras desta entrega nas jornadas J04, J06, J07, J08 e J11. Provar I02 (ciclo e item exatos), I05 (origem distinta entre pareceres do mesmo ciclo), C11 (pacote de origem) e C21 (versão documental) nos casos aplicáveis. As ações de V2-04 e V2-05 entram pelos regulares 47 e 48, com suas próprias permissões e provas.

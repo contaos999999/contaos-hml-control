@@ -708,5 +708,59 @@
     "evidencias": "ID de versão em análise e tarefa. Confirmar par de pertencimento e escopo nas tabelas oficiais antes de habilitar navegação V1."
   },
   "live": "NOT_RUN",
-  "prod": "NO-GO"
+  "prod": "NO-GO",
+  "validacao_documental": {
+    "pr": 834,
+    "head": "86944a258ea51df02671a8f809f69c74c77410a2",
+    "tree": "0b4a28c098c63d7534244ea6390c7ce4d48a8a3c",
+    "candidateWorkflows": [
+      {
+        "name": "ContaOS F3 CODE - 138 case preflight (not certification)",
+        "run": 45906238599,
+        "conclusion": "success"
+      },
+      {
+        "name": "ContaOS P0-NR-001 Anti-Reincidencia",
+        "run": 45906238701,
+        "conclusion": "success"
+      },
+      {
+        "name": "ContaOS F3 CODE - Coletor offline (nao certificador)",
+        "run": 45906238774,
+        "conclusion": "success"
+      },
+      {
+        "name": "ContaOS LOCK-TYPES-01 Double Barrier",
+        "run": 45906238604,
+        "conclusion": "success"
+      },
+      {
+        "name": "ContaOS F3 CODE - 138 execucoes funcionais individuais",
+        "run": 45906238747,
+        "conclusion": "success"
+      },
+      {
+        "name": "ContaOS Frontend Zero-Drift",
+        "run": 45906238700,
+        "conclusion": "success"
+      }
+    ],
+    "nativeJobs": [
+      {
+        "id": 140203535907,
+        "name": "ContaOS Frontend Zero-Drift",
+        "conclusion": "success"
+      },
+      {
+        "id": 140203536088,
+        "name": "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        "conclusion": "success"
+      }
+    ],
+    "baseline_local": {
+      "tests": 61,
+      "files": 5,
+      "result": "PASS"
+    }
+  }
 }
