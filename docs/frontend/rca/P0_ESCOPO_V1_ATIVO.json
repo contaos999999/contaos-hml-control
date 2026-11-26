@@ -3,19 +3,24 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "964d005b57ec95b28571a6dc39146ae2525d5aea",
+    "frontend_sha": "5f13e16ef5602efd23e67cea63d37500ccfe195f",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+      "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
       "versao": "V1",
-      "justificativa": "Provas CODE_FIXTURE de autorização, vínculo e isolamento para os 17 casos de V107, V108 e V109."
+      "justificativa": "Provas de isolamento e integridade dos documentos e versões V110/V111."
+    },
+    {
+      "arquivo": "src/test/f5-code-v115-document-scope-isolation.test.ts",
+      "versao": "V1",
+      "justificativa": "Provas de isolamento e integridade do documento de competência V115."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F5-784-IDENTIDADE-MATERIAL",
+      "id": "RCA-F5-786-IDENTIDADE-MATERIAL",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -26,54 +31,54 @@
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "O coletor histórico aceitou cardinalidade sem identidade canônica. Esta fatia estende a prevenção a normativos, orçamento e listas e exige prova da versão, da origem e do consumidor vinculado a cada ID.",
+        "descricao": "O coletor histórico conferia cardinalidade sem fixar os IDs aceitos. A F5.4 estende essa prevenção às conexões materiais de documentos, com identidade de versão, arquivo, hash, competência e consumidor.",
         "evidencias": [
           "Run ancestral 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2. Falha do coletor F4 preservada no histórico da PR #760.",
-          "Árvore F5.2 e ficha causal preservadas na integração 955b3f52598fa2cbee3e8d45a00c7cb94a71626a, blob e6496c993ca0e0a19e21580e3191cf7e667d015e. Material cumulativo do run 45687169618 conferido com 78 casos e 156 provas.",
-          "A PR #785 integrou a autorização prospectiva em 964d005b57ec95b28571a6dc39146ae2525d5aea, revisão assistida 6066966118. O P0_GOV_PLAN_784.json foi conferido na main no blob 30b0949a6a1ef879ee379a80455bc2e75a6436ff.",
-          "O primeiro ensaio local apontou projeção incorreta do teste para os objetos normalizados V116 e V117. Os IDs de organização e contrato são conferidos na resposta do adaptador. O hash e a versão de origem são conferidos no objeto normalizado e a representação serializada da fonte é validada separadamente."
+          "F5.3 integrada no commit b3009b3e5e0e3f776d0e2149b724961c368feb96. O run 45731531442 confirmou 95 casos e 190 provas.",
+          "PLAN #787 integrado em 5f13e16ef5602efd23e67cea63d37500ccfe195f, revisão assistida 6067497018. Escopo prospectivo conferido no blob f432a95edcfa22898385410ec1ed0ad464b1ee45.",
+          "A visão geral exige versao_pacote_atual, mesmo quando nula. A fixture foi alinhada ao parser. No V115, a resposta PT400 de integridade pertence ao tipo erro e é distinguida de 42501 no transporte."
         ],
         "hipoteses_descartadas": [
-          "A contagem de testes, sem identidade, não demonstra prova canônica.",
-          "O ensaio local de projeção trata do contrato de teste. A consulta por tenant, o hash e o resultado do consumidor são preservados e verificados no fluxo CODE_FIXTURE."
+          "IDs válidos e cardinalidade sozinhos não provam o vínculo entre documento e arquivo.",
+          "A validação com tenants sintéticos é CODE_FIXTURE. Nenhum resultado foi inferido de Supabase remoto."
         ]
       },
       "impacto": {
         "dependencias": [
-          "Adaptadores materiais V107, V108 e V109",
-          "Vínculos de fonte, versão, vigência e documento-base",
-          "Consumo em competência, análise, requisito, parecer e trilha de auditoria",
-          "Coletor F5 com os sete lotes da F5.1 e F5.2"
+          "Contratos V110 e V111, versão e proveniência de fonte",
+          "V115 e requisitos de competência",
+          "Transporte sintético, assinatura e download",
+          "Consumo de análises, pareceres e trilha de auditoria"
         ],
         "versoes_afetadas": [
           "V1"
         ],
         "riscos": [
           {
-            "risco": "Aceitação de hash desatualizado como negação de acesso",
+            "risco": "Exposição de link ou envio no tenant incorreto",
             "teste_preventivo": {
-              "id": "NEG-F5-3-C0232",
+              "id": "NEG-F5-4-C0288",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
-              "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0232 negative: foreign material change is denied and remains hidden"
+              "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
+              "caso": "F5 V110/V111 document scope isolation IFV1-F5-C0288 negative: foreign document action has no effect or link"
             }
           },
           {
-            "risco": "Falha genérica de transporte confundida com autorização",
+            "risco": "Erro de transporte aceito como negação ou integridade",
             "teste_preventivo": {
-              "id": "NEG-F5-3-C0264",
+              "id": "NEG-F5-4-C0315",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
-              "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0264 negative: foreign material change is denied and remains hidden"
+              "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
+              "caso": "F5 V110/V111 document scope isolation IFV1-F5-C0315 negative: foreign document action has no effect or link"
             }
           },
           {
-            "risco": "Fonte de outro tenant ou evento ligado à entidade errada",
+            "risco": "Associação de documento a requisito de outra competência",
             "teste_preventivo": {
-              "id": "NEG-F5-3-LINHAGEM",
-              "runner": "node",
-              "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-              "caso": "F5.3 rejects a source from another tenant"
+              "id": "NEG-F5-4-C0415",
+              "runner": "vitest",
+              "arquivo": "src/test/f5-code-v115-document-scope-isolation.test.ts",
+              "caso": "F5 V115 competence document scope isolation IFV1-F5-C0415 negative: foreign competence document and effects remain hidden"
             }
           }
         ]
@@ -91,88 +96,65 @@
         ],
         "green": [
           {
-            "id": "GREEN-F5-95-IDS",
+            "id": "GREEN-F5-109-IDS",
+            "runner": "node",
+            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
+            "caso": "F5 exact 109 cumulative canonical ids"
+          },
+          {
+            "id": "GREEN-F5-4-C0311",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
+            "caso": "F5 V110/V111 document scope isolation IFV1-F5-C0311 positive: document change and lineage remain scoped"
+          },
+          {
+            "id": "GREEN-F5-4-C0420",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-v115-document-scope-isolation.test.ts",
+            "caso": "F5 V115 competence document scope isolation IFV1-F5-C0420 positive: competence document reaches the authorized consumer"
+          }
+        ],
+        "negativos": [
+          {
+            "id": "NEG-F5-4-C0288",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
+            "caso": "F5 V110/V111 document scope isolation IFV1-F5-C0288 negative: foreign document action has no effect or link"
+          },
+          {
+            "id": "NEG-F5-4-C0315",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
+            "caso": "F5 V110/V111 document scope isolation IFV1-F5-C0315 negative: foreign document action has no effect or link"
+          },
+          {
+            "id": "NEG-F5-4-C0415",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-v115-document-scope-isolation.test.ts",
+            "caso": "F5 V115 competence document scope isolation IFV1-F5-C0415 negative: foreign competence document and effects remain hidden"
+          }
+        ],
+        "regressao": [
+          {
+            "id": "REG-F5-95-IDS",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
             "caso": "F5 exact 95 cumulative canonical ids"
           },
           {
-            "id": "GREEN-F5-3-C0192",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
-            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0192 positive: authorized material change reaches the scoped consumer"
-          },
-          {
-            "id": "GREEN-F5-3-C0237",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
-            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0237 positive: authorized material change reaches the scoped consumer"
-          },
-          {
-            "id": "GREEN-F5-3-C0260",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
-            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0260 positive: authorized material change reaches the scoped consumer"
-          }
-        ],
-        "negativos": [
-          {
-            "id": "NEG-F5-3-C0232",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
-            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0232 negative: foreign material change is denied and remains hidden"
-          },
-          {
-            "id": "NEG-F5-3-C0264",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
-            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0264 negative: foreign material change is denied and remains hidden"
-          },
-          {
-            "id": "NEG-F5-3-LINHAGEM",
-            "runner": "node",
-            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5.3 rejects a source from another tenant"
-          },
-          {
-            "id": "NEG-F5-3-AUDIT",
-            "runner": "node",
-            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5.3 rejects a different audit entity"
-          },
-          {
-            "id": "NEG-F5-3-C0268",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
-            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0268 negative: foreign material change is denied and remains hidden"
-          }
-        ],
-        "regressao": [
-          {
-            "id": "REG-F4-IDS",
+            "id": "REG-F4-MATERIAL",
             "runner": "node",
             "arquivo": "scripts/hml/f4-code-material-evidence.test.mjs",
             "caso": "F4 CODE material verifier accepts exact canonical ID pairs"
-          },
-          {
-            "id": "REG-F5-78-IDS",
-            "runner": "node",
-            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 exact 78 cumulative canonical ids"
-          },
-          {
-            "id": "REG-F5-RECIBO",
-            "runner": "node",
-            "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 context receipt remains partial"
           }
         ]
       },
       "solucao": {
-        "descricao": "Executar cada produtor e consumidor material com o cliente e adaptadores reais e respostas de transporte sintéticas. Reconciliar IDs, hash, vínculos e eventos. O verificador exige os pares exatos e a proveniência do mesmo HEAD, run, job e tentativa.",
-        "rollback": "Reverter o BUILD em PR protegida e preservar recibos históricos, escopos aprovados e controles obrigatórios.",
+        "descricao": "Executar os adaptadores reais com transporte sintético, comparar a versão e sua fonte e confirmar a negação sem efeito ou exposição. O coletor fixa arquivo, caso, título, escopo, SHA, run, job e tentativa.",
+        "rollback": "Reverter a BUILD em PR protegida, preservando os recibos cumulativos anteriores.",
         "arquivos": [
-          "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts"
+          "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
+          "src/test/f5-code-v115-document-scope-isolation.test.ts"
         ]
       }
     }

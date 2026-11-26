@@ -218,7 +218,9 @@ const normativeCases = JSON.parse(
   ),
 ).cases;
 test("F5 exact 95 cumulative canonical ids", () => {
-  const ids = Object.values(BATCHES).flat();
+  const ids = Object.entries(BATCHES)
+    .filter(([batch]) => !["contractdocuments", "competencedocuments"].includes(batch))
+    .flatMap(([, values]) => values);
   assert.equal(ids.length, 95);
   assert.equal(new Set(ids).size, 95);
   assert.deepEqual(
@@ -226,6 +228,31 @@ test("F5 exact 95 cumulative canonical ids", () => {
     normativeCases.map((row) => row.caseId.slice(-4)),
   );
   assert.equal(normativeCases.filter((row) => row.classification === "CONDICIONAL").length, 3);
+});
+
+test("F5 exact 109 cumulative canonical ids", () => {
+  const inventory = JSON.parse(
+    readFileSync(
+      new URL(
+        "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_4_CASE_CONTRACTS_PROPOSAL.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ).cases;
+  const all = Object.values(BATCHES).flat();
+  assert.equal(all.length, 109);
+  assert.equal(new Set(all).size, 109);
+  for (const [batch, origins] of [
+    ["contractdocuments", ["V110", "V111"]],
+    ["competencedocuments", ["V115"]],
+  ]) {
+    assert.deepEqual(
+      BATCHES[batch],
+      inventory.filter((row) => origins.includes(row.origin)).map((row) => row.caseId.slice(-4)),
+    );
+  }
+  assert.equal(inventory.filter((row) => row.classification === "CONDICIONAL").length, 3);
 });
 function normativeFixture() {
   const a = (n) => proofId("a", "530", n);

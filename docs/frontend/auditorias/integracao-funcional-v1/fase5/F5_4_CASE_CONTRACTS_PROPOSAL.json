@@ -1,6 +1,6 @@
 {
   "schema": "contaos.ifv1.f5.case-contract-proposal.v1",
-  "status": "PREPARATORY_NOT_AUTHORIZED_BUILD",
+  "status": "IMPLEMENTED_CANDIDATE_PENDING_CI",
   "scope": "F5.4",
   "planPr": 777,
   "f53BuildPr": 784,
@@ -30,7 +30,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Criar o documento completo no contrato de A. Reconciliar os IDs de documento, versão, arquivo e o hash conferido no consumidor, preservando vigência, tipo e metadados autorizados.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0294",
@@ -47,7 +47,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Criar o documento completo no contrato de A. Reconciliar os IDs de documento, versão, arquivo e o hash conferido no consumidor, preservando vigência, tipo e metadados autorizados.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0297",
@@ -64,7 +64,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Executar a operação autorizada e conferir pelo leitor V123 o evento final do produtor, a entidade, a organização e a correlação da resposta. Quando o adaptador expõe somente metadados seguros, conferir a correlação na fronteira do transporte e reconciliar pelo leitor real.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD",
       "conditionalEvent": "DocumentoContratoMetadadosCompletos",
       "eventEntity": "documentos_contrato",
       "precedingEvent": "DocumentoContratoCriado",
@@ -85,7 +85,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Adicionar versão ao documento de A, reler o ponteiro atual e a versão anterior e reconciliar arquivo, SHA-256 e proveniência de fonte, página e trecho quando expostos pelo consumidor.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0315",
@@ -102,7 +102,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Adicionar versão ao documento de A, reler o ponteiro atual e a versão anterior e reconciliar arquivo, SHA-256 e proveniência de fonte, página e trecho quando expostos pelo consumidor.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0320",
@@ -119,7 +119,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Adicionar versão ao documento de A, reler o ponteiro atual e a versão anterior e reconciliar arquivo, SHA-256 e proveniência de fonte, página e trecho quando expostos pelo consumidor.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0321",
@@ -136,7 +136,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Adicionar versão ao documento de A, reler o ponteiro atual e a versão anterior e reconciliar arquivo, SHA-256 e proveniência de fonte, página e trecho quando expostos pelo consumidor.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0324",
@@ -153,7 +153,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Executar a operação autorizada e conferir pelo leitor V123 o evento final do produtor, a entidade, a organização e a correlação da resposta. Quando o adaptador expõe somente metadados seguros, conferir a correlação na fronteira do transporte e reconciliar pelo leitor real.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD",
       "conditionalEvent": "VersaoDocumentoContratoCriada",
       "eventEntity": "versoes_documento"
     },
@@ -172,7 +172,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Criar documento de competência vinculado a requisito de A. Conferir documento, versão e arquivo e observar o efeito no consumidor do mesmo contrato e competência, inclusive a necessidade de reanálise quando prevista.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0413",
@@ -189,7 +189,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Criar documento de competência vinculado a requisito de A. Conferir documento, versão e arquivo e observar o efeito no consumidor do mesmo contrato e competência, inclusive a necessidade de reanálise quando prevista.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0415",
@@ -206,7 +206,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Criar documento de competência vinculado a requisito de A. Conferir documento, versão e arquivo e observar o efeito no consumidor do mesmo contrato e competência, inclusive a necessidade de reanálise quando prevista.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0416",
@@ -223,7 +223,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Criar documento de competência vinculado a requisito de A. Conferir documento, versão e arquivo e observar o efeito no consumidor do mesmo contrato e competência, inclusive a necessidade de reanálise quando prevista.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0418",
@@ -240,7 +240,7 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Criar documento de competência vinculado a requisito de A. Conferir documento, versão e arquivo e observar o efeito no consumidor do mesmo contrato e competência, inclusive a necessidade de reanálise quando prevista.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN"
+      "proofState": "PENDING_CI_AT_BUILD_HEAD"
     },
     {
       "caseId": "IFV1-F5-C0420",
@@ -257,9 +257,11 @@
       "backendContract": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
       "positiveProposal": "Executar a operação autorizada e conferir pelo leitor V123 o evento final do produtor, a entidade, a organização e a correlação da resposta. Quando o adaptador expõe somente metadados seguros, conferir a correlação na fronteira do transporte e reconciliar pelo leitor real.",
       "negativeProposal": "Com identidade sintética de B, tentar o comando e o consumidor vinculados a A. Conferir a decisão de autorização, ausência de arquivo, link ou metadado de A quando aplicável e leitura íntegra dos próprios registros de B e A após a recusa.",
-      "proofState": "NOT_RUN",
+      "proofState": "PENDING_CI_AT_BUILD_HEAD",
       "conditionalEvent": "DocumentoCompetenciaCriado",
       "eventEntity": "documentos_competencia"
     }
-  ]
+  ],
+  "scopePlanPr": 787,
+  "scopePlanIntegration": "5f13e16ef5602efd23e67cea63d37500ccfe195f"
 }
