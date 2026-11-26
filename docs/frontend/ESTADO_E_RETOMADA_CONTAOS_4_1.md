@@ -1,3 +1,13 @@
+## Situação atual · V2 CODE, próximo regular 46 · 26/11/2026
+
+Os regulares 44 e 45 e seus recibos estão integrados. [BUILD 45 #832](https://github.com/contaos999999/contaos-hml-control/pull/832), merge `423869bf317fcae4e98acb659ca818c372cbaf8d`, revisão 6078585220 no HEAD exato e Teste C 45869787335 com oito casos do ciclo e regressão V2-01. [Recibo #833](https://github.com/contaos999999/contaos-hml-control/pull/833), merge `b372f481c67156d429cbe9fb738990493a924cc7`, revisão 6078619814 e leitura na main.
+
+A [BUILD I05 #232](https://github.com/contaos999999/develop/pull/232) integrou a proveniência dos itens em `31f3ef9b95c8dc4e9eadbc786a2125e3c02a266d`. A migração 20261126221545 foi aplicada em HML com paridade de 139 versões no [run 45905601026](https://github.com/contaos999999/develop/actions/runs/45905601026). O worker v6 foi lido de volta com os três arquivos iguais aos da main. O [recibo #235](https://github.com/contaos999999/develop/pull/235) entrou em `cbf247724ecede59fdcba0d18d7b0e37c76f247f`. O contexto foi conferido contra 25 blobs e o catálogo 100/97, com os hashes preservados. [Checkpoint oficial](https://github.com/contaos999999/contaos-hml-control/issues/708#issuecomment-7204850136)
+
+A execução segue com o [PLAN P0 46](planos/PROMPT_46_V2_03_APONTAMENTO_DETALHE_2026-11-26.md), sua validação integrada, RED, BUILD, Teste C e recibo. Gates V2 e certificados cumulativos continuam em execução. LIVE NOT_RUN e PROD NO-GO.
+
+## Histórico de retomadas
+
 ## Situação atual · V2 CODE, recibo 44 concluído na main · 26/11/2026
 
 O certificado CODE V1 e o recibo de integração interna estão integrados pelas PRs #821 e #822. A V2 segue o plano mestre [#825](https://github.com/contaos999999/contaos-hml-control/pull/825) e sua matriz. Diligências V2-01 entrou pela [BUILD #827](https://github.com/contaos999999/contaos-hml-control/pull/827), merge `ea5802ce4544abeba7549c70070f121652490054`, com oito casos visuais confirmados.
