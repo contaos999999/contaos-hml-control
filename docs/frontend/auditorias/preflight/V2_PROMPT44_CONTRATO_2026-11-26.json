@@ -1,0 +1,98 @@
+{
+  "schema": "contaos.v2.prompt44.preflight.v1",
+  "estado": "CONTRATO_DE_LEITURA_VERIFICADO",
+  "regular": "44",
+  "frontend_do_gate": "af0c36c11bdfa647abdbd37b6199b0a0b32489cd",
+  "backend_normativo": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "projeto_hml": "gklhhhyosgasnyoxlrui",
+  "consulta": "Catálogo pg_class, information_schema.columns, pg_policies, pg_constraint e pg_proc. Somente metadados de leitura dos dois objetos envolvidos.",
+  "metadados": {
+    "campos": {
+      "id": "uuid:NO",
+      "status": "text:NO",
+      "id_contrato": "uuid:NO",
+      "recebido_em": "timestamp with time zone:NO",
+      "encerrado_em": "timestamp with time zone:YES",
+      "numero_rodada": "integer:NO",
+      "id_competencia": "uuid:NO",
+      "id_organizacao": "uuid:NO",
+      "prazo_resposta": "date:YES",
+      "versao_registro": "bigint:NO"
+    },
+    "tabela": true,
+    "rpc_v114": [
+      {
+        "argumento": "p_id_competencia uuid",
+        "anon_execute": false,
+        "auth_execute": true
+      }
+    ],
+    "permissoes": {
+      "rls": true,
+      "force_rls": false,
+      "anon_select": false,
+      "auth_select": true,
+      "auth_public_usage": true
+    },
+    "restricoes": [
+      {
+        "tipo": "c",
+        "definicao": "CHECK (status = ANY (ARRAY['aberto'::text, 'em_tratamento'::text, 'pronto_reapresentar'::text, 'reapresentado'::text, 'encerrado'::text]))"
+      },
+      {
+        "tipo": "f",
+        "definicao": "FOREIGN KEY (id_competencia) REFERENCES competencias(id) ON DELETE RESTRICT"
+      },
+      {
+        "tipo": "f",
+        "definicao": "FOREIGN KEY (id_contrato) REFERENCES contratos(id) ON DELETE RESTRICT"
+      },
+      {
+        "tipo": "f",
+        "definicao": "FOREIGN KEY (id_organizacao) REFERENCES organizacoes(id) ON DELETE RESTRICT"
+      },
+      {
+        "tipo": "f",
+        "definicao": "FOREIGN KEY (id_contrato, id_organizacao) REFERENCES contratos(id, id_organizacao) ON DELETE RESTRICT"
+      },
+      {
+        "tipo": "p",
+        "definicao": "PRIMARY KEY (id)"
+      },
+      {
+        "tipo": "u",
+        "definicao": "UNIQUE (id_competencia, numero_rodada)"
+      }
+    ],
+    "policies_leitura": [
+      {
+        "tipo": "SELECT",
+        "roles": [
+          "authenticated"
+        ],
+        "policy": "ciclos_diligencia_select",
+        "predicado": "privado.usuario_tem_acesso_contrato(id_contrato)"
+      }
+    ]
+  },
+  "positivos_code_planejados": [
+    "obter_visao_geral_competencia valida o escopo da competência",
+    "SELECT paginado com organização, contrato e competência",
+    "rodadas em ordem e tela de retorno para a competência"
+  ],
+  "negativos_code_planejados": [
+    "identidade e organização divergentes",
+    "linha de outro contrato no payload",
+    "status ou data inexistente no contrato",
+    "resposta de sessão anterior",
+    "rede, paginação ou autorização indevidas"
+  ],
+  "live": "NOT_RUN",
+  "prod": "NO-GO",
+  "referencias": [
+    "https://github.com/contaos999999/contaos-hml-control/pull/825",
+    "https://github.com/contaos999999/develop/blob/a1516de1d8949e505d83b5e000eb1cc558b217a7/docs/CERTIFICACAO_BACKEND_HML_4_1.md",
+    "https://supabase.com/docs/reference/javascript/select",
+    "https://supabase.com/docs/reference/javascript/using-modifiers-range"
+  ]
+}
