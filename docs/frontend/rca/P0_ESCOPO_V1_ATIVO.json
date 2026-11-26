@@ -3,24 +3,19 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "45afa6b3d00572b74eeb380580ba9ff2b1d97357",
+    "frontend_sha": "964d005b57ec95b28571a6dc39146ae2525d5aea",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f5-code-v102-v103-scope-isolation.test.ts",
+      "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
       "versao": "V1",
-      "justificativa": "Provas CODE_FIXTURE de criação, versão, consumo e isolamento de contratantes em V102/V103."
-    },
-    {
-      "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
-      "versao": "V1",
-      "justificativa": "Provas CODE_FIXTURE de contratos em V105/V106 e vínculo material aos consumidores autorizados."
+      "justificativa": "Provas CODE_FIXTURE de autorização, vínculo e isolamento para os 17 casos de V107, V108 e V109."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F5-782-IDENTIDADE-MATERIAL",
+      "id": "RCA-F5-784-IDENTIDADE-MATERIAL",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -31,55 +26,54 @@
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "O coletor original confirmou a cardinalidade do lote sem conferir os IDs canônicos. A F5.2 estende a prevenção da F5.1 a dois lotes, vinculando também produtor, consumidor, operação e escopo material de cada conexão.",
+        "descricao": "O coletor histórico aceitou cardinalidade sem identidade canônica. Esta fatia estende a prevenção a normativos, orçamento e listas e exige prova da versão, da origem e do consumidor vinculado a cada ID.",
         "evidencias": [
           "Run ancestral 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2. Falha do coletor F4 preservada no histórico da PR #760.",
-          "A evidência e a correção documental da F5.1 permanecem na ficha integrada pela #778, commit 9ebf16f6b339ddf7113add52257c08c9c89b9f8e, blob fffe36808f8d4827275341db21ddaf6e354e7343.",
-          "PLAN P0 #783 integrado em 45afa6b3d00572b74eeb380580ba9ff2b1d97357, revisão assistida 6061896583, escopo P0_GOV_PLAN_782.json blob b0902f298d7ad39138fae3278818b5857b207332.",
-          "Inventário canônico F5.2 derivado do PLAN #777 e da matriz bb7ce43f9c334f2f03e9aafab405addadfe5e19a. Os quatro eventos condicionais existem no backend normativo fixado."
+          "Árvore F5.2 e ficha causal preservadas na integração 955b3f52598fa2cbee3e8d45a00c7cb94a71626a, blob e6496c993ca0e0a19e21580e3191cf7e667d015e. Material cumulativo do run 45687169618 conferido com 78 casos e 156 provas.",
+          "A PR #785 integrou a autorização prospectiva em 964d005b57ec95b28571a6dc39146ae2525d5aea, revisão assistida 6066966118. O P0_GOV_PLAN_784.json foi conferido na main no blob 30b0949a6a1ef879ee379a80455bc2e75a6436ff.",
+          "O primeiro ensaio local apontou projeção incorreta do teste para os objetos normalizados V116 e V117. Os IDs de organização e contrato são conferidos na resposta do adaptador. O hash e a versão de origem são conferidos no objeto normalizado e a representação serializada da fonte é validada separadamente."
         ],
         "hipoteses_descartadas": [
-          "A mesma quantidade de testes pode conter IDs de outro caso, associação de outro tenant ou auditoria com correlação divergente.",
-          "O RED ancestral pertence ao coletor histórico. A alteração atual fiscaliza código com transporte sintético e não afirma falha ou PASS de RLS remota."
+          "A contagem de testes, sem identidade, não demonstra prova canônica.",
+          "O ensaio local de projeção trata do contrato de teste. A consulta por tenant, o hash e o resultado do consumidor são preservados e verificados no fluxo CODE_FIXTURE."
         ]
       },
       "impacto": {
         "dependencias": [
-          "Adaptadores V102/V103 e consumidores V101/V104/V105/V106/V123",
-          "Comandos V105/V106 e consumidores reais de detalhes e vínculos dos contratos",
-          "Dashboard SYS05, preferências por identidade e chave de cache",
-          "Trilha V123, associação composta de contratantes e contratos e leitores dependentes",
-          "Coletor F5 e cinco lotes integrados na F5.1"
+          "Adaptadores materiais V107, V108 e V109",
+          "Vínculos de fonte, versão, vigência e documento-base",
+          "Consumo em competência, análise, requisito, parecer e trilha de auditoria",
+          "Coletor F5 com os sete lotes da F5.1 e F5.2"
         ],
         "versoes_afetadas": [
           "V1"
         ],
         "riscos": [
           {
-            "risco": "Impedimento de transporte ou conflito classificado como negação de autorização",
+            "risco": "Aceitação de hash desatualizado como negação de acesso",
             "teste_preventivo": {
-              "id": "NEG-F5-2-C0107",
+              "id": "NEG-F5-3-C0232",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-v102-v103-scope-isolation.test.ts",
-              "caso": "F5 V102/V103 party scope isolation IFV1-F5-C0107 negative: foreign party mutation is denied and remains hidden"
+              "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+              "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0232 negative: foreign material change is denied and remains hidden"
             }
           },
           {
-            "risco": "Associação de contratante de A em contrato de B sem a integridade composta",
+            "risco": "Falha genérica de transporte confundida com autorização",
             "teste_preventivo": {
-              "id": "NEG-F5-2-C0136",
+              "id": "NEG-F5-3-C0264",
               "runner": "vitest",
-              "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
-              "caso": "F5 V105/V106 contract scope isolation IFV1-F5-C0136 negative: foreign contract change is denied and remains hidden"
+              "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+              "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0264 negative: foreign material change is denied and remains hidden"
             }
           },
           {
-            "risco": "Evento correto com correlação adulterada aceito pelo coletor",
+            "risco": "Fonte de outro tenant ou evento ligado à entidade errada",
             "teste_preventivo": {
-              "id": "NEG-F5-2-AUDIT",
+              "id": "NEG-F5-3-LINHAGEM",
               "runner": "node",
               "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-              "caso": "F5.2 rejects audit corruption"
+              "caso": "F5.3 rejects a source from another tenant"
             }
           }
         ]
@@ -97,60 +91,60 @@
         ],
         "green": [
           {
-            "id": "GREEN-F5-78-IDS",
+            "id": "GREEN-F5-95-IDS",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 exact 78 cumulative canonical ids"
+            "caso": "F5 exact 95 cumulative canonical ids"
           },
           {
-            "id": "GREEN-F5-2-C0100",
+            "id": "GREEN-F5-3-C0192",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-v102-v103-scope-isolation.test.ts",
-            "caso": "F5 V102/V103 party scope isolation IFV1-F5-C0100 positive: authorized party mutation reaches the scoped consumer"
+            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0192 positive: authorized material change reaches the scoped consumer"
           },
           {
-            "id": "GREEN-F5-2-C0146",
+            "id": "GREEN-F5-3-C0237",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
-            "caso": "F5 V105/V106 contract scope isolation IFV1-F5-C0146 positive: authorized contract change reaches the scoped consumer"
+            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0237 positive: authorized material change reaches the scoped consumer"
           },
           {
-            "id": "GREEN-F5-2-C0176",
+            "id": "GREEN-F5-3-C0260",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
-            "caso": "F5 V105/V106 contract scope isolation IFV1-F5-C0176 positive: authorized contract change reaches the scoped consumer"
+            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0260 positive: authorized material change reaches the scoped consumer"
           }
         ],
         "negativos": [
           {
-            "id": "NEG-F5-2-C0136",
+            "id": "NEG-F5-3-C0232",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
-            "caso": "F5 V105/V106 contract scope isolation IFV1-F5-C0136 negative: foreign contract change is denied and remains hidden"
+            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0232 negative: foreign material change is denied and remains hidden"
           },
           {
-            "id": "NEG-F5-2-C0107",
+            "id": "NEG-F5-3-C0264",
             "runner": "vitest",
-            "arquivo": "src/test/f5-code-v102-v103-scope-isolation.test.ts",
-            "caso": "F5 V102/V103 party scope isolation IFV1-F5-C0107 negative: foreign party mutation is denied and remains hidden"
+            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0264 negative: foreign material change is denied and remains hidden"
           },
           {
-            "id": "NEG-F5-2-AUDIT",
+            "id": "NEG-F5-3-LINHAGEM",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5.2 rejects audit corruption"
+            "caso": "F5.3 rejects a source from another tenant"
           },
           {
-            "id": "NEG-F5-2-C0146",
-            "runner": "vitest",
-            "arquivo": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
-            "caso": "F5 V105/V106 contract scope isolation IFV1-F5-C0146 negative: foreign contract change is denied and remains hidden"
-          },
-          {
-            "id": "NEG-F5-2-CONSUMER",
+            "id": "NEG-F5-3-AUDIT",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5.2 rejects consumer"
+            "caso": "F5.3 rejects a different audit entity"
+          },
+          {
+            "id": "NEG-F5-3-C0268",
+            "runner": "vitest",
+            "arquivo": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+            "caso": "F5 V107/V108/V109 normative scope isolation IFV1-F5-C0268 negative: foreign material change is denied and remains hidden"
           }
         ],
         "regressao": [
@@ -161,10 +155,10 @@
             "caso": "F4 CODE material verifier accepts exact canonical ID pairs"
           },
           {
-            "id": "REG-F5-54-IDS",
+            "id": "REG-F5-78-IDS",
             "runner": "node",
             "arquivo": "scripts/hml/f5-code-material-evidence.test.mjs",
-            "caso": "F5 exact 54 canonical ids"
+            "caso": "F5 exact 78 cumulative canonical ids"
           },
           {
             "id": "REG-F5-RECIBO",
@@ -175,11 +169,10 @@
         ]
       },
       "solucao": {
-        "descricao": "Executar produtores e consumidores reais com respostas de transporte roteirizadas, pares canônicos, dois tenants e reexecução cumulativa no mesmo HEAD. O coletor rejeita respostas incorretas, associação indevida, correlação adulterada e perda de vínculos.",
-        "rollback": "Reverter a BUILD por PR protegida e preservar recibos históricos, provas da F5.1 e controles obrigatórios.",
+        "descricao": "Executar cada produtor e consumidor material com o cliente e adaptadores reais e respostas de transporte sintéticas. Reconciliar IDs, hash, vínculos e eventos. O verificador exige os pares exatos e a proveniência do mesmo HEAD, run, job e tentativa.",
+        "rollback": "Reverter o BUILD em PR protegida e preservar recibos históricos, escopos aprovados e controles obrigatórios.",
         "arquivos": [
-          "src/test/f5-code-v102-v103-scope-isolation.test.ts",
-          "src/test/f5-code-v105-v106-scope-isolation.test.tsx"
+          "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts"
         ]
       }
     }

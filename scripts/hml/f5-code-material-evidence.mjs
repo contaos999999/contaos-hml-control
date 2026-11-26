@@ -36,6 +36,25 @@ export const BATCHES = Object.freeze({
     "0174",
     "0176",
   ],
+  normatives: [
+    "0192",
+    "0200",
+    "0202",
+    "0203",
+    "0204",
+    "0205",
+    "0208",
+    "0232",
+    "0233",
+    "0234",
+    "0237",
+    "0260",
+    "0262",
+    "0263",
+    "0264",
+    "0265",
+    "0268",
+  ],
 });
 export const A = "a1111111-1111-4111-8111-111111111111",
   B = "a2222222-2222-4222-8222-222222222222";
@@ -180,6 +199,50 @@ const f52Inventory = JSON.parse(
   ),
 );
 const f52Cases = new Map(f52Inventory.cases.map((entry) => [entry.caseId.slice(-4), entry]));
+const f53Inventory = JSON.parse(
+  fs.readFileSync(
+    new URL(
+      "../../docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_3_CASE_CONTRACTS_PROPOSAL.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+const f53Cases = new Map(f53Inventory.cases.map((entry) => [entry.caseId.slice(-4), entry]));
+const normativeStates = {
+  V107: {
+    ref: 13,
+    version: 12,
+    initial: "nao_aplicavel",
+    changed: "aplicavel",
+    hashSeed: "Fonte F5.3 a",
+  },
+  V108: {
+    ref: 22,
+    version: 22,
+    initial: "rascunho",
+    changed: "publicada",
+    hashSeed: "Orçamento F5.3 a",
+  },
+  V109: {
+    ref: 31,
+    version: 32,
+    initial: "rascunho",
+    changed: "publicada",
+    hashSeed: "Fonte F5.3 a",
+  },
+};
+const normativeConsumers = {
+  V109: 33,
+  V113: 42,
+  V114: 41,
+  V115: 42,
+  V116: 42,
+  V117: 42,
+  V118: 45,
+  V119: 41,
+  V123: 50,
+};
 const downstreamReads = {
   V107: "fontes_normativas",
   V108: "propostas_orcamentarias",
@@ -273,9 +336,18 @@ const batchesWithEvidence = {
       ][index],
     check: checkContract,
   },
+  normatives: {
+    file: "f5-code-v107-v108-v109-scope-isolation.test.ts",
+    suite: "F5 V107/V108/V109 normative scope isolation",
+    title: (_id, index) =>
+      [
+        "authorized material change reaches the scoped consumer",
+        "foreign material change is denied and remains hidden",
+      ][index],
+    check: checkNormative,
+  },
 };
-function checkScopeF52(o, id, producer, operation, association = false) {
-  const canonical = f52Cases.get(id);
+function checkScopedChange(o, canonical, producer, operation, label, association = false) {
   const positive = o.kind === "positive";
   const b = o.readback;
   if (
@@ -292,7 +364,7 @@ function checkScopeF52(o, id, producer, operation, association = false) {
     b.producer !== producer ||
     b.foreignVisible !== false
   )
-    fail("F5.2 actor/tenant/producer/consumer mismatch");
+    fail(label + " actor/tenant/producer/consumer mismatch");
   if (
     !positive &&
     (b.ownOrganizationId !== B ||
@@ -301,8 +373,11 @@ function checkScopeF52(o, id, producer, operation, association = false) {
       b.code !== (association ? "23503" : "42501") ||
       b.mutationCount !== 0)
   )
-    fail("F5.2 authorization denial missing or produced an effect");
+    fail(label + " authorization denial missing or produced an effect");
   return canonical;
+}
+function checkScopeF52(o, id, producer, operation, association = false) {
+  return checkScopedChange(o, f52Cases.get(id), producer, operation, "F5.2", association);
 }
 function checkAuditF52(b, materialId, event, series) {
   if (
@@ -419,6 +494,68 @@ function checkContract(o, id) {
   } else if (b.resultId !== contractId) {
     fail("F5.2 contract consumer did not return the written contract");
   }
+}
+function checkNormative(o, id) {
+  const c = f53Cases.get(id);
+  const domain = normativeStates[c?.origin];
+  if (!domain) fail("F5.3 canonical origin missing");
+  checkScopedChange(o, c, "rpc/" + c.producer, c.origin === "V107" ? "apply" : "publish", "F5.3");
+  const b = o.readback;
+  const a = (number) => fixtureId("a", "530", number);
+  const other = (number) => fixtureId("b", "530", number);
+  if (o.kind === "negative") {
+    if (
+      b.downstreamId !== undefined ||
+      b.ownMaterialId !== other(domain.ref) ||
+      b.ownVersionId !== other(domain.version) ||
+      b.ownContractId !== other(1) ||
+      b.targetMaterialId !== a(domain.ref) ||
+      b.targetState !== domain.initial ||
+      (id === "0232" && b.rejectedHashAsConflict !== true) ||
+      (id === "0264" && b.transportSeparated !== true)
+    )
+      fail("F5.3 foreign exposure, changed target or missing denial controls");
+    return;
+  }
+  const expectedHash = createHash("sha256").update(domain.hashSeed).digest("hex");
+  if (
+    b.organizationId !== A ||
+    b.contractId !== a(1) ||
+    b.ref !== a(domain.ref) ||
+    b.version !== a(domain.version) ||
+    b.validFrom !== "2026-11-01" ||
+    b.checksum !== expectedHash ||
+    b.previousState !== domain.initial ||
+    b.state !== domain.changed ||
+    b.downstreamId !== a(normativeConsumers[c.destination])
+  )
+    fail("F5.3 material version, checksum or consumer mismatch");
+  if (
+    (c.origin === "V108" && (b.linkedItem !== a(23) || b.sourceDocId !== a(24))) ||
+    (c.origin === "V109" &&
+      (b.linkedItem !== a(33) || b.sourceRef !== a(12) || b.requestId !== a(52))) ||
+    (c.origin !== "V109" && b.correlation !== a(51))
+  )
+    fail("F5.3 source, linked item or request mismatch");
+  if (c.destination === "V123") {
+    if (
+      b.eventName !== c.conditionalEvent ||
+      b.eventEntity !== a(domain.ref) ||
+      b.correlation !== a(51)
+    )
+      fail("F5.3 audit lineage mismatch");
+    return;
+  }
+  const snapshotHash = createHash("sha256").update("Histórico F5.3 a").digest("hex");
+  if (
+    (["V109", "V113", "V116", "V117"].includes(c.destination) && b.downstreamSource !== a(12)) ||
+    (["V113", "V116", "V117", "V118"].includes(c.destination) && b.snapshot !== snapshotHash) ||
+    (["V114", "V118", "V119"].includes(c.destination) &&
+      (b.previousCanPresent !== true || b.canPresent !== false)) ||
+    (c.destination === "V115" && b.missing !== true) ||
+    (c.destination === "V116" && (b.previousStale !== false || b.stale !== true))
+  )
+    fail("F5.3 consumer history or current state mismatch");
 }
 function checkAction(o, id) {
   const [frontier, operation, allowedRole] = actionContracts[id];
