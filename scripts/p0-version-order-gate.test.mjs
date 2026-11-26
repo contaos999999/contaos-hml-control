@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
-import { validateP0, P0 } from "./p0-version-order-gate.mjs";
+import { validateP0, readP0, P0, V1_INTEGRATION_RECEIPT } from "./p0-version-order-gate.mjs";
+import { validateProdReadiness } from "./p0-evidence-live-gate.mjs";
 
 const original = JSON.parse(readFileSync(P0, "utf8"));
 const clone = () => JSON.parse(JSON.stringify(original));
@@ -45,6 +46,72 @@ const v1Integrated = (m) => {
   m.controle.integracao_por_versao.V1.interna = fakeReceipt();
   return m;
 };
+
+const receiptRecord = () => ({
+  schema: "contaos.p0.v1-integration-receipt.v1",
+  versao: "V1",
+  escopo: "interna",
+  modalidade: "CODE",
+  live: "NOT_RUN",
+  prod: "NO-GO",
+  ressalvas: ["R-01", "R-02", "R-03"],
+  recibo: fakeReceipt(),
+});
+
+function readWithReceipt(receipt, manifest = original) {
+  return readP0((path) => {
+    if (path === P0) return JSON.stringify(manifest);
+    assert.equal(path, V1_INTEGRATION_RECEIPT);
+    if (receipt === undefined) throw Object.assign(new Error("Ausente"), { code: "ENOENT" });
+    if (receipt instanceof Error) throw receipt;
+    return typeof receipt === "string" ? receipt : JSON.stringify(receipt);
+  });
+}
+
+test("P0 — a ausência do recibo mantém a integração interna pendente", () => {
+  const m = readWithReceipt();
+  assert.deepEqual(m, original);
+  assert.match(check(m, plan("44")).errors.join(" "), /integracao interna da V1/);
+});
+
+test("P0 — recibo aditivo permite PLAN 44 e mantém GATE PROD bloqueado", () => {
+  const receipt = receiptRecord();
+  const m = readWithReceipt(receipt);
+  const expected = clone();
+  expected.controle.integracao_por_versao.V1.interna = receipt.recibo;
+  assert.deepEqual(m, expected);
+  assert.deepEqual(check(m, plan("44")).errors, []);
+  const prodErrors = validateProdReadiness(m);
+  assert.equal(prodErrors.length, 12);
+  assert.match(prodErrors.join(" "), /GATE PROD bloqueado: certificado de código V2/);
+});
+
+test("P0 — erro de leitura ou recibo corrompido interrompe a leitura", () => {
+  const denied = Object.assign(new Error("Leitura negada"), { code: "EACCES" });
+  assert.throws(() => readWithReceipt(denied), (error) => error === denied);
+  assert.throws(() => readWithReceipt("{"), SyntaxError);
+});
+
+test("P0 — rejeita recepção de escopo, status ou ressalvas incompatíveis", () => {
+  for (const override of [
+    { schema: "outro" },
+    { versao: "V2" },
+    { escopo: "cumulativa" },
+    { modalidade: "LIVE" },
+    { live: "PASS" },
+    { prod: "GO" },
+    { ressalvas: ["R-01", "R-02", "R-03", "R-04"] },
+    { recibo: { status: "PENDENTE" } },
+  ]) {
+    assert.throws(() => readWithReceipt({ ...receiptRecord(), ...override }), /recibo P0/i);
+  }
+});
+
+test("P0 — rejeita recibo antecipado ou conflitante com o manifesto de ordem", () => {
+  for (const m of [preV1(), v1Integrated(clone())]) {
+    assert.throws(() => readWithReceipt(receiptRecord(), m), /recibo P0/i);
+  }
+});
 
 test("P0 — V1 funcional certificada não libera V2 sem integracao interna", () => {
   const result = check(clone(), plan("44"));

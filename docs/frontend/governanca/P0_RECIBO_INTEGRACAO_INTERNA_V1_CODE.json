@@ -1,3 +1,104 @@
 {
-  "status": "RESERVADO"
+  "schema": "contaos.p0.v1-integration-receipt.v1",
+  "versao": "V1",
+  "escopo": "interna",
+  "modalidade": "CODE",
+  "live": "NOT_RUN",
+  "prod": "NO-GO",
+  "ressalvas": [
+    "R-01",
+    "R-02",
+    "R-03"
+  ],
+  "plan_pr": 824,
+  "revisao_modalidade": "TECNICA_ASSISTIDA_EDIVAN5002_PR_781",
+  "certificacao_global": {
+    "pr": 821,
+    "pr_merge_sha": "b3b7f09765d56340f440c8df94cfbd9a692d3023",
+    "arquivo": "docs/frontend/auditorias/integracao-funcional-v1/fase8/V1_INTEGRACAO_FUNCIONAL_CODE_CERTIFICATION.json",
+    "arquivo_sha256": "82ade19f490c43ed597b413b32eb02964e8b41178f1f11942b8455783bca593d",
+    "blob": "9810a2b7f41c56286295387eaed2ac7dada2146e"
+  },
+  "recibo": {
+    "status": "PASS",
+    "pr_merge_sha": "58d447b92d7f26de00e0afc4ac4347e109db251f",
+    "head_revisado": "5a78b965ca93019d696c0cad220b8984b29f0c09",
+    "arvore_revisada": "6cf6cb64d4ca9d10bdb5f70bfbcec793b7a56ce4",
+    "arquivo_evidencia": "docs/frontend/auditorias/integracao-funcional-v1/fase7/CERTIFICADO_RECIBO_INTEGRACAO_INTERNA_V1_CODE.md",
+    "arquivo_sha256": "fe8fcf2dfe9f17d92c331e4e2cad5ad255365861336aea09e1e14d5d4e53057f",
+    "matriz_arquivo": "docs/frontend/auditorias/integracao-funcional-v1/fase7/F7_CODE_TRACEABILITY.json",
+    "matriz_sha256": "79336321adcce1d408bce2841d7e46403014fe107772d348b537314db573bb21",
+    "grafo_arquivo": "docs/frontend/auditorias/integracao-funcional-v1/fase1/GRAFO.mmd",
+    "grafo_sha256": "e16020d742049facc0c71492331858f2c513e2cc51f2b71b3a46c3df46d7d0da",
+    "ci_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45844430133",
+    "revisao_independente_url": "https://github.com/contaos999999/contaos-hml-control/pull/823#pullrequestreview-6076429051",
+    "teste_c_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45844430133",
+    "teste_c": {
+      "tentativa": 1,
+      "job": 139994292740,
+      "artefato_id": 15132065914,
+      "artefato_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45844430133/artifacts/15132065914",
+      "zip_sha256": "8cbc52cbb47defdc554732f7ee015a1835509d9345ed830525abdab1bb1bad4b",
+      "relatorio_sha256": "482e7e57becb5d49b8974974e2c83380e237e82cdaccbb35fab424c296f1415a",
+      "delta_sha256": "d68d4de08d43562219f24b3ed26e16ef616342785a4622242a155f280573d5b5",
+      "combinacoes": 232,
+      "screenshots": 370,
+      "casos_delta_sintetico": 16
+    },
+    "fases_anteriores": [
+      {
+        "fase": 1,
+        "pr_merge_sha": "badffc1e3381e85bd115c04dfc98bb5fc864972b",
+        "arquivo_evidencia": "docs/frontend/auditorias/integracao-funcional-v1/fase1/CERTIFICADO.md",
+        "arquivo_sha256": "15a1d9c8be22dd29f750f5fdf5508cfdc49d3e2d4574d0f7bb4b8393e62c3ee8",
+        "ci_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45816836250",
+        "revisao_independente_url": "https://github.com/contaos999999/contaos-hml-control/pull/816#pullrequestreview-6073905992",
+        "origem_historica": {
+          "pr": 594,
+          "pr_merge_sha": "538c52d909a5a9929c10740e6f961e38beb8ee11",
+          "reexecucao_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45816836888"
+        }
+      },
+      {
+        "fase": 2,
+        "pr_merge_sha": "b2feca7f5d8976709ba95a2ce44407f910eabe19",
+        "arquivo_evidencia": "docs/frontend/auditorias/integracao-funcional-v1/fase2/CERTIFICADO_FASE2_NAVEGACAO_2026-11-13.md",
+        "arquivo_sha256": "62440c7630d34dfe2e51882d807c6b48af0160b2713f2e57c07c7b35cd0857c2",
+        "ci_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43512971085",
+        "revisao_independente_url": "https://github.com/contaos999999/contaos-hml-control/pull/652#pullrequestreview-5898772537"
+      },
+      {
+        "fase": 3,
+        "pr_merge_sha": "019a38e4aca6ec7d09a298875627d9c896f72600",
+        "arquivo_evidencia": "docs/frontend/auditorias/integracao-funcional-v1/fase3/CERTIFICADO_FASE3_CODE_2026-11-24.md",
+        "arquivo_sha256": "5d3c306e79410b299a346afb8d8f43f52e3b526e7ccbeb72beca19dfb088ea29",
+        "ci_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45536602285",
+        "revisao_independente_url": "https://github.com/contaos999999/contaos-hml-control/pull/758#pullrequestreview-6051192764"
+      },
+      {
+        "fase": 4,
+        "pr_merge_sha": "e322301e58419e78eb4dfad77a956326b449ecc1",
+        "arquivo_evidencia": "docs/frontend/auditorias/integracao-funcional-v1/fase4/CERTIFICADO_FASE4_CODE_2026-11-25.md",
+        "arquivo_sha256": "73bcefd611ee8a89760d9d763bd1f2b9bbdc370c4a77976765394aa810c3d7d3",
+        "ci_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45591946451",
+        "revisao_independente_url": "https://github.com/contaos999999/contaos-hml-control/pull/776#pullrequestreview-6055575595"
+      },
+      {
+        "fase": 5,
+        "pr_merge_sha": "4ea895059dcdac2cb2dc2558a9918f5392ecc8b0",
+        "arquivo_evidencia": "docs/frontend/auditorias/integracao-funcional-v1/fase5/CERTIFICADO_FASE5_CODE_2026-11-25.md",
+        "arquivo_sha256": "2181cea9479059af4ba1ee1e6e2cb06273161b805173f0a9079107ee9a52dc06",
+        "ci_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45745384585",
+        "revisao_independente_url": "https://github.com/contaos999999/contaos-hml-control/pull/795#pullrequestreview-6067937617"
+      },
+      {
+        "fase": 6,
+        "pr_merge_sha": "a8587643ae91e544d869454ff5b7d702d65435e9",
+        "arquivo_evidencia": "docs/frontend/auditorias/integracao-funcional-v1/fase6/CERTIFICADO_FASE6_CODE.md",
+        "arquivo_sha256": "daeda32f23c418f0175a0550a3d362841267f6f3953d7c360eace2a66698f39b",
+        "ci_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45814865584",
+        "revisao_independente_url": "https://github.com/contaos999999/contaos-hml-control/pull/815#pullrequestreview-6073743148"
+      }
+    ]
+  }
 }
