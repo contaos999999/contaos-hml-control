@@ -1,6 +1,6 @@
 {
   "schema": "contaos.ifv1.f6.journeys.v1",
-  "state": "PLAN_NOT_EXECUTED",
+  "state": "IMPLEMENTED_CANDIDATE_PENDING_NATIVE_RUN",
   "scope": "CODE_FIXTURE",
   "matrixBlob": "bb7ce43f9c334f2f03e9aafab405addadfe5e19a",
   "backendSha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
@@ -10,7 +10,20 @@
     "conditional": 18,
     "minimumProofs": 276
   },
-  "activeBatches": {},
+  "activeBatches": {
+    "adm01": {
+      "file": "src/test/f6-code-adm01-journeys.test.tsx",
+      "suite": "F6 ADM01 journeys"
+    },
+    "context": {
+      "file": "src/test/f6-code-context-journeys.test.tsx",
+      "suite": "F6 context journeys"
+    },
+    "sys04": {
+      "file": "src/test/f6-code-sys04-journeys.test.ts",
+      "suite": "F6 SYS04 journeys"
+    }
+  },
   "cases": [
     {
       "caseId": "IFV1-F6-C0002",
