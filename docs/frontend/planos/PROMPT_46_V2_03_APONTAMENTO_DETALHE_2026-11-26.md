@@ -41,3 +41,9 @@ Primeiro publicar o RED no GitHub com o caso `V2-03 registra a rota Apontamento 
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 
 GitHub e Supabase canônicos. A matriz permanece cumulativa e as provas de leitura e navegação usam CODE_FIXTURE. LIVE `NOT_RUN`. PROD `NO-GO`.
+
+## Emenda documental do crosswalk
+
+O candidato da BUILD #835 no HEAD `968abe570bd70001dccb1e6c877bb9e6e212f56d` parou no guard de escopo porque a chave raiz `prompt_crosswalk` ainda apontava para o regular 45. A validação documental #834 passou sem executar o guard de fonte para um diff da aplicação. A emenda vincula o regular 46 aos 11 atômicos diretos do catálogo e aos transversais aplicáveis. A allowlist da BUILD permanece a da PR #834.
+
+O mesmo candidato falhou no GOV-020 porque a geração direta local da árvore não incluiu o bloco de registro que o plugin TanStack Start acrescenta. A próxima BUILD deve versionar a saída de `bun run build`, com conferência de reprodução nos dois workflows. Antes de reavaliar a BUILD, integrar esta emenda com CI e revisão no HEAD exato. [Run 45909137250](https://github.com/contaos999999/contaos-hml-control/actions/runs/45909137250)
