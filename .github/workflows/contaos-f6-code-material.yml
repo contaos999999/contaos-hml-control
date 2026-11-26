@@ -37,6 +37,8 @@ jobs:
             test: src/test/f6-code-contract-document-journeys.test.ts
           - batch: competencedocs
             test: src/test/f6-code-competence-document-journeys.test.ts
+          - batch: competenceoperations
+            test: src/test/f6-code-competence-operation-journeys.test.tsx
     env:
       F6_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
       F6_JOB_NAME: F6 CODE ${{ matrix.batch }} - jornadas CODE_FIXTURE
