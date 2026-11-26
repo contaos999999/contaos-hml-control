@@ -1,0 +1,24 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 822,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Ativação do recibo de integração interna V1 CODE nos leitores de ordem e proveniência do P0.",
+  "files": [
+    "docs/frontend/governanca/P0_RECIBO_INTEGRACAO_INTERNA_V1_CODE.json",
+    "scripts/p0-version-order-gate.mjs",
+    "scripts/p0-version-order-gate.test.mjs",
+    "scripts/p0-evidence-live-gate.mjs"
+  ],
+  "baseline_main": "b3b7f09765d56340f440c8df94cfbd9a692d3023",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_document": "docs/frontend/planos/PLAN_P0_RECIBO_INTEGRACAO_INTERNA_V1_2026-11-26.md",
+  "authorization": "Titular autorizou finalizar o recibo interno da V1 CODE com as três contraprovas LIVE reservadas ao GATE PROD após V5. A eficácia depende da integração protegida deste PLAN.",
+  "acceptance": [
+    "Somente após merge e confirmação da prova final, referenciar os hashes reais, os seis predecessores e o Teste C no HEAD exato.",
+    "Exigir autenticação do recibo no gate existente e regressões para P0-LOCK-CERT, PLAN 44 simulado e GATE PROD."
+  ],
+  "constraints": [
+    "Governança CODE apenas. Preservar P0-LOCK-CERT, certificados e blobs protegidos, aplicação, backend e proteções. LIVE NOT_RUN. PROD NO-GO."
+  ]
+}

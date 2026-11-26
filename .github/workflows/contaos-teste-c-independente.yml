@@ -34,12 +34,24 @@ jobs:
             base="$(git merge-base "$base" HEAD)"
           fi
           git diff --name-only "$base" HEAD > "$RUNNER_TEMP/changed-testc.txt"
-          if grep -Eq '^(src/|public/|package\.json$|bun\.lock$|vite\.config\.ts$|scripts/testc/|\.github/workflows/contaos-teste-c-independente\.yml$)' "$RUNNER_TEMP/changed-testc.txt"; then
+          if grep -Fxq 'docs/frontend/auditorias/integracao-funcional-v1/fase7/CERTIFICADO_RECIBO_INTEGRACAO_INTERNA_V1_CODE.md' "$RUNNER_TEMP/changed-testc.txt"; then
+            echo "v1_receipt=true" >> "$GITHUB_OUTPUT"
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          elif grep -Eq '^(src/|public/|package\.json$|bun\.lock$|vite\.config\.ts$|scripts/testc/|\.github/workflows/contaos-teste-c-independente\.yml$)' "$RUNNER_TEMP/changed-testc.txt"; then
             echo "required=true" >> "$GITHUB_OUTPUT"
           else
             echo "required=false" >> "$GITHUB_OUTPUT"
             echo "Teste C N/A: alterações somente documentais ou CI administrativo."
           fi
+      - name: Fixar HEAD exato da prova final da V1
+        if: steps.scope.outputs.v1_receipt == 'true' && github.event_name == 'pull_request'
+        shell: bash
+        env:
+          REVIEWED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse "${REVIEWED_HEAD}^{tree}")" = "$(git rev-parse HEAD^{tree})"
+          git switch --detach "$REVIEWED_HEAD"
       - name: Setup Bun
         if: steps.scope.outputs.required == 'true'
         uses: oven-sh/setup-bun@v2
@@ -90,7 +102,7 @@ jobs:
         shell: bash
         env:
           CONTAOS_TESTC_BASE_URL: http://127.0.0.1:4173
-          CONTAOS_TESTC_HEAD_SHA: ${{ github.sha }}
+          CONTAOS_TESTC_HEAD_SHA: ${{ steps.scope.outputs.v1_receipt == 'true' && github.event.pull_request.head.sha || github.sha }}
           CONTAOS_TESTC_OUTPUT: artifacts/testc-visual
         run: node scripts/testc/visual-audit.mjs
       - name: Evidencia permanente de screenshots e SHA256SUMS
