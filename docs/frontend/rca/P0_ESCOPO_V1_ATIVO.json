@@ -3,19 +3,19 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "05667b7191f86f302e330506239aaba1cbf1866a",
+    "frontend_sha": "e3c3fb9ad0c1eaf12c8a536f563c821e3f1122e5",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
+      "arquivo": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
       "versao": "V1",
-      "justificativa": "Comprovar criação, análise e revisão material, com retomada, verificação de fila sintética e leitura pelos consumidores autorizados."
+      "justificativa": "Comprovar pareceres, apresentação e histórico com publicação persistida, recuperação e leitura restrita."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F6-806-IDENTIDADE-JORNADA",
+      "id": "RCA-F6-808-IDENTIDADE-JORNADA",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -29,13 +29,10 @@
         "descricao": "O coletor ancestral aceitava substituição de ID mantendo a cardinalidade. A extensão exige o caso e suas etapas, a prova negativa, recuperação e origem do artefato.",
         "evidencias": [
           "RED ancestral real 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2, rejeição de ID não canônico no coletor F4.",
-          "PLAN P0 #807 integrado em 05667b7191f86f302e330506239aaba1cbf1866a. BUILD anterior #804 integrado antes desta fatia.",
-          "O BUILD #804 integrou 109 jornadas e 218 provas do run 45776200713.",
-          "Os 19 casos de V113, V116 e V117 tiveram o pareamento material de 38 provas validado localmente. Passaram lint, TypeScript, 48 autotestes dos verificadores F5/F6 e os 256 testes cumulativos de nove arquivos.",
-          "As execuções distinguem 502/XX000, retomada do comando no mesmo escopo, releitura do estado, revisão com chave vinculada e recusa cruzada 403/42501. V116 usa fila e transporte sintéticos.",
-          "Preflight P0-NR-001: barreiras NR-003, NR-005, NR-007 e NR-009 aplicadas a títulos exatos, escopo prospectivo, testes materiais e leitura de main.",
-          "Ocorrência nova CI_API_5XX, tentativa 1 do run 45777846089, job sys04 139765768215. A API de metadados do GitHub respondeu HTTP 502 e set -e interrompeu o workflow antes do Vitest. Os oito demais jobs passaram.",
-          "RED local com a etapa original reproduziu a interrupção no primeiro 502 sem publicar identidade. GREEN em 10 cenários executou a etapa com recuperação de 502/503/504 e checou exaustão, 403, HEAD incompatível, tentativa incompatível e jobs ambíguos."
+          "PLAN P0 #809 integrado em e3c3fb9ad0c1eaf12c8a536f563c821e3f1122e5. BUILD anterior #806 integrado antes desta fatia.",
+          "A #806 integrou 128 jornadas e 256 provas em uma tentativa do run 45778253129.",
+          "As 10 jornadas de V118, V119 e V122 passaram no Vitest e no validador de material, com 20 provas novas. Lint, TypeScript, 48 testes dos verificadores F5/F6 e 276 regressões cumulativas passaram.",
+          "A interrupção preserva o estado anterior. O comando retomado publica o parecer, a versão de apresentação ou o evento de histórico, que os consumidores autorizados releem. A negativa distingue o 403/42501 e mantém a versão protegida."
         ],
         "hipoteses_descartadas": [
           "Cardinalidade não comprova a identidade nem a cadeia da jornada.",
@@ -44,31 +41,22 @@
       },
       "impacto": {
         "dependencias": [
-          "V113 criar competência",
-          "V116 solicitar e acompanhar análise",
-          "V117 revisão e evidências",
-          "SYS05 painel, V123 trilha e componentes de leitura"
+          "V118 parecer interno",
+          "V119 apresentação protegida",
+          "V122 histórico e versões",
+          "Consumidores de revisão, apresentação, recibos e trilha"
         ],
         "versoes_afetadas": [
           "V1"
         ],
         "riscos": [
           {
-            "risco": "Revisão de competência de terceiro e cruzamento de contexto",
+            "risco": "Consulta cruzada de histórico e alteração de versão congelada",
             "teste_preventivo": {
-              "id": "NEG-F6-5-C0458",
+              "id": "NEG-F6-6-C0564",
               "runner": "vitest",
-              "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
-              "caso": "F6 competence operation journeys IFV1-F6-C0458 negative: denies the foreign competence action and recovers the authorized view"
-            }
-          },
-          {
-            "risco": "Exposição de trilha ou reexecução concorrente fora do âmbito",
-            "teste_preventivo": {
-              "id": "NEG-F6-5-C0465",
-              "runner": "vitest",
-              "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
-              "caso": "F6 competence operation journeys IFV1-F6-C0465 negative: denies the foreign competence action and recovers the authorized view"
+              "arquivo": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
+              "caso": "F6 opinion, presentation and history journeys IFV1-F6-C0564 negative: refuses the foreign action and reloads the preserved published state"
             }
           }
         ]
@@ -86,30 +74,24 @@
         ],
         "green": [
           {
-            "id": "GREEN-F6-5-C0352",
+            "id": "GREEN-F6-6-C0482",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
-            "caso": "F6 competence operation journeys IFV1-F6-C0352 positive: resumes the competence operation and reconciles the current evidence"
+            "arquivo": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
+            "caso": "F6 opinion, presentation and history journeys IFV1-F6-C0482 positive: recovers from interruption and follows the scoped outcome through reload"
           },
           {
-            "id": "GREEN-F6-5-C0437",
+            "id": "GREEN-F6-6-C0502",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
-            "caso": "F6 competence operation journeys IFV1-F6-C0437 positive: resumes the competence operation and reconciles the current evidence"
+            "arquivo": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
+            "caso": "F6 opinion, presentation and history journeys IFV1-F6-C0502 positive: recovers from interruption and follows the scoped outcome through reload"
           }
         ],
         "negativos": [
           {
-            "id": "NEG-F6-5-C0458",
+            "id": "NEG-F6-6-C0564",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
-            "caso": "F6 competence operation journeys IFV1-F6-C0458 negative: denies the foreign competence action and recovers the authorized view"
-          },
-          {
-            "id": "NEG-F6-5-C0465",
-            "runner": "vitest",
-            "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
-            "caso": "F6 competence operation journeys IFV1-F6-C0465 negative: denies the foreign competence action and recovers the authorized view"
+            "arquivo": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
+            "caso": "F6 opinion, presentation and history journeys IFV1-F6-C0564 negative: refuses the foreign action and reloads the preserved published state"
           }
         ],
         "regressao": [
@@ -128,10 +110,10 @@
         ]
       },
       "solucao": {
-        "descricao": "Comprovar criação, análise e revisão material, com retomada, verificação de fila sintética e leitura pelos consumidores autorizados. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção. A consulta de proveniência repete somente HTTP 502/503/504 dentro do limite de cinco tentativas. Identidade incompatível, erro definitivo ou 5xx persistente impedem a emissão das provas.",
+        "descricao": "Comprovar pareceres, apresentação e histórico com publicação persistida, recuperação e leitura restrita. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção.",
         "rollback": "Reverter por PR protegida se houver regressão e suspender o recibo afetado até nova execução material.",
         "arquivos": [
-          "src/test/f6-code-competence-operation-journeys.test.tsx"
+          "src/test/f6-code-opinion-presentation-history-journeys.test.ts"
         ]
       }
     }
