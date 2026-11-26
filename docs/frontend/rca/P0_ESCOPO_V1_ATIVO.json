@@ -33,7 +33,9 @@
           "O BUILD #804 integrou 109 jornadas e 218 provas do run 45776200713.",
           "Os 19 casos de V113, V116 e V117 tiveram o pareamento material de 38 provas validado localmente. Passaram lint, TypeScript, 48 autotestes dos verificadores F5/F6 e os 256 testes cumulativos de nove arquivos.",
           "As execuções distinguem 502/XX000, retomada do comando no mesmo escopo, releitura do estado, revisão com chave vinculada e recusa cruzada 403/42501. V116 usa fila e transporte sintéticos.",
-          "Preflight P0-NR-001: barreiras NR-003, NR-005, NR-007 e NR-009 aplicadas a títulos exatos, escopo prospectivo, testes materiais e leitura de main."
+          "Preflight P0-NR-001: barreiras NR-003, NR-005, NR-007 e NR-009 aplicadas a títulos exatos, escopo prospectivo, testes materiais e leitura de main.",
+          "Ocorrência nova CI_API_5XX, tentativa 1 do run 45777846089, job sys04 139765768215. A API de metadados do GitHub respondeu HTTP 502 e set -e interrompeu o workflow antes do Vitest. Os oito demais jobs passaram.",
+          "RED local com a etapa original reproduziu a interrupção no primeiro 502 sem publicar identidade. GREEN em 10 cenários executou a etapa com recuperação de 502/503/504 e checou exaustão, 403, HEAD incompatível, tentativa incompatível e jobs ambíguos."
         ],
         "hipoteses_descartadas": [
           "Cardinalidade não comprova a identidade nem a cadeia da jornada.",
@@ -126,7 +128,7 @@
         ]
       },
       "solucao": {
-        "descricao": "Comprovar criação, análise e revisão material, com retomada, verificação de fila sintética e leitura pelos consumidores autorizados. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção.",
+        "descricao": "Comprovar criação, análise e revisão material, com retomada, verificação de fila sintética e leitura pelos consumidores autorizados. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção. A consulta de proveniência repete somente HTTP 502/503/504 dentro do limite de cinco tentativas. Identidade incompatível, erro definitivo ou 5xx persistente impedem a emissão das provas.",
         "rollback": "Reverter por PR protegida se houver regressão e suspender o recibo afetado até nova execução material.",
         "arquivos": [
           "src/test/f6-code-competence-operation-journeys.test.tsx"
