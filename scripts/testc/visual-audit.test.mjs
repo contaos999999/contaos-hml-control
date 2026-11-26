@@ -1043,3 +1043,20 @@ test("V2-02 registra a rota Ciclo de diligencia e a prova visual", async () => {
   assert.ok(files["client.ts"].includes("apontamentos_contratante"));
   assert.ok(files["client.ts"].includes("pareceres_contratante"));
 });
+
+test("V2-03 registra a rota Apontamento de diligencia e a prova visual", async () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/diligencias/$cicloId/apontamentos/$id"),
+    "FAIL V2-03 registra a rota Apontamento de diligencia e a prova visual: falta a rota do item na árvore TanStack",
+  );
+  assert.ok(ROUTES.some((route) => route.id === "V2-03" && route.path.includes("/apontamentos/")));
+  const { diligenciasFixtureFiles } = await import("./v2-integracao-visual.mjs");
+  const files = diligenciasFixtureFiles("/approved/source", {
+    "client.ts": "export const supabase = {};",
+    "router.tsx": "router",
+    "build.mjs": "build",
+  });
+  assert.ok(files["entry.tsx"].includes("/src/components/diligencias/ApontamentoDiligencia"));
+  assert.ok(files["client.ts"].includes("obter_fonte_apontamento_contratante"));
+});
