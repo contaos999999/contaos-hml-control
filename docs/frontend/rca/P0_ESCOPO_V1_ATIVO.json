@@ -3,24 +3,19 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "8fd813ba246bf97f884f6f465cdf7bd65c01e07d",
+    "frontend_sha": "8b19a84ee05c451acc93ae23766adfd2721843c6",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f6-code-party-journeys.test.ts",
+      "arquivo": "src/test/f6-code-normative-journeys.test.ts",
       "versao": "V1",
-      "justificativa": "Comprovar jornadas de cadastro e contrato com persistência, resposta interrompida e leitura íntegra do consumidor."
-    },
-    {
-      "arquivo": "src/test/f6-code-contract-journeys.test.tsx",
-      "versao": "V1",
-      "justificativa": "Comprovar jornadas de cadastro e contrato com persistência, resposta interrompida e leitura íntegra do consumidor."
+      "justificativa": "Comprovar encadeamento entre normativo, vigência, versão, orçamento e consumidores, inclusive interrupção e reexecução."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F6-800-IDENTIDADE-JORNADA",
+      "id": "RCA-F6-802-IDENTIDADE-JORNADA",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -34,10 +29,10 @@
         "descricao": "O coletor ancestral aceitava substituição de ID mantendo a cardinalidade. A extensão exige o caso e suas etapas, a prova negativa, recuperação e origem do artefato.",
         "evidencias": [
           "RED ancestral real 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2, rejeição de ID não canônico no coletor F4.",
-          "PLAN P0 #801 integrado em 8fd813ba246bf97f884f6f465cdf7bd65c01e07d. BUILD anterior #798 integrado antes desta fatia.",
-          "A #798 integrou 54 jornadas e 108 provas do run 45771946102.",
-          "Em V102/V105 a perda de resposta exige leitura do estado persistido antes de repetir. Em V106 o mesmo request da operação preserva o recibo. A associação cruzada é violação de integridade 23503.",
-          "A matriz ativa agora 78 casos em cinco lotes."
+          "PLAN P0 #803 integrado em 8b19a84ee05c451acc93ae23766adfd2721843c6. BUILD anterior #800 integrado antes desta fatia.",
+          "A #800 integrou 78 jornadas e 156 provas do run 45773505728.",
+          "Foram ativadas 17 jornadas de V107, V108 e V109. A primeira chamada interrompida preserva o estado original. O comando retomado produz versão relida e trilha no consumidor.",
+          "A recusa de escopo cruzado é 403/42501. As provas locais parearam 17 casos e 34 provas."
         ],
         "hipoteses_descartadas": [
           "Cardinalidade não comprova a identidade nem a cadeia da jornada.",
@@ -46,30 +41,29 @@
       },
       "impacto": {
         "dependencias": [
-          "V102/V103 contratantes e consumidores",
-          "V105/V106 contratos e associação",
-          "SYS05 painel, V123 auditoria e consumidores de competência e história"
+          "Normativos, vigência, versões, orçamento e requisitos",
+          "Competência, análise, protocolo de apresentação e auditoria"
         ],
         "versoes_afetadas": [
           "V1"
         ],
         "riscos": [
           {
-            "risco": "Alteração por escopo cruzado ou sobrescrita de versão",
+            "risco": "Escrita ou leitura do escopo alheio após a interrupção",
             "teste_preventivo": {
-              "id": "NEG-F6-2-C0107",
+              "id": "NEG-F6-3-C0232",
               "runner": "vitest",
-              "arquivo": "src/test/f6-code-party-journeys.test.ts",
-              "caso": "F6 party journeys IFV1-F6-C0107 negative: denies a foreign change and reloads the preserved party"
+              "arquivo": "src/test/f6-code-normative-journeys.test.ts",
+              "caso": "F6 normative journeys IFV1-F6-C0232 negative: rejects the foreign scope and resumes with the original material intact"
             }
           },
           {
-            "risco": "Vínculo cruzado com contratante de outra organização",
+            "risco": "Perda de requisitos ou versão vigente por tentativa indevida",
             "teste_preventivo": {
-              "id": "NEG-F6-2-C0136",
+              "id": "NEG-F6-3-C0264",
               "runner": "vitest",
-              "arquivo": "src/test/f6-code-contract-journeys.test.tsx",
-              "caso": "F6 contract journeys IFV1-F6-C0136 negative: refuses crossed scope or link and reloads the unchanged contract"
+              "arquivo": "src/test/f6-code-normative-journeys.test.ts",
+              "caso": "F6 normative journeys IFV1-F6-C0264 negative: rejects the foreign scope and resumes with the original material intact"
             }
           }
         ]
@@ -87,30 +81,30 @@
         ],
         "green": [
           {
-            "id": "GREEN-F6-2-C0093",
+            "id": "GREEN-F6-3-C0192",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-party-journeys.test.ts",
-            "caso": "F6 party journeys IFV1-F6-C0093 positive: reconciles a lost response and reads the linked party twice"
+            "arquivo": "src/test/f6-code-normative-journeys.test.ts",
+            "caso": "F6 normative journeys IFV1-F6-C0192 positive: preserves the original version through interruption and completes material publication"
           },
           {
-            "id": "GREEN-F6-2-C0176",
+            "id": "GREEN-F6-3-C0208",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-contract-journeys.test.tsx",
-            "caso": "F6 contract journeys IFV1-F6-C0176 positive: reconciles interrupted write and reloads the scoped contract consumer"
+            "arquivo": "src/test/f6-code-normative-journeys.test.ts",
+            "caso": "F6 normative journeys IFV1-F6-C0208 positive: preserves the original version through interruption and completes material publication"
           }
         ],
         "negativos": [
           {
-            "id": "NEG-F6-2-C0107",
+            "id": "NEG-F6-3-C0232",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-party-journeys.test.ts",
-            "caso": "F6 party journeys IFV1-F6-C0107 negative: denies a foreign change and reloads the preserved party"
+            "arquivo": "src/test/f6-code-normative-journeys.test.ts",
+            "caso": "F6 normative journeys IFV1-F6-C0232 negative: rejects the foreign scope and resumes with the original material intact"
           },
           {
-            "id": "NEG-F6-2-C0136",
+            "id": "NEG-F6-3-C0264",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-contract-journeys.test.tsx",
-            "caso": "F6 contract journeys IFV1-F6-C0136 negative: refuses crossed scope or link and reloads the unchanged contract"
+            "arquivo": "src/test/f6-code-normative-journeys.test.ts",
+            "caso": "F6 normative journeys IFV1-F6-C0264 negative: rejects the foreign scope and resumes with the original material intact"
           }
         ],
         "regressao": [
@@ -129,11 +123,10 @@
         ]
       },
       "solucao": {
-        "descricao": "Comprovar jornadas de cadastro e contrato com persistência, resposta interrompida e leitura íntegra do consumidor. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção.",
+        "descricao": "Comprovar encadeamento entre normativo, vigência, versão, orçamento e consumidores, inclusive interrupção e reexecução. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção.",
         "rollback": "Reverter por PR protegida se houver regressão e suspender o recibo afetado até nova execução material.",
         "arquivos": [
-          "src/test/f6-code-party-journeys.test.ts",
-          "src/test/f6-code-contract-journeys.test.tsx"
+          "src/test/f6-code-normative-journeys.test.ts"
         ]
       }
     }

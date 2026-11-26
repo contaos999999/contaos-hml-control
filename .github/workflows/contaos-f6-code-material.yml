@@ -31,6 +31,8 @@ jobs:
             test: src/test/f6-code-party-journeys.test.ts
           - batch: contracts
             test: src/test/f6-code-contract-journeys.test.tsx
+          - batch: normatives
+            test: src/test/f6-code-normative-journeys.test.ts
     env:
       F6_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
       F6_JOB_NAME: F6 CODE ${{ matrix.batch }} - jornadas CODE_FIXTURE
