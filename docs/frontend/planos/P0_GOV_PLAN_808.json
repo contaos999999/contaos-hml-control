@@ -1,0 +1,28 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 808,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "F6.6 CODE_FIXTURE. Jornadas de parecer, apresentação e histórico em 10 jornadas e 20 provas novas.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_JOURNEY_MATRIX.json",
+    "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json",
+    ".github/workflows/contaos-f6-code-material.yml",
+    "src/test/f6-code-opinion-presentation-history-journeys.test.ts"
+  ],
+  "baseline_main": "a1d45226df145fdd7f55466431a366ff24369999",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 796,
+  "authorization": "PLAN #796 e matriz do PLAN #797. Execução integral autorizada pelo titular. O escopo se torna eficaz após CI, revisão assistida, merge protegido e readback.",
+  "acceptance": [
+    "Executar os 10 IDs canônicos de V118, V119 e V122 em um único run cumulativo.",
+    "Demonstrar recuperação antes de publicação, estado persistido, versão congelada, chave do comando, parecer, apresentação e histórico.",
+    "Confirmar recusa cruzada, preservação da versão publicada, releitura dos consumidores e trilha de auditoria.",
+    "Conferir identidades, matriz e artefatos originais no mesmo HEAD. Meta de 138 casos e 276 provas cumulativas. CI integral, revisão assistida, merge protegido e readback."
+  ],
+  "constraints": [
+    "Escopo fechado em testes CODE_FIXTURE, matriz, evidência e RCA. Preservar produto, tipos protegidos, backend normativo e as barreiras existentes. LIVE NOT_RUN e PROD NO-GO."
+  ],
+  "certification": "F6_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

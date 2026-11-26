@@ -46,6 +46,10 @@
     "competenceoperations": {
       "file": "src/test/f6-code-competence-operation-journeys.test.tsx",
       "suite": "F6 competence operation journeys"
+    },
+    "closing": {
+      "file": "src/test/f6-code-opinion-presentation-history-journeys.test.ts",
+      "suite": "F6 opinion, presentation and history journeys"
     }
   },
   "cases": [
@@ -1846,7 +1850,7 @@
       "sourceConnectionId": "C0477",
       "journeyId": "F6.6-V118-V114-C0477",
       "slice": "F6.6",
-      "batch": null,
+      "batch": "closing",
       "origin": "V118",
       "destination": "V114",
       "classification": "OBRIGATORIA",
@@ -1860,7 +1864,7 @@
       "sourceConnectionId": "C0482",
       "journeyId": "F6.6-V118-V119-C0482",
       "slice": "F6.6",
-      "batch": null,
+      "batch": "closing",
       "origin": "V118",
       "destination": "V119",
       "classification": "OBRIGATORIA",
@@ -1874,7 +1878,7 @@
       "sourceConnectionId": "C0484",
       "journeyId": "F6.6-V118-V123-C0484",
       "slice": "F6.6",
-      "batch": null,
+      "batch": "closing",
       "origin": "V118",
       "destination": "V123",
       "classification": "CONDICIONAL",
@@ -1888,7 +1892,7 @@
       "sourceConnectionId": "C0496",
       "journeyId": "F6.6-V119-V114-C0496",
       "slice": "F6.6",
-      "batch": null,
+      "batch": "closing",
       "origin": "V119",
       "destination": "V114",
       "classification": "OBRIGATORIA",
@@ -1902,7 +1906,7 @@
       "sourceConnectionId": "C0502",
       "journeyId": "F6.6-V119-V120-C0502",
       "slice": "F6.6",
-      "batch": null,
+      "batch": "closing",
       "origin": "V119",
       "destination": "V120",
       "classification": "OBRIGATORIA",
@@ -1916,7 +1920,7 @@
       "sourceConnectionId": "C0504",
       "journeyId": "F6.6-V119-V123-C0504",
       "slice": "F6.6",
-      "batch": null,
+      "batch": "closing",
       "origin": "V119",
       "destination": "V123",
       "classification": "CONDICIONAL",
@@ -1930,7 +1934,7 @@
       "sourceConnectionId": "C0562",
       "journeyId": "F6.6-V122-V116-C0562",
       "slice": "F6.6",
-      "batch": null,
+      "batch": "closing",
       "origin": "V122",
       "destination": "V116",
       "classification": "OBRIGATORIA",
@@ -1944,7 +1948,7 @@
       "sourceConnectionId": "C0563",
       "journeyId": "F6.6-V122-V117-C0563",
       "slice": "F6.6",
-      "batch": null,
+      "batch": "closing",
       "origin": "V122",
       "destination": "V117",
       "classification": "OBRIGATORIA",
@@ -1958,7 +1962,7 @@
       "sourceConnectionId": "C0564",
       "journeyId": "F6.6-V122-V121-C0564",
       "slice": "F6.6",
-      "batch": null,
+      "batch": "closing",
       "origin": "V122",
       "destination": "V121",
       "classification": "OBRIGATORIA",
@@ -1972,7 +1976,7 @@
       "sourceConnectionId": "C0567",
       "journeyId": "F6.6-V122-V123-C0567",
       "slice": "F6.6",
-      "batch": null,
+      "batch": "closing",
       "origin": "V122",
       "destination": "V123",
       "classification": "CONDICIONAL",
@@ -1983,6 +1987,5 @@
     }
   ],
   "live": "NOT_RUN",
-  "production": "NO-GO",
-  "candidateSlice": "F6.6"
+  "production": "NO-GO"
 }
