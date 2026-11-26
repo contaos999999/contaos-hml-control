@@ -1,0 +1,49 @@
+name: ContaOS F5 CODE - atestacao de provas
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/hml/integracao-v1-fase5-code-attestation*.mjs"
+      - ".github/workflows/contaos-f5-code-attestation.yml"
+      - "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_CODE_ATTESTATION_SOURCE.json"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+jobs:
+  attest:
+    name: F5 CODE - reproduzir candidato
+    runs-on: ubuntu-22.04
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+      - name: Contraprovas de integridade e proveniencia
+        run: node --test scripts/hml/integracao-v1-fase5-code-attestation.test.mjs
+      - name: Reproduzir os doze artefatos originais
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/f5-attest"
+          mkdir -p "$out"
+          node scripts/hml/integracao-v1-fase5-code-attestation.mjs docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_CODE_ATTESTATION_SOURCE.json "$out/F5_CODE_ATTESTATION_CANDIDATE.json"
+          cd "$out"
+          sha256sum F5_CODE_ATTESTATION_CANDIDATE.json > SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - name: Preservar candidato nao certificado
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: f5-code-attestation-candidate-${{ github.event.pull_request.head.sha || github.sha }}-r${{ github.run_attempt }}
+          path: ${{ runner.temp }}/f5-attest/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Confirmar checkout imutavel
+        run: git diff --exit-code

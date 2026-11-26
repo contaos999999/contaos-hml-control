@@ -1,0 +1,27 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 792,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Atestar a origem e os 138 pares da Fase 5 CODE_FIXTURE no HEAD material integrado.",
+  "files": [
+    "scripts/hml/integracao-v1-fase5-code-attestation.mjs",
+    "scripts/hml/integracao-v1-fase5-code-attestation.test.mjs",
+    ".github/workflows/contaos-f5-code-attestation.yml",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_CODE_ATTESTATION_SOURCE.json"
+  ],
+  "acceptance": [
+    "Confirmar a revisão assistida, merge, árvores, sete workflows, Teste C, jobs, tentativa e doze artefatos nativos da #790.",
+    "Reconciliar a matriz e os seis inventários pelo conteúdo protegido. Reexecutar o verificador sobre os ZIPs originais e validar digests, IDs, pares, observações e títulos de testes.",
+    "Testar a rejeição de adulterações e publicar o candidato CODE_FIXTURE NOT_CERTIFIED em artefato do CI, preservando o HEAD e os hashes."
+  ],
+  "baseline_main": "ee46e1ddde75b24954e61b0081b8ab6b167c127f",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 777,
+  "authorization": "Fechamento previsto nos itens 4 a 6 da seção 4 do PLAN #777. Revisão assistida conforme #781. A autorização é eficaz após CI, merge protegido e readback deste PLAN.",
+  "constraints": [
+    "Sem alterações em src, no backend normativo, nos controles existentes ou na produção. Cada BUILD exige CI completo, revisão e merge protegido. CERT documental em PR separada após promoção comprovada."
+  ],
+  "certification": "F5_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

@@ -1,8 +1,16 @@
 {
-  "state": "AWAITING_VERIFIED_ATTESTATION",
+  "pr": 792,
+  "base": "3bdf06f7d3fe55acf517a847292dc4efc8c57847",
+  "head": "c0f2e16b1262df686645d50306804df9ee597fea",
+  "merge": "daeda38ebb222e29a28cb9630985a7a8fc0178ea",
+  "tree": "44654e0636e37a2240be492e59ee822fc195a3d6",
+  "review": 6067888121,
+  "run": 45744571463,
+  "attempt": 1,
+  "job": 139657390158,
+  "artifact": 15082816424,
+  "zipDigest": "b8efff21a096a8bde1644052b72510413bc88b3c0a531dc00351ddce999f586d",
+  "candidateDigest": "f4e37ec14b05db5bf1b849cdf4d95ea24169762dc2a380e10b057bbf7d4b6656",
   "materialPr": 790,
-  "materialHead": "aa5640e52cec265e2b250fce9b1d85452763d0b0",
-  "certification": "NOT_CERTIFIED",
-  "live": "NOT_RUN",
-  "production": "NO-GO"
+  "materialHead": "aa5640e52cec265e2b250fce9b1d85452763d0b0"
 }
