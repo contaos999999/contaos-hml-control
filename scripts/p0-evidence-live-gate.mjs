@@ -1,9 +1,10 @@
 import { readFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { fileURLToPath } from "node:url";
+import { pathToFileURL } from "node:url";
 import { readP0 } from "./p0-version-order-gate.mjs";
 
 export { P0 as P0_MANIFEST } from "./p0-version-order-gate.mjs";
+const RCA = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const REPO = "contaos999999/contaos-hml-control";
 const sha40 = (x) => typeof x === "string" && /^[0-9a-f]{40}$/.test(x);
 const sha256 = (x) => typeof x === "string" && /^[0-9a-f]{64}$/.test(x);
@@ -61,7 +62,8 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gat
   const checks = [];
   const fail = (msg) => errors.push("P0 LIVE: " + msg);
   const items = itemsFor(m);
-  if (!items.length) return { errors, checks, checked: 0 };
+  const regulars = m?.controle?.progresso_v2_code || [];
+  if (!items.length && !regulars.length) return { errors, checks, checked: 0 };
   if (typeof apiGet !== "function") return { errors: ["P0 LIVE: serviço GitHub autenticado indisponível."], checks, checked: 0 };
   const read = readBytes || ((path) => readFileSync(path));
   const exists = fileExists || existsSync;
@@ -96,7 +98,7 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gat
     throw new Error("Reviews incompletas por paginação.");
   }
 
-  async function authenticate(rec, label, sourceFiles, finalCertificate = false, scope = null) {
+  async function authenticate(rec, label, sourceFiles, { finalCertificate = false, scope, regular = false } = {}) {
     const rr = reviewRef(rec?.revisao_independente_url);
     const runId = ciRef(rec?.ci_url);
     if (!rr || !runId || !sha40(rec?.pr_merge_sha)) {
@@ -126,9 +128,21 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gat
         fail(label + ": revisão foi substituída/rejeitada posteriormente.");
         return;
       }
+      if (regular) {
+        const merge = await get("/git/commits/" + rec.pr_merge_sha);
+        if (review.user.login.toLowerCase() !== "edivan5002" ||
+            rec.pr_head_sha !== pr.head.sha || merge?.sha !== rec.pr_merge_sha ||
+            merge.tree?.sha !== rec.tree_sha || merge.parents?.length !== 2 ||
+            merge.parents[0]?.sha !== rec.base_sha || merge.parents[1]?.sha !== rec.pr_head_sha) {
+          fail(label + ": HEAD, árvore, pais do merge ou identidade revisora divergem da BUILD.");
+          return;
+        }
+      }
       if (run?.name !== "ContaOS Frontend Zero-Drift" ||
           run?.conclusion !== "success" ||
-          ![pr.head.sha, pr.merge_commit_sha].includes(run.head_sha)) {
+          ![pr.head.sha, pr.merge_commit_sha].includes(run.head_sha) ||
+          (regular && (run.head_sha !== rec.pr_head_sha || run.status !== "completed" ||
+            run.event !== "pull_request" || run.head_branch !== pr.head.ref))) {
         fail(label + ": execução Zero-Drift não está SUCCESS no SHA do PR.");
         return;
       }
@@ -138,10 +152,11 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gat
         try {
           const remote = await get("/contents/" + source.path +
             "?ref=" + pr.head.sha);
-          if (remote?.encoding !== "base64" || !remote.content ||
-              !sha256(source.hash) ||
-              createHash("sha256").update(Buffer.from(remote.content, "base64"))
-                .digest("hex") !== source.hash) {
+          const bytes = remote?.encoding === "base64" && remote.content ?
+            Buffer.from(remote.content, "base64") : null;
+          if (!bytes || !sha256(source.hash) ||
+              createHash("sha256").update(bytes).digest("hex") !== source.hash ||
+              (source.validate && !source.validate(JSON.parse(bytes.toString("utf8"))))) {
             fail(label + ": fonte não coincide com o SHA do PR revisado: " + source.path);
             return;
           }
@@ -159,19 +174,26 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gat
         return;
       }
       const list = jobs?.jobs || [];
-      if (jobs?.total_count > 100 ||
-          !list.some((j) => j.name === "ContaOS Frontend Zero-Drift" && j.conclusion === "success") ||
+      const quality = list.find((j) => j.name === "ContaOS Frontend Zero-Drift" && j.conclusion === "success");
+      if (jobs?.total_count > 100 || !quality ||
           !list.some((j) => j.name.includes("Auditoria de navegador independente") && j.conclusion === "success")) {
         fail(label + ": jobs Zero-Drift e Teste C não comprovados como SUCCESS.");
         return;
       }
-      if (finalCertificate) {
+      if (regular && (quality.head_sha !== rec.pr_head_sha || quality.run_attempt !== run.run_attempt ||
+          !quality.steps?.some((step) => step.name.startsWith("P0 RCA V1-V5 — verificar escopo") &&
+            step.conclusion === "success"))) {
+        fail(label + ": RCA operacional não comprovado no HEAD e tentativa da BUILD.");
+        return;
+      }
+      if (finalCertificate || regular) {
         // Teste C de mera documentação é N/A e NÃO comprova integração.
         // Usar a própria execução do PR quando ela realmente executou
         // Playwright, ou uma workflow_dispatch independente no mesmo SHA.
-        const visualId = ciRef(rec.teste_c_run_url || rec.ci_url);
+        const proof = regular ? rec.teste_c : null;
+        const visualId = ciRef(regular ? proof?.run_url : rec.teste_c_run_url || rec.ci_url);
         if (!visualId) {
-          fail(label + ": certificado final sem execução visual Teste C identificada.");
+          fail(label + ": recibo sem execução visual Teste C identificada.");
           return;
         }
         const visualRun = await get("/actions/runs/" + visualId);
@@ -185,7 +207,14 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gat
           s.name.startsWith(needle) && s.conclusion === "success");
         const actual = (artifacts?.artifacts || []).some((a) =>
           /^contaos-teste-c-\d+-\d+$/.test(a.name || "") &&
-          a.expired === false && a.size_in_bytes > 0);
+          a.expired === false && a.size_in_bytes > 0 &&
+          (!regular || (
+            a.id === proof.artefato_id &&
+            a.name === "contaos-teste-c-" + visualId + "-" + proof.tentativa &&
+            a.digest === "sha256:" + proof.artefato_sha256 &&
+            a.workflow_run?.id === visualId &&
+            a.workflow_run.head_sha === rec.pr_head_sha
+          )));
         if (!sameSha || visualRun.conclusion !== "success" ||
             !["ContaOS Frontend Zero-Drift", "ContaOS Teste C Independente"].includes(visualRun.name) ||
             visualJobs?.total_count > 100 || artifacts?.total_count > 100 ||
@@ -196,7 +225,23 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gat
           fail(label + ": Teste C visual/E2E SKIPPED, SHA divergente ou artefatos não comprovados.");
           return;
         }
-        if (requireLive) {
+        if (regular) {
+          const checkout = await get("/git/commits/" + proof.checkout_sha);
+          const exactCheckout = checkout?.sha === rec.pr_head_sha ||
+            (checkout?.parents?.length === 2 &&
+              checkout.parents[0]?.sha === rec.base_sha &&
+              checkout.parents[1]?.sha === rec.pr_head_sha);
+          if (visualRun.head_sha !== rec.pr_head_sha ||
+              visualRun.run_attempt !== proof.tentativa ||
+              visualJob.id !== proof.job_id || visualJob.run_attempt !== proof.tentativa ||
+              visualJob.head_sha !== rec.pr_head_sha ||
+              checkout?.sha !== proof.checkout_sha || checkout.tree?.sha !== rec.tree_sha ||
+              !exactCheckout) {
+            fail(label + ": checkout, job ou tentativa do Teste C diverge da BUILD.");
+            return;
+          }
+        }
+        if (finalCertificate && requireLive) {
         const e2e = rec.hml_e2e;
         const hmlId = ciRef(e2e?.run_url);
         // Uma auditoria visual Trilha A, mesmo SUCCESS, nao autentica
@@ -332,9 +377,18 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists, gat
       { path: receipt.arquivo_evidencia, hash: receipt.arquivo_sha256 },
       { path: receipt.matriz_arquivo, hash: receipt.matriz_sha256 },
       { path: receipt.grafo_arquivo, hash: receipt.grafo_sha256 },
-    ], true, version + "/" + kind);
+    ], { finalCertificate: true, scope: version + "/" + kind });
   }
-  return { errors, checks, checked: items.length };
+  for (const receipt of regulars) {
+    await authenticate(receipt, "V2 regular " + receipt.regular_id, [{
+      path: RCA,
+      hash: receipt.rca_sha256,
+      validate: (report) => report?.schema === "contaos.p0.rca-report.v2" &&
+        report.versao === "V2" && report.prompt_id === receipt.regular_id &&
+        report.baseline?.frontend_sha === receipt.base_sha,
+    }], { regular: true });
+  }
+  return { errors, checks, checked: items.length + regulars.length };
 }
 
 async function githubGet(path, token) {
@@ -371,7 +425,6 @@ async function main() {
     return;
   }
   console.log("P0 " + gate + " PASS: " + result.checked +
-    " certificados não legados validados em GitHub REST; casos PENDENTE não foram presumidos certificados.");
+    " certificados não legados ou recibos de regular validados em GitHub REST; casos PENDENTE não foram presumidos certificados.");
 }
-if (process.argv[1] && fileURLToPath(import.meta.url) ===
-  fileURLToPath(new URL("file://" + process.argv[1]))) main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

@@ -1,9 +1,11 @@
+import { createHash } from "node:crypto";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { validateP0, readP0, P0, V1_INTEGRATION_RECEIPT } from "./p0-version-order-gate.mjs";
 import { validateProdReadiness } from "./p0-evidence-live-gate.mjs";
 
+const progressPath = "docs/frontend/governanca/P0_PROGRESSO_V2_CODE.json";
 const original = JSON.parse(readFileSync(P0, "utf8"));
 const clone = () => JSON.parse(JSON.stringify(original));
 const plan = (id) => ({ prompt_id: id, status: "VALIDADO" });
@@ -61,6 +63,7 @@ const receiptRecord = () => ({
 function readWithReceipt(receipt, manifest = original) {
   return readP0((path) => {
     if (path === P0) return JSON.stringify(manifest);
+    if (path === progressPath) throw Object.assign(new Error("Ausente"), { code: "ENOENT" });
     assert.equal(path, V1_INTEGRATION_RECEIPT);
     if (receipt === undefined) throw Object.assign(new Error("Ausente"), { code: "ENOENT" });
     if (receipt instanceof Error) throw receipt;
@@ -310,4 +313,142 @@ test("P0 — V1 RCA causal nao pode ser removida apos emenda X", () => {
   const m2 = clone();
   delete m2.controle.rca_impacto.relatorio_v1;
   assert.match(check(m2, plan("75")).errors.join(" "), /P0 RCA/);
+});
+
+const receipt44Path = "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-44.json";
+const sampleSha = (value) => value.repeat(40);
+const sampleHash = (value) => value.repeat(64);
+const goodV2Receipt = () => ({
+  schema: "contaos.p0.v2-regular-code-receipt.v1",
+  versao: "V2",
+  modalidade: "CODE",
+  status: "PASS",
+  regular_id: "44",
+  live: "NOT_RUN",
+  prod: "NO-GO",
+  pr_merge_sha: sampleSha("a"),
+  pr_head_sha: sampleSha("b"),
+  base_sha: sampleSha("c"),
+  tree_sha: sampleSha("d"),
+  ci_url: "https://github.com/contaos999999/contaos-hml-control/actions/runs/12345",
+  revisao_independente_url: "https://github.com/contaos999999/contaos-hml-control/pull/123#pullrequestreview-12345",
+  rca_sha256: sampleHash("e"),
+  teste_c: {
+    run_url: "https://github.com/contaos999999/contaos-hml-control/actions/runs/12345",
+    tentativa: 1,
+    job_id: 2,
+    artefato_id: 3,
+    artefato_sha256: sampleHash("f"),
+    checkout_sha: sampleSha("e"),
+  },
+});
+
+function progressFixture() {
+  const receipt = goodV2Receipt();
+  const receiptBytes = Buffer.from(JSON.stringify(receipt));
+  const record = {
+    regular_id: "44",
+    arquivo: receipt44Path,
+    sha256: createHash("sha256").update(receiptBytes).digest("hex"),
+  };
+  const progress = {
+    schema: "contaos.p0.v2-code-progress.v1",
+    versao: "V2",
+    modalidade: "CODE",
+    recibos: [record],
+  };
+  const files = new Map([
+    [P0, Buffer.from(JSON.stringify(original))],
+    [V1_INTEGRATION_RECEIPT, Buffer.from(JSON.stringify(receiptRecord()))],
+    [receipt44Path, receiptBytes],
+  ]);
+  const read = () => readP0((path, encoding) => {
+    const bytes = path === progressPath ?
+      Buffer.from(JSON.stringify(progress)) : files.get(path);
+    if (!bytes) throw Object.assign(new Error(`Ausente ${path}`), { code: "ENOENT" });
+    return encoding ? bytes.toString(encoding) : bytes;
+  });
+  return { read, progress, record, receipt, files };
+}
+
+test("P0 V2 incorpora prova sequencial do regular 44 e libera 45", () => {
+  const { read } = progressFixture();
+  const m = read();
+  assert.equal(check(m, plan("44")).next, "45");
+  assert.deepEqual(check(m, plan("45")).errors, []);
+});
+
+test("P0 V2 progresso vazio mantem 44 e V3 bloqueada", () => {
+  const { read, progress } = progressFixture();
+  progress.recibos = [];
+  const m = read();
+  assert.equal(check(m, plan("44")).next, "44");
+  assert.deepEqual(check(m, plan("44")).errors, []);
+  assert.match(check(m, plan("50")).errors.join(" "), /falta certificado da V2/);
+});
+
+test("P0 V2 rejeita salto duplicata e ausencia do recibo V1", () => {
+  const missing = progressFixture();
+  missing.files.delete(V1_INTEGRATION_RECEIPT);
+  assert.throws(missing.read, /exige o recibo V1/);
+
+  const jump = progressFixture();
+  jump.record.regular_id = "45";
+  assert.throws(jump.read, /fora da sequência/);
+
+  const repeated = progressFixture();
+  repeated.progress.recibos.push(repeated.record);
+  assert.throws(repeated.read, /fora da sequência/);
+});
+
+test("P0 V2 rejeita recibo ausente fora do caminho ou com bytes divergentes", () => {
+  const offPath = progressFixture();
+  offPath.record.arquivo = receipt44Path.replace("/fase3/", "/fase2/");
+  assert.throws(offPath.read, /Caminho ou digest inválido/);
+
+  const absent = progressFixture();
+  absent.files.delete(receipt44Path);
+  assert.throws(absent.read, { code: "ENOENT" });
+
+  const changed = progressFixture();
+  changed.files.set(receipt44Path, Buffer.from("{}"));
+  assert.throws(changed.read, /Digest divergente/);
+});
+
+test("P0 V2 nao aceita promocao ou PROD dentro de recibo regular", () => {
+  for (const patch of [
+    { prod: "GO" },
+    { live: "PASS" },
+    { regular_id: "45" },
+    { certificados_por_versao: { V2: "PASS" } },
+  ]) {
+    const { read, receipt, record, files } = progressFixture();
+    const replacement = Buffer.from(JSON.stringify({ ...receipt, ...patch }));
+    record.sha256 = createHash("sha256").update(replacement).digest("hex");
+    files.set(receipt44Path, replacement);
+    assert.throws(read, /Recibo CODE incompatível/);
+  }
+  const { read, progress } = progressFixture();
+  progress.certificados_por_versao = { V2: "PASS" };
+  assert.throws(read, /Progresso V2 CODE inválido/);
+});
+
+test("P0 V2 oito recibos ainda exigem tres certificados antes do PLAN 50", () => {
+  const { read, progress, record, files, receipt } = progressFixture();
+  for (const id of ["45", "46", "47", "48", "49", "76", "77"]) {
+    const newPath = receipt44Path.replace("regular-44", "regular-" + id);
+    const content = Buffer.from(JSON.stringify({ ...receipt, regular_id: id }));
+    files.set(newPath, content);
+    progress.recibos.push({
+      ...record,
+      regular_id: id,
+      arquivo: newPath,
+      sha256: createHash("sha256").update(content).digest("hex"),
+    });
+  }
+  const m = read();
+  assert.equal(check(m, plan("50")).next, "50");
+  assert.match(check(m, plan("50")).errors.join(" "), /falta certificado da V2/);
+  assert.match(check(m, plan("50")).errors.join(" "), /integracao interna da V2/);
+  assert.match(check(m, plan("50")).errors.join(" "), /integracao cumulativa da V2/);
 });

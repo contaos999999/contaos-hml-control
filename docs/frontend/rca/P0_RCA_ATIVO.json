@@ -3,172 +3,105 @@
   "versao": "V2",
   "prompt_id": "44",
   "baseline": {
-    "frontend_sha": "b0b49cb62b5088785c4bba1cc8f55d0e9be61991",
+    "frontend_sha": "d8041ec7cfe978bcb8981f78347ed96bb43766e7",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/routes/competencias_.$id_.diligencias.tsx",
+      "arquivo": "scripts/p0-version-order-gate.mjs",
       "versao": "V2",
-      "justificativa": "Entrega ou teste do recorte V2-01 conforme PLAN P0 #826."
+      "justificativa": "Leitura efetiva, autenticação GitHub ou contraprova da sequência CODE previstas no PLAN P0 #828."
     },
     {
-      "arquivo": "src/routeTree.gen.ts",
+      "arquivo": "scripts/p0-version-order-gate.test.mjs",
       "versao": "V2",
-      "justificativa": "Saída determinística GOV-020 da nova rota."
+      "justificativa": "Leitura efetiva, autenticação GitHub ou contraprova da sequência CODE previstas no PLAN P0 #828."
     },
     {
-      "arquivo": "src/components/competencias/CompetenciaVisaoGeral.tsx",
-      "versao": "V1",
-      "justificativa": "Entrada para Diligências após a resolução autorizada da competência. Mantém fluxos e portões da V1."
+      "arquivo": "scripts/p0-evidence-live-gate.mjs",
+      "versao": "V2",
+      "justificativa": "Leitura efetiva, autenticação GitHub ou contraprova da sequência CODE previstas no PLAN P0 #828."
     },
     {
-      "arquivo": "src/components/diligencias/DiligenciasCompetencia.tsx",
+      "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
       "versao": "V2",
-      "justificativa": "Entrega ou teste do recorte V2-01 conforme PLAN P0 #826."
-    },
-    {
-      "arquivo": "src/lib/diligencias/diligenciasDados.ts",
-      "versao": "V2",
-      "justificativa": "Entrega ou teste do recorte V2-01 conforme PLAN P0 #826."
-    },
-    {
-      "arquivo": "src/test/v2-44-contrato.test.ts",
-      "versao": "V2",
-      "justificativa": "Entrega ou teste do recorte V2-01 conforme PLAN P0 #826."
-    },
-    {
-      "arquivo": "src/test/v2-44-tela.test.tsx",
-      "versao": "V2",
-      "justificativa": "Entrega ou teste do recorte V2-01 conforme PLAN P0 #826."
-    },
-    {
-      "arquivo": "scripts/testc/visual-audit.mjs",
-      "versao": "V2",
-      "justificativa": "Entrega ou teste do recorte V2-01 conforme PLAN P0 #826."
-    },
-    {
-      "arquivo": "scripts/testc/visual-audit.test.mjs",
-      "versao": "V2",
-      "justificativa": "Entrega ou teste do recorte V2-01 conforme PLAN P0 #826."
-    },
-    {
-      "arquivo": "scripts/testc/v2-integracao-visual.mjs",
-      "versao": "V2",
-      "justificativa": "Entrega ou teste do recorte V2-01 conforme PLAN P0 #826."
+      "justificativa": "Leitura efetiva, autenticação GitHub ou contraprova da sequência CODE previstas no PLAN P0 #828."
     }
   ],
   "itens": [
     {
-      "id": "V2-01-DILIGENCIAS",
-      "tipo": "NOVA_FUNCIONALIDADE",
+      "id": "V2-PROGRESSO-CODE",
+      "tipo": "CORRECAO",
+      "reproducao": {
+        "confirmada": true,
+        "sintoma": "O recibo de conclusão não muda o próximo regular no manifesto efetivo.",
+        "esperado": "O recibo 44 válido move a sequência para 45, com a prova tendo sido autenticada no GitHub.",
+        "observado": "O subteste nomeado esperou 45 e recebeu 44 com a BUILD 44 já integrada.",
+        "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45864497542 | https://github.com/contaos999999/contaos-hml-control/actions/runs/45865583578"
+      },
+      "causa": {
+        "status": "CONFIRMADA",
+        "descricao": "Apenas a integração V1 tem leitor complementar. Os regulares da V2 são derivados dos IDs da âncora P0 revisada na V1, sem consumir recibos da V2.",
+        "evidencias": [
+          "Leitor na base d8041ec7cfe978bcb8981f78347ed96bb43766e7",
+          "Run RED https://github.com/contaos999999/contaos-hml-control/actions/runs/45864497542 e teste P0 V2 incorpora prova sequencial do regular 44 e libera 45",
+          "O modo isolado preserva argv[1] relativo, e uma URL file construída por concatenação produz ERR_INVALID_FILE_URL_HOST no Linux: https://github.com/contaos999999/contaos-hml-control/actions/runs/45865583578."
+        ],
+        "hipoteses_descartadas": [
+          "PROD ou contraprovas LIVE não controlam a sequência de regulares CODE.",
+          "A BUILD V2-01 foi protegida e relida, com evidência visual do mesmo HEAD."
+        ]
+      },
       "solucao": {
-        "descricao": "Lista autenticada e paginada em leitura sob contrato RLS, com navegação entre V114 e V2-01 e Teste C sintético das duas telas.",
-        "rollback": "Reverter por PR protegido os caminhos do incremento e confirmar a rota de competência original. Conferir recibos anteriores e ausência de escrita de dados.",
+        "descricao": "Extensão aditiva ao leitor compartilhado, com ordem, hashes e recibos CODE autenticados no GitHub REST. Entradas CLI usam pathToFileURL para preservar invocação direta e imports dos testes isolados.",
+        "rollback": "Reverter por PR protegido o leitor e registro aditivos e verificar a leitura do P0 V1. Manter os recibos e os blobs históricos para auditoria.",
         "arquivos": [
-          "src/routes/competencias_.$id_.diligencias.tsx",
-          "src/routeTree.gen.ts",
-          "src/components/competencias/CompetenciaVisaoGeral.tsx",
-          "src/components/diligencias/DiligenciasCompetencia.tsx",
-          "src/lib/diligencias/diligenciasDados.ts",
-          "src/test/v2-44-contrato.test.ts",
-          "src/test/v2-44-tela.test.tsx",
-          "scripts/testc/visual-audit.mjs",
-          "scripts/testc/visual-audit.test.mjs",
-          "scripts/testc/v2-integracao-visual.mjs"
+          "scripts/p0-version-order-gate.mjs",
+          "scripts/p0-version-order-gate.test.mjs",
+          "scripts/p0-evidence-live-gate.mjs",
+          "scripts/p0-evidence-live-gate.test.mjs"
         ]
       },
       "impacto": {
         "dependencias": [
-          "RPC existente obter_visao_geral_competencia",
-          "SELECT de ciclos_diligencia sob RLS por contrato",
-          "sessionStorage de organização associada à identidade",
-          "TanStack via GOV-020",
-          "Teste C e conjunto histórico V1"
+          "Manifesto histórico P0-LOCK-CERT",
+          "Recibo V1 interna",
+          "GitHub compare, Git commits, revisão, execução do RCA e Teste C com artefato",
+          "Certificações CODE e preflight GATE PROD"
         ],
         "versoes_afetadas": [
           "V1",
-          "V2"
+          "V2",
+          "V3",
+          "V4",
+          "V5"
         ],
         "riscos": [
           {
-            "risco": "Resposta de outro tenant ou até depois da mudança de contexto.",
+            "risco": "Avanço por ausência do recibo anterior, alteração de bytes ou salto.",
             "teste_preventivo": {
-              "id": "44-TROCA",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-44-tela.test.tsx",
-              "caso": "V2-01 cancela a resposta antiga apos troca de organizacao"
+              "id": "V2-PROGRESSO-ORDEM",
+              "runner": "node",
+              "arquivo": "scripts/p0-version-order-gate.test.mjs",
+              "caso": "P0 V2 rejeita salto duplicata e ausencia do recibo V1"
             }
           },
           {
-            "risco": "Transformar negação em vazio, ou exibir dados sem autorização.",
+            "risco": "Aprovar outra árvore, outra tentativa ou Teste C omitido.",
             "teste_preventivo": {
-              "id": "44-RBAC",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-44-contrato.test.ts",
-              "caso": "V2-01 preserva a negacao de leitura e os erros de transporte"
+              "id": "V2-PROGRESSO-RECUSA",
+              "runner": "node",
+              "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
+              "caso": "P0 LIVE rejeita proveniencia divergente do regular V2"
             }
           },
           {
-            "risco": "Página inválida, estado inventado ou vínculo cruzado.",
+            "risco": "Abrir V3 automaticamente após o último regular, sem os certificados.",
             "teste_preventivo": {
-              "id": "44-DADOS",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-44-contrato.test.ts",
-              "caso": "V2-01 rejeita linhas cruzadas duplicadas e fora do contrato"
-            }
-          },
-          {
-            "risco": "Entrada V114 fora da competência consultada.",
-            "teste_preventivo": {
-              "id": "44-V114",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-44-tela.test.tsx",
-              "caso": "V2-01 liga a entrada de diligencias a V114 sem trocar o contexto"
-            }
-          }
-        ]
-      },
-      "preflight": {
-        "status": "VERIFICADO",
-        "baseline_sha": "b0b49cb62b5088785c4bba1cc8f55d0e9be61991",
-        "arquivo_evidencia": "docs/frontend/auditorias/preflight/V2_PROMPT44_CONTRATO_2026-11-26.json",
-        "arquivo_sha256": "b0116642486333386b28b83eef148dcda0018a154606b674cb178d4d2b4a81ab",
-        "checks": [
-          {
-            "tipo": "CONTRATO",
-            "teste": {
-              "id": "44-CT",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-44-contrato.test.ts",
-              "caso": "V2-01 lista ciclos autenticados por competencia contrato e organizacao"
-            }
-          },
-          {
-            "tipo": "RBAC_RLS",
-            "teste": {
-              "id": "44-RBAC",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-44-contrato.test.ts",
-              "caso": "V2-01 preserva a negacao de leitura e os erros de transporte"
-            }
-          },
-          {
-            "tipo": "DADOS_INTEGRIDADE",
-            "teste": {
-              "id": "44-DADOS",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-44-contrato.test.ts",
-              "caso": "V2-01 rejeita linhas cruzadas duplicadas e fora do contrato"
-            }
-          },
-          {
-            "tipo": "DEPENDENCIAS",
-            "teste": {
-              "id": "44-V114",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-44-tela.test.tsx",
-              "caso": "V2-01 liga a entrada de diligencias a V114 sem trocar o contexto"
+              "id": "V2-PROGRESSO-V3",
+              "runner": "node",
+              "arquivo": "scripts/p0-version-order-gate.test.mjs",
+              "caso": "P0 V2 oito recibos ainda exigem tres certificados antes do PLAN 50"
             }
           }
         ]
@@ -176,72 +109,80 @@
       "testes": {
         "red": [
           {
-            "id": "44-RED",
+            "id": "V2-PROGRESSO-RED",
             "runner": "node",
-            "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-01 registra a rota Diligencias e a prova visual",
-            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45861378177",
-            "run_sha": "effee1a1f6174047761402d49e405cce9fde2f0d"
+            "arquivo": "scripts/p0-version-order-gate.test.mjs",
+            "caso": "P0 V2 incorpora prova sequencial do regular 44 e libera 45",
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45864497542",
+            "run_sha": "87c478cea636c363ec327ee76cf3b5b80a736800"
+          },
+          {
+            "id": "V2-PROGRESSO-RUNNER",
+            "runner": "node",
+            "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
+            "caso": "P0 V2 executa as provas nomeadas no modo isolado do RCA",
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45865583578",
+            "run_sha": "76feade95858da798270d65dc35e74337f986060"
           }
         ],
         "green": [
           {
-            "id": "44-CT",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-44-contrato.test.ts",
-            "caso": "V2-01 lista ciclos autenticados por competencia contrato e organizacao"
-          },
-          {
-            "id": "44-RODADAS",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-44-tela.test.tsx",
-            "caso": "V2-01 lista duas rodadas e retorna a competencia autorizada"
-          },
-          {
-            "id": "44-TESTEC",
+            "id": "V2-PROGRESSO-GREEN",
             "runner": "node",
-            "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-01 registra a rota Diligencias e a prova visual"
+            "arquivo": "scripts/p0-version-order-gate.test.mjs",
+            "caso": "P0 V2 incorpora prova sequencial do regular 44 e libera 45"
+          },
+          {
+            "id": "V2-PROGRESSO-PROVA",
+            "runner": "node",
+            "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
+            "caso": "P0 LIVE autentica regular V2 no HEAD revisado com Teste C material"
           }
         ],
         "negativos": [
           {
-            "id": "44-RBAC",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-44-contrato.test.ts",
-            "caso": "V2-01 preserva a negacao de leitura e os erros de transporte"
+            "id": "V2-PROGRESSO-ORDEM",
+            "runner": "node",
+            "arquivo": "scripts/p0-version-order-gate.test.mjs",
+            "caso": "P0 V2 rejeita salto duplicata e ausencia do recibo V1"
           },
           {
-            "id": "44-DADOS",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-44-contrato.test.ts",
-            "caso": "V2-01 rejeita linhas cruzadas duplicadas e fora do contrato"
+            "id": "V2-PROGRESSO-BYTES",
+            "runner": "node",
+            "arquivo": "scripts/p0-version-order-gate.test.mjs",
+            "caso": "P0 V2 rejeita recibo ausente fora do caminho ou com bytes divergentes"
           },
           {
-            "id": "44-TROCA",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-44-tela.test.tsx",
-            "caso": "V2-01 cancela a resposta antiga apos troca de organizacao"
+            "id": "V2-PROGRESSO-PROD",
+            "runner": "node",
+            "arquivo": "scripts/p0-version-order-gate.test.mjs",
+            "caso": "P0 V2 nao aceita promocao ou PROD dentro de recibo regular"
           },
           {
-            "id": "44-LOGOUT",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-44-tela.test.tsx",
-            "caso": "V2-01 limpa dados e retorna ao login depois de perder a sessao"
+            "id": "V2-PROGRESSO-RECUSA",
+            "runner": "node",
+            "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
+            "caso": "P0 LIVE rejeita proveniencia divergente do regular V2"
           }
         ],
         "regressao": [
           {
-            "id": "44-V114",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-44-tela.test.tsx",
-            "caso": "V2-01 liga a entrada de diligencias a V114 sem trocar o contexto"
+            "id": "V2-PROGRESSO-V3",
+            "runner": "node",
+            "arquivo": "scripts/p0-version-order-gate.test.mjs",
+            "caso": "P0 V2 oito recibos ainda exigem tres certificados antes do PLAN 50"
           },
           {
-            "id": "44-TESTEC",
+            "id": "V2-PROGRESSO-V1",
             "runner": "node",
-            "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-01 registra a rota Diligencias e a prova visual"
+            "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
+            "caso": "P0 separation — CODE_CERTIFICATION accepts verified CI without authenticated HML LIVE"
+          },
+          {
+            "id": "V2-PROGRESSO-RUNNER",
+            "runner": "node",
+            "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
+            "caso": "P0 V2 executa as provas nomeadas no modo isolado do RCA"
           }
         ]
       }

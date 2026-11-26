@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -384,4 +385,102 @@ test("P0 separation — complete five-version readiness alone is not LIVE PASS",
   assert.deepEqual(validateProdReadiness(x.manifest), []);
   const result = await x.run("GATE_PROD");
   assert.notEqual(result.errors.length, 0);
+});
+
+function regularProof() {
+  const x = fixture();
+  const base = "c".repeat(40);
+  const tree = "d".repeat(40);
+  const checkout = "e".repeat(40);
+  const rcaPath = "docs/frontend/rca/P0_RCA_ATIVO.json";
+  const rca = Buffer.from(JSON.stringify({
+    schema: "contaos.p0.rca-report.v2", versao: "V2", prompt_id: "44",
+    baseline: { frontend_sha: base },
+  }));
+  const rec = {
+    regular_id: "44",
+    pr_merge_sha: M, pr_head_sha: H, base_sha: base, tree_sha: tree,
+    ci_url: ci, revisao_independente_url: review,
+    rca_sha256: createHash("sha256").update(rca).digest("hex"),
+    teste_c: {
+      run_url: ci, tentativa: 1, job_id: 652, artefato_id: 987,
+      artefato_sha256: digest, checkout_sha: checkout,
+    },
+  };
+  x.manifest.controle = { progresso_v2_code: [rec] };
+  x.remoteFiles.set(rcaPath, rca);
+  x.responses["/pulls/123"].head.ref = "build/regular-44";
+  x.responses["/pulls/123/reviews?per_page=100&page=1"][0].user.login = "Edivan5002";
+  const ciRun = x.responses["/actions/runs/789"];
+  Object.assign(ciRun, { status: "completed", event: "pull_request", head_branch: "build/regular-44", run_attempt: 1 });
+  const [quality, visualJob] = x.responses["/actions/runs/789/jobs?per_page=100"].jobs;
+  Object.assign(quality, {
+    head_sha: H, run_attempt: 1,
+    steps: [{ name: "P0 RCA V1-V5 — verificar escopo, RED GitHub e executar GREEN/REG reais", conclusion: "success" }],
+  });
+  Object.assign(visualJob, { id: 652, run_attempt: 1, head_sha: H });
+  const artifact = x.responses["/actions/runs/789/artifacts?per_page=100"].artifacts[0];
+  Object.assign(artifact, { id: 987, digest: "sha256:" + digest, workflow_run: { id: 789, head_sha: H } });
+  const parents = [{ sha: base }, { sha: H }];
+  const mergeCommit = { sha: M, tree: { sha: tree }, parents };
+  const checkoutCommit = { sha: checkout, tree: { sha: tree }, parents };
+  x.responses["/git/commits/" + M] = mergeCommit;
+  x.responses["/git/commits/" + checkout] = checkoutCommit;
+  return { ...x, rec, ciRun, artifact, quality, visualJob, mergeCommit, checkoutCommit, rcaPath };
+}
+
+test("P0 LIVE autentica regular V2 no HEAD revisado com Teste C material", async () => {
+  const x = regularProof();
+  const r = await x.run("CODE_CERTIFICATION");
+  assert.deepEqual(r.errors, []);
+  assert.equal(r.checked, 1);
+  assert.equal(r.checks[0].label, "V2 regular 44");
+  assert.equal(r.checks[0].reviewer, "Edivan5002");
+});
+
+test("P0 LIVE rejeita proveniencia divergente do regular V2", async () => {
+  for (const [change, expected] of [
+    [(x) => { x.ciRun.conclusion = "failure"; }, /Zero-Drift/],
+    [(x) => { x.ciRun.head_sha = M; }, /SHA do PR/],
+    [(x) => { x.rec.pr_head_sha = M; }, /HEAD, árvore/],
+    [(x) => { x.rec.pr_merge_sha = H; }, /SHA de merge/],
+    [(x) => { x.mergeCommit.tree.sha = H; }, /árvore, pais/],
+    [(x) => { x.mergeCommit.parents = []; }, /árvore, pais/],
+    [(x) => { x.responses["/pulls/123/reviews?per_page=100&page=1"][0].commit_id = M; }, /review não é APPROVED/],
+    [(x) => { x.responses["/pulls/123/reviews?per_page=100&page=1"][0].user.login = "outro"; }, /identidade revisora/],
+    [(x) => { x.remoteFiles.set(x.rcaPath, Buffer.from("{}")); }, /fonte não coincide/],
+    [(x) => { x.artifact.digest = "sha256:" + "a".repeat(64); }, /artefatos não comprovados/],
+    [(x) => { x.artifact.id = 988; }, /artefatos não comprovados/],
+    [(x) => { x.artifact.workflow_run.head_sha = M; }, /artefatos não comprovados/],
+    [(x) => { x.quality.steps[0].conclusion = "skipped"; }, /RCA operacional/],
+    [(x) => { x.visualJob.steps[1].conclusion = "skipped"; }, /Teste C visual/],
+    [(x) => { x.ciRun.run_attempt = 2; x.quality.run_attempt = 2; }, /job ou tentativa/],
+    [(x) => { x.visualJob.id = 653; }, /job ou tentativa/],
+    [(x) => { x.checkoutCommit.tree.sha = H; }, /checkout, job/],
+    [(x) => { x.responses["/compare/" + M + "...main"].status = "diverged"; }, /ancestral da main/],
+  ]) {
+    const x = regularProof();
+    change(x);
+    const result = await x.run("CODE_CERTIFICATION");
+    assert.match(result.errors.join(" "), expected);
+    assert.deepEqual(result.checks, []);
+  }
+});
+
+test("P0 V2 executa as provas nomeadas no modo isolado do RCA", () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const proofs = [
+    ["scripts/p0-version-order-gate.test.mjs", "P0 V2 incorpora prova sequencial do regular 44 e libera 45"],
+    ["scripts/p0-evidence-live-gate.test.mjs", "P0 LIVE autentica regular V2 no HEAD revisado com Teste C material"],
+  ];
+  for (const [file, title] of proofs) {
+    const actual = spawnSync(process.execPath, [
+      "--test", "--experimental-test-isolation=none", "--test-reporter=tap",
+      "--test-name-pattern=^" + title + "$", file,
+    ], { env, encoding: "utf8" });
+    assert.equal(actual.status, 0, actual.stdout + actual.stderr);
+    assert.ok(actual.stdout.includes("# Subtest: " + title));
+    assert.match(actual.stdout, /# pass 1/);
+  }
 });
