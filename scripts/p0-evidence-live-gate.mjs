@@ -1,8 +1,9 @@
 import { readFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { readP0 } from "./p0-version-order-gate.mjs";
 
-export const P0_MANIFEST = "docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json";
+export { P0 as P0_MANIFEST } from "./p0-version-order-gate.mjs";
 const REPO = "contaos999999/contaos-hml-control";
 const sha40 = (x) => typeof x === "string" && /^[0-9a-f]{40}$/.test(x);
 const sha256 = (x) => typeof x === "string" && /^[0-9a-f]{64}$/.test(x);
@@ -353,7 +354,7 @@ async function githubGet(path, token) {
 }
 async function main() {
   let m;
-  try { m = JSON.parse(readFileSync(P0_MANIFEST, "utf8")); }
+  try { m = readP0(); }
   catch (e) { console.error("P0 LIVE FAIL: manifesto inválido " + e.message); process.exitCode = 1; return; }
   const token = String(process.env.GITHUB_TOKEN || "");
   const gate = process.env.CONTAOS_CERTIFICATION_GATE || "CODE_CERTIFICATION";

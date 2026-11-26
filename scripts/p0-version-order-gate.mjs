@@ -3,6 +3,8 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 export const P0 = "docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json";
+export const V1_INTEGRATION_RECEIPT =
+  "docs/frontend/governanca/P0_RECIBO_INTEGRACAO_INTERNA_V1_CODE.json";
 const PLAN = "docs/frontend/planos/PLANO_ATIVO.json";
 const seq = (a, b, digits) =>
   Array.from({ length: b - a + 1 }, (_, i) => String(a + i).padStart(digits, "0"));
@@ -17,6 +19,40 @@ const safePrefix = (seen, expected) =>
 
 const integrationVersions = ["V1", "V2", "V3", "V4", "V5"];
 const reqKeys = ["interna", "cumulativa"];
+
+// Aplica o recibo complementar ao manifesto histórico lido pelos dois gates P0.
+export function readP0(readFile = readFileSync) {
+  const manifest = JSON.parse(readFile(P0, "utf8"));
+  let record;
+  try {
+    record = readFile(V1_INTEGRATION_RECEIPT, "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT") return manifest;
+    throw error;
+  }
+
+  const receipt = JSON.parse(record);
+  const control = manifest.controle;
+  const v1 = control?.integracao_por_versao?.V1;
+  if (
+    receipt?.schema !== "contaos.p0.v1-integration-receipt.v1" ||
+    receipt.versao !== "V1" ||
+    receipt.escopo !== "interna" ||
+    receipt.modalidade !== "CODE" ||
+    receipt.live !== "NOT_RUN" ||
+    receipt.prod !== "NO-GO" ||
+    !same(receipt.ressalvas, ["R-01", "R-02", "R-03"]) ||
+    receipt.recibo?.status !== "PASS" ||
+    control?.certificados_por_versao?.V1?.status !== "PASS" ||
+    v1?.interna?.status !== "PENDENTE" ||
+    v1?.cumulativa !== "BASE_FUNDACIONAL"
+  ) {
+    throw new Error("Recibo P0 V1/interna inválido ou conflitante.");
+  }
+  v1.interna = receipt.recibo;
+  return manifest;
+}
+
 const prReview = (s) =>
   typeof s === "string" &&
   /^https:\/\/github\.com\/contaos999999\/contaos-hml-control\/pull\/\d+#pullrequestreview-\d+$/.test(s);
@@ -264,7 +300,7 @@ function changedFiles() {
   }
 }
 function main() {
-  const manifest = JSON.parse(readFileSync(P0, "utf8"));
+  const manifest = readP0();
   const plan = JSON.parse(readFileSync(PLAN, "utf8"));
   const result = validateP0(manifest, plan, changedFiles());
   if (result.errors.length) {
