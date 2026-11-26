@@ -16,6 +16,27 @@ import {
   pixelContrastDecision,
 } from "./visual-audit.mjs";
 
+test("V2-01 registra a rota Diligencias e a prova visual", async () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/competencias/$id/diligencias"),
+    "FAIL V2-01 registra a rota Diligencias e a prova visual: rota ainda ausente da árvore TanStack",
+  );
+  assert.ok(ROUTES.some((route) => route.id === "V2-01" && route.path.endsWith("/diligencias")));
+  const { diligenciasVisualCases, diligenciasFixtureFiles } = await import("./v2-integracao-visual.mjs");
+  const proof = diligenciasVisualCases(WIDTHS, THEMES);
+  assert.equal(proof.length, 8);
+  assert.equal(new Set(proof.map(({ width, theme }) => width + "/" + theme)).size, 8);
+  const files = diligenciasFixtureFiles("/approved/source", {
+    "client.ts": "export const supabase = {};",
+    "router.tsx": "router",
+    "build.mjs": "build",
+  });
+  assert.ok(files["entry.tsx"].includes("/src/components/competencias/CompetenciaVisaoGeral"));
+  assert.ok(files["entry.tsx"].includes("/src/components/diligencias/DiligenciasCompetencia"));
+  assert.ok(files["client.ts"].includes("ciclos_diligencia"));
+});
+
 test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preservando o drawer", () => {
   const routeDirectory = new URL("../../src/routes/", import.meta.url);
   const normalize = (path) =>
