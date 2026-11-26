@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
@@ -310,4 +311,68 @@ test("P0 — V1 RCA causal nao pode ser removida apos emenda X", () => {
   const m2 = clone();
   delete m2.controle.rca_impacto.relatorio_v1;
   assert.match(check(m2, plan("75")).errors.join(" "), /P0 RCA/);
+});
+
+const progressPath = "docs/frontend/governanca/P0_PROGRESSO_V2_CODE.json";
+const receipt44Path = "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-44.json";
+const sampleSha = (value) => value.repeat(40);
+const sampleHash = (value) => value.repeat(64);
+const goodV2Receipt = () => ({
+  schema: "contaos.p0.v2-regular-code-receipt.v1",
+  versao: "V2",
+  modalidade: "CODE",
+  status: "PASS",
+  regular_id: "44",
+  live: "NOT_RUN",
+  prod: "NO-GO",
+  pr_merge_sha: sampleSha("a"),
+  pr_head_sha: sampleSha("b"),
+  base_sha: sampleSha("c"),
+  tree_sha: sampleSha("d"),
+  ci_url: "https://github.com/contaos999999/contaos-hml-control/actions/runs/12345",
+  revisao_independente_url: "https://github.com/contaos999999/contaos-hml-control/pull/123#pullrequestreview-12345",
+  rca_sha256: sampleHash("e"),
+  teste_c: {
+    run_url: "https://github.com/contaos999999/contaos-hml-control/actions/runs/12345",
+    tentativa: 1,
+    job_id: 2,
+    artefato_id: 3,
+    artefato_sha256: sampleHash("f"),
+    checkout_sha: sampleSha("e"),
+  },
+});
+
+function progressFixture() {
+  const receipt = goodV2Receipt();
+  const receiptBytes = Buffer.from(JSON.stringify(receipt));
+  const record = {
+    regular_id: "44",
+    arquivo: receipt44Path,
+    sha256: createHash("sha256").update(receiptBytes).digest("hex"),
+  };
+  const progress = {
+    schema: "contaos.p0.v2-code-progress.v1",
+    versao: "V2",
+    modalidade: "CODE",
+    recibos: [record],
+  };
+  const files = new Map([
+    [P0, Buffer.from(JSON.stringify(original))],
+    [V1_INTEGRATION_RECEIPT, Buffer.from(JSON.stringify(receiptRecord()))],
+    [receipt44Path, receiptBytes],
+  ]);
+  const read = () => readP0((path, encoding) => {
+    const bytes = path === progressPath ?
+      Buffer.from(JSON.stringify(progress)) : files.get(path);
+    if (!bytes) throw Object.assign(new Error(`Ausente ${path}`), { code: "ENOENT" });
+    return encoding ? bytes.toString(encoding) : bytes;
+  });
+  return { read, progress, record, receipt, files };
+}
+
+test("P0 V2 incorpora prova sequencial do regular 44 e libera 45", () => {
+  const { read } = progressFixture();
+  const m = read();
+  assert.equal(check(m, plan("44")).next, "45");
+  assert.deepEqual(check(m, plan("45")).errors, []);
 });
