@@ -37,6 +37,8 @@ jobs:
             test: src/test/f6-code-contract-document-journeys.test.ts
           - batch: competencedocs
             test: src/test/f6-code-competence-document-journeys.test.ts
+          - batch: competenceoperations
+            test: src/test/f6-code-competence-operation-journeys.test.tsx
     env:
       F6_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
       F6_JOB_NAME: F6 CODE ${{ matrix.batch }} - jornadas CODE_FIXTURE
@@ -54,11 +56,26 @@ jobs:
           set -euo pipefail
           head_sha="$(git rev-parse HEAD)"
           test "$head_sha" = "$F6_EXPECTED_HEAD"
-          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .head_sha)" = "$head_sha"
-          endpoint="repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100"
+          run_endpoint="repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          endpoint="$run_endpoint/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100"
+          api_errors="$(mktemp)"
+          trap 'rm -f -- "$api_errors"' EXIT
+          retry_transient() {
+            cat "$api_errors" >&2
+            grep -Eq '\(HTTP (502|503|504)\)' "$api_errors"
+          }
+          job_id=""
           for delay in 0 2 4 8 16; do
             sleep "$delay"
-            jobs="$(gh api "$endpoint")"
+            if ! run_head="$(gh api "$run_endpoint" --jq .head_sha 2>"$api_errors")"; then
+              retry_transient || exit 1
+              continue
+            fi
+            test "$run_head" = "$head_sha"
+            if ! jobs="$(gh api "$endpoint" 2>"$api_errors")"; then
+              retry_transient || exit 1
+              continue
+            fi
             job_id="$(jq -r --arg job_name "$F6_JOB_NAME" --arg head "$head_sha" \
               --argjson run "$GITHUB_RUN_ID" --argjson attempt "$GITHUB_RUN_ATTEMPT" '
               if .total_count != (.jobs | length) then error("lista de jobs incompleta")

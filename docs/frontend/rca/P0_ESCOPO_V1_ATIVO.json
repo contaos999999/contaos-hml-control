@@ -3,24 +3,19 @@
   "versao": "V1",
   "prompt_id": "75",
   "baseline": {
-    "frontend_sha": "944836ad85cfe58afa45131d965167630a25a9bb",
+    "frontend_sha": "05667b7191f86f302e330506239aaba1cbf1866a",
     "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
   },
   "escopo": [
     {
-      "arquivo": "src/test/f6-code-contract-document-journeys.test.ts",
+      "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
       "versao": "V1",
-      "justificativa": "Comprovar persistência, associação, conteúdo e recuperação das jornadas de documentos contratuais e da competência."
-    },
-    {
-      "arquivo": "src/test/f6-code-competence-document-journeys.test.ts",
-      "versao": "V1",
-      "justificativa": "Comprovar persistência, associação, conteúdo e recuperação das jornadas de documentos contratuais e da competência."
+      "justificativa": "Comprovar criação, análise e revisão material, com retomada, verificação de fila sintética e leitura pelos consumidores autorizados."
     }
   ],
   "itens": [
     {
-      "id": "RCA-F6-804-IDENTIDADE-JORNADA",
+      "id": "RCA-F6-806-IDENTIDADE-JORNADA",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
@@ -34,10 +29,13 @@
         "descricao": "O coletor ancestral aceitava substituição de ID mantendo a cardinalidade. A extensão exige o caso e suas etapas, a prova negativa, recuperação e origem do artefato.",
         "evidencias": [
           "RED ancestral real 45546975968, job 138978826762, HEAD ff0e241860b243c8cc5fb092dce114384d15d9e2, rejeição de ID não canônico no coletor F4.",
-          "PLAN P0 #805 integrado em 944836ad85cfe58afa45131d965167630a25a9bb. BUILD anterior #802 integrado antes desta fatia.",
-          "A #802 integrou 95 jornadas e 190 provas no run 45774786139.",
-          "As 14 jornadas novas reconciliam o recibo de escrita com o número da versão, o ID do arquivo, o hash e a leitura autorizada do consumidor após interrupção.",
-          "A prova local confirmou 28 resultados e o TypeScript atestou que o contrato de releitura de V115 usa número de versão e ID do arquivo."
+          "PLAN P0 #807 integrado em 05667b7191f86f302e330506239aaba1cbf1866a. BUILD anterior #804 integrado antes desta fatia.",
+          "O BUILD #804 integrou 109 jornadas e 218 provas do run 45776200713.",
+          "Os 19 casos de V113, V116 e V117 tiveram o pareamento material de 38 provas validado localmente. Passaram lint, TypeScript, 48 autotestes dos verificadores F5/F6 e os 256 testes cumulativos de nove arquivos.",
+          "As execuções distinguem 502/XX000, retomada do comando no mesmo escopo, releitura do estado, revisão com chave vinculada e recusa cruzada 403/42501. V116 usa fila e transporte sintéticos.",
+          "Preflight P0-NR-001: barreiras NR-003, NR-005, NR-007 e NR-009 aplicadas a títulos exatos, escopo prospectivo, testes materiais e leitura de main.",
+          "Ocorrência nova CI_API_5XX, tentativa 1 do run 45777846089, job sys04 139765768215. A API de metadados do GitHub respondeu HTTP 502 e set -e interrompeu o workflow antes do Vitest. Os oito demais jobs passaram.",
+          "RED local com a etapa original reproduziu a interrupção no primeiro 502 sem publicar identidade. GREEN em 10 cenários executou a etapa com recuperação de 502/503/504 e checou exaustão, 403, HEAD incompatível, tentativa incompatível e jobs ambíguos."
         ],
         "hipoteses_descartadas": [
           "Cardinalidade não comprova a identidade nem a cadeia da jornada.",
@@ -46,30 +44,31 @@
       },
       "impacto": {
         "dependencias": [
-          "V110/V111 documentos e versões contratuais",
-          "V115 documentos da competência",
-          "Consumidores de análise, revisão, parecer, protocolo e auditoria"
+          "V113 criar competência",
+          "V116 solicitar e acompanhar análise",
+          "V117 revisão e evidências",
+          "SYS05 painel, V123 trilha e componentes de leitura"
         ],
         "versoes_afetadas": [
           "V1"
         ],
         "riscos": [
           {
-            "risco": "Acesso ou vínculo de documento contratual fora do escopo",
+            "risco": "Revisão de competência de terceiro e cruzamento de contexto",
             "teste_preventivo": {
-              "id": "NEG-F6-4-C0315",
+              "id": "NEG-F6-5-C0458",
               "runner": "vitest",
-              "arquivo": "src/test/f6-code-contract-document-journeys.test.ts",
-              "caso": "F6 contract document journeys IFV1-F6-C0315 negative: refuses a foreign file or link and preserves the restorable version"
+              "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
+              "caso": "F6 competence operation journeys IFV1-F6-C0458 negative: denies the foreign competence action and recovers the authorized view"
             }
           },
           {
-            "risco": "Alteração cruzada de documento, hash ou trilha",
+            "risco": "Exposição de trilha ou reexecução concorrente fora do âmbito",
             "teste_preventivo": {
-              "id": "NEG-F6-4-C0420",
+              "id": "NEG-F6-5-C0465",
               "runner": "vitest",
-              "arquivo": "src/test/f6-code-competence-document-journeys.test.ts",
-              "caso": "F6 competence document journeys IFV1-F6-C0420 negative: refuses the foreign document and rereads the original scoped evidence"
+              "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
+              "caso": "F6 competence operation journeys IFV1-F6-C0465 negative: denies the foreign competence action and recovers the authorized view"
             }
           }
         ]
@@ -87,30 +86,30 @@
         ],
         "green": [
           {
-            "id": "GREEN-F6-4-C0288",
+            "id": "GREEN-F6-5-C0352",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-contract-document-journeys.test.ts",
-            "caso": "F6 contract document journeys IFV1-F6-C0288 positive: resumes the document command and reloads the persisted lineage"
+            "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
+            "caso": "F6 competence operation journeys IFV1-F6-C0352 positive: resumes the competence operation and reconciles the current evidence"
           },
           {
-            "id": "GREEN-F6-4-C0415",
+            "id": "GREEN-F6-5-C0437",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-competence-document-journeys.test.ts",
-            "caso": "F6 competence document journeys IFV1-F6-C0415 positive: resumes a scoped document command after a failed response and verifies its evidence"
+            "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
+            "caso": "F6 competence operation journeys IFV1-F6-C0437 positive: resumes the competence operation and reconciles the current evidence"
           }
         ],
         "negativos": [
           {
-            "id": "NEG-F6-4-C0315",
+            "id": "NEG-F6-5-C0458",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-contract-document-journeys.test.ts",
-            "caso": "F6 contract document journeys IFV1-F6-C0315 negative: refuses a foreign file or link and preserves the restorable version"
+            "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
+            "caso": "F6 competence operation journeys IFV1-F6-C0458 negative: denies the foreign competence action and recovers the authorized view"
           },
           {
-            "id": "NEG-F6-4-C0420",
+            "id": "NEG-F6-5-C0465",
             "runner": "vitest",
-            "arquivo": "src/test/f6-code-competence-document-journeys.test.ts",
-            "caso": "F6 competence document journeys IFV1-F6-C0420 negative: refuses the foreign document and rereads the original scoped evidence"
+            "arquivo": "src/test/f6-code-competence-operation-journeys.test.tsx",
+            "caso": "F6 competence operation journeys IFV1-F6-C0465 negative: denies the foreign competence action and recovers the authorized view"
           }
         ],
         "regressao": [
@@ -129,11 +128,10 @@
         ]
       },
       "solucao": {
-        "descricao": "Comprovar persistência, associação, conteúdo e recuperação das jornadas de documentos contratuais e da competência. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção.",
+        "descricao": "Comprovar criação, análise e revisão material, com retomada, verificação de fila sintética e leitura pelos consumidores autorizados. Reexecutar todas as jornadas cumulativas da F6 em um único HEAD e certificar somente após atestação e promoção. A consulta de proveniência repete somente HTTP 502/503/504 dentro do limite de cinco tentativas. Identidade incompatível, erro definitivo ou 5xx persistente impedem a emissão das provas.",
         "rollback": "Reverter por PR protegida se houver regressão e suspender o recibo afetado até nova execução material.",
         "arquivos": [
-          "src/test/f6-code-contract-document-journeys.test.ts",
-          "src/test/f6-code-competence-document-journeys.test.ts"
+          "src/test/f6-code-competence-operation-journeys.test.tsx"
         ]
       }
     }
