@@ -64,6 +64,7 @@ export const ROUTES = [
     requiresDrawer: true,
   },
   { id: "V2-06", path: "/diligencias/" + CICLO_V2_FIXTURE + "/reapresentar" },
+  { id: "V2-07", path: "/competencias/" + UUID + "/pareceres-contratante" },
 ];
 export function cases() {
   return ROUTES.flatMap((route) =>
@@ -1609,6 +1610,12 @@ async function run() {
       cases: 8,
       report: "v2-diligencias/report.json",
       records: "reapresentacaoRecords",
+    },
+    offline_v2_parecer: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+      records: "parecerRecords",
     },
     started_utc: started,
     finished_utc: new Date().toISOString(),

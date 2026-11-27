@@ -133,6 +133,10 @@ export function CompetenciaProtocolo({
       {estado.tipo === "carregando" ? <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Consultando apresentação…
       </p> : estado.tipo === "ok" ? <>
+        <Button asChild variant="outline" className="min-h-11">
+          <Link to="/competencias/$id/pareceres-contratante" params={{ id: competencia }}
+            search={{ apresentacaoId: apresentacao }}>Pareceres do contratante</Link>
+        </Button>
         <section aria-labelledby="v120-apresentacao" className="rounded-lg border border-border bg-card p-5">
           <h2 id="v120-apresentacao" className="text-lg font-semibold">Dados da apresentação</h2>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
