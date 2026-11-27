@@ -277,8 +277,8 @@ function parecerFixture(name: string, args: Record<string, unknown>) {
     concluido_em: null, atualizado_em: comum.recebido_em, correlation_id: correlacao });
 }
 function tabelasParecer(table: string) {
-  if (location.pathname !== "${parecerPath}" ||
-      !["pareceres_contratante", "apresentacoes_contratante", "configuracao_upload"].includes(table)) return null;
+  if (location.pathname !== "${parecerPath}" && !(location.pathname === "${diligencias}" && table === "pareceres_contratante")) return null;
+  if (!["pareceres_contratante", "apresentacoes_contratante", "configuracao_upload"].includes(table)) return null;
   const scope = new Map<string, unknown>();
   let signal: AbortSignal | undefined;
   let offset = 0;
@@ -1047,6 +1047,7 @@ export async function collectDiligenciasVisual(
         });
         etapaVisual = "V2_07_PARECER";
         await page.goto(origin + diligencias);
+        await page.getByText("Processamento: Enfileirado", { exact: true }).waitFor();
         const atalhoParecer = page.getByRole("link", { name: "Pareceres do contratante" });
         await atalhoParecer.focus();
         if (!(await atalhoParecer.evaluate((element) => document.activeElement === element)))

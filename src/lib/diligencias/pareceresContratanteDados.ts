@@ -74,6 +74,10 @@ const clienteFila = supabase as unknown as {
     nome: "obter_processamento_parecer_v2",
     args: { p_id_competencia: string; p_id_parecer: string },
   ): { abortSignal(signal: AbortSignal): PromiseLike<Resposta> };
+  rpc(
+    nome: "obter_fonte_apontamento_contratante",
+    args: { p_id_ciclo: string; p_id_apontamento: string },
+  ): { abortSignal(signal: AbortSignal): PromiseLike<Resposta> };
 };
 
 function interpretar<T>(schema: z.ZodType<T>, resposta: Resposta, signal: AbortSignal): T {
@@ -210,4 +214,92 @@ export async function consultarProcessamentoParecer(contexto: EscopoParecer, ite
       valor.id_ciclo !== item.id_ciclo || (valor.status === "dispensado") !== item.parecer_final_favoravel)
     throw new ErroParecer("erro");
   return valor;
+}
+
+export const ROTULOS_PROCESSAMENTO_PARECER: Record<ProcessamentoParecer["status"], string> = {
+  enfileirado: "Enfileirado",
+  processando: "Em processamento",
+  concluido: "Concluído",
+  falhou: "Falha no processamento",
+  cancelado: "Cancelado",
+  indisponivel: "Indisponível",
+  dispensado: "Extração dispensada",
+};
+
+export async function consultarUltimoParecer(contexto: EscopoParecer, signal: AbortSignal) {
+  const { itens } = await listarPareceres(contexto, 0, signal);
+  const ultimo = itens[0];
+  if (!ultimo) return null;
+  const situacao = await consultarProcessamentoParecer(contexto, ultimo, signal);
+  return { parecer: ultimo, processamento: situacao };
+}
+
+const candidato = escopo.extend({
+  id,
+  id_ciclo: id,
+  codigo: z.string().nullable(),
+  descricao: z.string(),
+});
+const origem = escopo.extend({
+  id_apontamento: id,
+  id_ciclo: id,
+  estado: z.enum(["REGISTRADA", "ORIGEM_INDISPONIVEL", "ORIGEM_NAO_REGISTRADA"]),
+  fonte: z.object({
+    id_parecer: id,
+    id_arquivo: id,
+    id_apresentacao: id.nullable(),
+    arquivo_sha256: z.string().refine(sha256Diligencia),
+  }).nullable(),
+});
+export type ApontamentoParecer = z.infer<typeof candidato>;
+
+/** Pagina candidatos do ciclo; só expõe vínculos confirmados pela RPC de origem. */
+export async function listarApontamentosParecer(
+  contexto: EscopoParecer,
+  item: ParecerContratante,
+  offset: number,
+  signal: AbortSignal,
+) {
+  validarEscopo(contexto);
+  if (!parecer.safeParse(item).success || !mesmoEscopo(item, contexto))
+    throw new ErroParecer("sem_permissao");
+  if (!item.id_ciclo || !offsetDiligenciasValido(offset))
+    throw new ErroParecer("invalido");
+  const ciclo = item.id_ciclo;
+  signal.throwIfAborted();
+  const r = await supabase
+    .from("apontamentos_contratante")
+    .select("id,id_ciclo,id_organizacao,id_contrato,id_competencia,codigo,descricao", { count: "exact" })
+    .eq("id_organizacao", contexto.id_organizacao)
+    .eq("id_contrato", contexto.id_contrato)
+    .eq("id_competencia", contexto.id_competencia)
+    .eq("id_ciclo", ciclo)
+    .order("criado_em", { ascending: false })
+    .order("id", { ascending: false })
+    .range(offset, offset + PAGINA_DILIGENCIAS - 1)
+    .abortSignal(signal);
+  const candidatos = interpretar(z.array(candidato), r, signal);
+  const pagina = validarPagina(candidatos, r.count, offset);
+  if (candidatos.some((a) => !mesmoEscopo(a, contexto) || a.id_ciclo !== ciclo))
+    throw new ErroParecer("sem_permissao");
+  const conferidos = await Promise.all(candidatos.map(async (a) => {
+    const resposta = interpretar(origem, await clienteFila.rpc("obter_fonte_apontamento_contratante", {
+      p_id_ciclo: ciclo,
+      p_id_apontamento: a.id,
+    }).abortSignal(signal), signal);
+    if (!mesmoEscopo(resposta, contexto) || resposta.id_ciclo !== ciclo || resposta.id_apontamento !== a.id)
+      throw new ErroParecer("erro");
+    if (resposta.estado !== "REGISTRADA") {
+      if (resposta.fonte !== null) throw new ErroParecer("erro");
+      return null;
+    }
+    const fonte = resposta.fonte;
+    if (!fonte) throw new ErroParecer("erro");
+    if (fonte.id_parecer !== item.id) return null;
+    if (fonte.id_arquivo !== item.id_arquivo || fonte.id_apresentacao !== item.id_apresentacao)
+      throw new ErroParecer("erro");
+    return a;
+  }));
+  signal.throwIfAborted();
+  return { itens: conferidos.filter((a): a is ApontamentoParecer => a !== null), totalCandidatos: pagina.total };
 }

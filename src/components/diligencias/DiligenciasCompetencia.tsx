@@ -10,6 +10,7 @@ import {
   parseVisaoGeral,
 } from "@/lib/competencias/competenciaVisaoGeralDados";
 import { formatarDataHoraBr } from "@/lib/contratos/baseNormativaDados";
+import { consultarUltimoParecer, ROTULOS_PROCESSAMENTO_PARECER } from "@/lib/diligencias/pareceresContratanteDados";
 import { formatarDataBr, uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";
 import {
   ErroDiligencias,
@@ -25,7 +26,7 @@ import {
 
 type Estado =
   | { tipo: "carregando" | "invalido" | "sem_permissao" | "nao_encontrada" | "erro" }
-  | { tipo: "ok"; itens: CicloDiligencia[]; total: number };
+  | { tipo: "ok"; itens: CicloDiligencia[]; total: number; ultimo?: Awaited<ReturnType<typeof consultarUltimoParecer>>; falhaParecer?: boolean };
 
 const mensagens = {
   invalido: "O endereço informado para a competência não é válido.",
@@ -125,6 +126,12 @@ export function DiligenciasCompetencia({ id }: { id: string }) {
           throw new ErroDiligencias("sem_permissao");
         }
         atualizar({ tipo: "ok", ...ciclos });
+        try {
+          const ultimo = await consultarUltimoParecer({ id_competencia: competencia, id_organizacao: organizacao, id_contrato: vg.competencia.id_contrato }, signal);
+          atualizar({ tipo: "ok", ...ciclos, ultimo });
+        } catch {
+          atualizar({ tipo: "ok", ...ciclos, falhaParecer: true });
+        }
       } catch (erro) {
         atualizar({
           tipo:
@@ -166,6 +173,16 @@ export function DiligenciasCompetencia({ id }: { id: string }) {
             Pareceres do contratante
           </Link>
         </Button>
+      )}
+      {estado.tipo === "ok" && (
+        <section aria-label="Último parecer recebido" className="rounded-md border border-border bg-card p-4 text-sm">
+          <h2 className="font-semibold">Último parecer recebido</h2>
+          {estado.ultimo ? <>
+            <p className="break-words">{estado.ultimo.parecer.numero_documento || "Parecer sem número"}</p>
+            <p>{formatarDataHoraBr(estado.ultimo.parecer.recebido_em)}</p>
+            <p>Processamento: {ROTULOS_PROCESSAMENTO_PARECER[estado.ultimo.processamento.status]}</p>
+          </> : <p role="status">{estado.falhaParecer ? "Parecer indisponível para consulta." : estado.ultimo === null ? "Nenhum parecer recebido." : "Consultando último parecer…"}</p>}
+        </section>
       )}
       {valido && (
         <Button

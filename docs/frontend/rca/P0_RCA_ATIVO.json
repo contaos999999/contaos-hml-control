@@ -138,6 +138,15 @@
               "arquivo": "src/test/v2-76-tela.test.tsx",
               "caso": "V2-07 tela descarta a consulta anterior na mudança de organização"
             }
+          },
+          {
+            "risco": "Vincular apontamento de outro parecer da mesma rodada",
+            "teste_preventivo": {
+              "id": "76-ORIGEM",
+              "runner": "vitest",
+              "arquivo": "src/test/v2-76-contrato.test.ts",
+              "caso": "V2-07 contrato vincula apenas apontamentos com origem confirmada no parecer exato"
+            }
           }
         ]
       },
@@ -226,6 +235,12 @@
             "runner": "node",
             "arquivo": "scripts/testc/visual-audit.test.mjs",
             "caso": "V2-07 registra a rota de pareceres e sua prova visual"
+          },
+          {
+            "id": "76-ORIGEM",
+            "runner": "vitest",
+            "arquivo": "src/test/v2-76-contrato.test.ts",
+            "caso": "V2-07 contrato vincula apenas apontamentos com origem confirmada no parecer exato"
           }
         ],
         "negativos": [

@@ -4,6 +4,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: f }));
 import {
   consultarProcessamentoParecer,
   listarPareceres,
+  listarApontamentosParecer,
   listarApresentacoesParecer,
   registrarParecer,
 } from "@/lib/diligencias/pareceresContratanteDados";
@@ -67,6 +68,19 @@ describe("V2-07 contrato", () => {
     f.rpc.mockReturnValueOnce(rpc(null, { code: "42501" }, 403)).mockReturnValueOnce(rpc(null, { code: "PT409" }, 409));
     await expect(registrarParecer(contexto, pedido, signal())).rejects.toMatchObject({ tipo: "sem_permissao" });
     await expect(registrarParecer(contexto, pedido, signal())).rejects.toMatchObject({ tipo: "conflito" });
+  });
+  it("vincula apenas apontamentos com origem confirmada no parecer exato", async () => {
+    const a = { ...contexto, id: uid(10), id_ciclo: uid(7), codigo: "AP-1", descricao: "Item do parecer" };
+    const b = { ...a, id: uid(11), codigo: "AP-2" };
+    const fonte = { id_parecer: parecer.id, id_arquivo: parecer.id_arquivo, id_apresentacao: parecer.id_apresentacao, arquivo_sha256: "a".repeat(64) };
+    f.from.mockReturnValueOnce(tabela([a, b], 2));
+    f.rpc.mockReturnValueOnce(rpc({ ...contexto, id_ciclo: uid(7), id_apontamento: a.id, estado: "REGISTRADA", fonte }))
+      .mockReturnValueOnce(rpc({ ...contexto, id_ciclo: uid(7), id_apontamento: b.id, estado: "REGISTRADA", fonte: { ...fonte, id_parecer: uid(99) } }));
+    await expect(listarApontamentosParecer(contexto, parecer, 0, signal())).resolves.toEqual({ itens: [a], totalCandidatos: 2 });
+    expect(f.rpc).toHaveBeenCalledWith("obter_fonte_apontamento_contratante", { p_id_ciclo: uid(7), p_id_apontamento: a.id });
+    f.from.mockReturnValueOnce(tabela([a]));
+    f.rpc.mockReturnValueOnce(rpc({ ...contexto, id_ciclo: uid(7), id_apontamento: a.id, estado: "REGISTRADA", fonte: { ...fonte, id_arquivo: uid(99) } }));
+    await expect(listarApontamentosParecer(contexto, parecer, 0, signal())).rejects.toMatchObject({ tipo: "erro" });
   });
   it("consulta processamento por RPC sem ler a fila e rejeita recibo divergente", async () => {
     const resultado = { id_parecer: uid(6), id_ciclo: uid(7), id_competencia: uid(3), status: "enfileirado",

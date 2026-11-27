@@ -8,7 +8,7 @@ import { formatarDataHoraBr } from "@/lib/contratos/baseNormativaDados";
 import { aceiteDe, enviarArquivoCertificado, motivoInvalido, obterConfiguracaoUpload, type EstadoEnvio } from "@/lib/contratos/documentosDados";
 import { consultarEscopoCicloDiligencia } from "@/lib/diligencias/cicloDiligenciaDados";
 import { PAGINA_DILIGENCIAS } from "@/lib/diligencias/diligenciasDados";
-import { conferirApresentacaoParecer, conferirArquivoParecer, consultarProcessamentoParecer, ErroParecer, listarApresentacoesParecer, listarPareceres, prepararPedidoParecer, registrarParecer, type EscopoParecer, type ParecerContratante, type PedidoParecer, type ProcessamentoParecer } from "@/lib/diligencias/pareceresContratanteDados";
+import { conferirApresentacaoParecer, conferirArquivoParecer, consultarProcessamentoParecer, ErroParecer, listarApresentacoesParecer, listarPareceres, listarApontamentosParecer, prepararPedidoParecer, registrarParecer, type EscopoParecer, type ParecerContratante, type PedidoParecer, type ProcessamentoParecer, type ApresentacaoParecer } from "@/lib/diligencias/pareceresContratanteDados";
 import { EVENTO_ORGANIZACAO_ALTERADA, obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 
 const rotulos: Record<ProcessamentoParecer["status"], string> = {
@@ -27,7 +27,7 @@ type Dados = {
 type Estado = { tipo: "carregando" } | { tipo: "erro"; mensagem: string } | { tipo: "ok"; dados: Dados };
 
 function ParecerLinha({ item, contexto, signal }: { item: ParecerContratante; contexto: EscopoParecer; signal: AbortSignal }) {
-  const [estado, setEstado] = useState<{ processamento?: ProcessamentoParecer; prazo?: string | null; erro?: string }>({});
+  const [estado, setEstado] = useState<{ processamento?: ProcessamentoParecer; prazo?: string | null; apresentacao?: ApresentacaoParecer | null; erro?: string }>({});
   const [revisao, setRevisao] = useState(0);
   useEffect(() => {
     const ctrl = new AbortController();
@@ -38,9 +38,12 @@ function ParecerLinha({ item, contexto, signal }: { item: ParecerContratante; co
     void (async () => {
       try {
         const processamento = await consultarProcessamentoParecer(contexto, item, ctrl.signal);
-        const ciclo = item.id_ciclo ? await consultarEscopoCicloDiligencia(item.id_ciclo, contexto.id_organizacao, ctrl.signal) : null;
+        const [ciclo, apresentacao] = await Promise.all([
+          item.id_ciclo ? consultarEscopoCicloDiligencia(item.id_ciclo, contexto.id_organizacao, ctrl.signal) : null,
+          item.id_apresentacao ? conferirApresentacaoParecer(contexto, item.id_apresentacao, ctrl.signal) : null,
+        ]);
         if (ciclo && (ciclo.id_competencia !== contexto.id_competencia || ciclo.id_contrato !== contexto.id_contrato)) throw new ErroParecer("sem_permissao");
-        if (!ctrl.signal.aborted) setEstado({ processamento, prazo: ciclo?.prazo_resposta ?? null });
+        if (!ctrl.signal.aborted) setEstado({ processamento, prazo: ciclo?.prazo_resposta ?? null, apresentacao });
       } catch {
         if (!ctrl.signal.aborted) setEstado({ erro: "Processamento ou prazo indisponível para consulta." });
       }
@@ -55,14 +58,47 @@ function ParecerLinha({ item, contexto, signal }: { item: ParecerContratante; co
       {item.data_emissao && <p className="text-sm">Emissão: {formatarDataBr(item.data_emissao)}</p>}
       {item.parecer_final_favoravel && <p className="text-sm">Parecer final favorável</p>}
       <p role="status" className="text-sm">{estado.processamento ? rotulos[estado.processamento.status] : estado.erro || "Consultando processamento…"}</p>
+      {estado.apresentacao && <p className="text-sm break-words">Protocolo: {estado.apresentacao.protocolo || "Não informado"} · Rodada {estado.apresentacao.numero_rodada}</p>}
+      {estado.processamento && <p className="text-sm">Tentativas: {estado.processamento.tentativas}</p>}
+      {estado.processamento?.concluido_em && <p className="text-sm">Extração concluída em: {formatarDataHoraBr(estado.processamento.concluido_em)}</p>}
       {item.id_ciclo && <p className="text-sm">Prazo: {estado.prazo ? formatarDataBr(estado.prazo) : "Pendente de confirmação"}</p>}
       <div className="flex flex-wrap gap-2">
         {item.id_apresentacao && <Button asChild variant="outline" className="min-h-11"><Link to="/competencias/$id/apresentacoes/$apresentacaoId" params={{ id: contexto.id_competencia, apresentacaoId: item.id_apresentacao }}>Protocolo original</Link></Button>}
         {item.id_ciclo && <Button asChild variant="outline" className="min-h-11"><Link to="/diligencias/$cicloId" params={{ cicloId: item.id_ciclo }}>Abrir rodada</Link></Button>}
         <Button variant="outline" className="min-h-11" onClick={() => setRevisao(v => v + 1)}>Atualizar processamento</Button>
       </div>
+      {estado.processamento?.status === "concluido" && item.id_ciclo && <ApontamentosDoParecer item={item} contexto={contexto} signal={signal} />}
     </li>
   );
+}
+
+function ApontamentosDoParecer({ item, contexto, signal }: { item: ParecerContratante; contexto: EscopoParecer; signal: AbortSignal }) {
+  const [aberto, setAberto] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [pagina, setPagina] = useState<{ offset: number; dados: Awaited<ReturnType<typeof listarApontamentosParecer>> | null } | null>(null);
+  useEffect(() => {
+    if (!aberto) return;
+    const ctrl = new AbortController();
+    const abortar = () => ctrl.abort();
+    signal.addEventListener("abort", abortar);
+    if (signal.aborted) ctrl.abort();
+    void listarApontamentosParecer(contexto, item, offset, ctrl.signal).then(dados => {
+      if (!ctrl.signal.aborted) setPagina({ offset, dados });
+    }).catch(() => { if (!ctrl.signal.aborted) setPagina({ offset, dados: null }); });
+    return () => { ctrl.abort(); signal.removeEventListener("abort", abortar); };
+  }, [aberto, contexto, item, offset, signal]);
+  const atual = pagina?.offset === offset ? pagina : null;
+  return <section aria-label="Apontamentos extraídos" className="space-y-2 border-t border-border pt-3">
+    <Button type="button" variant="outline" aria-expanded={aberto} onClick={() => { setPagina(null); setAberto(v => !v); }}>{aberto ? "Ocultar apontamentos" : "Consultar apontamentos extraídos"}</Button>
+    {aberto && (!atual ? <p role="status">Conferindo as origens dos apontamentos…</p> : !atual.dados ? <p role="alert">Não foi possível confirmar os vínculos com este parecer.</p> : <>
+      {!atual.dados.itens.length && <p role="status">Nenhum vínculo confirmado nesta página da rodada.</p>}
+      <ul className="space-y-2">{atual.dados.itens.map(a => <li key={a.id} className="break-words text-sm"><Link className="underline" to="/diligencias/$cicloId/apontamentos/$id" params={{ cicloId: a.id_ciclo, id: a.id }}>{a.codigo || "Apontamento"}: {a.descricao}</Link></li>)}</ul>
+      <nav aria-label="Paginação dos apontamentos da rodada" className="flex flex-wrap gap-2">
+        <Button variant="outline" disabled={!offset} onClick={() => setOffset(v => v - PAGINA_DILIGENCIAS)}>Anteriores</Button>
+        <Button variant="outline" disabled={offset + PAGINA_DILIGENCIAS >= atual.dados.totalCandidatos} onClick={() => setOffset(v => v + PAGINA_DILIGENCIAS)}>Próximos</Button>
+      </nav>
+    </>)}
+  </section>;
 }
 
 export function PareceresContratante({ id, apresentacaoId }: { id: string; apresentacaoId?: string }) {
