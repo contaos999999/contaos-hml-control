@@ -33,3 +33,7 @@ Os seis workflows do candidato documental passaram no HEAD `dbd70ca1fcd6298dc35c
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 
 CODE_FIXTURE. LIVE `NOT_RUN`. PROD `NO-GO`.
+
+## Emenda documental de preflight
+
+O RED da BUILD #839 reproduziu a falta do painel no run 45980472483. O gate P0 RCA exige o arquivo canônico de preflight e seu SHA no relatório de nova funcionalidade. O registro vincula o contrato HML, a revisão e a evidência anterior ao BUILD. Os caminhos da BUILD são os do PLAN #838. [Preflight do 47](../auditorias/preflight/V2_PROMPT47_CONTRATO_2026-11-27.json)
