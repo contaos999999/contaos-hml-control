@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 
+import { ContestacaoDiligencia } from "@/components/diligencias/ContestacaoDiligencia";
 import { PlanoAcaoDiligencia } from "@/components/diligencias/PlanoAcaoDiligencia";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,7 +79,7 @@ export function ApontamentoDiligencia({
     setRevisao((n) => n + 1);
   }, []);
 
-  const relerDepoisDaTarefa = useCallback(() => {
+  const relerDepoisDaOperacao = useCallback(() => {
     atual.current?.abort();
     setAtualizacao((n) => n + 1);
   }, []);
@@ -171,7 +172,14 @@ export function ApontamentoDiligencia({
             escopo={estado.dados.ciclo}
             apontamento={estado.dados.item.id}
             usuario={estado.usuario}
-            aoRegistrar={relerDepoisDaTarefa}
+            aoRegistrar={relerDepoisDaOperacao}
+          />
+          <ContestacaoDiligencia
+            key={chave + ":contestacao"}
+            ciclo={estado.dados.ciclo}
+            apontamento={estado.dados.item.id}
+            offset={offset}
+            aoRegistrar={relerDepoisDaOperacao}
           />
           <Conteudo dados={estado.dados} offset={offset} />
           <Button variant="outline" className="min-h-11" onClick={revalidar}>

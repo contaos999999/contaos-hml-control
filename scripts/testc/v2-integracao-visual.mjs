@@ -102,6 +102,70 @@ const rpcRespond = (data: unknown, code?: string) => ({
   },
 });
 
+let etapaContestacao = "vazia";
+let leituraMinuta = 0;
+const idContestacao = identificador(14);
+const idDecisao = identificador(15);
+const idMinuta = identificador(16);
+const mapaContestacao = [{ id: identificador(17), id_versao_documento: versao2,
+  titulo: "Comprovante da competência", versao_documento: 2, pagina: 3, hash: hashVersao,
+  descricao: "Serviço comprovado", trecho: "Atendimento registrado na competência." }];
+function contestacaoFixture(name: string, args: Record<string, unknown>) {
+  const pendente = etapaContestacao === "pendente";
+  const aprovada = etapaContestacao === "aprovada";
+  if (name === "obter_contestacoes_v2") {
+    if (location.search.includes("contestacao-negada")) return rpcRespond(null, "42501");
+    if (args.p_id_ciclo !== rodadas[0].id || args.p_id_apontamento !== apontamentos[0].id ||
+        args.p_offset !== 0 || args.p_limite !== 10 || args.p_offset_fontes !== 0) throw Error("ESCOPO_V248_CONSULTA");
+    if (etapaContestacao === "fila" && ++leituraMinuta > 1) etapaContestacao = "rascunho";
+    const rascunho = etapaContestacao === "rascunho";
+    const versaoAtual = pendente || aprovada ? 2 : rascunho ? 1 : 0;
+    const base = {
+      texto: "Síntese da minuta e pedido de revisão", fundamento: "Prova documental da rodada",
+      hash: hashVersao, criado_em: comum.recebido_em,
+      resultado_final: null, resultado_registrado_em: null, mapa: mapaContestacao,
+    };
+    const anterior = { ...base, id: idContestacao, versao: 1, status_aprovacao: "rascunho",
+      recomendada: true, justificativa_recomendacao: "Há suporte documental.", revisar: false,
+      aprovado_por: null, aprovado_em: null };
+    return rpcRespond({ id_ciclo: rodadas[0].id, id_apontamento: apontamentos[0].id,
+      versao_atual: versaoAtual, versao_apontamento: 1, submeter: true, solicitar_minuta: !pendente,
+      offset: 0, limite: 10, total: versaoAtual, offset_fontes: 0, total_fontes: 1,
+      fontes: [{ id: versao2, titulo: "Comprovante da competência", numero: 2, hash: hashVersao, vigente: true }],
+      contestacoes: versaoAtual === 2 ? [{ ...base, id: idDecisao, versao: 2,
+        status_aprovacao: aprovada ? "aprovada" : "pendente", recomendada: false, justificativa_recomendacao: null,
+        revisar: pendente, aprovado_por: aprovada ? revisor : null, aprovado_em: aprovada ? comum.recebido_em : null }, anterior]
+        : rascunho ? [anterior] : [],
+      minuta: etapaContestacao === "vazia" ? null :
+        { id: idMinuta, estado: etapaContestacao === "fila" ? "enfileirado" : "concluido" }
+    });
+  }
+  if (name === "solicitar_minuta_contestacao_v2") {
+    if (args.p_id_apontamento !== apontamentos[0].id || args.p_versao_esperada !== 0 ||
+       typeof args.p_chave !== "string") throw Error("ESCOPO_V248_MINUTA");
+    etapaContestacao = "fila";
+    return rpcRespond({ id_execucao: idMinuta, id_apontamento: apontamentos[0].id, versao_esperada: 0 });
+  }
+  if (name === "salvar_contestacao_v2") {
+    const e = (args.p_evidencias as Array<Record<string, unknown>>)?.[0];
+    if (args.p_id_apontamento !== apontamentos[0].id || args.p_versao_esperada !== 1 ||
+        e?.id_versao_documento !== versao2 || e?.hash !== hashVersao || e?.pagina !== 3 ||
+        typeof args.p_chave !== "string") throw Error("ESCOPO_V248_MAPA");
+    etapaContestacao = "pendente";
+    return rpcRespond({ schema_versao: "v248-v1", id_contestacao: idDecisao, id_apontamento: apontamentos[0].id,
+      versao: 2, hash: hashVersao, status_aprovacao: "pendente", correlation_id: correlacao });
+  }
+  if (name === "revisar_contestacao_v2") {
+    if (!pendente || args.p_id_contestacao !== idDecisao || args.p_versao_esperada !== 2 ||
+        args.p_aprovar !== true || args.p_fundamento !== "Versão e página conferidas" ||
+        typeof args.p_chave !== "string") throw Error("ESCOPO_V248_REVISAO");
+    etapaContestacao = "aprovada";
+    apontamentos[0].status = "contestado_aprovado";
+    return rpcRespond({ schema_versao: "v248-v1", id_contestacao: idDecisao, id_apontamento: apontamentos[0].id,
+      versao: 2, hash: hashVersao, status_aprovacao: "aprovada", correlation_id: correlacao });
+  }
+}
+
 function planoFixture(name: string, args: Record<string, unknown>) {
   if (name === "obter_plano_acao_diligencia_v2") {
     if (args.p_id_ciclo !== rodadas[0].id || args.p_id_apontamento !== apontamentos[0].id ||
@@ -127,7 +191,7 @@ function planoFixture(name: string, args: Record<string, unknown>) {
   }
   if (name === "avaliar_portao_reapresentacao") {
     if (args.p_id_ciclo !== rodadas[0].id) throw Error("ESCOPO_PORTAO_V2");
-    const tratado = etapa === "aprovado";
+    const tratado = etapa === "aprovado" || etapaContestacao === "aprovada";
     return rpcRespond({ total: 1, tratados: Number(tratado), abertos: Number(!tratado), liberado: tratado });
   }
   if (name === "obter_documentos_competencia_v115" && location.pathname === "${itemPath}") {
@@ -166,6 +230,8 @@ export const supabase = {
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
   },
   rpc(name: string, args: Record<string, unknown>) {
+    const contestacao = contestacaoFixture(name, args);
+    if (contestacao) return contestacao;
     const plano = planoFixture(name, args);
     if (plano) return plano;
     if (name !== "obter_fonte_apontamento_contratante") return baseline.rpc(name);
@@ -334,6 +400,7 @@ export async function collectDiligenciasVisual(
   const cycleRecords = [];
   const itemRecords = [];
   const planoRecords = [];
+  const contestacaoRecords = [];
   let server;
 
   try {
@@ -620,6 +687,83 @@ export async function collectDiligenciasVisual(
           chamadasExternas: externa,
           errosDePagina: erros,
         });
+        etapaVisual = "V2_05_ABERTURA";
+        await page.goto(origin + itemPath);
+        const gatilhoContestacao = page.getByRole("button", { name: "Abrir contestação" });
+        await gatilhoContestacao.focus();
+        await gatilhoContestacao.press("Enter");
+        const contestacao = page.getByRole("dialog", { name: "Contestação" });
+        await contestacao.getByText("Nenhuma versão registrada para este apontamento.").waitFor();
+        etapaVisual = "V2_05_FILA_MINUTA";
+        await contestacao.getByRole("button", { name: "Solicitar minuta" }).click();
+        await contestacao.getByText("Minuta na fila.").waitFor();
+        etapaVisual = "V2_05_LEITURA_MINUTA";
+        await contestacao.getByRole("button", { name: "Atualizar contestação" }).click();
+        await contestacao.getByText("Contestação recomendada para avaliação humana.").waitFor();
+        await contestacao.getByText("Comprovante da competência · versão 2 · página 3").waitFor();
+        if (await contestacao.getByRole("button", { name: "Revisar versão 1" }).count())
+          throw Error("TESTE_C_V248_MINUTA_SEM_REVISAO");
+        etapaVisual = "V2_05_MAPA";
+        await contestacao.getByRole("button", { name: "Usar versão 1 como base" }).click();
+        await contestacao
+          .getByLabel("Manifestação")
+          .fill("Manifestação humana com prova documental");
+        await contestacao.getByRole("button", { name: "Submeter versão" }).click();
+        await contestacao.getByRole("button", { name: "Revisar versão 2" }).click();
+        await contestacao.getByLabel("Decisão").selectOption("aprovar");
+        await contestacao.getByLabel("Fundamento da revisão").fill("Versão e página conferidas");
+        await contestacao.getByRole("button", { name: "Registrar decisão" }).click();
+        await contestacao.getByText("Revisão da contestação registrada.").waitFor();
+        await contestacao.getByText("Apontamentos tratados na rodada 1 de 1.").waitFor();
+        await contestacao.getByRole("link", { name: "Abrir auditoria" }).waitFor();
+        await contestacao.evaluate(async (element) => {
+          await Promise.allSettled(element.getAnimations().map((item) => item.finished));
+        });
+        const overflowContestacao = await contestacao.evaluate((element) =>
+          Math.max(
+            0,
+            element.scrollWidth - element.clientWidth,
+            element.getBoundingClientRect().right - innerWidth,
+          ),
+        );
+        if (overflowContestacao > 1) throw Error("TESTE_C_V248_OVERFLOW");
+        const imagemContestacao = "screenshots/V2-05_" + width + "_" + theme + ".png";
+        const bytesContestacao = await page.screenshot({ fullPage: true, animations: "disabled" });
+        writeFileSync(join(target, imagemContestacao), bytesContestacao);
+        await page.keyboard.press("Escape");
+        await contestacao.waitFor({ state: "hidden" });
+        await page.waitForFunction(
+          () => document.activeElement?.textContent?.trim() === "Abrir contestação",
+        );
+        etapaVisual = "V2_05_RLS";
+        await page.goto(origin + itemPath + "?fixture=contestacao-negada");
+        await page.getByRole("button", { name: "Abrir contestação" }).click();
+        await contestacao.getByRole("alert").filter({ hasText: "não tem permissão" }).waitFor();
+        if (
+          (await contestacao.getByRole("heading", { name: "Histórico de versões" }).count()) ||
+          externa ||
+          erros
+        )
+          throw Error("TESTE_C_V248_ISOLAMENTO");
+        contestacaoRecords.push({
+          width,
+          theme,
+          screenshot: imagemContestacao,
+          sha256: digest(bytesContestacao),
+          status: "PASS",
+          foco: true,
+          retorno: true,
+          mapa: true,
+          versaoExata: true,
+          minuta: true,
+          revisaoHumana: true,
+          portaoAtualizado: true,
+          auditoria: true,
+          negacaoSemDados: true,
+          overflow: overflowContestacao,
+          chamadasExternas: externa,
+          errosDePagina: erros,
+        });
         await page.goto(origin + cicloPath);
         await verificarCiclo();
         await page.getByRole("link", { name: "Voltar às diligências" }).press("Enter");
@@ -694,12 +838,13 @@ export async function collectDiligenciasVisual(
       records.length !== cases.length ||
       cycleRecords.length !== cases.length ||
       itemRecords.length !== cases.length ||
-      planoRecords.length !== cases.length
+      planoRecords.length !== cases.length ||
+      contestacaoRecords.length !== cases.length
     ) {
       throw Error("TESTE_C_V2_COBERTURA");
     }
     const record = {
-      schema: "contaos.v2-diligencias.offline-visual.v4",
+      schema: "contaos.v2-diligencias.offline-visual.v5",
       mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
       headSha,
       sourceTree: git("rev-parse", "HEAD^{tree}"),
@@ -716,6 +861,8 @@ export async function collectDiligenciasVisual(
           "src/components/diligencias/ApontamentoDiligencia.tsx",
           "src/components/diligencias/PlanoAcaoDiligencia.tsx",
           "src/lib/diligencias/planoAcaoDiligenciaDados.ts",
+          "src/components/diligencias/ContestacaoDiligencia.tsx",
+          "src/lib/diligencias/contestacaoDiligenciaDados.ts",
           "src/lib/diligencias/apontamentoDiligenciaDados.ts",
           "src/lib/diligencias/apontamentoEvidenciasDados.ts",
           "src/routes/diligencias_.$cicloId_.apontamentos_.$id.tsx",
@@ -726,15 +873,20 @@ export async function collectDiligenciasVisual(
       cycleRecords,
       itemRecords,
       planoRecords,
+      contestacaoRecords,
     };
     const report = JSON.stringify(record, null, 2) + "\n";
     writeFileSync(join(target, "report.json"), report);
     writeFileSync(
       join(target, "SHA256SUMS"),
       [
-        ...[...records, ...cycleRecords, ...itemRecords, ...planoRecords].map(
-          (r) => r.sha256 + "  " + r.screenshot,
-        ),
+        ...[
+          ...records,
+          ...cycleRecords,
+          ...itemRecords,
+          ...planoRecords,
+          ...contestacaoRecords,
+        ].map((r) => r.sha256 + "  " + r.screenshot),
         digest(report) + "  report.json",
       ].join("\n") + "\n",
     );
@@ -742,6 +894,7 @@ export async function collectDiligenciasVisual(
     console.log("V2_02_OFFLINE_VISUAL_PASS_8");
     console.log("V2_03_OFFLINE_VISUAL_PASS_8");
     console.log("V2_04_OFFLINE_VISUAL_PASS_8");
+    console.log("V2_05_OFFLINE_VISUAL_PASS_8");
     return record;
   } finally {
     if (server?.listening) await new Promise((resolve) => server.close(resolve));
