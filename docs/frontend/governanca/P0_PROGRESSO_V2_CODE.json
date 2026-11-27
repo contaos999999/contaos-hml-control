@@ -27,6 +27,11 @@
       "regular_id": "48",
       "arquivo": "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-48.json",
       "sha256": "0304b7b67b55a1b1d39eb81b99ad9d9c6d6c06a8646033cfb5ce97e9da5f51ca"
+    },
+    {
+      "regular_id": "49",
+      "arquivo": "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-49.json",
+      "sha256": "c31b3219d6632d1b1b588dc2bd9b2f74af13cd43c8832ad94a811d2b06c6660b"
     }
   ]
 }
