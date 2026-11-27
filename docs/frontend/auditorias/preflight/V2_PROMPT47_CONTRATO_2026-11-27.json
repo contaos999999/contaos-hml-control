@@ -1,0 +1,75 @@
+{
+  "schema": "contaos.v2.preflight.regular.v1",
+  "regular": "47",
+  "status": "VERIFICADO",
+  "plan": {
+    "pr": 838,
+    "merge": "4abfc8cafae509a341dbe1a0716f56019f40d35e",
+    "review": 6086580417
+  },
+  "backend": {
+    "plan_pr": 236,
+    "build_pr": 237,
+    "build_merge": "88d0489d92474d4c0f94fcb342e28fb1b81180f5",
+    "review": 6086402316,
+    "receipt_pr": 238,
+    "receipt_main": "270c2bf56b566d05143a5835e3cc2714769cf74d",
+    "receipt_review": 6086496999
+  },
+  "contrato": [
+    "obter_plano_acao_diligencia_v2",
+    "salvar_tarefa_diligencia_v2",
+    "submeter_solucao_tarefa_diligencia_v2",
+    "revisar_solucao_tarefa_diligencia_v2",
+    "obter_documentos_competencia_v115",
+    "avaliar_portao_reapresentacao"
+  ],
+  "rbac_rls": {
+    "escopo": [
+      "organizacao",
+      "contrato",
+      "competencia",
+      "rodada",
+      "apontamento"
+    ],
+    "perfil_atribuicao": [
+      "gestor",
+      "responsavel",
+      "revisor"
+    ],
+    "worker": "service_role"
+  },
+  "prova": {
+    "run": 45947535696,
+    "tentativa": 1,
+    "job": 140335570280,
+    "artefato": 15175635937,
+    "sha256": "34ccc00049ccbe6331e87839aba6625d9cdba3c5ee02fa12eca66d3e88ba3c56",
+    "restore": 45947535617
+  },
+  "hml": {
+    "run": 45978865282,
+    "tentativa": 1,
+    "job": 140437390826,
+    "migration": "20261127050308",
+    "migration_sha256": "7235e308597091c3a27257caed9c91ac45dea1cc886121e59af3bba87f980fae",
+    "versions": 140,
+    "worker_version": 7,
+    "worker_sha256": "28129243fcadfa11f970d1232bcd1d9d5b7d9c28cd66cc4e92c47f2448ad71d1",
+    "catalogo_exato": true
+  },
+  "frontend": {
+    "build_pr": 839,
+    "red_run": 45980472483,
+    "red_job": 140442788523,
+    "testes_exigidos": [
+      "contrato",
+      "RBAC_RLS",
+      "dados",
+      "dependencias",
+      "Teste C"
+    ]
+  },
+  "live": "NOT_RUN",
+  "prod": "NO-GO"
+}
