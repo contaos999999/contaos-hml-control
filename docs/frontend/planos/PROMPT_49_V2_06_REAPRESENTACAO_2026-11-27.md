@@ -2,6 +2,8 @@
 
 27/11/2026. O [plano executivo #825](https://github.com/contaos999999/contaos-hml-control/pull/825), a matriz de 26/11/2026 e o [recibo 48 #844](https://github.com/contaos999999/contaos-hml-control/pull/844) habilitam o regular 49. O [recibo backend #244](https://github.com/contaos999999/develop/pull/244) comprova o contrato aplicado em HML e vincula o snapshot `369c9b9640cb06963eda3878685417d1c815d763`, com 25 documentos e catálogo 100/97 preservados. [Checkpoint oficial](https://github.com/contaos999999/contaos-hml-control/issues/708#issuecomment-7223249635)
 
+Os seis workflows do candidato documental passaram no HEAD `84169394f56b0e5a4259719956f78429328a95bc`. [CI do PLAN](https://github.com/contaos999999/contaos-hml-control/actions/runs/46033687040)
+
 ## Contrato e navegação
 
 - Abrir `/diligencias/:cicloId/reapresentar` a partir de V2-02 com retorno ao ciclo. Manter o contexto da organização, contrato, competência e rodada. Reusar o cliente, as verificações de escopo, sinais de cancelamento e leitura do protocolo V120.
