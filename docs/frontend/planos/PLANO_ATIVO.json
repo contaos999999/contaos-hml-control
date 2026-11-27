@@ -1,15 +1,15 @@
 {
   "schema": "contaos.frontend.plan.v1",
   "prompt_id": "48",
-  "status": "EM_VALIDACAO",
+  "status": "VALIDADO",
   "plano_documento": "docs/frontend/planos/PROMPT_48_V2_05_CONTESTACAO_2026-11-27.md",
   "validacao": {
-    "resultado": "PENDENTE",
-    "validado_por": null,
-    "validado_em": null,
+    "resultado": "PASS",
+    "validado_por": "Validação documental com seis workflows aprovados no candidato exato e contrato HML autenticado.",
+    "validado_em": "2026-11-27",
     "modo_aprovacao": "validacao_documental_com_autorizacao_titular",
     "aprovacao_humana_exigida": false,
-    "ci_plano_url": null,
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46023513070",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -20,7 +20,7 @@
       "nfr": "PASS",
       "zero_drift": "PASS",
       "tdd": "PASS",
-      "ci": "PENDENTE",
+      "ci": "PASS",
       "teste_c_planejado": "PASS",
       "rollback": "PASS"
     },
@@ -4581,7 +4581,7 @@
     "ci_plan_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45979562816"
   },
   "v2_prompt48": {
-    "state": "PLAN_DOCUMENTAL_EM_VALIDACAO",
+    "state": "PLAN_DOCUMENTAL_VALIDADO",
     "predecessor_receipt_pr": 841,
     "backend_plan_pr": 239,
     "backend_build_pr": 240,
@@ -4613,6 +4613,9 @@
     "mode": "CODE_FIXTURE",
     "live": "NOT_RUN",
     "prod": "NO-GO",
-    "preflight": "docs/frontend/auditorias/preflight/V2_PROMPT48_CONTRATO_2026-11-27.json"
+    "preflight": "docs/frontend/auditorias/preflight/V2_PROMPT48_CONTRATO_2026-11-27.json",
+    "plan_pr": 842,
+    "ci_plan_head": "ee15a8c4ff8454b4b1213ddc4b92f86d2c258340",
+    "ci_plan_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46023513070"
   }
 }

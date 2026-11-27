@@ -2,6 +2,8 @@
 
 27/11/2026. O [plano executivo #825](https://github.com/contaos999999/contaos-hml-control/pull/825), a matriz de 26/11/2026 e o [recibo 47 #841](https://github.com/contaos999999/contaos-hml-control/pull/841) habilitam este PLAN. O [recibo backend #241](https://github.com/contaos999999/develop/pull/241) vincula o contrato efetivo em HML ao snapshot `6998cf2625c3affe0313e2472ffaa0de78693c3a`, com os 25 documentos e o catálogo original 100/97 preservados. [Checkpoint oficial](https://github.com/contaos999999/contaos-hml-control/issues/708#issuecomment-7221831705)
 
+Os seis workflows do candidato documental passaram no HEAD `ee15a8c4ff8454b4b1213ddc4b92f86d2c258340`. [CI do PLAN](https://github.com/contaos999999/contaos-hml-control/actions/runs/46023513070)
+
 ## Contrato e fluxos
 
 - Abrir V2-05 no apontamento de V2-03. Preservar organização, contrato, competência, rodada, item, navegação e foco. Cancelar leitura anterior na troca de item, rota ou sessão.
