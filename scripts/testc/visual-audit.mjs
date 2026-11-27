@@ -1611,6 +1611,12 @@ async function run() {
       report: "v2-diligencias/report.json",
       records: "reapresentacaoRecords",
     },
+    offline_v2_parecer: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+      records: "parecerRecords",
+    },
     started_utc: started,
     finished_utc: new Date().toISOString(),
     browser_profile: "SEM CREDENCIAIS E SEM MOCK DE TENANT",

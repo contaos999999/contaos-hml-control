@@ -18,6 +18,7 @@ const novoPath = "/competencias/" + competencia + "/apresentacoes/" + protocoloN
 const protocoloPath = "/competencias/" + competencia + "/apresentacoes/" + protocoloId;
 const overview = "/competencias/" + competencia;
 const diligencias = overview + "/diligencias";
+const parecerPath = overview + "/pareceres-contratante";
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 export function diligenciasVisualCases(widths, themes) {
@@ -267,6 +268,58 @@ function tabelasReapresentacao(table: string) {
   return query;
 }
 
+function parecerFixture(name: string, args: Record<string, unknown>) {
+  if (name !== "obter_processamento_parecer_v2") return;
+  if (args.p_id_competencia !== C || args.p_id_parecer !== pareceres[0].id)
+    throw Error("ESCOPO_V276_PROCESSAMENTO");
+  return rpcRespond({ id_parecer: pareceres[0].id, id_ciclo: rodadas[0].id,
+    id_competencia: C, status: "enfileirado", tentativas: 0, iniciado_em: null,
+    concluido_em: null, atualizado_em: comum.recebido_em, correlation_id: correlacao });
+}
+function tabelasParecer(table: string) {
+  if (location.pathname !== "${parecerPath}" ||
+      !["pareceres_contratante", "apresentacoes_contratante", "configuracao_upload"].includes(table)) return null;
+  const scope = new Map<string, unknown>();
+  let signal: AbortSignal | undefined;
+  let offset = 0;
+  const query = {
+    select() { return query; },
+    eq(k: string, v: unknown) { scope.set(k, v); return query; },
+    order() { return query; },
+    range(a: number, b: number) { if (b-a !== 24) throw Error("PAGINA_V276"); offset = a; return query; },
+    abortSignal(s: AbortSignal) { signal = s; return query; },
+    async maybeSingle() {
+      signal?.throwIfAborted();
+      if (table === "configuracao_upload") {
+        if (scope.get("id") !== true) throw Error("CONFIG_V276");
+        return { data: { extensoes_permitidas: ["pdf"], mimes_permitidos: ["application/pdf"],
+          tamanho_maximo_bytes: 10485760, limiar_upload_resumivel_bytes: 6291456 }, error: null, status: 200 };
+      }
+      const r = dados();
+      return { ...r, data: Array.isArray(r.data) ? r.data[0] ?? null : null };
+    },
+    then(resolve: (x: unknown) => unknown, reject: (x: unknown) => unknown) {
+      return Promise.resolve().then(dados).then(resolve, reject);
+    }
+  };
+  function dados() {
+    signal?.throwIfAborted();
+    if (scope.get("id_organizacao") !== O || scope.get("id_contrato") !== K || scope.get("id_competencia") !== C)
+      throw Error("ESCOPO_V276_LISTA");
+    const fixture = new URLSearchParams(location.search).get("fixture");
+    if (fixture === "parecer-denied") return { data: null, count: null, error: { code: "42501" }, status: 403 };
+    if (table === "apresentacoes_contratante") {
+      const a = { id: A, id_organizacao: O, id_contrato: K, id_competencia: C, protocolo: "PROTOCOLO-SINT-76", numero_rodada: 2, apresentado_em: comum.recebido_em };
+      const data = offset || (scope.has("id") && scope.get("id") !== A) ? [] : [a];
+      return { data, count: 1, error: null, status: 200 };
+    }
+    const item = { ...pareceres[0], id_arquivo: arquivo, registrado_por: revisor, parecer_final_favoravel: false };
+    const total = fixture === "parecer-empty" ? 0 : 1;
+    return { data: total && !offset ? [item] : [], count: total, error: null, status: 200 };
+  }
+  return query;
+}
+
 function planoFixture(name: string, args: Record<string, unknown>) {
   if (name === "obter_plano_acao_diligencia_v2") {
     if (args.p_id_ciclo !== rodadas[0].id || args.p_id_apontamento !== apontamentos[0].id ||
@@ -331,6 +384,8 @@ export const supabase = {
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
   },
   rpc(name: string, args: Record<string, unknown>) {
+    const parecer = parecerFixture(name, args);
+    if (parecer) return parecer;
     const reapresentacao = reapresentacaoFixture(name, args);
     if (reapresentacao) return reapresentacao;
     const contestacao = contestacaoFixture(name, args);
@@ -349,6 +404,8 @@ export const supabase = {
     } };
   },
   from(table: string) {
+    const parecer = tabelasParecer(table);
+    if (parecer) return parecer;
     const reapresentacao = tabelasReapresentacao(table);
     if (reapresentacao) return reapresentacao;
     if (Object.hasOwn(tabelas, table) && (table !== "itens_pacote_competencia" || location.pathname === "${itemPath}")) {
@@ -457,6 +514,7 @@ import { DiligenciasCompetencia } from ${JSON.stringify(root + "/src/components/
 import { ApontamentoDiligencia } from ${JSON.stringify(root + "/src/components/diligencias/ApontamentoDiligencia.tsx")};
 import { CicloDiligencia } from ${JSON.stringify(root + "/src/components/diligencias/CicloDiligencia.tsx")};
 import { ReapresentacaoDiligencia } from ${JSON.stringify(root + "/src/components/diligencias/ReapresentacaoDiligencia.tsx")};
+import { PareceresContratante } from ${JSON.stringify(root + "/src/components/diligencias/PareceresContratante.tsx")};
 import { CompetenciaProtocolo } from ${JSON.stringify(root + "/src/components/competencias/CompetenciaProtocolo.tsx")};
 import { definirPreferenciaOrganizacao } from ${JSON.stringify(root + "/src/lib/organizacao/preferenciaOrganizacao.ts")};
 import { C, O } from "./client";
@@ -478,6 +536,7 @@ function ApresentacaoFixture() {
   if (modulo === "diligencias" && subrota === "reapresentar") return <ReapresentacaoDiligencia cicloId={id} offset={offset} />;
   if (modulo === "diligencias") return <CicloDiligencia id={id} foco={foco} offset={offset} />;
   if (subrota === "diligencias") return <DiligenciasCompetencia id={id} />;
+  if (subrota === "pareceres-contratante") return <PareceresContratante id={id} apresentacaoId={endereco.searchParams.get("apresentacaoId") ?? undefined} />;
   if (subrota === "apresentacoes") return <CompetenciaProtocolo id={id} apresentacaoId={origem} />;
   return <CompetenciaVisaoGeral id={C} />;
 }
@@ -509,6 +568,7 @@ export async function collectDiligenciasVisual(
   const planoRecords = [];
   const contestacaoRecords = [];
   const reapresentacaoRecords = [];
+  const parecerRecords = [];
   let server;
 
   try {
@@ -543,7 +603,7 @@ export async function collectDiligenciasVisual(
         reply.setHeader("content-type", "text/css");
         reply.end(css);
       } else if (
-        [overview, diligencias, cicloPath, protocoloPath, itemPath, wizardPath, novoPath].includes(
+        [overview, diligencias, cicloPath, protocoloPath, itemPath, wizardPath, novoPath, parecerPath].includes(
           path,
         )
       ) {
@@ -985,6 +1045,46 @@ export async function collectDiligenciasVisual(
           chamadasExternas: externa,
           errosDePagina: erros,
         });
+        etapaVisual = "V2_07_PARECER";
+        await page.goto(origin + diligencias);
+        const atalhoParecer = page.getByRole("link", { name: "Pareceres do contratante" });
+        await atalhoParecer.focus();
+        if (!(await atalhoParecer.evaluate((element) => document.activeElement === element)))
+          throw Error("TESTE_C_V2_76_FOCO");
+        await atalhoParecer.press("Enter");
+        await page.waitForURL(origin + parecerPath);
+        await page.getByRole("heading", { name: "PARECER-SINTETICO-02" }).waitFor();
+        await page.getByText("Enfileirado", { exact: true }).waitFor();
+        await page.getByRole("link", { name: "Protocolo original" }).waitFor();
+        await page.getByLabel("Classificação").focus();
+        if (!(await page.getByLabel("Classificação").evaluate((element) => document.activeElement === element)))
+          throw Error("TESTE_C_V2_76_FORMULARIO");
+        await page.getByLabel("Classificação").fill("Conferência sintética");
+        if (!(await page.getByRole("button", { name: "Registrar parecer", exact: true }).isDisabled()))
+          throw Error("TESTE_C_V2_76_ARQUIVO");
+        const overflowParecer = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - innerWidth));
+        if (overflowParecer > 1) throw Error("TESTE_C_V2_76_OVERFLOW");
+        const imagemParecer = "screenshots/V2-07_" + width + "_" + theme + ".png";
+        const bytesParecer = await page.screenshot({ fullPage: true, animations: "disabled" });
+        writeFileSync(join(target, imagemParecer), bytesParecer);
+        await page.getByRole("link", { name: "Protocolo original" }).press("Enter");
+        await page.waitForURL(origin + protocoloPath);
+        await page.getByRole("link", { name: "Pareceres do contratante" }).press("Enter");
+        await page.waitForURL(origin + parecerPath + "?apresentacaoId=" + protocoloId);
+        await page.getByRole("heading", { name: "PARECER-SINTETICO-02" }).waitFor();
+        if (!(await page.getByLabel("Apresentação", { exact: true }).isDisabled()) ||
+            (await page.getByLabel("Apresentação", { exact: true }).inputValue()) !== protocoloId)
+          throw Error("TESTE_C_V2_76_VINCULO");
+        await page.goto(origin + parecerPath + "?fixture=parecer-empty");
+        await page.getByText("Nenhum parecer recebido.", { exact: true }).waitFor();
+        await page.goto(origin + parecerPath + "?fixture=parecer-denied");
+        await page.getByRole("alert").filter({ hasText: "Sem permissão" }).waitFor();
+        if (await page.getByRole("heading", { name: "PARECER-SINTETICO-02" }).count() ||
+            await page.getByRole("button", { name: "Registrar parecer", exact: true }).count() || externa || erros)
+          throw Error("TESTE_C_V2_76_ISOLAMENTO");
+        parecerRecords.push({ width, theme, screenshot: imagemParecer, sha256: digest(bytesParecer),
+          status: "PASS", foco: true, arquivoObrigatorio: true, protocoloV120: true,
+          vazio: true, negacaoSemDados: true, overflow: overflowParecer, chamadasExternas: externa, errosDePagina: erros });
         records.push({
           width,
           theme,
@@ -1019,12 +1119,13 @@ export async function collectDiligenciasVisual(
       itemRecords.length !== cases.length ||
       planoRecords.length !== cases.length ||
       contestacaoRecords.length !== cases.length ||
-      reapresentacaoRecords.length !== cases.length
+      reapresentacaoRecords.length !== cases.length ||
+      parecerRecords.length !== cases.length
     ) {
       throw Error("TESTE_C_V2_COBERTURA");
     }
     const record = {
-      schema: "contaos.v2-diligencias.offline-visual.v6",
+      schema: "contaos.v2-diligencias.offline-visual.v7",
       mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
       headSha,
       sourceTree: git("rev-parse", "HEAD^{tree}"),
@@ -1045,6 +1146,9 @@ export async function collectDiligenciasVisual(
           "src/lib/diligencias/contestacaoDiligenciaDados.ts",
           "src/components/diligencias/ReapresentacaoDiligencia.tsx",
           "src/lib/diligencias/reapresentacaoDiligenciaDados.ts",
+          "src/components/diligencias/PareceresContratante.tsx",
+          "src/lib/diligencias/pareceresContratanteDados.ts",
+          "src/routes/competencias_.$id_.pareceres-contratante.tsx",
           "src/routes/diligencias_.$cicloId_.reapresentar.tsx",
           "src/lib/diligencias/apontamentoDiligenciaDados.ts",
           "src/lib/diligencias/apontamentoEvidenciasDados.ts",
@@ -1058,6 +1162,7 @@ export async function collectDiligenciasVisual(
       planoRecords,
       contestacaoRecords,
       reapresentacaoRecords,
+      parecerRecords,
     };
     const report = JSON.stringify(record, null, 2) + "\n";
     writeFileSync(join(target, "report.json"), report);
@@ -1071,6 +1176,7 @@ export async function collectDiligenciasVisual(
           ...planoRecords,
           ...contestacaoRecords,
           ...reapresentacaoRecords,
+          ...parecerRecords,
         ].map((r) => r.sha256 + "  " + r.screenshot),
         digest(report) + "  report.json",
       ].join("\n") + "\n",
@@ -1081,6 +1187,7 @@ export async function collectDiligenciasVisual(
     console.log("V2_04_OFFLINE_VISUAL_PASS_8");
     console.log("V2_05_OFFLINE_VISUAL_PASS_8");
     console.log("V2_06_OFFLINE_VISUAL_PASS_8");
+    console.log("V2_07_OFFLINE_VISUAL_PASS_8");
     return record;
   } finally {
     if (server?.listening) await new Promise((resolve) => server.close(resolve));
