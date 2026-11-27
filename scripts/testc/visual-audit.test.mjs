@@ -1061,3 +1061,10 @@ test("V2-03 registra a rota Apontamento de diligencia e a prova visual", async (
   assert.ok(files["entry.tsx"].includes("/src/components/diligencias/ApontamentoDiligencia"));
   assert.ok(files["client.ts"].includes("obter_fonte_apontamento_contratante"));
 });
+
+test("V2-04 registra o painel do plano de ação no Teste C", () => {
+  assert.ok(
+    ROUTES.some((route) => route.id === "V2-04" && route.path.includes("/apontamentos/") && route.requiresDrawer),
+    "FAIL V2-04 registra o painel do plano de ação no Teste C: o apontamento ainda não possui o painel de tarefas",
+  );
+});
