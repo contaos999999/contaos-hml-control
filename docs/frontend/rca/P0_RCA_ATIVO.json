@@ -157,7 +157,7 @@
               "id": "46-V111-NEGACAO",
               "runner": "vitest",
               "arquivo": "src/test/documentoDetalhe.test.tsx",
-              "caso": "preserva ausencia da versao citada e bloqueia substituicao automatica"
+              "caso": "V1-11 evidência citada pela V2-03 preserva ausencia da versao citada e bloqueia substituicao automatica"
             }
           },
           {
@@ -273,7 +273,7 @@
             "id": "46-V111-VERSAO",
             "runner": "vitest",
             "arquivo": "src/test/documentoDetalhe.test.tsx",
-            "caso": "abre versao citada ainda que fora da primeira pagina"
+            "caso": "V1-11 evidência citada pela V2-03 abre versao citada ainda que fora da primeira pagina"
           },
           {
             "id": "46-VISUAL",
@@ -317,7 +317,7 @@
             "id": "46-V111-NEGACAO",
             "runner": "vitest",
             "arquivo": "src/test/documentoDetalhe.test.tsx",
-            "caso": "preserva ausencia da versao citada e bloqueia substituicao automatica"
+            "caso": "V1-11 evidência citada pela V2-03 preserva ausencia da versao citada e bloqueia substituicao automatica"
           }
         ],
         "regressao": [
