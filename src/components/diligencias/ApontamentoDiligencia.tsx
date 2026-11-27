@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 
+import { PlanoAcaoDiligencia } from "@/components/diligencias/PlanoAcaoDiligencia";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { formatarDataHoraBr } from "@/lib/contratos/baseNormativaDados";
@@ -45,7 +46,7 @@ const CARTAO = "space-y-3 rounded-md border border-border bg-card p-4 sm:p-5";
 
 type Estado =
   | { tipo: "carregando" | keyof typeof MENSAGENS }
-  | { tipo: "ok"; dados: DetalheApontamentoDiligencia };
+  | { tipo: "ok"; dados: DetalheApontamentoDiligencia; usuario: string };
 
 export function ApontamentoDiligencia({
   cicloId,
@@ -59,6 +60,7 @@ export function ApontamentoDiligencia({
   const navigate = useNavigate();
   const atual = useRef<AbortController | null>(null);
   const [revisao, setRevisao] = useState(0);
+  const [atualizacao, setAtualizacao] = useState(0);
   const cicloValido = uuidValido(cicloId);
   const valido = cicloValido && uuidValido(id);
   const ciclo = cicloValido ? uuidCanonico(cicloId) : cicloId;
@@ -74,6 +76,11 @@ export function ApontamentoDiligencia({
   const revalidar = useCallback(() => {
     atual.current?.abort();
     setRevisao((n) => n + 1);
+  }, []);
+
+  const relerDepoisDaTarefa = useCallback(() => {
+    atual.current?.abort();
+    setAtualizacao((n) => n + 1);
   }, []);
 
   useEffect(() => {
@@ -116,7 +123,7 @@ export function ApontamentoDiligencia({
         const dados = await consultarApontamentoDiligencia(ciclo, itemId, org, signal);
         if (obterPreferenciaOrganizacao(data.user.id) !== org)
           throw new ErroDiligencias("sem_permissao");
-        responder({ tipo: "ok", dados });
+        responder({ tipo: "ok", dados, usuario: data.user.id });
       } catch (erro) {
         responder({ tipo: erro instanceof ErroDiligencias ? erro.tipo : "erro" });
       }
@@ -125,7 +132,7 @@ export function ApontamentoDiligencia({
       controller.abort();
       if (atual.current === controller) atual.current = null;
     };
-  }, [chave, ciclo, itemId, navigate, valido]);
+  }, [atualizacao, chave, ciclo, itemId, navigate, valido]);
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 px-4 py-6 sm:px-6">
@@ -159,6 +166,13 @@ export function ApontamentoDiligencia({
         </p>
       ) : estado.tipo === "ok" ? (
         <>
+          <PlanoAcaoDiligencia
+            key={chave}
+            escopo={estado.dados.ciclo}
+            apontamento={estado.dados.item.id}
+            usuario={estado.usuario}
+            aoRegistrar={relerDepoisDaTarefa}
+          />
           <Conteudo dados={estado.dados} offset={offset} />
           <Button variant="outline" className="min-h-11" onClick={revalidar}>
             <RefreshCw className="mr-2 h-4 w-4" aria-hidden /> Atualizar apontamento

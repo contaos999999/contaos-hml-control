@@ -60,7 +60,10 @@ test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preser
   assert.equal(pages.length, 31);
   assert.equal(new Set(pages).size, pages.length);
   assert.deepEqual([...new Set(ROUTES.map((route) => normalize(route.path)))].sort(), pages.sort());
-  assert.equal(ROUTES.filter((route) => route.requiresDrawer).length, 1);
+  assert.deepEqual(
+    ROUTES.filter((route) => route.requiresDrawer).map((route) => route.id),
+    ["V117", "V2-04"],
+  );
   assert.equal(ROUTES.find((route) => route.id === "V117")?.requiresDrawer, true);
 });
 
@@ -76,15 +79,16 @@ test("P0 V123: Auditoria possui oito casos privados sem PASS autenticado presumi
   );
 });
 
-test("matriz oficial preserva 29 superfícies V1 e inclui lista, ciclo e apontamento V2", () => {
-  assert.equal(ROUTES.length, 32);
+test("matriz oficial preserva 29 superfícies V1 e inclui lista, ciclo, apontamento e plano V2", () => {
+  assert.equal(ROUTES.length, 33);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
   assert.equal(cases().filter((x) => !x.id.startsWith("V2-")).length, 232);
   assert.equal(cases().filter((x) => x.id === "V2-01").length, 8);
   assert.equal(cases().filter((x) => x.id === "V2-02").length, 8);
   assert.equal(cases().filter((x) => x.id === "V2-03").length, 8);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 256);
+  assert.equal(cases().filter((x) => x.id === "V2-04").length, 8);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 264);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");
@@ -1060,4 +1064,14 @@ test("V2-03 registra a rota Apontamento de diligencia e a prova visual", async (
   });
   assert.ok(files["entry.tsx"].includes("/src/components/diligencias/ApontamentoDiligencia"));
   assert.ok(files["client.ts"].includes("obter_fonte_apontamento_contratante"));
+});
+
+test("V2-04 registra o painel do plano de ação no Teste C", () => {
+  assert.ok(
+    ROUTES.some(
+      (route) =>
+        route.id === "V2-04" && route.path.includes("/apontamentos/") && route.requiresDrawer,
+    ),
+    "FAIL V2-04 registra o painel do plano de ação no Teste C: o apontamento ainda não possui o painel de tarefas",
+  );
 });
