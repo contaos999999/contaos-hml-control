@@ -2,6 +2,8 @@
 
 27/11/2026. O [plano executivo #825](https://github.com/contaos999999/contaos-hml-control/pull/825) e o [recibo 46 #837](https://github.com/contaos999999/contaos-hml-control/pull/837) habilitam o regular 47. A [BUILD backend #237](https://github.com/contaos999999/develop/pull/237) e o recibo [backend #238](https://github.com/contaos999999/develop/pull/238) comprovam o contrato HML. Snapshot em `270c2bf56b566d05143a5835e3cc2714769cf74d`, com 25 blobs normativos e catálogo 100/97 sem divergência. [Checkpoint oficial](https://github.com/contaos999999/contaos-hml-control/issues/708#issuecomment-7215362611)
 
+Os seis workflows do candidato documental passaram no HEAD `dbd70ca1fcd6298dc35c86a54b2849b19b0e6254`. [CI do PLAN](https://github.com/contaos999999/contaos-hml-control/actions/runs/45979562816)
+
 ## Contrato e integração
 
 - O plano de ação abre em painel lateral no item exato de V2-03. A navegação conserva a rodada, a competência, a organização, a página do ciclo e o foco de retorno. Trocas de sessão, rota e organização cancelam as consultas e descartam os dados anteriores.

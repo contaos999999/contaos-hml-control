@@ -1,15 +1,15 @@
 {
   "schema": "contaos.frontend.plan.v1",
   "prompt_id": "47",
-  "status": "EM_VALIDACAO",
+  "status": "VALIDADO",
   "plano_documento": "docs/frontend/planos/PROMPT_47_V2_04_PLANO_ACAO_DILIGENCIA_2026-11-27.md",
   "validacao": {
-    "resultado": "PENDENTE_CI",
-    "validado_por": "Candidato documental do regular 47",
+    "resultado": "PASS",
+    "validado_por": "Validação documental com seis workflows aprovados no candidato exato e contrato HML integrado.",
     "validado_em": "2026-11-27",
     "modo_aprovacao": "validacao_documental_com_autorizacao_titular",
     "aprovacao_humana_exigida": false,
-    "ci_plano_url": null,
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45979562816",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -20,7 +20,7 @@
       "nfr": "PASS",
       "zero_drift": "PASS",
       "tdd": "PASS",
-      "ci": "PENDENTE",
+      "ci": "PASS",
       "teste_c_planejado": "PASS",
       "rollback": "PASS"
     },
@@ -4547,7 +4547,7 @@
     }
   },
   "v2_prompt47": {
-    "state": "PLAN_DOCUMENTAL_EM_VALIDACAO",
+    "state": "PLAN_DOCUMENTAL_VALIDADO",
     "predecessor_receipt_pr": 837,
     "backend_plan_pr": 236,
     "backend_build_pr": 237,
@@ -4576,6 +4576,9 @@
     ],
     "mode": "CODE_FIXTURE",
     "live": "NOT_RUN",
-    "prod": "NO-GO"
+    "prod": "NO-GO",
+    "plan_pr": 838,
+    "ci_plan_head": "dbd70ca1fcd6298dc35c86a54b2849b19b0e6254",
+    "ci_plan_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45979562816"
   }
 }
