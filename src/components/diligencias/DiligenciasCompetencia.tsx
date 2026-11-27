@@ -160,6 +160,13 @@ export function DiligenciasCompetencia({ id }: { id: string }) {
         <h1 className="text-2xl font-semibold tracking-tight">Diligências</h1>
         <p className="text-sm text-muted-foreground">Acompanhe as rodadas da competência.</p>
       </header>
+      {estado.tipo === "ok" && (
+        <Button asChild variant="outline" className="min-h-11">
+          <Link to="/competencias/$id/pareceres-contratante" params={{ id: competencia }}>
+            Pareceres do contratante
+          </Link>
+        </Button>
+      )}
       {valido && (
         <Button
           variant="outline"
