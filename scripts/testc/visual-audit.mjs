@@ -64,6 +64,7 @@ export const ROUTES = [
     requiresDrawer: true,
   },
   { id: "V2-06", path: "/diligencias/" + CICLO_V2_FIXTURE + "/reapresentar" },
+  { id: "V2-07", path: "/competencias/" + UUID + "/pareceres-contratante" },
 ];
 export function cases() {
   return ROUTES.flatMap((route) =>
