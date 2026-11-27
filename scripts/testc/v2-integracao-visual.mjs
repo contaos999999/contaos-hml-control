@@ -1068,16 +1068,21 @@ export async function collectDiligenciasVisual(
         const imagemParecer = "screenshots/V2-07_" + width + "_" + theme + ".png";
         const bytesParecer = await page.screenshot({ fullPage: true, animations: "disabled" });
         writeFileSync(join(target, imagemParecer), bytesParecer);
+        etapaVisual = "V2_07_PARECER_PROTOCOLO";
         await page.getByRole("link", { name: "Protocolo original" }).press("Enter");
         await page.waitForURL(origin + protocoloPath);
         await page.getByRole("link", { name: "Pareceres do contratante" }).press("Enter");
+        etapaVisual = "V2_07_PARECER_RETORNO";
         await page.waitForURL(origin + parecerPath + "?apresentacaoId=" + protocoloId);
         await page.getByRole("heading", { name: "PARECER-SINTETICO-02" }).waitFor();
+        etapaVisual = "V2_07_PARECER_VINCULO";
         if (!(await page.getByLabel("Apresentação", { exact: true }).isDisabled()) ||
             (await page.getByLabel("Apresentação", { exact: true }).inputValue()) !== protocoloId)
           throw Error("TESTE_C_V2_76_VINCULO");
+        etapaVisual = "V2_07_PARECER_VAZIO";
         await page.goto(origin + parecerPath + "?fixture=parecer-empty");
         await page.getByText("Nenhum parecer recebido.", { exact: true }).waitFor();
+        etapaVisual = "V2_07_PARECER_NEGADO";
         await page.goto(origin + parecerPath + "?fixture=parecer-denied");
         await page.getByRole("alert").filter({ hasText: "Sem permissão" }).waitFor();
         if (await page.getByRole("heading", { name: "PARECER-SINTETICO-02" }).count() ||

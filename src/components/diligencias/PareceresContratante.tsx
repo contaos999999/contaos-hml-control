@@ -239,11 +239,12 @@ function RegistroParecer({ dados, signal, onTrava }: { dados: Dados; signal: Abo
   return <section aria-label="Registrar parecer" className="space-y-4 rounded-lg border border-border bg-card p-4">
     <h2 className="text-lg font-semibold">Registrar parecer</h2>
     <form className="grid gap-3" onSubmit={e => { e.preventDefault(); void registrar(); }}>
-      <label className="grid gap-1 text-sm">Apresentação
-        <select className="min-h-11 rounded border border-input bg-background px-2" required disabled={bloqueado || !!dados.inicial} value={pedido.apresentacao} onChange={e => setPedido(p => ({ ...p, apresentacao: e.target.value }))}>
+      <div className="grid gap-1 text-sm">
+        <label htmlFor="parecer-apresentacao">Apresentação</label>
+        <select id="parecer-apresentacao" className="min-h-11 rounded border border-input bg-background px-2" required disabled={bloqueado || !!dados.inicial} value={pedido.apresentacao} onChange={e => setPedido(p => ({ ...p, apresentacao: e.target.value }))}>
           <option value="">Selecione a apresentação</option>{apresentacoes.map(a => <option key={a.id} value={a.id}>{a.protocolo || "Sem protocolo"} · Rodada {a.numero_rodada}</option>)}
         </select>
-      </label>
+      </div>
       <label className="grid gap-1 text-sm">Classificação<input className="min-h-11 rounded border border-input bg-background px-2" required maxLength={200} disabled={bloqueado} value={pedido.resultado} onChange={e => setPedido(p => ({ ...p, resultado: e.target.value }))}/></label>
       <label className="grid gap-1 text-sm">Número do documento<input className="min-h-11 rounded border border-input bg-background px-2" maxLength={120} disabled={bloqueado} value={pedido.numero} onChange={e => setPedido(p => ({ ...p, numero: e.target.value }))}/></label>
       <label className="grid gap-1 text-sm">Data de emissão<input className="min-h-11 rounded border border-input bg-background px-2" type="date" disabled={bloqueado} value={pedido.emissao} onChange={e => setPedido(p => ({ ...p, emissao: e.target.value }))}/></label>
