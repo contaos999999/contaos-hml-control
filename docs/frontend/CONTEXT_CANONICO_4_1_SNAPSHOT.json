@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "471da904421768743edf2a9114611af3a0f03439",
+  "source_commit": "b45532dc6397b2c34763ff20ced56f3d0f604d8e",
   "source_date": "2026-11-22",
   "context_documents": [
     {
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "PLAN V2-07 reancorado na main de develop após o recibo #247. Conferidos 25 blobs e o catálogo 100/97."
+  "p0_reanchor_note": "PLAN V2-07 reancorado após os recibos backend #247 e #250. Conferidos 25 blobs do contexto e o catálogo 100/97."
 }

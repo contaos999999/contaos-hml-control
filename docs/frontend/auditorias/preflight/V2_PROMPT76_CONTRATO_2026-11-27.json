@@ -20,8 +20,9 @@
     "ciclos_diligencia",
     "apontamentos_contratante",
     "arquivos",
-    "autorizar_upload_arquivo",
-    "confirmar_upload_arquivo"
+    "confirmar_upload_arquivo",
+    "storage-sign-upload",
+    "obter_fonte_apontamento_contratante"
   ],
   "rbac_rls": {
     "escopo": [
@@ -198,5 +199,21 @@
     ]
   },
   "live": "NOT_RUN",
-  "prod": "NO-GO"
+  "prod": "NO-GO",
+  "prazo_externo": {
+    "backend_plan_pr": 248,
+    "backend_build_pr": 249,
+    "backend_build_merge": "c900bbcbca4a0826b83a3fd0c4bdb4120d80778e",
+    "backend_receipt_pr": 250,
+    "backend_receipt_main": "b45532dc6397b2c34763ff20ced56f3d0f604d8e",
+    "backend_receipt_review": 6093710473,
+    "hml_run": 46073226704,
+    "attempt": 1,
+    "job": 140754855876,
+    "migration": "20261127213828",
+    "sha256": "2909774d5be1e0fbd55883291c89ca877a4ed6312577d2346dfe822ef8238284",
+    "private_body_md5": "1cb26ba5b7b5950a0e8f53164df33d77",
+    "versions": 144,
+    "catalogo_exato": true
+  }
 }
