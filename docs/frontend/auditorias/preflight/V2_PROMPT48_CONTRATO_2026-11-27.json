@@ -1,0 +1,66 @@
+{
+  "schema": "contaos.v2.preflight.regular.v1",
+  "regular": "48",
+  "status": "VERIFICADO",
+  "backend": {
+    "plan_pr": 239,
+    "build_pr": 240,
+    "build_merge": "80dc2d088a7010688f5172a6d9e43fb7e271d571",
+    "review": 6090114288,
+    "receipt_pr": 241,
+    "receipt_main": "6998cf2625c3affe0313e2472ffaa0de78693c3a",
+    "receipt_review": 6090205809
+  },
+  "contrato": [
+    "obter_contestacoes_v2",
+    "salvar_contestacao_v2",
+    "revisar_contestacao_v2",
+    "solicitar_minuta_contestacao_v2",
+    "obter_documentos_competencia_v115",
+    "avaliar_portao_reapresentacao"
+  ],
+  "rbac_rls": {
+    "escopo": [
+      "organizacao",
+      "contrato",
+      "competencia",
+      "rodada",
+      "apontamento",
+      "versao"
+    ],
+    "capacidades_oficiais": true,
+    "worker": "service_role"
+  },
+  "prova": {
+    "run": 45988110599,
+    "tentativa": 1,
+    "job": 140468784911,
+    "artefato": 15191944655,
+    "sha256": "09d8edacaf1b3987d5e11661339107a1b66f0f9b4c1a48b9b60293973bae51e6",
+    "restore": 45988110516
+  },
+  "hml": {
+    "run": 46022686228,
+    "tentativa": 1,
+    "job": 140586063941,
+    "migration": "20261127105223",
+    "migration_sha256": "27c5acd2e614d8cccf60f9fc55c895c0827121215822db7b356f87589274bc16",
+    "versions": 141,
+    "worker_version": 8,
+    "worker_sha256": "40158adf5b73684dc34a6d5342740b32f92509f0e9cc10086f26680e5aa7b972",
+    "catalogo_exato": true
+  },
+  "frontend": {
+    "recibo_predecessor": 841,
+    "testes_exigidos": [
+      "contrato",
+      "RBAC_RLS",
+      "versao",
+      "mapa",
+      "auditoria",
+      "Teste C"
+    ]
+  },
+  "live": "NOT_RUN",
+  "prod": "NO-GO"
+}
