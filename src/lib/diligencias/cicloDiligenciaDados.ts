@@ -73,7 +73,7 @@ const CAMPOS_PARECER =
   CHAVES_RODADA +
   ",numero_documento,recebido_em,data_emissao,resultado_geral,id_apresentacao," +
   "apresentacao:apresentacoes_contratante!pareceres_contratante_id_apresentacao_fkey(id,id_competencia,id_contrato,id_organizacao)";
-const CAMPOS_APONTAMENTO =
+export const CAMPOS_APONTAMENTO =
   CHAVES_RODADA +
   ",codigo,descricao,classificacao_sugerida,status,severidade,criado_em," +
   "valor_questionado::text,glosa_potencial::text,valor_aceito::text,impacto_financeiro_estimado::text";
@@ -87,7 +87,7 @@ function chaveOficial<T extends object>(valores: T, v: unknown): v is keyof T {
   return typeof v === "string" && Object.hasOwn(valores, v);
 }
 
-function mesmoEscopo(valor: Record<string, unknown>, ciclo: CicloDiligencia) {
+export function mesmoEscopo(valor: Record<string, unknown>, ciclo: CicloDiligencia) {
   return (
     valor["id_competencia"] === ciclo.id_competencia &&
     valor["id_contrato"] === ciclo.id_contrato &&
@@ -134,7 +134,7 @@ function lerParecer(dados: Record<string, unknown>, ciclo: CicloDiligencia): Par
   };
 }
 
-function lerApontamento(dados: Record<string, unknown>): ApontamentoDaRodada {
+export function lerApontamento(dados: Record<string, unknown>): ApontamentoDaRodada {
   const {
     id,
     codigo,
@@ -231,19 +231,12 @@ async function consultarPagina<T>(
   return { itens, total: resposta.count };
 }
 
-export async function consultarCicloDiligencia(
+export async function consultarEscopoCicloDiligencia(
   id: string,
   organizacao: string,
-  offsets: { pareceres: number; apontamentos: number },
   signal: AbortSignal,
-): Promise<DetalheCicloDiligencia> {
-  if (
-    !uuid(id) ||
-    !uuid(organizacao) ||
-    !offsetDiligenciasValido(offsets.pareceres) ||
-    !offsetDiligenciasValido(offsets.apontamentos)
-  )
-    throw new ErroDiligencias("invalido");
+): Promise<CicloDiligencia> {
+  if (!uuid(id) || !uuid(organizacao)) throw new ErroDiligencias("invalido");
 
   signal.throwIfAborted();
   const cicloId = uuidCanonico(id);
@@ -287,6 +280,18 @@ export async function consultarCicloDiligencia(
   )
     throw new ErroDiligencias("sem_permissao");
 
+  return ciclo;
+}
+
+export async function consultarCicloDiligencia(
+  id: string,
+  organizacao: string,
+  offsets: { pareceres: number; apontamentos: number },
+  signal: AbortSignal,
+): Promise<DetalheCicloDiligencia> {
+  if (!offsetDiligenciasValido(offsets.pareceres) || !offsetDiligenciasValido(offsets.apontamentos))
+    throw new ErroDiligencias("invalido");
+  const ciclo = await consultarEscopoCicloDiligencia(id, organizacao, signal);
   const [pareceres, apontamentos] = await Promise.all([
     consultarPagina(
       "pareceres_contratante",

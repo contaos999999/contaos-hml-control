@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { DocumentoDetalhe } from "@/components/contratos/DocumentoDetalhe";
-import { lerBuscaCentral } from "@/lib/contratos/documentoDetalheDados";
+import { lerBuscaDetalheDocumento } from "@/lib/contratos/documentoDetalheDados";
 
 export const Route = createFileRoute("/contratos_/$id_/documentos_/$idDocumento")({
   ssr: false,
-  validateSearch: lerBuscaCentral,
+  validateSearch: lerBuscaDetalheDocumento,
   head: () => ({
     meta: [
       { title: "Detalhe do documento — ContaOS" },

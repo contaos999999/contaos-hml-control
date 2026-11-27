@@ -36,7 +36,10 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
+import {
+  EVENTO_ORGANIZACAO_ALTERADA,
+  obterPreferenciaOrganizacao,
+} from "@/lib/organizacao/preferenciaOrganizacao";
 import {
   ErroDetalhe,
   formatarDataBr,
@@ -73,6 +76,7 @@ import {
   ehMaterial,
   emProcessamento,
   hashDiverge,
+  lerBuscaCentral,
   listarFragmentos,
   listarPaginas,
   listarProcessamentos,
@@ -81,11 +85,12 @@ import {
   mensagemErroRevisao,
   obterDocumento,
   consultarCapacidadeRevisaoDocumento,
+  consultarVersaoCitada,
   revisarSugestao,
   rotuloMetadado,
   rotuloUsuario,
   type ArquivoDetalhe,
-  type BuscaCentral,
+  type BuscaDetalheDocumento,
   type FiltrosSugestao,
   type Sugestao,
   type VersaoDetalhe,
@@ -107,7 +112,7 @@ export function DocumentoDetalhe({
 }: {
   id: string;
   idDocumento: string;
-  retorno: BuscaCentral;
+  retorno: BuscaDetalheDocumento;
 }) {
   const navigate = useNavigate();
   const [ctx, setCtx] = useState<Ctx | null>(null);
@@ -140,6 +145,23 @@ export function DocumentoDetalhe({
     };
   }, [navigate, tentativa]);
 
+  const versaoCitada = retorno.versao;
+  useEffect(() => {
+    if (versaoCitada === undefined) return;
+    const revalidar = () => {
+      setCtx(null);
+      setTentativa((n) => n + 1);
+    };
+    const { data } = supabase.auth.onAuthStateChange((evento) => {
+      if (evento !== "INITIAL_SESSION") revalidar();
+    });
+    window.addEventListener(EVENTO_ORGANIZACAO_ALTERADA, revalidar);
+    return () => {
+      window.removeEventListener(EVENTO_ORGANIZACAO_ALTERADA, revalidar);
+      data.subscription.unsubscribe();
+    };
+  }, [versaoCitada]);
+
   const idOk = uuidValido(id) && uuidValido(idDocumento);
   const idC = idOk ? uuidCanonico(id) : id;
   const idD = idOk ? uuidCanonico(idDocumento) : idDocumento;
@@ -157,6 +179,17 @@ export function DocumentoDetalhe({
                   <ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Voltar para contratos
                 </Link>
               </Button>
+              {retorno.ciclo && retorno.apontamento && (
+                <Button asChild variant="outline" className="h-11">
+                  <Link
+                    to="/diligencias/$cicloId/apontamentos/$id"
+                    params={{ cicloId: retorno.ciclo, id: retorno.apontamento }}
+                    search={{ offset: retorno.offset }}
+                  >
+                    Voltar ao apontamento
+                  </Link>
+                </Button>
+              )}
             </nav>
           </div>
         </nav>
@@ -351,7 +384,7 @@ function GateContrato({
   id: string;
   idDocumento: string;
   ctx: Ctx;
-  retorno: BuscaCentral;
+  retorno: BuscaDetalheDocumento;
 }) {
   const contrato = useQuery({
     queryKey: ["contratos", "detalhe", ctx.idUsuario, ctx.idOrganizacao, id],
@@ -359,7 +392,10 @@ function GateContrato({
     retry: false,
   });
   const c = contrato.data;
-  const pronto = !!c && uuidCanonico(c.id) === id;
+  const buscaCentral = lerBuscaCentral(retorno);
+  const emOutraOrganizacao =
+    retorno.versao !== undefined && !!c && c.id_organizacao !== ctx.idOrganizacao;
+  const pronto = !!c && uuidCanonico(c.id) === id && !emOutraOrganizacao;
   const documento = useQuery({
     queryKey: ["v111", "documento", ctx.idUsuario, ctx.idOrganizacao, id, idDocumento],
     queryFn: ({ signal }) => obterDocumento(id, idDocumento, signal),
@@ -392,6 +428,15 @@ function GateContrato({
       </>
     );
   }
+  if (emOutraOrganizacao)
+    return (
+      <>
+        <Titulo />
+        <p role="alert" className="text-sm">
+          A versão citada está indisponível na organização selecionada.
+        </p>
+      </>
+    );
   if (!pronto || !c)
     return (
       <>
@@ -401,7 +446,7 @@ function GateContrato({
     );
   const voltar = (
     <Button asChild variant="outline" className="h-11">
-      <Link to="/contratos/$id/documentos" params={{ id: c.id }} search={retorno}>
+      <Link to="/contratos/$id/documentos" params={{ id: c.id }} search={buscaCentral}>
         <ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Voltar para Documentos
       </Link>
     </Button>
@@ -455,7 +500,7 @@ function GateContrato({
             <Link
               to="/contratos/$id/documentos"
               params={{ id: c.id }}
-              search={retorno}
+              search={buscaCentral}
               className="underline-offset-4 hover:underline"
             >
               Documentos
@@ -469,7 +514,12 @@ function GateContrato({
       </nav>
       <Titulo numero={c.numero ?? undefined} titulo={d.titulo} />
       {voltar}
-      <Detalhe doc={d} ctx={ctx} />
+      <Detalhe
+        key={retorno.versao ?? "historico"}
+        doc={d}
+        ctx={ctx}
+        versaoCitada={retorno.versao}
+      />
     </>
   );
 }
@@ -527,7 +577,15 @@ function StatusProcessamento({ s }: { s: string | undefined }) {
 
 // ---------- Detalhe ----------
 type Selecao = { v: VersaoDetalhe; a: ArquivoDetalhe | undefined };
-function Detalhe({ doc, ctx }: { doc: Documento; ctx: Ctx }) {
+function Detalhe({
+  doc,
+  ctx,
+  versaoCitada,
+}: {
+  doc: Documento;
+  ctx: Ctx;
+  versaoCitada?: string | undefined;
+}) {
   const [pagina, setPagina] = useState(0);
   const [sel, setSel] = useState<Selecao | null>(null);
   const [aviso, setAviso] = useState("");
@@ -551,14 +609,24 @@ function Detalhe({ doc, ctx }: { doc: Documento; ctx: Ctx }) {
     queryFn: ({ signal }) => listarVersoes(doc.id, pagina, signal),
     retry: false,
   });
+  const citada = useQuery({
+    queryKey: ["v111", "versao-citada", ...chave, versaoCitada],
+    queryFn: ({ signal }) =>
+      consultarVersaoCitada(doc, ctx.idOrganizacao, versaoCitada ?? "", signal),
+    enabled: !!versaoCitada,
+    retry: false,
+    staleTime: 0,
+  });
   const itens = versoes.data?.itens ?? [];
   const arquivos = versoes.data?.arquivos ?? {};
   const padrao = itens.find((v) => v.numero_versao === doc.versao_atual) ?? itens[0];
   const atual: Selecao | null = sel
     ? { v: itens.find((v) => v.id === sel.v.id) ?? sel.v, a: arquivos[sel.v.id_arquivo] ?? sel.a }
-    : padrao
-      ? { v: padrao, a: arquivos[padrao.id_arquivo] }
-      : null;
+    : versaoCitada !== undefined
+      ? (citada.data ?? null)
+      : padrao
+        ? { v: padrao, a: arquivos[padrao.id_arquivo] }
+        : null;
 
   return (
     <>
@@ -642,6 +710,16 @@ function Detalhe({ doc, ctx }: { doc: Documento; ctx: Ctx }) {
         </section>
 
         <div className="min-w-0 space-y-6">
+          {versaoCitada !== undefined &&
+            !sel &&
+            (!versaoCitada || citada.isError ? (
+              <Alerta
+                mensagem="A versão citada está indisponível."
+                onRetry={versaoCitada ? () => void citada.refetch() : undefined}
+              />
+            ) : citada.isPending ? (
+              <Carregando texto="Carregando versão citada…" />
+            ) : null)}
           {atual && (
             <>
               <Cadeia sel={atual} ctx={ctx} />
