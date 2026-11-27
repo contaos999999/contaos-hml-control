@@ -184,7 +184,7 @@ export function DocumentoDetalhe({
                   <Link
                     to="/diligencias/$cicloId/apontamentos/$id"
                     params={{ cicloId: retorno.ciclo, id: retorno.apontamento }}
-                    search={{ offset: retorno.offset }}
+                    search={retorno.offset === undefined ? {} : { offset: retorno.offset }}
                   >
                     Voltar ao apontamento
                   </Link>

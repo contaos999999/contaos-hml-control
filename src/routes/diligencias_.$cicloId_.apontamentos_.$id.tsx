@@ -5,12 +5,8 @@ import { offsetDiligenciasValido } from "@/lib/diligencias/diligenciasDados";
 
 export const Route = createFileRoute("/diligencias_/$cicloId_/apontamentos_/$id")({
   ssr: false,
-  validateSearch: (search: Record<string, unknown>) => ({
-    offset:
-      typeof search["offset"] === "number" && offsetDiligenciasValido(search["offset"])
-        ? search["offset"]
-        : undefined,
-  }),
+  validateSearch: ({ offset }: Record<string, unknown>): { offset?: number } =>
+    typeof offset === "number" && offsetDiligenciasValido(offset) ? { offset } : {},
   head: () => ({
     meta: [
       { title: "Detalhe do apontamento · ContaOS" },

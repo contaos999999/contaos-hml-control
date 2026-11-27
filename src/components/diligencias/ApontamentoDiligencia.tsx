@@ -135,7 +135,10 @@ export function ApontamentoDiligencia({
             <Link
               to="/diligencias/$cicloId"
               params={{ cicloId: ciclo }}
-              search={{ offset, foco: valido ? itemId : undefined }}
+              search={{
+                ...(offset === undefined ? {} : { offset }),
+                ...(valido ? { foco: itemId } : {}),
+              }}
             >
               <ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Voltar ao ciclo
             </Link>
@@ -404,7 +407,7 @@ function Conteudo({
                             versao: v.versaoId,
                             ciclo: ciclo.id,
                             apontamento: item.id,
-                            offset,
+                            ...(offset === undefined ? {} : { offset }),
                           }}
                         >
                           Abrir versão {v.numero} em {v.titulo}

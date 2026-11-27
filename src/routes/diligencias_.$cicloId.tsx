@@ -6,16 +6,13 @@ import { offsetDiligenciasValido } from "@/lib/diligencias/diligenciasDados";
 
 export const Route = createFileRoute("/diligencias_/$cicloId")({
   ssr: false,
-  validateSearch: (search: Record<string, unknown>) => ({
-    offset:
-      typeof search["offset"] === "number" && offsetDiligenciasValido(search["offset"])
-        ? search["offset"]
-        : undefined,
-    foco:
-      typeof search["foco"] === "string" && uuidValido(search["foco"])
-        ? uuidCanonico(search["foco"])
-        : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { offset?: number; foco?: string } => {
+    const { offset, foco } = search;
+    const parametros: { offset?: number; foco?: string } = {};
+    if (typeof offset === "number" && offsetDiligenciasValido(offset)) parametros.offset = offset;
+    if (typeof foco === "string" && uuidValido(foco)) parametros.foco = uuidCanonico(foco);
+    return parametros;
+  },
   head: () => ({
     meta: [
       { title: "Ciclo de diligência · ContaOS" },

@@ -294,7 +294,7 @@ function ConteudoCiclo({
                     id={"abrir-apontamento-" + item.id}
                     to="/diligencias/$cicloId/apontamentos/$id"
                     params={{ cicloId: ciclo.id, id: item.id }}
-                    search={{ offset: offsets.apontamentos || undefined }}
+                    search={offsets.apontamentos ? { offset: offsets.apontamentos } : {}}
                   >
                     {item.codigo ? `Abrir apontamento ${item.codigo}` : "Abrir apontamento"}
                   </Link>
