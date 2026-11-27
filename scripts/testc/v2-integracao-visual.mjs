@@ -12,6 +12,9 @@ const cicloAnterior = "88888888-8888-4888-8888-888888888888";
 const protocoloId = "33333333-3333-4333-8333-333333333333";
 const cicloPath = "/diligencias/" + CICLO_V2_FIXTURE;
 const itemPath = cicloPath + "/apontamentos/" + APONTAMENTO_V2_FIXTURE;
+const wizardPath = cicloPath + "/reapresentar";
+const protocoloNovo = "46000000-0000-4000-8000-000000000021";
+const novoPath = "/competencias/" + competencia + "/apresentacoes/" + protocoloNovo;
 const protocoloPath = "/competencias/" + competencia + "/apresentacoes/" + protocoloId;
 const overview = "/competencias/" + competencia;
 const diligencias = overview + "/diligencias";
@@ -166,6 +169,104 @@ function contestacaoFixture(name: string, args: Record<string, unknown>) {
   }
 }
 
+let estadoReapresentacao = "aberto";
+const hashReap = "d".repeat(64);
+const pacoteReap = identificador(22);
+const pacoteCiclo = identificador(23);
+const comprovanteReap = identificador(24);
+const apresentacaoReap = { id: "${protocoloNovo}", id_competencia: C, id_organizacao: O, id_contrato: K,
+  id_pacote: pacoteReap, protocolo: "REAP-SINT-49", forma_apresentacao: "Portal",
+  apresentado_em: comum.recebido_em, tipo: "reapresentacao", numero_rodada: 3 };
+
+function reapresentacaoFixture(name: string, args: Record<string, unknown>) {
+  const wizard = location.pathname === "${wizardPath}";
+  const fixture = new URLSearchParams(location.search).get("fixture");
+  if (name === "obter_visao_geral_competencia" && (wizard || estadoReapresentacao === "registrado")) {
+    if (args.p_id_competencia !== C) throw Error("ESCOPO_V249_COMPETENCIA");
+    return { async abortSignal(signal: AbortSignal) {
+      const resposta = await baseline.rpc(name).abortSignal();
+      signal.throwIfAborted();
+      return { ...resposta, data: { ...resposta.data,
+        competencia: { ...resposta.data.competencia, situacao: estadoReapresentacao === "registrado" ? "reapresentado" :
+          estadoReapresentacao === "liberado" ? "pode_reapresentar_contratante" : "em_diligencia" },
+        allowed_actions: { ...resposta.data.allowed_actions, apresentar: fixture !== "wizard-denied" },
+      } };
+    } };
+  }
+  if (name === "avaliar_portao_reapresentacao" && wizard) {
+    if (args.p_id_ciclo !== rodadas[0].id) throw Error("ESCOPO_V249_PORTAO");
+    const livre = fixture !== "wizard-blocked";
+    return rpcRespond({ total: 1, tratados: Number(livre), abertos: Number(!livre), liberado: livre });
+  }
+  if (name === "liberar_reapresentacao") {
+    if (!wizard || args.p_id_ciclo !== rodadas[0].id || args.p_fundamento !== "Reanálise conferida" ||
+        estadoReapresentacao !== "aberto") throw Error("ESCOPO_V249_LIBERACAO");
+    estadoReapresentacao = "liberado";
+    rodadas[0].status = "pronto_reapresentar";
+    return rpcRespond({ id_aprovacao: identificador(25), situacao: "pode_reapresentar_contratante", hash_contexto: hashReap });
+  }
+  if (name === "registrar_reapresentacao") {
+    if (!wizard || estadoReapresentacao !== "liberado" || args.p_id_ciclo !== rodadas[0].id ||
+        args.p_protocolo !== apresentacaoReap.protocolo || args.p_forma_apresentacao !== apresentacaoReap.forma_apresentacao ||
+        args.p_id_comprovante_arquivo !== comprovanteReap || typeof args.p_idempotency_key !== "string")
+      throw Error("ESCOPO_V249_REGISTRO");
+    estadoReapresentacao = "registrado";
+    rodadas[0].status = "reapresentado";
+    return rpcRespond(apresentacaoReap.id);
+  }
+}
+
+function tabelasReapresentacao(table: string) {
+  if (!["${wizardPath}", "${novoPath}"].includes(location.pathname) ||
+      !["apresentacoes_contratante","pacotes_competencia","pacotes_reapresentacao","itens_pacote_competencia","arquivos"].includes(table))
+    return null;
+  const scope = new Map<string, unknown>();
+  let signal: AbortSignal | undefined;
+  const query = {
+    select() { return query; },
+    eq(k: string, v: unknown) { scope.set(k, v); return query; },
+    order() { return query; },
+    limit() { return query; },
+    range() { return query; },
+    abortSignal(s: AbortSignal) { signal = s; return query; },
+    async maybeSingle() { const d = dados(); return { data: d[0] ?? null, error: null, status: 200 }; },
+    then(resolve: (x: unknown) => unknown, reject: (x: unknown) => unknown) {
+      return Promise.resolve().then(() => {
+        const data = dados(); return { data, count: data.length, error: null, status: 200 };
+      }).then(resolve, reject);
+    }
+  };
+  function dados() {
+    signal?.throwIfAborted();
+    if (scope.get("id_organizacao") !== O || scope.get("id_contrato") !== K) throw Error("ESCOPO_V249_ORG");
+    if (table === "arquivos") {
+      if (scope.get("status_seguranca") !== "aprovado") throw Error("ESCOPO_V249_ARQUIVO");
+      return [{ id: comprovanteReap, nome_original: "comprovante-sintetico.pdf", id_organizacao: O, id_contrato: K, status_seguranca: "aprovado" }];
+    }
+    if (scope.get("id_competencia") !== C) throw Error("ESCOPO_V249_DADOS");
+    if (table === "apresentacoes_contratante") {
+      if (scope.get("numero_rodada") === 2) return [{ id: A }];
+      if ((scope.get("numero_rodada") === 3 && scope.get("tipo") === "reapresentacao") ||
+          scope.get("id") === apresentacaoReap.id) return estadoReapresentacao === "registrado" ? [apresentacaoReap] : [];
+      throw Error("ESCOPO_V249_APRESENTACAO");
+    }
+    if (table === "pacotes_reapresentacao") {
+      if (scope.get("id_ciclo") !== rodadas[0].id || scope.get("hash") !== hashReap || scope.get("numero") !== 1)
+        throw Error("ESCOPO_V249_PACOTE_RODADA");
+      return [{ id: pacoteCiclo, id_organizacao: O, id_contrato: K, id_competencia: C, id_ciclo: rodadas[0].id,
+        numero: 1, hash: hashReap, reapresentado_em: comum.recebido_em }];
+    }
+    if (table === "pacotes_competencia") {
+      if (scope.get("id") !== pacoteReap) throw Error("ESCOPO_V249_PACOTE_COMPETENCIA");
+      return [{ id: pacoteReap, id_organizacao: O, id_contrato: K, id_competencia: C, tipo: "reapresentacao",
+        numero: 1, hash_pacote: hashReap, status: "apresentado", congelado_em: comum.recebido_em }];
+    }
+    if (scope.get("id_pacote") !== pacoteReap) throw Error("ESCOPO_V249_ITENS");
+    return [];
+  }
+  return query;
+}
+
 function planoFixture(name: string, args: Record<string, unknown>) {
   if (name === "obter_plano_acao_diligencia_v2") {
     if (args.p_id_ciclo !== rodadas[0].id || args.p_id_apontamento !== apontamentos[0].id ||
@@ -230,6 +331,8 @@ export const supabase = {
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
   },
   rpc(name: string, args: Record<string, unknown>) {
+    const reapresentacao = reapresentacaoFixture(name, args);
+    if (reapresentacao) return reapresentacao;
     const contestacao = contestacaoFixture(name, args);
     if (contestacao) return contestacao;
     const plano = planoFixture(name, args);
@@ -246,6 +349,8 @@ export const supabase = {
     } };
   },
   from(table: string) {
+    const reapresentacao = tabelasReapresentacao(table);
+    if (reapresentacao) return reapresentacao;
     if (Object.hasOwn(tabelas, table) && (table !== "itens_pacote_competencia" || location.pathname === "${itemPath}")) {
       const filtros = new Map<string, string>();
       const listas = new Map<string, string[]>();
@@ -351,6 +456,7 @@ import { CompetenciaVisaoGeral } from ${JSON.stringify(root + "/src/components/c
 import { DiligenciasCompetencia } from ${JSON.stringify(root + "/src/components/diligencias/DiligenciasCompetencia.tsx")};
 import { ApontamentoDiligencia } from ${JSON.stringify(root + "/src/components/diligencias/ApontamentoDiligencia.tsx")};
 import { CicloDiligencia } from ${JSON.stringify(root + "/src/components/diligencias/CicloDiligencia.tsx")};
+import { ReapresentacaoDiligencia } from ${JSON.stringify(root + "/src/components/diligencias/ReapresentacaoDiligencia.tsx")};
 import { CompetenciaProtocolo } from ${JSON.stringify(root + "/src/components/competencias/CompetenciaProtocolo.tsx")};
 import { definirPreferenciaOrganizacao } from ${JSON.stringify(root + "/src/lib/organizacao/preferenciaOrganizacao.ts")};
 import { C, O } from "./client";
@@ -369,6 +475,7 @@ function ApresentacaoFixture() {
   const offset = Number(endereco.searchParams.get("offset")) || undefined;
   if (modulo === "diligencias" && subrota === "apontamentos")
     return <ApontamentoDiligencia cicloId={id} id={origem} offset={offset} />;
+  if (modulo === "diligencias" && subrota === "reapresentar") return <ReapresentacaoDiligencia cicloId={id} offset={offset} />;
   if (modulo === "diligencias") return <CicloDiligencia id={id} foco={foco} offset={offset} />;
   if (subrota === "diligencias") return <DiligenciasCompetencia id={id} />;
   if (subrota === "apresentacoes") return <CompetenciaProtocolo id={id} apresentacaoId={origem} />;
@@ -401,6 +508,7 @@ export async function collectDiligenciasVisual(
   const itemRecords = [];
   const planoRecords = [];
   const contestacaoRecords = [];
+  const reapresentacaoRecords = [];
   let server;
 
   try {
@@ -434,7 +542,11 @@ export async function collectDiligenciasVisual(
       } else if (path === "/style.css") {
         reply.setHeader("content-type", "text/css");
         reply.end(css);
-      } else if ([overview, diligencias, cicloPath, protocoloPath, itemPath].includes(path)) {
+      } else if (
+        [overview, diligencias, cicloPath, protocoloPath, itemPath, wizardPath, novoPath].includes(
+          path,
+        )
+      ) {
         reply.setHeader("content-type", "text/html");
         reply.end(html);
       } else {
@@ -806,6 +918,73 @@ export async function collectDiligenciasVisual(
         if ((await page.getByRole("heading", { name: /Rodada \d/ }).count()) || erros || externa) {
           throw Error("TESTE_C_V2_ISOLAMENTO_FIXTURE");
         }
+        etapaVisual = "V2_06_PORTAO";
+        await page.goto(origin + wizardPath + "?fixture=wizard-blocked");
+        await page
+          .getByText("O portão exige que todos os apontamentos da rodada estejam tratados.")
+          .waitFor();
+        if (await page.getByRole("button", { name: "Revisar liberação" }).count())
+          throw Error("TESTE_C_V2_49_PORTAO");
+        etapaVisual = "V2_06_NAVEGACAO";
+        await page.goto(origin + cicloPath);
+        await page.getByRole("link", { name: "Abrir reapresentação" }).press("Enter");
+        await page.waitForURL(origin + wizardPath);
+        await page.getByRole("link", { name: "Ver protocolo da rodada anterior" }).waitFor();
+        etapaVisual = "V2_06_LIBERACAO";
+        await page.getByLabel("Fundamento da liberação").fill("Reanálise conferida");
+        await page.getByRole("button", { name: "Revisar liberação" }).click();
+        await page.getByRole("button", { name: "Confirmar liberação" }).click();
+        etapaVisual = "V2_06_REGISTRO";
+        await page.getByLabel("Protocolo", { exact: true }).fill("REAP-SINT-49");
+        await page.getByLabel("Forma da reapresentação").fill("Portal");
+        await page
+          .getByLabel("Comprovante aprovado (opcional)")
+          .selectOption({ label: "comprovante-sintetico.pdf" });
+        await page.getByRole("button", { name: "Revisar registro" }).click();
+        await page.getByRole("button", { name: "Confirmar reapresentação" }).click();
+        etapaVisual = "V2_06_RECIBO";
+        await page.getByRole("heading", { name: "Recibo da reapresentação" }).waitFor();
+        await page.getByText("Protocolo REAP-SINT-49 · rodada 3").waitFor();
+        await page.getByRole("link", { name: "Abrir auditoria" }).waitFor();
+        const overflowReapresentacao = await page.evaluate(() =>
+          Math.max(0, document.documentElement.scrollWidth - innerWidth),
+        );
+        if (overflowReapresentacao > 1) throw Error("TESTE_C_V2_49_OVERFLOW");
+        const imagemReapresentacao = "screenshots/V2-06_" + width + "_" + theme + ".png";
+        const bytesReapresentacao = await page.screenshot({
+          fullPage: true,
+          animations: "disabled",
+        });
+        writeFileSync(join(target, imagemReapresentacao), bytesReapresentacao);
+        await page.getByRole("link", { name: "Abrir protocolo da reapresentação" }).press("Enter");
+        await page.waitForURL(origin + novoPath);
+        await page.getByText("REAP-SINT-49", { exact: true }).waitFor();
+        etapaVisual = "V2_06_RLS";
+        await page.goto(origin + wizardPath + "?fixture=wizard-denied");
+        await page.getByRole("alert").filter({ hasText: "não tem permissão" }).waitFor();
+        if (
+          (await page.getByRole("button", { name: "Revisar liberação" }).count()) ||
+          erros ||
+          externa
+        )
+          throw Error("TESTE_C_V2_49_ISOLAMENTO");
+        reapresentacaoRecords.push({
+          width,
+          theme,
+          screenshot: imagemReapresentacao,
+          sha256: digest(bytesReapresentacao),
+          status: "PASS",
+          portao: true,
+          liberacao: true,
+          comprovante: true,
+          protocoloV120: true,
+          anteriorPreservado: true,
+          auditoria: true,
+          negacaoSemDados: true,
+          overflow: overflowReapresentacao,
+          chamadasExternas: externa,
+          errosDePagina: erros,
+        });
         records.push({
           width,
           theme,
@@ -839,12 +1018,13 @@ export async function collectDiligenciasVisual(
       cycleRecords.length !== cases.length ||
       itemRecords.length !== cases.length ||
       planoRecords.length !== cases.length ||
-      contestacaoRecords.length !== cases.length
+      contestacaoRecords.length !== cases.length ||
+      reapresentacaoRecords.length !== cases.length
     ) {
       throw Error("TESTE_C_V2_COBERTURA");
     }
     const record = {
-      schema: "contaos.v2-diligencias.offline-visual.v5",
+      schema: "contaos.v2-diligencias.offline-visual.v6",
       mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
       headSha,
       sourceTree: git("rev-parse", "HEAD^{tree}"),
@@ -863,6 +1043,9 @@ export async function collectDiligenciasVisual(
           "src/lib/diligencias/planoAcaoDiligenciaDados.ts",
           "src/components/diligencias/ContestacaoDiligencia.tsx",
           "src/lib/diligencias/contestacaoDiligenciaDados.ts",
+          "src/components/diligencias/ReapresentacaoDiligencia.tsx",
+          "src/lib/diligencias/reapresentacaoDiligenciaDados.ts",
+          "src/routes/diligencias_.$cicloId_.reapresentar.tsx",
           "src/lib/diligencias/apontamentoDiligenciaDados.ts",
           "src/lib/diligencias/apontamentoEvidenciasDados.ts",
           "src/routes/diligencias_.$cicloId_.apontamentos_.$id.tsx",
@@ -874,6 +1057,7 @@ export async function collectDiligenciasVisual(
       itemRecords,
       planoRecords,
       contestacaoRecords,
+      reapresentacaoRecords,
     };
     const report = JSON.stringify(record, null, 2) + "\n";
     writeFileSync(join(target, "report.json"), report);
@@ -886,6 +1070,7 @@ export async function collectDiligenciasVisual(
           ...itemRecords,
           ...planoRecords,
           ...contestacaoRecords,
+          ...reapresentacaoRecords,
         ].map((r) => r.sha256 + "  " + r.screenshot),
         digest(report) + "  report.json",
       ].join("\n") + "\n",
@@ -895,6 +1080,7 @@ export async function collectDiligenciasVisual(
     console.log("V2_03_OFFLINE_VISUAL_PASS_8");
     console.log("V2_04_OFFLINE_VISUAL_PASS_8");
     console.log("V2_05_OFFLINE_VISUAL_PASS_8");
+    console.log("V2_06_OFFLINE_VISUAL_PASS_8");
     return record;
   } finally {
     if (server?.listening) await new Promise((resolve) => server.close(resolve));

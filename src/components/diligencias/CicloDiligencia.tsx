@@ -169,7 +169,18 @@ export function CicloDiligencia({
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Consultando ciclo…
         </p>
       ) : estado.tipo === "ok" ? (
-        <ConteudoCiclo dados={estado.dados} offsets={offsets} mudarPagina={mudarPagina} />
+        <>
+          <Button asChild variant="outline" className="min-h-11">
+            <Link
+              to="/diligencias/$cicloId/reapresentar"
+              params={{ cicloId }}
+              search={offset === undefined ? {} : { offset }}
+            >
+              Abrir reapresentação
+            </Link>
+          </Button>
+          <ConteudoCiclo dados={estado.dados} offsets={offsets} mudarPagina={mudarPagina} />
+        </>
       ) : (
         <p role="alert" className="rounded-md border border-border bg-card p-4 text-sm">
           {mensagens[estado.tipo]}

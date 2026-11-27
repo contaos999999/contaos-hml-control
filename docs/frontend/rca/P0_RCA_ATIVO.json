@@ -1,66 +1,78 @@
 {
   "schema": "contaos.p0.rca-report.v2",
   "versao": "V2",
-  "prompt_id": "48",
+  "prompt_id": "49",
   "baseline": {
-    "frontend_sha": "5f5ea326f4d9892043b1502c0e51c9a3d5eab3e5",
-    "backend_sha": "6998cf2625c3affe0313e2472ffaa0de78693c3a"
+    "frontend_sha": "22742804b18d153e68f74c1af5d17489df761ab9",
+    "backend_sha": "369c9b9640cb06963eda3878685417d1c815d763"
   },
   "escopo": [
     {
-      "arquivo": "src/components/diligencias/ApontamentoDiligencia.tsx",
+      "arquivo": "src/routes/diligencias_.$cicloId_.reapresentar.tsx",
       "versao": "V2",
-      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
+      "justificativa": "Assistente, rota, contrato ou prova no PLAN P0 #845."
     },
     {
-      "arquivo": "src/components/diligencias/ContestacaoDiligencia.tsx",
+      "arquivo": "src/routeTree.gen.ts",
       "versao": "V2",
-      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
+      "justificativa": "Assistente, rota, contrato ou prova no PLAN P0 #845."
     },
     {
-      "arquivo": "src/lib/diligencias/contestacaoDiligenciaDados.ts",
+      "arquivo": "src/components/diligencias/CicloDiligencia.tsx",
       "versao": "V2",
-      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
+      "justificativa": "Assistente, rota, contrato ou prova no PLAN P0 #845."
     },
     {
-      "arquivo": "src/test/v2-48-contrato.test.ts",
+      "arquivo": "src/components/diligencias/ReapresentacaoDiligencia.tsx",
       "versao": "V2",
-      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
+      "justificativa": "Assistente, rota, contrato ou prova no PLAN P0 #845."
     },
     {
-      "arquivo": "src/test/v2-48-tela.test.tsx",
+      "arquivo": "src/lib/diligencias/reapresentacaoDiligenciaDados.ts",
       "versao": "V2",
-      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
+      "justificativa": "Assistente, rota, contrato ou prova no PLAN P0 #845."
+    },
+    {
+      "arquivo": "src/test/v2-49-contrato.test.ts",
+      "versao": "V2",
+      "justificativa": "Assistente, rota, contrato ou prova no PLAN P0 #845."
+    },
+    {
+      "arquivo": "src/test/v2-49-tela.test.tsx",
+      "versao": "V2",
+      "justificativa": "Assistente, rota, contrato ou prova no PLAN P0 #845."
     },
     {
       "arquivo": "scripts/testc/visual-audit.mjs",
       "versao": "V2",
-      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
+      "justificativa": "Assistente, rota, contrato ou prova no PLAN P0 #845."
     },
     {
       "arquivo": "scripts/testc/visual-audit.test.mjs",
       "versao": "V2",
-      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
+      "justificativa": "Assistente, rota, contrato ou prova no PLAN P0 #845."
     },
     {
       "arquivo": "scripts/testc/v2-integracao-visual.mjs",
       "versao": "V2",
-      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
+      "justificativa": "Assistente, rota, contrato ou prova no PLAN P0 #845."
     }
   ],
   "itens": [
     {
-      "id": "V2-05-CONTESTACAO",
+      "id": "V2-06-REAPRESENTACAO",
       "tipo": "NOVA_FUNCIONALIDADE",
       "solucao": {
-        "descricao": "A V2-03 lia o apontamento e as tarefas, sem entrada própria para contestação, minuta, mapa e decisão. O drawer liga o item exato às quatro RPCs V2-05 implantadas e confirma o resultado na releitura do portão e do item. O primeiro Teste C (46026007387, job 140597463978) excedeu a espera de “Minuta na fila”. A reprodução local confirmou que a solicitação, que grava somente a execução, acionava duas leituras do painel ao atualizar também o item. A solicitação agora relê o painel e o portão uma vez. Submissão e decisão continuam atualizando o item e o ciclo. O Teste C identifica a etapa de fila e de atualização separadamente e conserva a espera e as verificações.",
-        "rollback": "Reverter o incremento frontend em PR protegida. Preservar versões, mapa e histórico oficial no backend.",
+        "descricao": "O ciclo de diligência não tinha rota de reapresentação. O assistente usa o portão e as operações oficiais, reconsulta o estado da rodada e verifica o recibo e os pacotes antes de encaminhar à V120.",
+        "rollback": "Reverter por PR protegida e conservar os recibos e comprovantes oficiais.",
         "arquivos": [
-          "src/components/diligencias/ApontamentoDiligencia.tsx",
-          "src/components/diligencias/ContestacaoDiligencia.tsx",
-          "src/lib/diligencias/contestacaoDiligenciaDados.ts",
-          "src/test/v2-48-contrato.test.ts",
-          "src/test/v2-48-tela.test.tsx",
+          "src/routes/diligencias_.$cicloId_.reapresentar.tsx",
+          "src/routeTree.gen.ts",
+          "src/components/diligencias/CicloDiligencia.tsx",
+          "src/components/diligencias/ReapresentacaoDiligencia.tsx",
+          "src/lib/diligencias/reapresentacaoDiligenciaDados.ts",
+          "src/test/v2-49-contrato.test.ts",
+          "src/test/v2-49-tela.test.tsx",
           "scripts/testc/visual-audit.mjs",
           "scripts/testc/visual-audit.test.mjs",
           "scripts/testc/v2-integracao-visual.mjs"
@@ -68,10 +80,9 @@
       },
       "impacto": {
         "dependencias": [
-          "V2-02 e V2-03",
-          "Evidências autorizadas em V111 e V115",
-          "Recibo backend #241",
-          "Auditoria V123 e portão da rodada"
+          "V2-02, V2-04, V2-05",
+          "Contrato HML #244",
+          "V114, V119, V120 e V123"
         ],
         "versoes_afetadas": [
           "V1",
@@ -79,92 +90,92 @@
         ],
         "riscos": [
           {
-            "risco": "Exibir dados de outro item ou papel.",
+            "risco": "Autorizar ação sem portão da rodada.",
             "teste_preventivo": {
-              "id": "48-RLS",
+              "id": "49-PORTAO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-48-contrato.test.ts",
-              "caso": "V2-05 preserva negacao e rejeita dados de outro apontamento ou pagina"
+              "arquivo": "src/test/v2-49-tela.test.tsx",
+              "caso": "V2-06 bloqueia portão incompleto e distingue negação após releitura"
             }
           },
           {
-            "risco": "Aceitar recibo fora da versão da evidência.",
+            "risco": "Exibir pacote de outro ciclo.",
             "teste_preventivo": {
-              "id": "48-MAPA",
+              "id": "49-PACOTE",
               "runner": "vitest",
-              "arquivo": "src/test/v2-48-contrato.test.ts",
-              "caso": "V2-05 submete somente o mapa e a versao exata com recibo correlacionado"
+              "arquivo": "src/test/v2-49-contrato.test.ts",
+              "caso": "V2-06 verifica pacote e protocolo da rodada exata"
             }
           },
           {
-            "risco": "Perder a referência da decisão concorrente ou repetida.",
+            "risco": "Selecionar comprovante de outro contrato.",
             "teste_preventivo": {
-              "id": "48-CONFLITO",
+              "id": "49-ESCOPO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-48-contrato.test.ts",
-              "caso": "V2-05 confere conflito invalidade e cancelamento antes de aceitar o recibo"
+              "arquivo": "src/test/v2-49-contrato.test.ts",
+              "caso": "V2-06 rejeita comprovante fora do escopo e requisição cancelada"
             }
           },
           {
-            "risco": "Repetir a mutação após perda de resposta.",
+            "risco": "Duplicar efeito em resposta incerta.",
             "teste_preventivo": {
-              "id": "48-RETRY",
+              "id": "49-RETRY",
               "runner": "vitest",
-              "arquivo": "src/test/v2-48-tela.test.tsx",
-              "caso": "V2-05 reutiliza chave de minuta apos perda de resposta e oculta revisao sem capacidade"
+              "arquivo": "src/test/v2-49-tela.test.tsx",
+              "caso": "V2-06 repete a chave da intenção original após perda de resposta"
             }
           },
           {
-            "risco": "Exibir a leitura anterior após voltar ou mudar de contexto.",
+            "risco": "Inverter as referências de protocolo anterior e novo.",
             "teste_preventivo": {
-              "id": "48-TROCA",
+              "id": "49-FLUXO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-48-tela.test.tsx",
-              "caso": "V2-05 aborta a leitura descartada ao fechar e devolve foco ao acionador"
+              "arquivo": "src/test/v2-49-tela.test.tsx",
+              "caso": "V2-06 libera registra e relê o recibo distinguindo a rodada anterior"
             }
           }
         ]
       },
       "preflight": {
         "status": "VERIFICADO",
-        "baseline_sha": "5f5ea326f4d9892043b1502c0e51c9a3d5eab3e5",
-        "arquivo_evidencia": "docs/frontend/auditorias/preflight/V2_PROMPT48_CONTRATO_2026-11-27.json",
-        "arquivo_sha256": "fc69d35cd668e2987be26242668499a96698ca9e9c8852c6e7c707860f15db89",
+        "baseline_sha": "22742804b18d153e68f74c1af5d17489df761ab9",
+        "arquivo_evidencia": "docs/frontend/auditorias/preflight/V2_PROMPT49_CONTRATO_2026-11-27.json",
+        "arquivo_sha256": "f1c670bf2bcf260b97acb876cb5f510386fb6d53f2342a1b5f03d0021ed6bad7",
         "checks": [
           {
             "tipo": "CONTRATO",
             "teste": {
-              "id": "48-CONTRATO",
+              "id": "49-CONTRATO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-48-contrato.test.ts",
-              "caso": "V2-05 consulta escopo pagina versao e capacidades da fonte oficial"
+              "arquivo": "src/test/v2-49-contrato.test.ts",
+              "caso": "V2-06 libera exclusivamente pela operação oficial com fundamento"
             }
           },
           {
             "tipo": "RBAC_RLS",
             "teste": {
-              "id": "48-RLS",
+              "id": "49-RLS",
               "runner": "vitest",
-              "arquivo": "src/test/v2-48-contrato.test.ts",
-              "caso": "V2-05 preserva negacao e rejeita dados de outro apontamento ou pagina"
+              "arquivo": "src/test/v2-49-contrato.test.ts",
+              "caso": "V2-06 preserva escopo pedido chave e negação do servidor"
             }
           },
           {
             "tipo": "DADOS_INTEGRIDADE",
             "teste": {
-              "id": "48-MAPA",
+              "id": "49-PACOTE",
               "runner": "vitest",
-              "arquivo": "src/test/v2-48-contrato.test.ts",
-              "caso": "V2-05 submete somente o mapa e a versao exata com recibo correlacionado"
+              "arquivo": "src/test/v2-49-contrato.test.ts",
+              "caso": "V2-06 verifica pacote e protocolo da rodada exata"
             }
           },
           {
             "tipo": "DEPENDENCIAS",
             "teste": {
-              "id": "48-ABERTURA",
+              "id": "49-FLUXO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-48-tela.test.tsx",
-              "caso": "V2-05 abre a contestacao mostra mapa e registra decisao humana com releitura"
+              "arquivo": "src/test/v2-49-tela.test.tsx",
+              "caso": "V2-06 libera registra e relê o recibo distinguindo a rodada anterior"
             }
           }
         ]
@@ -172,76 +183,64 @@
       "testes": {
         "red": [
           {
-            "id": "48-RED",
+            "id": "49-RED",
             "runner": "node",
             "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-05 registra o painel de contestação no Teste C",
-            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46024773857",
-            "run_sha": "069dd16991a5a3412a4995c18ddef780a00ab6ba"
+            "caso": "V2-06 registra a rota de reapresentação e sua prova visual",
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46034676034",
+            "run_sha": "39dd6a750a5f994ed1b2491496fe6d59ce2d0869"
           }
         ],
         "green": [
           {
-            "id": "48-CONTRATO",
+            "id": "49-CONTRATO",
             "runner": "vitest",
-            "arquivo": "src/test/v2-48-contrato.test.ts",
-            "caso": "V2-05 consulta escopo pagina versao e capacidades da fonte oficial"
+            "arquivo": "src/test/v2-49-contrato.test.ts",
+            "caso": "V2-06 libera exclusivamente pela operação oficial com fundamento"
           },
           {
-            "id": "48-MAPA",
+            "id": "49-RLS",
             "runner": "vitest",
-            "arquivo": "src/test/v2-48-contrato.test.ts",
-            "caso": "V2-05 submete somente o mapa e a versao exata com recibo correlacionado"
+            "arquivo": "src/test/v2-49-contrato.test.ts",
+            "caso": "V2-06 preserva escopo pedido chave e negação do servidor"
           },
           {
-            "id": "48-FILA",
+            "id": "49-PACOTE",
             "runner": "vitest",
-            "arquivo": "src/test/v2-48-contrato.test.ts",
-            "caso": "V2-05 distingue fila de minuta e aprova exclusivamente a versao revisada"
+            "arquivo": "src/test/v2-49-contrato.test.ts",
+            "caso": "V2-06 verifica pacote e protocolo da rodada exata"
           },
           {
-            "id": "48-ABERTURA",
+            "id": "49-FLUXO",
             "runner": "vitest",
-            "arquivo": "src/test/v2-48-tela.test.tsx",
-            "caso": "V2-05 abre a contestacao mostra mapa e registra decisao humana com releitura"
+            "arquivo": "src/test/v2-49-tela.test.tsx",
+            "caso": "V2-06 libera registra e relê o recibo distinguindo a rodada anterior"
           },
           {
-            "id": "48-RED",
+            "id": "49-RED",
             "runner": "node",
             "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-05 registra o painel de contestação no Teste C"
+            "caso": "V2-06 registra a rota de reapresentação e sua prova visual"
           }
         ],
         "negativos": [
           {
-            "id": "48-RLS",
+            "id": "49-ESCOPO",
             "runner": "vitest",
-            "arquivo": "src/test/v2-48-contrato.test.ts",
-            "caso": "V2-05 preserva negacao e rejeita dados de outro apontamento ou pagina"
+            "arquivo": "src/test/v2-49-contrato.test.ts",
+            "caso": "V2-06 rejeita comprovante fora do escopo e requisição cancelada"
           },
           {
-            "id": "48-CONFLITO",
+            "id": "49-PORTAO",
             "runner": "vitest",
-            "arquivo": "src/test/v2-48-contrato.test.ts",
-            "caso": "V2-05 confere conflito invalidade e cancelamento antes de aceitar o recibo"
+            "arquivo": "src/test/v2-49-tela.test.tsx",
+            "caso": "V2-06 bloqueia portão incompleto e distingue negação após releitura"
           },
           {
-            "id": "48-NEGACAO",
+            "id": "49-RETRY",
             "runner": "vitest",
-            "arquivo": "src/test/v2-48-tela.test.tsx",
-            "caso": "V2-05 nega o contexto antes de exibir evidencias ou acoes e recupera o vazio"
-          },
-          {
-            "id": "48-RETRY",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-48-tela.test.tsx",
-            "caso": "V2-05 reutiliza chave de minuta apos perda de resposta e oculta revisao sem capacidade"
-          },
-          {
-            "id": "48-TROCA",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-48-tela.test.tsx",
-            "caso": "V2-05 aborta a leitura descartada ao fechar e devolve foco ao acionador"
+            "arquivo": "src/test/v2-49-tela.test.tsx",
+            "caso": "V2-06 repete a chave da intenção original após perda de resposta"
           }
         ],
         "regressao": [
@@ -262,6 +261,12 @@
             "runner": "vitest",
             "arquivo": "src/test/v2-44-tela.test.tsx",
             "caso": "V2-01 liga a entrada de diligencias a V114 sem trocar o contexto"
+          },
+          {
+            "id": "48-PORTAO",
+            "runner": "vitest",
+            "arquivo": "src/test/v2-48-tela.test.tsx",
+            "caso": "V2-05 abre a contestacao mostra mapa e registra decisao humana com releitura"
           }
         ]
       }
