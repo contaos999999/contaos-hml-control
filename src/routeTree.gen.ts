@@ -726,7 +726,8 @@ const rootRouteChildren: RootRouteChildren = {
   CompetenciasIdDiligenciasRoute: CompetenciasIdDiligenciasRoute,
   CompetenciasIdDocumentosRoute: CompetenciasIdDocumentosRoute,
   CompetenciasIdParecerRoute: CompetenciasIdParecerRoute,
-  CompetenciasIdPareceresContratanteRoute: CompetenciasIdPareceresContratanteRoute,
+  CompetenciasIdPareceresContratanteRoute:
+    CompetenciasIdPareceresContratanteRoute,
   ContratantesIdEditarRoute: ContratantesIdEditarRoute,
   ContratosIdBaseNormativaRoute: ContratosIdBaseNormativaRoute,
   ContratosIdCompetenciasRoute: ContratosIdCompetenciasRoute,

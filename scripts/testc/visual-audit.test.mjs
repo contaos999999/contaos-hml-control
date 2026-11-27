@@ -57,7 +57,7 @@ test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preser
       assert.ok(match, `Rota não reconhecida: ${name}`);
       return normalize(match[1]);
     });
-  assert.equal(pages.length, 32);
+  assert.equal(pages.length, 33);
   assert.equal(new Set(pages).size, pages.length);
   assert.deepEqual([...new Set(ROUTES.map((route) => normalize(route.path)))].sort(), pages.sort());
   assert.deepEqual(
