@@ -1086,3 +1086,12 @@ test("V2-05 registra o painel de contestação no Teste C", () => {
     "FAIL V2-05 registra o painel de contestação no Teste C: ainda falta a entrada de contestação no apontamento",
   );
 });
+
+test("V2-06 registra a rota de reapresentação e sua prova visual", () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/diligencias/$cicloId/reapresentar") &&
+      ROUTES.some((route) => route.id === "V2-06" && route.path.endsWith("/reapresentar")),
+    "FAIL V2-06 registra a rota de reapresentação e sua prova visual: ainda falta o assistente na rota da rodada",
+  );
+});
