@@ -112,7 +112,7 @@ describe("V2-07 tela", () => {
     expect(screen.getByLabelText("Apresentação")).toHaveValue(uid(4));
     expect(screen.getByLabelText("Apresentação")).toBeDisabled();
     expect(screen.getByText("Prazo: 05/12/2026")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Registrar parecer", exact: true })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^Registrar parecer$/ })).toBeDisabled();
   });
 
   it("usa upload privado e repete a intenção original após resposta incerta", async () => {
@@ -120,7 +120,7 @@ describe("V2-07 tela", () => {
     render(<PareceresContratante id={uid(3)} apresentacaoId={uid(4)} />);
     await preparar();
     expect(f.upload).toHaveBeenCalledWith(uid(1), uid(2), expect.any(File), expect.any(Object));
-    fireEvent.click(screen.getByRole("button", { name: "Registrar parecer", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: /^Registrar parecer$/ }));
     await screen.findByText(/Não foi possível confirmar o resultado/);
     expect(screen.getByLabelText("Classificação")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Atualizar consulta" })).toBeDisabled();

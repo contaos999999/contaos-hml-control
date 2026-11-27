@@ -4,7 +4,7 @@ import { PareceresContratante } from "@/components/diligencias/PareceresContrata
 export const Route = createFileRoute("/competencias_/$id_/pareceres-contratante")({
   ssr: false,
   validateSearch: (search: Record<string, unknown>): { apresentacaoId?: string } =>
-    typeof search.apresentacaoId === "string" ? { apresentacaoId: search.apresentacaoId } : {},
+    typeof search["apresentacaoId"] === "string" ? { apresentacaoId: search["apresentacaoId"] } : {},
   head: () => ({
     meta: [
       { title: "Pareceres do contratante · ContaOS" },
