@@ -1,66 +1,66 @@
 {
   "schema": "contaos.p0.rca-report.v2",
   "versao": "V2",
-  "prompt_id": "47",
+  "prompt_id": "48",
   "baseline": {
-    "frontend_sha": "c18312f8cd2ba8fe0acedbde11afc6d1b1caac96",
-    "backend_sha": "270c2bf56b566d05143a5835e3cc2714769cf74d"
+    "frontend_sha": "5f5ea326f4d9892043b1502c0e51c9a3d5eab3e5",
+    "backend_sha": "6998cf2625c3affe0313e2472ffaa0de78693c3a"
   },
   "escopo": [
     {
       "arquivo": "src/components/diligencias/ApontamentoDiligencia.tsx",
       "versao": "V2",
-      "justificativa": "Painel do plano de ação, adaptadores homologados ou prova do escopo autorizado no PLAN P0 #838."
+      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
     },
     {
-      "arquivo": "src/components/diligencias/PlanoAcaoDiligencia.tsx",
+      "arquivo": "src/components/diligencias/ContestacaoDiligencia.tsx",
       "versao": "V2",
-      "justificativa": "Painel do plano de ação, adaptadores homologados ou prova do escopo autorizado no PLAN P0 #838."
+      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
     },
     {
-      "arquivo": "src/lib/diligencias/planoAcaoDiligenciaDados.ts",
+      "arquivo": "src/lib/diligencias/contestacaoDiligenciaDados.ts",
       "versao": "V2",
-      "justificativa": "Painel do plano de ação, adaptadores homologados ou prova do escopo autorizado no PLAN P0 #838."
+      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
     },
     {
-      "arquivo": "src/test/v2-47-contrato.test.ts",
+      "arquivo": "src/test/v2-48-contrato.test.ts",
       "versao": "V2",
-      "justificativa": "Painel do plano de ação, adaptadores homologados ou prova do escopo autorizado no PLAN P0 #838."
+      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
     },
     {
-      "arquivo": "src/test/v2-47-tela.test.tsx",
+      "arquivo": "src/test/v2-48-tela.test.tsx",
       "versao": "V2",
-      "justificativa": "Painel do plano de ação, adaptadores homologados ou prova do escopo autorizado no PLAN P0 #838."
+      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
     },
     {
       "arquivo": "scripts/testc/visual-audit.mjs",
       "versao": "V2",
-      "justificativa": "Painel do plano de ação, adaptadores homologados ou prova do escopo autorizado no PLAN P0 #838."
+      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
     },
     {
       "arquivo": "scripts/testc/visual-audit.test.mjs",
       "versao": "V2",
-      "justificativa": "Painel do plano de ação, adaptadores homologados ou prova do escopo autorizado no PLAN P0 #838."
+      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
     },
     {
       "arquivo": "scripts/testc/v2-integracao-visual.mjs",
       "versao": "V2",
-      "justificativa": "Painel do plano de ação, adaptadores homologados ou prova do escopo autorizado no PLAN P0 #838."
+      "justificativa": "Painel, contrato ou prova no PLAN P0 #842."
     }
   ],
   "itens": [
     {
-      "id": "V2-04-PLANO-ACAO",
+      "id": "V2-05-CONTESTACAO",
       "tipo": "NOVA_FUNCIONALIDADE",
       "solucao": {
-        "descricao": "Abrir as tarefas do item exato, usar as operações da rodada e atualizar o portão e a leitura da V2-03 após a decisão oficial.",
-        "rollback": "Reverter o incremento por PR protegida. Preservar os registros e evidências do backend e as leituras da V2-03.",
+        "descricao": "A V2-03 lia o apontamento e as tarefas, sem entrada própria para contestação, minuta, mapa e decisão. O drawer liga o item exato às quatro RPCs V2-05 implantadas e confirma o resultado na releitura do portão e do item.",
+        "rollback": "Reverter o incremento frontend em PR protegida. Preservar versões, mapa e histórico oficial no backend.",
         "arquivos": [
           "src/components/diligencias/ApontamentoDiligencia.tsx",
-          "src/components/diligencias/PlanoAcaoDiligencia.tsx",
-          "src/lib/diligencias/planoAcaoDiligenciaDados.ts",
-          "src/test/v2-47-contrato.test.ts",
-          "src/test/v2-47-tela.test.tsx",
+          "src/components/diligencias/ContestacaoDiligencia.tsx",
+          "src/lib/diligencias/contestacaoDiligenciaDados.ts",
+          "src/test/v2-48-contrato.test.ts",
+          "src/test/v2-48-tela.test.tsx",
           "scripts/testc/visual-audit.mjs",
           "scripts/testc/visual-audit.test.mjs",
           "scripts/testc/v2-integracao-visual.mjs"
@@ -68,10 +68,10 @@
       },
       "impacto": {
         "dependencias": [
-          "V2-03 e V2-02",
-          "V115 para versão documental",
-          "V123 para a correlação",
-          "Contrato HML #238 e portão oficial da rodada"
+          "V2-02 e V2-03",
+          "Evidências autorizadas em V111 e V115",
+          "Recibo backend #241",
+          "Auditoria V123 e portão da rodada"
         ],
         "versoes_afetadas": [
           "V1",
@@ -79,101 +79,92 @@
         ],
         "riscos": [
           {
-            "risco": "Aceitar tarefa, apontamento ou prova de outro escopo.",
+            "risco": "Exibir dados de outro item ou papel.",
             "teste_preventivo": {
-              "id": "47-RLS",
+              "id": "48-RLS",
               "runner": "vitest",
-              "arquivo": "src/test/v2-47-contrato.test.ts",
-              "caso": "V2-04 preserva a negacao e recusa plano de outro item ou prova de outra tarefa"
+              "arquivo": "src/test/v2-48-contrato.test.ts",
+              "caso": "V2-05 preserva negacao e rejeita dados de outro apontamento ou pagina"
             }
           },
           {
-            "risco": "Selecionar versão de documento substituída.",
+            "risco": "Aceitar recibo fora da versão da evidência.",
             "teste_preventivo": {
-              "id": "47-VERSAO",
+              "id": "48-MAPA",
               "runner": "vitest",
-              "arquivo": "src/test/v2-47-contrato.test.ts",
-              "caso": "V2-04 seleciona somente a versao documental vigente da competencia"
+              "arquivo": "src/test/v2-48-contrato.test.ts",
+              "caso": "V2-05 submete somente o mapa e a versao exata com recibo correlacionado"
             }
           },
           {
-            "risco": "Manter dados de organização, rota ou sessão anterior.",
+            "risco": "Perder a referência da decisão concorrente ou repetida.",
             "teste_preventivo": {
-              "id": "47-TROCA",
+              "id": "48-CONFLITO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-47-tela.test.tsx",
-              "caso": "V2-04 aborta o contexto descartado e ignora a resposta antiga"
+              "arquivo": "src/test/v2-48-contrato.test.ts",
+              "caso": "V2-05 confere conflito invalidade e cancelamento antes de aceitar o recibo"
             }
           },
           {
-            "risco": "Duplicar mutação depois de perder a resposta.",
+            "risco": "Repetir a mutação após perda de resposta.",
             "teste_preventivo": {
-              "id": "47-RETRY",
+              "id": "48-RETRY",
               "runner": "vitest",
-              "arquivo": "src/test/v2-47-tela.test.tsx",
-              "caso": "V2-04 reutiliza a mesma chave apos perda de resposta"
+              "arquivo": "src/test/v2-48-tela.test.tsx",
+              "caso": "V2-05 reutiliza chave de minuta apos perda de resposta e oculta revisao sem capacidade"
             }
           },
           {
-            "risco": "Oferecer revisão ou aprovação sem prova vigente.",
+            "risco": "Exibir a leitura anterior após voltar ou mudar de contexto.",
             "teste_preventivo": {
-              "id": "47-EVIDENCIA",
+              "id": "48-TROCA",
               "runner": "vitest",
-              "arquivo": "src/test/v2-47-tela.test.tsx",
-              "caso": "V2-04 submete a versao escolhida e limita a decisao a capacidade oficial"
-            }
-          },
-          {
-            "risco": "Perder o foco ao fechar o painel.",
-            "teste_preventivo": {
-              "id": "47-FOCO",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-47-tela.test.tsx",
-              "caso": "V2-04 salva aviso do papel autenticado e retorna o foco ao apontamento"
+              "arquivo": "src/test/v2-48-tela.test.tsx",
+              "caso": "V2-05 aborta a leitura descartada ao fechar e devolve foco ao acionador"
             }
           }
         ]
       },
       "preflight": {
         "status": "VERIFICADO",
-        "baseline_sha": "c18312f8cd2ba8fe0acedbde11afc6d1b1caac96",
-        "arquivo_evidencia": "docs/frontend/auditorias/preflight/V2_PROMPT47_CONTRATO_2026-11-27.json",
-        "arquivo_sha256": "1cc5fab8cecf65868c3529369503c01d2813a7951dbe3cd41976a08ad7f986fa",
+        "baseline_sha": "5f5ea326f4d9892043b1502c0e51c9a3d5eab3e5",
+        "arquivo_evidencia": "docs/frontend/auditorias/preflight/V2_PROMPT48_CONTRATO_2026-11-27.json",
+        "arquivo_sha256": "fc69d35cd668e2987be26242668499a96698ca9e9c8852c6e7c707860f15db89",
         "checks": [
           {
             "tipo": "CONTRATO",
             "teste": {
-              "id": "47-CONTRATO",
+              "id": "48-CONTRATO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-47-contrato.test.ts",
-              "caso": "V2-04 consulta escopo, tarefas, capacidades e portao da mesma rodada"
+              "arquivo": "src/test/v2-48-contrato.test.ts",
+              "caso": "V2-05 consulta escopo pagina versao e capacidades da fonte oficial"
             }
           },
           {
             "tipo": "RBAC_RLS",
             "teste": {
-              "id": "47-RLS",
+              "id": "48-RLS",
               "runner": "vitest",
-              "arquivo": "src/test/v2-47-contrato.test.ts",
-              "caso": "V2-04 preserva a negacao e recusa plano de outro item ou prova de outra tarefa"
+              "arquivo": "src/test/v2-48-contrato.test.ts",
+              "caso": "V2-05 preserva negacao e rejeita dados de outro apontamento ou pagina"
             }
           },
           {
             "tipo": "DADOS_INTEGRIDADE",
             "teste": {
-              "id": "47-VERSAO",
+              "id": "48-MAPA",
               "runner": "vitest",
-              "arquivo": "src/test/v2-47-contrato.test.ts",
-              "caso": "V2-04 seleciona somente a versao documental vigente da competencia"
+              "arquivo": "src/test/v2-48-contrato.test.ts",
+              "caso": "V2-05 submete somente o mapa e a versao exata com recibo correlacionado"
             }
           },
           {
             "tipo": "DEPENDENCIAS",
             "teste": {
-              "id": "47-ABERTURA",
+              "id": "48-ABERTURA",
               "runner": "vitest",
-              "arquivo": "src/test/v2-47-tela.test.tsx",
-              "caso": "V2-04 abre o painel, registra a tarefa e rele o detalhe e o portao"
+              "arquivo": "src/test/v2-48-tela.test.tsx",
+              "caso": "V2-05 abre a contestacao mostra mapa e registra decisao humana com releitura"
             }
           }
         ]
@@ -181,94 +172,76 @@
       "testes": {
         "red": [
           {
-            "id": "47-RED",
+            "id": "48-RED",
             "runner": "node",
             "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-04 registra o painel do plano de ação no Teste C",
-            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45980472483",
-            "run_sha": "c70a4b62795f0b99bbf8c35ed8b6132fe65b9e1b"
+            "caso": "V2-05 registra o painel de contestação no Teste C",
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46024773857",
+            "run_sha": "069dd16991a5a3412a4995c18ddef780a00ab6ba"
           }
         ],
         "green": [
           {
-            "id": "47-CONTRATO",
+            "id": "48-CONTRATO",
             "runner": "vitest",
-            "arquivo": "src/test/v2-47-contrato.test.ts",
-            "caso": "V2-04 consulta escopo, tarefas, capacidades e portao da mesma rodada"
+            "arquivo": "src/test/v2-48-contrato.test.ts",
+            "caso": "V2-05 consulta escopo pagina versao e capacidades da fonte oficial"
           },
           {
-            "id": "47-VERSAO",
+            "id": "48-MAPA",
             "runner": "vitest",
-            "arquivo": "src/test/v2-47-contrato.test.ts",
-            "caso": "V2-04 seleciona somente a versao documental vigente da competencia"
+            "arquivo": "src/test/v2-48-contrato.test.ts",
+            "caso": "V2-05 submete somente o mapa e a versao exata com recibo correlacionado"
           },
           {
-            "id": "47-IDEMPOTENCIA",
+            "id": "48-FILA",
             "runner": "vitest",
-            "arquivo": "src/test/v2-47-contrato.test.ts",
-            "caso": "V2-04 encaminha a mesma intencao e verifica versao e correlacao do recibo"
+            "arquivo": "src/test/v2-48-contrato.test.ts",
+            "caso": "V2-05 distingue fila de minuta e aprova exclusivamente a versao revisada"
           },
           {
-            "id": "47-AUDITORIA",
+            "id": "48-ABERTURA",
             "runner": "vitest",
-            "arquivo": "src/test/v2-47-contrato.test.ts",
-            "caso": "V2-04 conserva preferencia do usuario e rastreia a correlacao na auditoria"
+            "arquivo": "src/test/v2-48-tela.test.tsx",
+            "caso": "V2-05 abre a contestacao mostra mapa e registra decisao humana com releitura"
           },
           {
-            "id": "47-ABERTURA",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-47-tela.test.tsx",
-            "caso": "V2-04 abre o painel, registra a tarefa e rele o detalhe e o portao"
-          },
-          {
-            "id": "47-EVIDENCIA",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-47-tela.test.tsx",
-            "caso": "V2-04 submete a versao escolhida e limita a decisao a capacidade oficial"
-          },
-          {
-            "id": "47-FOCO",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-47-tela.test.tsx",
-            "caso": "V2-04 salva aviso do papel autenticado e retorna o foco ao apontamento"
-          },
-          {
-            "id": "47-TESTE-C",
+            "id": "48-RED",
             "runner": "node",
             "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-04 registra o painel do plano de ação no Teste C"
+            "caso": "V2-05 registra o painel de contestação no Teste C"
           }
         ],
         "negativos": [
           {
-            "id": "47-RLS",
+            "id": "48-RLS",
             "runner": "vitest",
-            "arquivo": "src/test/v2-47-contrato.test.ts",
-            "caso": "V2-04 preserva a negacao e recusa plano de outro item ou prova de outra tarefa"
+            "arquivo": "src/test/v2-48-contrato.test.ts",
+            "caso": "V2-05 preserva negacao e rejeita dados de outro apontamento ou pagina"
           },
           {
-            "id": "47-CONFLITO",
+            "id": "48-CONFLITO",
             "runner": "vitest",
-            "arquivo": "src/test/v2-47-contrato.test.ts",
-            "caso": "V2-04 rejeita conflito, recibo deslocado e chamada cancelada"
+            "arquivo": "src/test/v2-48-contrato.test.ts",
+            "caso": "V2-05 confere conflito invalidade e cancelamento antes de aceitar o recibo"
           },
           {
-            "id": "47-RETRY",
+            "id": "48-NEGACAO",
             "runner": "vitest",
-            "arquivo": "src/test/v2-47-tela.test.tsx",
-            "caso": "V2-04 reutiliza a mesma chave apos perda de resposta"
+            "arquivo": "src/test/v2-48-tela.test.tsx",
+            "caso": "V2-05 nega o contexto antes de exibir evidencias ou acoes e recupera o vazio"
           },
           {
-            "id": "47-NEGACAO",
+            "id": "48-RETRY",
             "runner": "vitest",
-            "arquivo": "src/test/v2-47-tela.test.tsx",
-            "caso": "V2-04 distingue negacao, falha recuperavel e ausencia de tarefas"
+            "arquivo": "src/test/v2-48-tela.test.tsx",
+            "caso": "V2-05 reutiliza chave de minuta apos perda de resposta e oculta revisao sem capacidade"
           },
           {
-            "id": "47-TROCA",
+            "id": "48-TROCA",
             "runner": "vitest",
-            "arquivo": "src/test/v2-47-tela.test.tsx",
-            "caso": "V2-04 aborta o contexto descartado e ignora a resposta antiga"
+            "arquivo": "src/test/v2-48-tela.test.tsx",
+            "caso": "V2-05 aborta a leitura descartada ao fechar e devolve foco ao acionador"
           }
         ],
         "regressao": [

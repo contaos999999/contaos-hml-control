@@ -62,7 +62,7 @@ test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preser
   assert.deepEqual([...new Set(ROUTES.map((route) => normalize(route.path)))].sort(), pages.sort());
   assert.deepEqual(
     ROUTES.filter((route) => route.requiresDrawer).map((route) => route.id),
-    ["V117", "V2-04"],
+    ["V117", "V2-04", "V2-05"],
   );
   assert.equal(ROUTES.find((route) => route.id === "V117")?.requiresDrawer, true);
 });
@@ -79,8 +79,8 @@ test("P0 V123: Auditoria possui oito casos privados sem PASS autenticado presumi
   );
 });
 
-test("matriz oficial preserva 29 superfícies V1 e inclui lista, ciclo, apontamento e plano V2", () => {
-  assert.equal(ROUTES.length, 33);
+test("matriz oficial preserva 29 superfícies V1 e inclui lista, ciclo, apontamento, plano e contestação V2", () => {
+  assert.equal(ROUTES.length, 34);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
   assert.equal(cases().filter((x) => !x.id.startsWith("V2-")).length, 232);
@@ -88,7 +88,8 @@ test("matriz oficial preserva 29 superfícies V1 e inclui lista, ciclo, apontame
   assert.equal(cases().filter((x) => x.id === "V2-02").length, 8);
   assert.equal(cases().filter((x) => x.id === "V2-03").length, 8);
   assert.equal(cases().filter((x) => x.id === "V2-04").length, 8);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 264);
+  assert.equal(cases().filter((x) => x.id === "V2-05").length, 8);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 272);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");
