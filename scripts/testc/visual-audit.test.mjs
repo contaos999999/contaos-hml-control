@@ -1075,3 +1075,13 @@ test("V2-04 registra o painel do plano de ação no Teste C", () => {
     "FAIL V2-04 registra o painel do plano de ação no Teste C: o apontamento ainda não possui o painel de tarefas",
   );
 });
+
+test("V2-05 registra o painel de contestação no Teste C", () => {
+  assert.ok(
+    ROUTES.some(
+      (route) =>
+        route.id === "V2-05" && route.path.includes("/apontamentos/") && route.requiresDrawer,
+    ),
+    "FAIL V2-05 registra o painel de contestação no Teste C: ainda falta a entrada de contestação no apontamento",
+  );
+});
