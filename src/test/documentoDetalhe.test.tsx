@@ -47,7 +47,15 @@ vi.mock("@/integrations/supabase/client", () => {
     return Promise.resolve(m.rpc(nome, args));
   };
   return {
-    supabase: { auth: { getUser: m.getUser }, from, rpc, functions: { invoke: m.invoke } },
+    supabase: {
+      auth: {
+        getUser: m.getUser,
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+      },
+      from,
+      rpc,
+      functions: { invoke: m.invoke },
+    },
   };
 });
 vi.mock("@/lib/administracao/rbacRpc", async (original) => ({
@@ -92,6 +100,8 @@ import {
   PAGINA_SUGESTOES,
   PAGINA_VERSOES,
   bloqueioAprovacao,
+  lerBuscaDetalheDocumento,
+  type BuscaDetalheDocumento,
 } from "@/lib/contratos/documentoDetalheDados";
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { Route } from "@/routes/contratos_.$id_.documentos_.$idDocumento";
@@ -287,11 +297,11 @@ function cenario(o: Cen = {}) {
     return ok(null);
   };
 }
-function montar(id = K1, idDoc = D1) {
+function montar(id = K1, idDoc = D1, retorno: BuscaDetalheDocumento = {}) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const view = render(
     <QueryClientProvider client={qc}>
-      <DocumentoDetalhe id={id} idDocumento={idDoc} retorno={{}} />
+      <DocumentoDetalhe id={id} idDocumento={idDoc} retorno={retorno} />
     </QueryClientProvider>,
   );
   return { ...view, qc };
@@ -308,14 +318,12 @@ const semDetalhe = () => DETALHE.forEach((t) => expect(de(t)).toHaveLength(0));
 const cartao = (id: string) => screen.findByTestId(`sugestao-${id}`);
 
 beforeEach(() => {
-  m.permissoes
-    .mockReset()
-    .mockResolvedValue({
-      schema_versao: "rbac-v1",
-      versao: 1,
-      master: false,
-      permissoes: [{ recurso: "arquivos", acao: "editar" }],
-    });
+  m.permissoes.mockReset().mockResolvedValue({
+    schema_versao: "rbac-v1",
+    versao: 1,
+    master: false,
+    permissoes: [{ recurso: "arquivos", acao: "editar" }],
+  });
   m.chamadas.length = 0;
   m.rpcChamadas.length = 0;
   m.resposta = null;
@@ -895,4 +903,54 @@ it("P0 refetch de capacidade preserva rascunho e bloqueia confirmação temporar
     expect(screen.getByRole("button", { name: "Confirmar aprovação" })).toBeEnabled(),
   );
   expect(screen.getByLabelText("Categoria revisada (opcional)")).toHaveValue("Minha categoria");
+});
+
+describe("V1-11 evidência citada pela V2-03", () => {
+  it("abre versao citada ainda que fora da primeira pagina", async () => {
+    cenario();
+    const resposta = m.resposta;
+    m.resposta = (c) => {
+      if (c.tabela === "versoes_documento") {
+        if (eqDe(c, "id") === V1)
+          return ok({ ...versoes()[1], id_contrato: K1, id_organizacao: A });
+        return ok([versoes()[0]], 24);
+      }
+      if (c.tabela === "arquivos" && eqDe(c, "id") === AR1)
+        return ok({ ...arq(AR1, "b".repeat(64)), id_contrato: K1, id_organizacao: A });
+      return resposta?.(c);
+    };
+    const retorno = lerBuscaDetalheDocumento({
+      versao: V1,
+      ciclo: K1,
+      apontamento: D1,
+      offset: 25,
+    });
+    expect(retorno).toEqual({ versao: V1, ciclo: K1, apontamento: D1, offset: 25 });
+    montar(K1, D1, retorno);
+    expect(
+      await screen.findByRole("heading", { name: "Cadeia de evidência — versão 1" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "Cadeia de evidência — versão 2" }),
+    ).not.toBeInTheDocument();
+    const consulta = de("versoes_documento").find((c) => eqDe(c, "id") === V1);
+    expect(consulta).toBeDefined();
+    if (!consulta) throw new Error("Consulta da versão citada ausente");
+    expect(eqDe(consulta, "id_documento_contrato")).toBe(D1);
+    expect(eqDe(consulta, "id_contrato")).toBe(K1);
+    expect(eqDe(consulta, "id_organizacao")).toBe(A);
+  });
+
+  it("preserva ausencia da versao citada e bloqueia substituicao automatica", async () => {
+    cenario();
+    const resposta = m.resposta;
+    m.resposta = (c) =>
+      c.tabela === "versoes_documento" && eqDe(c, "id") === V1
+        ? ok({ ...versoes()[1], id_contrato: K1, id_organizacao: OUTRO })
+        : resposta?.(c);
+    montar(K1, D1, { versao: V1 });
+    expect(await screen.findByText("A versão citada está indisponível.")).toBeVisible();
+    expect(screen.queryByRole("heading", { name: /Cadeia de evidência/ })).not.toBeInTheDocument();
+    expect(de("arquivos").some((c) => eqDe(c, "id") === AR1)).toBe(false);
+  });
 });

@@ -1,84 +1,120 @@
 {
   "schema": "contaos.p0.rca-report.v2",
   "versao": "V2",
-  "prompt_id": "45",
+  "prompt_id": "46",
   "baseline": {
-    "frontend_sha": "fce19729ebdb1f4b01267d68def983233d59d776",
-    "backend_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7"
+    "frontend_sha": "ea96505fb865a18c859e57ed2e4bd823efda298b",
+    "backend_sha": "cbf247724ecede59fdcba0d18d7b0e37c76f247f"
   },
   "escopo": [
     {
       "arquivo": "src/routes/diligencias_.$cicloId.tsx",
       "versao": "V2",
-      "justificativa": "Entrega ou contraprova autorizada do Ciclo de diligência conforme PLAN P0 #831."
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
+    },
+    {
+      "arquivo": "src/routes/diligencias_.$cicloId_.apontamentos_.$id.tsx",
+      "versao": "V2",
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
     },
     {
       "arquivo": "src/routeTree.gen.ts",
       "versao": "V2",
-      "justificativa": "Saída do gerador TanStack GOV-020 para a nova rota do ciclo."
-    },
-    {
-      "arquivo": "src/components/diligencias/DiligenciasCompetencia.tsx",
-      "versao": "V2",
-      "justificativa": "Entrega ou contraprova autorizada do Ciclo de diligência conforme PLAN P0 #831."
+      "justificativa": "Artefato produzido pelo gerador TanStack para a nova rota aprovada."
     },
     {
       "arquivo": "src/components/diligencias/CicloDiligencia.tsx",
       "versao": "V2",
-      "justificativa": "Entrega ou contraprova autorizada do Ciclo de diligência conforme PLAN P0 #831."
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
     },
     {
-      "arquivo": "src/lib/diligencias/diligenciasDados.ts",
+      "arquivo": "src/components/diligencias/ApontamentoDiligencia.tsx",
       "versao": "V2",
-      "justificativa": "Entrega ou contraprova autorizada do Ciclo de diligência conforme PLAN P0 #831."
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
     },
     {
       "arquivo": "src/lib/diligencias/cicloDiligenciaDados.ts",
       "versao": "V2",
-      "justificativa": "Entrega ou contraprova autorizada do Ciclo de diligência conforme PLAN P0 #831."
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
     },
     {
-      "arquivo": "src/test/v2-45-contrato.test.ts",
+      "arquivo": "src/lib/diligencias/apontamentoDiligenciaDados.ts",
       "versao": "V2",
-      "justificativa": "Entrega ou contraprova autorizada do Ciclo de diligência conforme PLAN P0 #831."
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
     },
     {
-      "arquivo": "src/test/v2-45-tela.test.tsx",
+      "arquivo": "src/lib/diligencias/apontamentoEvidenciasDados.ts",
       "versao": "V2",
-      "justificativa": "Entrega ou contraprova autorizada do Ciclo de diligência conforme PLAN P0 #831."
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
+    },
+    {
+      "arquivo": "src/routes/contratos_.$id_.documentos_.$idDocumento.tsx",
+      "versao": "V1",
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
+    },
+    {
+      "arquivo": "src/components/contratos/DocumentoDetalhe.tsx",
+      "versao": "V1",
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
+    },
+    {
+      "arquivo": "src/lib/contratos/documentoDetalheDados.ts",
+      "versao": "V1",
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
+    },
+    {
+      "arquivo": "src/test/documentoDetalhe.test.tsx",
+      "versao": "V1",
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
+    },
+    {
+      "arquivo": "src/test/v2-46-contrato.test.ts",
+      "versao": "V2",
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
+    },
+    {
+      "arquivo": "src/test/v2-46-tela.test.tsx",
+      "versao": "V2",
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
     },
     {
       "arquivo": "scripts/testc/visual-audit.mjs",
       "versao": "V2",
-      "justificativa": "Entrega ou contraprova autorizada do Ciclo de diligência conforme PLAN P0 #831."
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
     },
     {
       "arquivo": "scripts/testc/visual-audit.test.mjs",
       "versao": "V2",
-      "justificativa": "Entrega ou contraprova autorizada do Ciclo de diligência conforme PLAN P0 #831."
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
     },
     {
       "arquivo": "scripts/testc/v2-integracao-visual.mjs",
       "versao": "V2",
-      "justificativa": "Entrega ou contraprova autorizada do Ciclo de diligência conforme PLAN P0 #831."
+      "justificativa": "Leitura, navegação da V2-03, vínculo da versão V111 ou prova do escopo autorizado no PLAN P0 #834."
     }
   ],
   "itens": [
     {
-      "id": "V2-02-CICLO-DILIGENCIA",
+      "id": "V2-03-DETALHE-APONTAMENTO",
       "tipo": "NOVA_FUNCIONALIDADE",
       "solucao": {
-        "descricao": "Consulta do ciclo autorizada por organização e competência com paginação das fontes e dos itens. Projeta valores oficiais com centavos preservados e abre o protocolo correspondente quando visível pelo vínculo sob RLS.",
-        "rollback": "Reverter a BUILD por PR protegido, validar a navegação original V2-01 e V114 e preservar dados e recibo do regular anterior.",
+        "descricao": "Selecionar item pelo ciclo e por suas chaves oficiais. Apresentar proveniência do parecer, referência ao protocolo, análises, evidências versionadas, revisão humana e desfechos em leitura sob RLS. Retornar ao item e abrir a versão autorizada de V111.",
+        "rollback": "Reverter o incremento por PR protegida e conferir navegação padrão V111 e retornos V2-02 e V2-01. Preservar o registro I05 do backend.",
         "arquivos": [
           "src/routes/diligencias_.$cicloId.tsx",
+          "src/routes/diligencias_.$cicloId_.apontamentos_.$id.tsx",
           "src/routeTree.gen.ts",
-          "src/components/diligencias/DiligenciasCompetencia.tsx",
           "src/components/diligencias/CicloDiligencia.tsx",
-          "src/lib/diligencias/diligenciasDados.ts",
+          "src/components/diligencias/ApontamentoDiligencia.tsx",
           "src/lib/diligencias/cicloDiligenciaDados.ts",
-          "src/test/v2-45-contrato.test.ts",
-          "src/test/v2-45-tela.test.tsx",
+          "src/lib/diligencias/apontamentoDiligenciaDados.ts",
+          "src/lib/diligencias/apontamentoEvidenciasDados.ts",
+          "src/routes/contratos_.$id_.documentos_.$idDocumento.tsx",
+          "src/components/contratos/DocumentoDetalhe.tsx",
+          "src/lib/contratos/documentoDetalheDados.ts",
+          "src/test/documentoDetalhe.test.tsx",
+          "src/test/v2-46-contrato.test.ts",
+          "src/test/v2-46-tela.test.tsx",
           "scripts/testc/visual-audit.mjs",
           "scripts/testc/visual-audit.test.mjs",
           "scripts/testc/v2-integracao-visual.mjs"
@@ -86,10 +122,11 @@
       },
       "impacto": {
         "dependencias": [
-          "RLS de ciclos_diligencia, pareceres_contratante, apontamentos_contratante e apresentacoes_contratante",
-          "RPC somente leitura obter_visao_geral_competencia",
-          "V2-01 Diligências, V114 e V120",
-          "GOV-020, visual independente e sessões autorizadas pelo cliente existente"
+          "I05 HML e RPC obter_fonte_apontamento_contratante com RLS",
+          "V2-02 e obter_visao_geral_competencia",
+          "V120 e o pacote congelado",
+          "V111 e consulta da versão por documento, contrato e organização",
+          "eventos de revisão de tarefas e desfechos oficiais"
         ],
         "versoes_afetadas": [
           "V1",
@@ -97,83 +134,101 @@
         ],
         "riscos": [
           {
-            "risco": "Renderizar item ou parecer cruzado, ou ligar a um protocolo invisível.",
+            "risco": "Renderizar entidade de rodada ou organização incompatível.",
             "teste_preventivo": {
-              "id": "45-ORIGEM",
+              "id": "46-RLS",
               "runner": "vitest",
-              "arquivo": "src/test/v2-45-contrato.test.ts",
-              "caso": "V2-02 rejeita origem ou item cruzado e nao expoe apresentacao invisivel"
+              "arquivo": "src/test/v2-46-contrato.test.ts",
+              "caso": "V2-03 bloqueia item invisivel ou cruzado e preserva a negacao explicita"
             }
           },
           {
-            "risco": "Perder centavos do numeric(18,2) no transporte ou na apresentação.",
+            "risco": "Confundir uma versão posterior com a que integra o pacote apresentado.",
             "teste_preventivo": {
-              "id": "45-PRECISAO",
+              "id": "46-VERSAO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-45-contrato.test.ts",
-              "caso": "V2-02 preserva centavos sem converter o decimal de 18 digitos para Number"
+              "arquivo": "src/test/v2-46-contrato.test.ts",
+              "caso": "V2-03 distingue a evidencia do pacote de uma versao posterior e rejeita hash divergente"
             }
           },
           {
-            "risco": "Aceitar resposta do contexto anterior após a troca de organização.",
+            "risco": "Substituir a versão documental citada pela versão atual ou abrir versão sem acesso.",
             "teste_preventivo": {
-              "id": "45-CANCELAR",
+              "id": "46-V111-NEGACAO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-45-tela.test.tsx",
-              "caso": "V2-02 cancela o ciclo anterior na troca de organizacao"
+              "arquivo": "src/test/documentoDetalhe.test.tsx",
+              "caso": "V1-11 evidência citada pela V2-03 preserva ausencia da versao citada e bloqueia substituicao automatica"
             }
           },
           {
-            "risco": "Indicar vazio em caso de negação ou erro, ou navegar por ID de outra competência.",
+            "risco": "Aceitar resposta de uma sessão ou organização anterior.",
             "teste_preventivo": {
-              "id": "45-RLS",
+              "id": "46-SESSAO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-45-contrato.test.ts",
-              "caso": "V2-02 preserva a negacao e nao consulta filhos de ciclo invisivel"
+              "arquivo": "src/test/v2-46-tela.test.tsx",
+              "caso": "V2-03 limpa o item obsoleto na troca de organizacao ou sessao"
+            }
+          },
+          {
+            "risco": "Perder o foco ou a página do item ao retornar.",
+            "teste_preventivo": {
+              "id": "46-FOCO",
+              "runner": "vitest",
+              "arquivo": "src/test/v2-46-tela.test.tsx",
+              "caso": "V2-02 retorna a pagina e devolve o foco ao apontamento de origem"
+            }
+          },
+          {
+            "risco": "Atribuir ao item uma origem histórica sem vínculo oficial.",
+            "teste_preventivo": {
+              "id": "46-ORIGEM",
+              "runner": "vitest",
+              "arquivo": "src/test/v2-46-contrato.test.ts",
+              "caso": "V2-03 distingue origem historica, origem bloqueada e resposta cruzada"
             }
           }
         ]
       },
       "preflight": {
         "status": "VERIFICADO",
-        "baseline_sha": "fce19729ebdb1f4b01267d68def983233d59d776",
-        "arquivo_evidencia": "docs/frontend/auditorias/preflight/V2_PROMPT45_CONTRATO_2026-11-26.json",
-        "arquivo_sha256": "bd2530a3bc0c50f1089ec9f2e0dd68a4f7235b0b5a2b679dba356406c30e6842",
+        "baseline_sha": "ea96505fb865a18c859e57ed2e4bd823efda298b",
+        "arquivo_evidencia": "docs/frontend/auditorias/preflight/V2_PROMPT46_CONTRATO_2026-11-26.json",
+        "arquivo_sha256": "c2d4713f664db7bb8e1d763b73bc632e17f391881b4a0219dc780c371c367969",
         "checks": [
           {
             "tipo": "CONTRATO",
             "teste": {
-              "id": "45-CONTRATO",
+              "id": "46-CONTRATO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-45-contrato.test.ts",
-              "caso": "V2-02 consulta o ciclo autorizado com fontes e valores no escopo da rodada"
+              "arquivo": "src/test/v2-46-contrato.test.ts",
+              "caso": "V2-03 consulta item, parecer, pacote e revisao no escopo autorizado"
             }
           },
           {
             "tipo": "RBAC_RLS",
             "teste": {
-              "id": "45-RLS",
+              "id": "46-RLS",
               "runner": "vitest",
-              "arquivo": "src/test/v2-45-contrato.test.ts",
-              "caso": "V2-02 preserva a negacao e nao consulta filhos de ciclo invisivel"
+              "arquivo": "src/test/v2-46-contrato.test.ts",
+              "caso": "V2-03 bloqueia item invisivel ou cruzado e preserva a negacao explicita"
             }
           },
           {
             "tipo": "DADOS_INTEGRIDADE",
             "teste": {
-              "id": "45-ORIGEM",
+              "id": "46-VERSAO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-45-contrato.test.ts",
-              "caso": "V2-02 rejeita origem ou item cruzado e nao expoe apresentacao invisivel"
+              "arquivo": "src/test/v2-46-contrato.test.ts",
+              "caso": "V2-03 distingue a evidencia do pacote de uma versao posterior e rejeita hash divergente"
             }
           },
           {
             "tipo": "DEPENDENCIAS",
             "teste": {
-              "id": "45-NAV",
+              "id": "46-NAVEGACAO",
               "runner": "vitest",
-              "arquivo": "src/test/v2-45-tela.test.tsx",
-              "caso": "V2-02 retorna a lista e chega ao protocolo da propria competencia"
+              "arquivo": "src/test/v2-46-tela.test.tsx",
+              "caso": "V2-03 liga o item, protocolo e versao exata ao contexto de retorno"
             }
           }
         ]
@@ -181,75 +236,99 @@
       "testes": {
         "red": [
           {
-            "id": "45-RED",
+            "id": "46-RED",
             "runner": "node",
             "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-02 registra a rota Ciclo de diligencia e a prova visual",
-            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45868390135",
-            "run_sha": "a12b06e54b998ced1a671c866166e54588b02066"
+            "caso": "V2-03 registra a rota Apontamento de diligencia e a prova visual",
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45906979036",
+            "run_sha": "59b1506d9790fcb394ad15ad111839a6a6c47f84"
           }
         ],
         "green": [
           {
-            "id": "45-CONTRATO",
+            "id": "46-CONTRATO",
             "runner": "vitest",
-            "arquivo": "src/test/v2-45-contrato.test.ts",
-            "caso": "V2-02 consulta o ciclo autorizado com fontes e valores no escopo da rodada"
+            "arquivo": "src/test/v2-46-contrato.test.ts",
+            "caso": "V2-03 consulta item, parecer, pacote e revisao no escopo autorizado"
           },
           {
-            "id": "45-NAV",
+            "id": "46-VERSAO",
+            "runner": "vitest",
+            "arquivo": "src/test/v2-46-contrato.test.ts",
+            "caso": "V2-03 distingue a evidencia do pacote de uma versao posterior e rejeita hash divergente"
+          },
+          {
+            "id": "46-NAVEGACAO",
+            "runner": "vitest",
+            "arquivo": "src/test/v2-46-tela.test.tsx",
+            "caso": "V2-03 liga o item, protocolo e versao exata ao contexto de retorno"
+          },
+          {
+            "id": "46-FOCO",
+            "runner": "vitest",
+            "arquivo": "src/test/v2-46-tela.test.tsx",
+            "caso": "V2-02 retorna a pagina e devolve o foco ao apontamento de origem"
+          },
+          {
+            "id": "46-V111-VERSAO",
+            "runner": "vitest",
+            "arquivo": "src/test/documentoDetalhe.test.tsx",
+            "caso": "V1-11 evidência citada pela V2-03 abre versao citada ainda que fora da primeira pagina"
+          },
+          {
+            "id": "46-VISUAL",
+            "runner": "node",
+            "arquivo": "scripts/testc/visual-audit.test.mjs",
+            "caso": "V2-03 registra a rota Apontamento de diligencia e a prova visual"
+          }
+        ],
+        "negativos": [
+          {
+            "id": "46-RLS",
+            "runner": "vitest",
+            "arquivo": "src/test/v2-46-contrato.test.ts",
+            "caso": "V2-03 bloqueia item invisivel ou cruzado e preserva a negacao explicita"
+          },
+          {
+            "id": "46-ORIGEM",
+            "runner": "vitest",
+            "arquivo": "src/test/v2-46-contrato.test.ts",
+            "caso": "V2-03 distingue origem historica, origem bloqueada e resposta cruzada"
+          },
+          {
+            "id": "46-VINCULOS",
+            "runner": "vitest",
+            "arquivo": "src/test/v2-46-contrato.test.ts",
+            "caso": "V2-03 nao usa versao de outra competencia nem revisao de tarefa sem vinculo"
+          },
+          {
+            "id": "46-SESSAO",
+            "runner": "vitest",
+            "arquivo": "src/test/v2-46-tela.test.tsx",
+            "caso": "V2-03 limpa o item obsoleto na troca de organizacao ou sessao"
+          },
+          {
+            "id": "46-ROTA",
+            "runner": "vitest",
+            "arquivo": "src/test/v2-46-tela.test.tsx",
+            "caso": "V2-03 descarta a resposta da rota anterior ao trocar de apontamento"
+          },
+          {
+            "id": "46-V111-NEGACAO",
+            "runner": "vitest",
+            "arquivo": "src/test/documentoDetalhe.test.tsx",
+            "caso": "V1-11 evidência citada pela V2-03 preserva ausencia da versao citada e bloqueia substituicao automatica"
+          }
+        ],
+        "regressao": [
+          {
+            "id": "45-PROTOCOLO",
             "runner": "vitest",
             "arquivo": "src/test/v2-45-tela.test.tsx",
             "caso": "V2-02 retorna a lista e chega ao protocolo da propria competencia"
           },
           {
-            "id": "45-PRECISAO",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-45-contrato.test.ts",
-            "caso": "V2-02 preserva centavos sem converter o decimal de 18 digitos para Number"
-          },
-          {
-            "id": "45-VISUAL",
-            "runner": "node",
-            "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-02 registra a rota Ciclo de diligencia e a prova visual"
-          }
-        ],
-        "negativos": [
-          {
-            "id": "45-RLS",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-45-contrato.test.ts",
-            "caso": "V2-02 preserva a negacao e nao consulta filhos de ciclo invisivel"
-          },
-          {
-            "id": "45-ORIGEM",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-45-contrato.test.ts",
-            "caso": "V2-02 rejeita origem ou item cruzado e nao expoe apresentacao invisivel"
-          },
-          {
-            "id": "45-CANCELAR",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-45-tela.test.tsx",
-            "caso": "V2-02 cancela o ciclo anterior na troca de organizacao"
-          },
-          {
-            "id": "45-PAGINAS",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-45-contrato.test.ts",
-            "caso": "V2-02 separa os offsets, vazio, falha de transporte e cancelamento"
-          },
-          {
-            "id": "45-ESTADOS",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-45-tela.test.tsx",
-            "caso": "V2-02 separa carregamento, vazio autorizado e recusa"
-          }
-        ],
-        "regressao": [
-          {
-            "id": "44-REGRESSAO",
+            "id": "44-COMPETENCIA",
             "runner": "vitest",
             "arquivo": "src/test/v2-44-tela.test.tsx",
             "caso": "V2-01 liga a entrada de diligencias a V114 sem trocar o contexto"
