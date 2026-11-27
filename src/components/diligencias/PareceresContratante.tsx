@@ -108,11 +108,14 @@ export function PareceresContratante({ id, apresentacaoId }: { id: string; apres
   const [versao, setVersao] = useState(0);
   const [offset, setOffset] = useState(0);
   const [offsetAp, setOffsetAp] = useState(0);
+  const chaveConsulta = chave + ":" + versao + ":" + offset + ":" + offsetAp;
+  const [travaConsulta, setTravaConsulta] = useState<string | null>(null);
+  const consultaTravada = travaConsulta === chaveConsulta;
   const [resposta, setResposta] = useState<{ chave: string; versao: number; offset: number; offsetAp: number; estado: Estado } | null>(null);
   const estado: Estado = resposta?.chave === chave && resposta.versao === versao && resposta.offset === offset && resposta.offsetAp === offsetAp
     ? resposta.estado : { tipo: "carregando" };
   useEffect(() => {
-    const reiniciar = () => { atual.current?.abort(); setOffset(0); setOffsetAp(0); setVersao(v => v + 1); };
+    const reiniciar = () => { atual.current?.abort(); setTravaConsulta(null); setOffset(0); setOffsetAp(0); setVersao(v => v + 1); };
     const { data } = supabase.auth.onAuthStateChange(evento => { if (evento !== "INITIAL_SESSION") reiniciar(); });
     window.addEventListener(EVENTO_ORGANIZACAO_ALTERADA, reiniciar);
     return () => { data.subscription.unsubscribe(); window.removeEventListener(EVENTO_ORGANIZACAO_ALTERADA, reiniciar); };
@@ -151,26 +154,26 @@ export function PareceresContratante({ id, apresentacaoId }: { id: string; apres
   return <main className="mx-auto max-w-5xl space-y-5 px-4 py-6 sm:px-6">
     <Button asChild variant="ghost" className="min-h-11"><Link to="/competencias/$id/diligencias" params={{ id }}>Voltar às diligências</Link></Button>
     <header><h1 className="text-2xl font-semibold tracking-tight">Pareceres do contratante</h1><p className="text-sm text-muted-foreground">Registro oficial e acompanhamento da extração.</p></header>
-    <Button variant="outline" onClick={() => setVersao(v => v + 1)} className="min-h-11">Atualizar consulta</Button>
+    <Button variant="outline" disabled={consultaTravada} onClick={() => setVersao(v => v + 1)} className="min-h-11">Atualizar consulta</Button>
     {estado.tipo === "carregando" ? <p role="status">Consultando pareceres…</p> : estado.tipo === "erro" ? <p role="alert">{estado.mensagem}</p> : atual.current && <div key={chave + ":" + versao + ":" + offset + ":" + offsetAp} className="space-y-5">
-      <RegistroParecer dados={estado.dados} signal={atual.current.signal} />
+      <RegistroParecer dados={estado.dados} signal={atual.current.signal} onTrava={travar => setTravaConsulta(valor => travar ? chaveConsulta : valor === chaveConsulta ? null : valor)} />
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" disabled={!offsetAp} onClick={() => setOffsetAp(v => v - PAGINA_DILIGENCIAS)}>Apresentações anteriores</Button>
-        <Button variant="outline" disabled={offsetAp + PAGINA_DILIGENCIAS >= estado.dados.apresentacoes.total} onClick={() => setOffsetAp(v => v + PAGINA_DILIGENCIAS)}>Próximas apresentações</Button>
+        <Button variant="outline" disabled={consultaTravada || !offsetAp} onClick={() => setOffsetAp(v => v - PAGINA_DILIGENCIAS)}>Apresentações anteriores</Button>
+        <Button variant="outline" disabled={consultaTravada || offsetAp + PAGINA_DILIGENCIAS >= estado.dados.apresentacoes.total} onClick={() => setOffsetAp(v => v + PAGINA_DILIGENCIAS)}>Próximas apresentações</Button>
       </div>
       <section aria-label="Pareceres recebidos" className="space-y-3">
         {!estado.dados.pareceres.total && <p role="status">Nenhum parecer recebido.</p>}
         <ul className="space-y-3">{estado.dados.pareceres.itens.map(item => <ParecerLinha key={item.id} item={item} contexto={estado.dados.contexto} signal={atual.current!.signal} />)}</ul>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" disabled={!offset} onClick={() => setOffset(v => v - PAGINA_DILIGENCIAS)}>Pareceres anteriores</Button>
-          <Button variant="outline" disabled={offset + PAGINA_DILIGENCIAS >= estado.dados.pareceres.total} onClick={() => setOffset(v => v + PAGINA_DILIGENCIAS)}>Próximos pareceres</Button>
+          <Button variant="outline" disabled={consultaTravada || !offset} onClick={() => setOffset(v => v - PAGINA_DILIGENCIAS)}>Pareceres anteriores</Button>
+          <Button variant="outline" disabled={consultaTravada || offset + PAGINA_DILIGENCIAS >= estado.dados.pareceres.total} onClick={() => setOffset(v => v + PAGINA_DILIGENCIAS)}>Próximos pareceres</Button>
         </div>
       </section>
     </div>}
   </main>;
 }
 
-function RegistroParecer({ dados, signal }: { dados: Dados; signal: AbortSignal }) {
+function RegistroParecer({ dados, signal, onTrava }: { dados: Dados; signal: AbortSignal; onTrava: (travar: boolean) => void }) {
   const [pedido, setPedido] = useState<PedidoParecer>({ apresentacao: dados.inicial?.id ?? "", arquivo: "", resultado: "", finalFavoravel: false, numero: "", emissao: "", prazo: "" });
   const [file, setFile] = useState<File | null>(null);
   const envio = useRef<EstadoEnvio>({});
@@ -192,7 +195,7 @@ function RegistroParecer({ dados, signal }: { dados: Dados; signal: AbortSignal 
   };
   const enviar = async () => {
     if (trava.current || !file || signal.aborted) return;
-    trava.current = true; setOcupado(true); setMensagem("");
+    trava.current = true; onTrava(true); setOcupado(true); setMensagem("");
     try {
       await conferirContexto();
       const config = await obterConfiguracaoUpload(signal);
@@ -208,22 +211,28 @@ function RegistroParecer({ dados, signal }: { dados: Dados; signal: AbortSignal 
         if (!signal.aborted) setMensagem("Arquivo enviado. Aguarde ou confira a aprovação antes de registrar.");
       }
     } catch (e) { if (!signal.aborted) setMensagem(e instanceof ErroParecer ? mensagens[e.tipo] : "Envio não confirmado. Retome o mesmo arquivo."); }
-    finally { trava.current = false; if (!signal.aborted) setOcupado(false); }
+    finally { trava.current = false; if (!signal.aborted) { setOcupado(false); onTrava(false); } }
   };
   const registrar = async () => {
     if (trava.current || signal.aborted || confirmado) return;
-    trava.current = true; setOcupado(true); setMensagem("");
+    trava.current = true; onTrava(true); setOcupado(true); setMensagem("");
+    let resultadoIncerto = intencao.current !== null;
     try {
       await conferirContexto();
       const p = intencao.current ?? prepararPedidoParecer(pedido);
       await conferirArquivoParecer(dados.contexto, p.arquivo, signal);
       await conferirContexto();
       intencao.current = p; setFixado(true);
+      resultadoIncerto = true;
       const idParecer = await registrarParecer(dados.contexto, p, signal);
       await conferirContexto();
+      resultadoIncerto = false;
       setConfirmado(idParecer); setMensagem("Registro confirmado pelo servidor. Atualize a consulta para conferir a rodada e o prazo.");
-    } catch (e) { if (!signal.aborted) setMensagem(e instanceof ErroParecer ? mensagens[e.tipo] : mensagens.erro); }
-    finally { trava.current = false; if (!signal.aborted) setOcupado(false); }
+    } catch (e) {
+      if (e instanceof ErroParecer && e.tipo !== "erro") resultadoIncerto = false;
+      if (!signal.aborted) setMensagem(e instanceof ErroParecer ? mensagens[e.tipo] : mensagens.erro);
+    }
+    finally { trava.current = false; if (!signal.aborted) { setOcupado(false); onTrava(resultadoIncerto); } }
   };
   const apresentacoes = dados.inicial && !dados.apresentacoes.itens.some(a => a.id === dados.inicial?.id) ? [dados.inicial, ...dados.apresentacoes.itens] : dados.apresentacoes.itens;
   const bloqueado = ocupado || !!intencao.current || !!confirmado;

@@ -24,6 +24,8 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
+    rpc: vi.fn(),
+    from: vi.fn(),
     auth: {
       getUser: f.getUser,
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
@@ -121,11 +123,13 @@ describe("V2-07 tela", () => {
     fireEvent.click(screen.getByRole("button", { name: "Registrar parecer", exact: true }));
     await screen.findByText(/Não foi possível confirmar o resultado/);
     expect(screen.getByLabelText("Classificação")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Atualizar consulta" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Repetir registro" }));
     await screen.findByText(/Registro confirmado pelo servidor/);
     expect(f.registrar).toHaveBeenCalledTimes(2);
     expect(f.registrar.mock.calls[0]?.[1]).toEqual(f.registrar.mock.calls[1]?.[1]);
     expect(f.upload).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Atualizar consulta" })).toBeEnabled();
   });
 
   it("nega a consulta sem exibir registros nem formulário", async () => {
