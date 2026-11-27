@@ -85,13 +85,89 @@ const tabelas: Record<string, unknown[]> = {
     entidade_tipo: "documento_competencia", entidade_id: documento, versao_id: versao1, hash: hashVersao }],
 };
 
+const novaTarefa = identificador(10);
+const revalidacao = identificador(11);
+const correlacao = identificador(12);
+let etapa = "pendente";
+let leiturasPendentes = 0;
+const tarefaVisual = {
+  id: novaTarefa, descricao: "Obter assinatura do comprovante", id_plano: null,
+  responsavel: revisor, prazo: "2026-11-20", tipo_acao: "obter_assinatura", prioridade: "alta",
+  depende_de: [],
+};
+const rpcRespond = (data: unknown, code?: string) => ({
+  async abortSignal(signal: AbortSignal) {
+    signal.throwIfAborted();
+    return { data, error: code ? { code } : null, status: code ? 403 : 200 };
+  },
+});
+
+function planoFixture(name: string, args: Record<string, unknown>) {
+  if (name === "obter_plano_acao_diligencia_v2") {
+    if (args.p_id_ciclo !== rodadas[0].id || args.p_id_apontamento !== apontamentos[0].id ||
+        args.p_offset !== 0 || args.p_limite !== 10) throw Error("ESCOPO_PLANO_V2");
+    if (new URLSearchParams(location.search).get("fixture") === "plano-negado") return rpcRespond(null, "42501");
+    if (etapa === "enfileirado" && ++leiturasPendentes > 1) etapa = "revalidado";
+    const aprovada = etapa === "aprovado";
+    const pendente = etapa === "pendente";
+    return rpcRespond({
+      id_ciclo: rodadas[0].id, id_apontamento: apontamentos[0].id, total: 1, offset: 0, limite: 10, criar: true,
+      perfil_preferencia: "gestor_contrato", planos: [], dependencias: [],
+      responsaveis: [{ id: revisor, nome: "Pessoa sintética da rodada" }],
+      tarefas: [{ ...tarefaVisual, status: pendente ? "pendente" : "concluida",
+        validacao_solucao: pendente ? "pendente" : aprovada ? "aprovada" : "em_analise",
+        versao_registro: pendente ? 1 : aprovada ? 3 : 2, id_execucao: pendente ? null : revalidacao,
+        id_evidencia: pendente ? null : versao2, estado_execucao: pendente ? null : etapa === "enfileirado" ? "enfileirado" : "concluido",
+        prova: etapa === "revalidado" || aprovada ? { id_analise: analise, id_execucao: revalidacao, id_apontamento: apontamentos[0].id,
+          id_evidencia: versao2, id_tarefa: novaTarefa, registrado_em: comum.recebido_em,
+          confianca: 0.95, evidencia_suficiente: true, classificacao: "procedente" } : null,
+        editar: pendente, submeter: pendente, revisar: etapa === "revalidado", aprovar: etapa === "revalidado",
+      }],
+    });
+  }
+  if (name === "avaliar_portao_reapresentacao") {
+    if (args.p_id_ciclo !== rodadas[0].id) throw Error("ESCOPO_PORTAO_V2");
+    const tratado = etapa === "aprovado";
+    return rpcRespond({ total: 1, tratados: Number(tratado), abertos: Number(!tratado), liberado: tratado });
+  }
+  if (name === "obter_documentos_competencia_v115" && location.pathname === "${itemPath}") {
+    if (args.p_id_competencia !== C || args.p_documentos_offset !== 0) throw Error("ESCOPO_VERSAO_V2");
+    return rpcRespond({ competencia: { id: C, id_contrato: K, id_organizacao: O }, documentos_total: 1,
+      documentos: [{ id: documento, titulo: "Comprovante da competência", situacao: "ativo", versao_atual: 2,
+        versao: { id: versao2, numero_versao: 2, hash: hashVersao } }],
+    });
+  }
+  if (name === "submeter_solucao_tarefa_diligencia_v2") {
+    if (etapa !== "pendente" || args.p_id_tarefa !== novaTarefa || args.p_id_evidencia !== versao2 ||
+        args.p_versao_esperada !== 1 || typeof args.p_chave_idempotencia !== "string") throw Error("ESCOPO_SUBMISSAO_V2");
+    etapa = "enfileirado";
+    tabelas.tarefas_diligencia.push({ ...ref, id: novaTarefa, descricao: tarefaVisual.descricao, id_evidencia_versao_documento: versao2 });
+    return rpcRespond({ schema_versao: "v247-v1", id_tarefa: novaTarefa, versao_registro: 2, status: "concluida",
+      validacao_solucao: "em_analise", id_execucao: revalidacao, id_evidencia: versao2, correlation_id: correlacao });
+  }
+  if (name === "revisar_solucao_tarefa_diligencia_v2") {
+    if (etapa !== "revalidado" || args.p_id_tarefa !== novaTarefa || args.p_versao_esperada !== 2 ||
+        args.p_aprovar !== true || args.p_fundamento !== "Assinatura conferida na versão 2" ||
+        typeof args.p_chave_idempotencia !== "string") throw Error("ESCOPO_REVISAO_V2");
+    etapa = "aprovado";
+    apontamentos[0].status = "resolvido";
+    tabelas.eventos_auditoria.push({ id: identificador(13), id_organizacao: O, id_usuario: revisor,
+      id_entidade: novaTarefa, entidade: "tarefas_diligencia", evento: "SolucaoTarefaDiligenciaRevisada",
+      criado_em: comum.recebido_em, depois: { aprovada: true, fundamento: args.p_fundamento, revisor } });
+    return rpcRespond({ schema_versao: "v247-v1", id_tarefa: novaTarefa, versao_registro: 3, status: "concluida",
+      validacao_solucao: "aprovada", id_execucao: revalidacao, id_evidencia: versao2, correlation_id: correlacao });
+  }
+}
+
 export const supabase = {
   ...baseline,
   auth: {
     ...baseline.auth,
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
   },
-  rpc(name: string, args: Record<string, string>) {
+  rpc(name: string, args: Record<string, unknown>) {
+    const plano = planoFixture(name, args);
+    if (plano) return plano;
     if (name !== "obter_fonte_apontamento_contratante") return baseline.rpc(name);
     if (args.p_id_ciclo !== rodadas[0].id || args.p_id_apontamento !== apontamentos[0].id)
       throw Error("ESCOPO_ORIGEM_APONTAMENTO");
@@ -257,6 +333,7 @@ export async function collectDiligenciasVisual(
   const records = [];
   const cycleRecords = [];
   const itemRecords = [];
+  const planoRecords = [];
   let server;
 
   try {
@@ -416,6 +493,80 @@ export async function collectDiligenciasVisual(
         const imagemItem = "screenshots/V2-03_" + width + "_" + theme + ".png";
         const bytesItem = await page.screenshot({ fullPage: true, animations: "disabled" });
         writeFileSync(join(target, imagemItem), bytesItem);
+
+        const gatilhoPlano = page.getByRole("button", { name: "Abrir plano de ação" });
+        await gatilhoPlano.focus();
+        await gatilhoPlano.press("Enter");
+        const plano = page.getByRole("dialog", { name: "Plano de ação" });
+        await plano.getByRole("heading", { name: "Obter assinatura do comprovante" }).waitFor();
+        await plano.getByText("Apontamentos tratados na rodada 0 de 1.", { exact: true }).waitFor();
+        const overflowPlano = await plano.evaluate((element) =>
+          Math.max(
+            0,
+            element.scrollWidth - element.clientWidth,
+            element.getBoundingClientRect().right - innerWidth,
+          ),
+        );
+        if (overflowPlano > 1) throw Error("TESTE_C_V2_PLANO_OVERFLOW");
+        const imagemPlano = "screenshots/V2-04_" + width + "_" + theme + ".png";
+        const bytesPlano = await page.screenshot({ fullPage: true, animations: "disabled" });
+        writeFileSync(join(target, imagemPlano), bytesPlano);
+        await plano.getByRole("button", { name: "Submeter evidência" }).click();
+        await plano
+          .getByLabel("Versão da evidência")
+          .selectOption({ label: "Comprovante da competência · versão 2" });
+        await plano.getByRole("button", { name: "Enviar para revalidação" }).click();
+        await plano.getByText("Revalidação em processamento.", { exact: true }).waitFor();
+        if (await plano.getByRole("button", { name: "Revisar solução" }).count())
+          throw Error("TESTE_C_V2_PLANO_REVISAO_ANTES");
+        await plano.getByRole("button", { name: "Atualizar plano" }).click();
+        await plano.getByRole("button", { name: "Revisar solução" }).click();
+        await plano.getByLabel("Decisão").selectOption("aprovar");
+        await plano.getByLabel("Fundamento da revisão").fill("Assinatura conferida na versão 2");
+        await plano.getByRole("button", { name: "Registrar revisão" }).click();
+        await plano.getByText("Revisão registrada.", { exact: true }).waitFor();
+        await plano.getByText("Apontamentos tratados na rodada 1 de 1.", { exact: true }).waitFor();
+        await plano.getByText("Solução validada", { exact: true }).waitFor();
+        await page.keyboard.press("Escape");
+        await plano.waitFor({ state: "hidden" });
+        await page.waitForFunction(
+          () => document.activeElement?.textContent?.trim() === "Abrir plano de ação",
+        );
+        await page.getByText("Resolvido", { exact: true }).waitFor();
+        await page.getByText("Assinatura conferida na versão 2", { exact: true }).waitFor();
+        await page.goto(origin + itemPath + "?fixture=plano-negado");
+        await verificarItem();
+        await page.getByRole("button", { name: "Abrir plano de ação" }).click();
+        await plano
+          .getByRole("alert")
+          .filter({ hasText: "Seu perfil não tem permissão para esta operação no plano de ação." })
+          .waitFor();
+        if (
+          (await plano.getByText("Obter assinatura do comprovante", { exact: true }).count()) ||
+          erros ||
+          externa
+        )
+          throw Error("TESTE_C_V2_PLANO_ISOLAMENTO");
+        await plano.getByRole("button", { name: "Fechar plano de ação" }).click();
+        await plano.waitFor({ state: "hidden" });
+        planoRecords.push({
+          width,
+          theme,
+          screenshot: imagemPlano,
+          sha256: digest(bytesPlano),
+          status: "PASS",
+          foco: true,
+          retorno: true,
+          versaoVigente: true,
+          revalidacao: true,
+          revisaoHumana: true,
+          portaoAtualizado: true,
+          negacaoSemDados: true,
+          overflow: overflowPlano,
+          chamadasExternas: externa,
+          errosDePagina: erros,
+        });
+
         await page.getByRole("link", { name: "Voltar ao ciclo" }).press("Enter");
         await page.waitForURL(
           (url) =>
@@ -514,12 +665,13 @@ export async function collectDiligenciasVisual(
       cases.length !== 8 ||
       records.length !== cases.length ||
       cycleRecords.length !== cases.length ||
-      itemRecords.length !== cases.length
+      itemRecords.length !== cases.length ||
+      planoRecords.length !== cases.length
     ) {
       throw Error("TESTE_C_V2_COBERTURA");
     }
     const record = {
-      schema: "contaos.v2-diligencias.offline-visual.v3",
+      schema: "contaos.v2-diligencias.offline-visual.v4",
       mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
       headSha,
       sourceTree: git("rev-parse", "HEAD^{tree}"),
@@ -534,6 +686,8 @@ export async function collectDiligenciasVisual(
           "src/components/competencias/CompetenciaProtocolo.tsx",
           "src/lib/diligencias/cicloDiligenciaDados.ts",
           "src/components/diligencias/ApontamentoDiligencia.tsx",
+          "src/components/diligencias/PlanoAcaoDiligencia.tsx",
+          "src/lib/diligencias/planoAcaoDiligenciaDados.ts",
           "src/lib/diligencias/apontamentoDiligenciaDados.ts",
           "src/lib/diligencias/apontamentoEvidenciasDados.ts",
           "src/routes/diligencias_.$cicloId_.apontamentos_.$id.tsx",
@@ -543,19 +697,23 @@ export async function collectDiligenciasVisual(
       records,
       cycleRecords,
       itemRecords,
+      planoRecords,
     };
     const report = JSON.stringify(record, null, 2) + "\n";
     writeFileSync(join(target, "report.json"), report);
     writeFileSync(
       join(target, "SHA256SUMS"),
       [
-        ...[...records, ...cycleRecords, ...itemRecords].map((r) => r.sha256 + "  " + r.screenshot),
+        ...[...records, ...cycleRecords, ...itemRecords, ...planoRecords].map(
+          (r) => r.sha256 + "  " + r.screenshot,
+        ),
         digest(report) + "  report.json",
       ].join("\n") + "\n",
     );
     console.log("V2_01_OFFLINE_VISUAL_PASS_8");
     console.log("V2_02_OFFLINE_VISUAL_PASS_8");
     console.log("V2_03_OFFLINE_VISUAL_PASS_8");
+    console.log("V2_04_OFFLINE_VISUAL_PASS_8");
     return record;
   } finally {
     if (server?.listening) await new Promise((resolve) => server.close(resolve));
