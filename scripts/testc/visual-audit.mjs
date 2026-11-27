@@ -53,6 +53,11 @@ export const ROUTES = [
     id: "V2-03",
     path: "/diligencias/" + CICLO_V2_FIXTURE + "/apontamentos/" + APONTAMENTO_V2_FIXTURE,
   },
+  {
+    id: "V2-04",
+    path: "/diligencias/" + CICLO_V2_FIXTURE + "/apontamentos/" + APONTAMENTO_V2_FIXTURE,
+    requiresDrawer: true,
+  },
 ];
 export function cases() {
   return ROUTES.flatMap((route) =>
@@ -1580,6 +1585,12 @@ async function run() {
       cases: 8,
       report: "v2-diligencias/report.json",
       records: "itemRecords",
+    },
+    offline_v2_plano_acao: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+      records: "planoRecords",
     },
     started_utc: started,
     finished_utc: new Date().toISOString(),
