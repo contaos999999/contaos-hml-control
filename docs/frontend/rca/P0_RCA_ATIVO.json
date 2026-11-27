@@ -3,7 +3,7 @@
   "versao": "V2",
   "prompt_id": "46",
   "baseline": {
-    "frontend_sha": "5ed7a74f19f25ec4d3295ceb0e63c6213647b67b",
+    "frontend_sha": "ea96505fb865a18c859e57ed2e4bd823efda298b",
     "backend_sha": "cbf247724ecede59fdcba0d18d7b0e37c76f247f"
   },
   "escopo": [
@@ -191,7 +191,7 @@
       },
       "preflight": {
         "status": "VERIFICADO",
-        "baseline_sha": "5ed7a74f19f25ec4d3295ceb0e63c6213647b67b",
+        "baseline_sha": "ea96505fb865a18c859e57ed2e4bd823efda298b",
         "arquivo_evidencia": "docs/frontend/auditorias/preflight/V2_PROMPT46_CONTRATO_2026-11-26.json",
         "arquivo_sha256": "c2d4713f664db7bb8e1d763b73bc632e17f391881b4a0219dc780c371c367969",
         "checks": [
