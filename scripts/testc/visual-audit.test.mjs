@@ -1096,3 +1096,12 @@ test("V2-06 registra a rota de reapresentação e sua prova visual", () => {
     "FAIL V2-06 registra a rota de reapresentação e sua prova visual: ainda falta o assistente na rota da rodada",
   );
 });
+
+test("V2-07 registra a rota de pareceres e sua prova visual", () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/competencias/$id/pareceres-contratante") &&
+      ROUTES.some((route) => route.id === "V2-07" && route.path.endsWith("/pareceres-contratante")),
+    "FAIL V2-07 registra a rota de pareceres e sua prova visual: rota do parecer externo ausente",
+  );
+});
