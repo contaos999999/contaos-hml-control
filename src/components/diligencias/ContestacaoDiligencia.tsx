@@ -184,7 +184,7 @@ export function ContestacaoDiligencia({
       setFormulario(undefined);
       setRecibo(resultado);
       reler({ historico: 0, fontes: 0 });
-      aoRegistrar();
+      if (resultado.tipo !== "minuta") aoRegistrar();
       titulo.current?.focus();
     } catch (e) {
       if (signal.aborted) return;

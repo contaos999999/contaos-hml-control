@@ -186,13 +186,14 @@ describe("V2-05", () => {
     mocks.registrarContestacao
       .mockRejectedValueOnce(Error("timeout"))
       .mockResolvedValueOnce({ tipo: "minuta", referencia: uuid(10) });
-    const { painel } = await abrir();
+    const { painel, aoRegistrar } = await abrir();
     const acao = await painel.findByRole("button", { name: "Solicitar minuta" });
     expect(painel.queryByRole("button", { name: "Revisar versão 2" })).not.toBeInTheDocument();
     fireEvent.click(acao);
     expect(await painel.findByRole("alert")).toHaveTextContent("Tente novamente");
     fireEvent.click(acao);
     expect(await painel.findByText("Solicitação de minuta registrada.")).toBeInTheDocument();
+    expect(aoRegistrar).not.toHaveBeenCalled();
     expect(mocks.registrarContestacao.mock.calls[0]?.[2]).toBe(
       mocks.registrarContestacao.mock.calls[1]?.[2],
     );

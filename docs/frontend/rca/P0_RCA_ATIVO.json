@@ -53,7 +53,7 @@
       "id": "V2-05-CONTESTACAO",
       "tipo": "NOVA_FUNCIONALIDADE",
       "solucao": {
-        "descricao": "A V2-03 lia o apontamento e as tarefas, sem entrada própria para contestação, minuta, mapa e decisão. O drawer liga o item exato às quatro RPCs V2-05 implantadas e confirma o resultado na releitura do portão e do item.",
+        "descricao": "A V2-03 lia o apontamento e as tarefas, sem entrada própria para contestação, minuta, mapa e decisão. O drawer liga o item exato às quatro RPCs V2-05 implantadas e confirma o resultado na releitura do portão e do item. O primeiro Teste C (46026007387, job 140597463978) excedeu a espera de “Minuta na fila”. A reprodução local confirmou que a solicitação, que grava somente a execução, acionava duas leituras do painel ao atualizar também o item. A solicitação agora relê o painel e o portão uma vez. Submissão e decisão continuam atualizando o item e o ciclo. O Teste C identifica a etapa de fila e de atualização separadamente e conserva a espera e as verificações.",
         "rollback": "Reverter o incremento frontend em PR protegida. Preservar versões, mapa e histórico oficial no backend.",
         "arquivos": [
           "src/components/diligencias/ApontamentoDiligencia.tsx",

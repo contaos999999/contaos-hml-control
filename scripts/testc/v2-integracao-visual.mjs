@@ -122,7 +122,7 @@ function contestacaoFixture(name: string, args: Record<string, unknown>) {
     const versaoAtual = pendente || aprovada ? 2 : rascunho ? 1 : 0;
     const base = {
       texto: "Síntese da minuta e pedido de revisão", fundamento: "Prova documental da rodada",
-      hash: hashVersao, criada_em: comum.recebido_em, criado_em: comum.recebido_em,
+      hash: hashVersao, criado_em: comum.recebido_em,
       resultado_final: null, resultado_registrado_em: null, mapa: mapaContestacao,
     };
     const anterior = { ...base, id: idContestacao, versao: 1, status_aprovacao: "rascunho",
@@ -694,8 +694,10 @@ export async function collectDiligenciasVisual(
         await gatilhoContestacao.press("Enter");
         const contestacao = page.getByRole("dialog", { name: "Contestação" });
         await contestacao.getByText("Nenhuma versão registrada para este apontamento.").waitFor();
+        etapaVisual = "V2_05_FILA_MINUTA";
         await contestacao.getByRole("button", { name: "Solicitar minuta" }).click();
         await contestacao.getByText("Minuta na fila.").waitFor();
+        etapaVisual = "V2_05_LEITURA_MINUTA";
         await contestacao.getByRole("button", { name: "Atualizar contestação" }).click();
         await contestacao.getByText("Contestação recomendada para avaliação humana.").waitFor();
         await contestacao.getByText("Comprovante da competência · versão 2 · página 3").waitFor();
