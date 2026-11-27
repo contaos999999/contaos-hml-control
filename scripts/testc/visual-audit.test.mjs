@@ -57,7 +57,7 @@ test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preser
       assert.ok(match, `Rota não reconhecida: ${name}`);
       return normalize(match[1]);
     });
-  assert.equal(pages.length, 31);
+  assert.equal(pages.length, 32);
   assert.equal(new Set(pages).size, pages.length);
   assert.deepEqual([...new Set(ROUTES.map((route) => normalize(route.path)))].sort(), pages.sort());
   assert.deepEqual(
@@ -80,7 +80,7 @@ test("P0 V123: Auditoria possui oito casos privados sem PASS autenticado presumi
 });
 
 test("matriz oficial preserva 29 superfícies V1 e inclui lista, ciclo, apontamento, plano e contestação V2", () => {
-  assert.equal(ROUTES.length, 34);
+  assert.equal(ROUTES.length, 35);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
   assert.equal(cases().filter((x) => !x.id.startsWith("V2-")).length, 232);
@@ -89,7 +89,8 @@ test("matriz oficial preserva 29 superfícies V1 e inclui lista, ciclo, apontame
   assert.equal(cases().filter((x) => x.id === "V2-03").length, 8);
   assert.equal(cases().filter((x) => x.id === "V2-04").length, 8);
   assert.equal(cases().filter((x) => x.id === "V2-05").length, 8);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 272);
+  assert.equal(cases().filter((x) => x.id === "V2-06").length, 8);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 280);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");
@@ -1084,5 +1085,14 @@ test("V2-05 registra o painel de contestação no Teste C", () => {
         route.id === "V2-05" && route.path.includes("/apontamentos/") && route.requiresDrawer,
     ),
     "FAIL V2-05 registra o painel de contestação no Teste C: ainda falta a entrada de contestação no apontamento",
+  );
+});
+
+test("V2-06 registra a rota de reapresentação e sua prova visual", () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/diligencias/$cicloId/reapresentar") &&
+      ROUTES.some((route) => route.id === "V2-06" && route.path.endsWith("/reapresentar")),
+    "FAIL V2-06 registra a rota de reapresentação e sua prova visual: ainda falta o assistente na rota da rodada",
   );
 });
