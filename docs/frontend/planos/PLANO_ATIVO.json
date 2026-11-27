@@ -82,12 +82,19 @@
     "20_PROMPT_000_BRAND_01.md"
   ],
   "prompt_crosswalk": {
-    "regular_prompt_id": "45",
+    "regular_prompt_id": "46",
     "direct_atomic_ids": [
       "000",
       "026",
       "027",
-      "028"
+      "028",
+      "029",
+      "030",
+      "031",
+      "032",
+      "040",
+      "041",
+      "042"
     ],
     "additional_transversal_atomic_ids": [
       "091",
@@ -4545,6 +4552,13 @@
     "backend_main": "cbf247724ecede59fdcba0d18d7b0e37c76f247f",
     "live": "NOT_RUN",
     "prod": "NO-GO",
-    "preflight_sha256": "c2d4713f664db7bb8e1d763b73bc632e17f391881b4a0219dc780c371c367969"
+    "preflight_sha256": "c2d4713f664db7bb8e1d763b73bc632e17f391881b4a0219dc780c371c367969",
+    "emenda_crosswalk": {
+      "build_pr": 835,
+      "red_head": "968abe570bd70001dccb1e6c877bb9e6e212f56d",
+      "red_run": 45909137250,
+      "causa": "O registro da raiz ainda apontava para o regular anterior após ativar a allowlist do 46.",
+      "correcao": "Atualizar somente o crosswalk do regular 46 a partir do catálogo e regenerar a árvore TanStack pelo build oficial na PR de código."
+    }
   }
 }
