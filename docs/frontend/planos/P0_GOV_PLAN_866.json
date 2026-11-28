@@ -7,7 +7,8 @@
     "src/test/selecionarOrganizacao.test.tsx",
     "docs/frontend/rca/P0_RCA_ATIVO.json",
     "docs/frontend/auditorias/P0_864_RED_EVIDENCIAS_2026-11-28.md",
-    ".github/workflows/p0-864-causal-red.yml"
+    ".github/workflows/p0-864-causal-red.yml",
+    ".github/workflows/contaos-frontend-zero-drift.yml"
   ],
   "plan_documento": "docs/frontend/planos/P0_864_RCA_F6_C0043_SELECAO_ORGANIZACAO_2026-11-28.md",
   "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/866",
@@ -17,5 +18,14 @@
   "justificativa": "Issue #864: intermitência da seleção organizacional em F6-C0043. Autorização fechada de diagnóstico, RED causal, correção mínima, regressões. Workflow focal temporário somente read-only, remover antes de merge. Escopo restrito por PR sem alterar allowlist global ou regular 76.",
   "ativacao_autorizada": false,
   "prod_changes_allowed": false,
-  "backend_changes_allowed": false
+  "backend_changes_allowed": false,
+  "emenda_red_zero_drift": {
+    "path": "docs/frontend/planos/EMENDA_P0_866_RED_ZERO_DRIFT_2026-11-28.md",
+    "blob": "947ecba4540903e19610de6f89c860de7664c6df",
+    "prior_manifest": "5d90bd5ee0957b98efc6b2ad173e8a6b9fcc2cf8",
+    "red_sha": "7bbc8d9197eda89ad01e408750272e6678ff92b5",
+    "run": 46141936389,
+    "job": 140969559814,
+    "temporary": true
+  }
 }
