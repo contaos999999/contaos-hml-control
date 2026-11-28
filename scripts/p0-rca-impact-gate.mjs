@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { join as joinPath, resolve as resolvePath, sep as pathSep } from "node:path";
@@ -1089,10 +1090,10 @@ FULL_PROTOCOL_CASES.push(...[
 // even when all existing names and tests remain green.
 // Candidate protocol snapshot §5.10–5.12: append-only material evidence,
 // still NO-GO. Binding is reviewed in PR #690, not independently approved.
-const FULL_PROTOCOL_GIT_BLOB="7f822731872177a14b600f9800f3cb6801a2085c";
+const FULL_PROTOCOL_GIT_BLOB="857d73a44bce5917d64aad6fca6df987ab823321";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"33462488ae65e51db73aef5d14c72cec7e6fa894",
-  rca:"699a4226a346f71d3f99d9f027607154ed572d4d",
+  rca:"d0bea54b09eb379cd32d1391cf34c9d100d1731e",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -1138,7 +1139,10 @@ FULL_PROTOCOL_CASES.push(
   {id:"MODALITY-863-SEMANTIC",file:"rca",pattern:"P0 #863 RED: full assisted semantic fixture"},
   {id:"MODALITY-863-SEMANTIC-STAGE",file:"rca",pattern:"P0 #863 RED: missing or unknown release stage"},
   {id:"MODALITY-863-AUTHORITY",file:"rca",pattern:"P0 #863 protected modality authority"},
-  {id:"MODALITY-863-PRIORITY",file:"rca",pattern:"P0 #863 review stage priority models"}
+  {id:"MODALITY-863-PRIORITY",file:"rca",pattern:"P0 #863 review stage priority models"},
+  {id:"SEMANTIC-CORPUS-EMPTY",file:"rca",pattern:"P0 #863 RED: verified flags cannot replace protected corpus"},
+  {id:"SEMANTIC-CORPUS-SUBSET",file:"rca",pattern:"P0 #863 RED: source-bound subset cannot masquerade"},
+  {id:"SEMANTIC-CORPUS-CONTENT",file:"rca",pattern:"P0 #863 corpus integrity: same cardinality"}
 );
 const ACTIVATION_ONLY_PROTOCOL_IDS=new Set([
   "S3-N17C-THIRD-AUTHOR","S3-N17C-TWO-APPROVALS","S3-N17C-EXTERNAL",
@@ -1979,22 +1983,47 @@ async function assessSemanticGate({
   if(!["FINAL","PREAUDIT"].includes(stage))fail("SEMANTIC_STAGE_UNKNOWN");
   if(!modality)fail("SEMANTIC_RELEASE_STAGE_UNKNOWN");
   if(!validSha(base))fail("SEMANTIC_BASE_UNPROVEN");
-  let policy=null;
+  let policy=null,canonical=null;
   if(validSha(base)&&modality){
     try{
-      policy=readP0690ProtectedSources(base).normative.modality_amendment;
+      const protectedSources=readP0690ProtectedSources(base);
+      policy=protectedSources.normative.modality_amendment;
       if(!policy||policy.activation_authorized!==false||
          policy.required_review_by_stage?.[release_stage]!==modality)
         fail("SEMANTIC_STAGE_POLICY_UNPROVEN");
-    }catch{fail("SEMANTIC_STAGE_POLICY_UNPROVEN");}
+      // Never trust inventory flags or counts supplied by the candidate.
+      // Rebuild each collection from the authenticated, immutable source blobs.
+      const protectedInventory=inventoryProtectedSemanticLines(protectedSources.semanticSources);
+      const protectedWorklist=buildSevenAxisSemanticBacklog(protectedInventory);
+      const protectedSentences=inventorySemanticSentenceCandidates(protectedInventory);
+      const protectedReverse=auditSemanticReverseCoverage(protectedInventory,protectedWorklist);
+      if(!protectedInventory.inventory_verified||!protectedWorklist.worklist_verified||
+         !protectedSentences.partition_verified||protectedInventory.lines.length!==118||
+         protectedWorklist.normative_rules.length!==137||protectedSentences.candidates.length!==381||
+         protectedWorklist.all_possible_rule_pairs!==9316||
+         protectedReverse.source_count!==118||protectedReverse.unproven_rule_count!==137||
+         protectedReverse.invalid.length!==0)
+        fail("SEMANTIC_CANONICAL_CORPUS_UNPROVEN");
+      else{
+        canonical={inventory:protectedInventory,worklist:protectedWorklist,
+          sentenceInventory:protectedSentences,reverseCoverage:protectedReverse};
+        if(!isDeepStrictEqual(inventory,protectedInventory)||
+           !isDeepStrictEqual(worklist,protectedWorklist)||
+           !isDeepStrictEqual(sentenceInventory,protectedSentences)||
+           !isDeepStrictEqual(reverseCoverage,protectedReverse))
+          fail("SEMANTIC_PROTECTED_CORPUS_MISMATCH");
+      }
+    }catch{fail("SEMANTIC_STAGE_POLICY_OR_CORPUS_UNPROVEN");}
   }
+  if(!canonical)fail("SEMANTIC_PROTECTED_CORPUS_MISMATCH");
   if(preaudit&&independent!==null)fail("SEMANTIC_PREAUDIT_INDEPENDENT_STAGE_CONFUSION");
   if(preaudit&&assisted!==null)fail("SEMANTIC_PREAUDIT_ASSISTED_STAGE_CONFUSION");
   if(!preaudit&&((preProd&&independent!==null)||(prod&&assisted!==null)))
     fail("SEMANTIC_MIXED_REVIEW_MODALITY");
-  const expectedRules=worklist?.normative_rules||[];
-  const expectedSentences=sentenceInventory?.candidates||[];
-  const expectedSources=inventory?.lines||[];
+  // All denominators and origin lookups come from the rebuilt protected corpus.
+  const expectedRules=canonical?.worklist.normative_rules||[];
+  const expectedSentences=canonical?.sentenceInventory.candidates||[];
+  const expectedSources=canonical?.inventory.lines||[];
   const goodSha=typeof head==="string"&&/^[0-9a-f]{40}$/.test(head);
   if(!inventory?.inventory_verified||!worklist?.worklist_verified||
      !sentenceInventory?.partition_verified||!goodSha)

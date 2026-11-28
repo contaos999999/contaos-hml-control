@@ -3158,3 +3158,8 @@ Evidência local até este checkpoint de código: 452 testes Node e 90 Python ap
 ## 28/11/2026 — PLAN #863 integrado, reancoragem e RED causal
 
 PLAN #863 aprovado por revisão assistida Edivan5002 ID 6097312484 e integrado em 18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e. Reancoragem #690 6108b2d92b96072f6f3583ab1f455b31e345ea83, 14/14 caminhos. RED e7f2c02b027562d249df2434920a27635c3bf9be: Python 90/92, job 140954756309/run 46137113494, N06 falso bloqueio pré-PROD e aceitação de estágio desconhecido; Node 273/280, job 140954825411/run 46137113477, dois REDs causais e cinco falhas esperadas de pins. BUILD corretivo aplica a modalidade por estágio, autentica emenda protegida, mantém matriz histórica e contraprovas, sem ativação. GREEN e CI, pré-auditoria V2, provas semânticas materiais, revisão, merge/readback e certificação ainda pendentes. PROD NO-GO. Não confundir este registro com certificado.
+
+
+## 28/11/2026 — RED adicional de integridade do corpus fiscal
+
+RCA do comentário #690/7238814619. RED 2304cfe9dc53e1802c30f7bbdd29df903ae5314b, run 46141783363 job 140969089190: 277/284; dois falsos PASS comprovados (corpus vazio e subconjunto), cinco pins de integridade esperados. BUILD reconstrói os quatro objetos do corpus dos blobs protegidos, confronta conteúdo e cardinalidade integral, preserva os 14 caminhos, 137/118/381/9316, testemunhas e revisão por estágio. Reancoragem para PLAN #865 d7b0adeb6a418ad53f9dc6e3723309180c3deb5e; prova GREEN e gates materiais pendentes. #866 separada para regressão de produto, sem autorizar PROD/HML.

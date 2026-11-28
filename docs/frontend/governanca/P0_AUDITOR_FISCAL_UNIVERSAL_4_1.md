@@ -338,6 +338,8 @@ RED #863: supervisor Windows run 46137113494/job 140954756309, 90/92, duas falha
 
 N17(c), App privilegiado, fila, autorização/revogação, RLS, HML e PROD conservam seus gates próprios. activation_authorized=false. O supervisor e exportador são diagnósticos e não podem emitir certificado ou status privilegiado. O recibo V2, as provas materiais completas, a revisão assistida elegível, o merge protegido e o readback continuam condições cumulativas do escopo pré-PROD. Preservar as referências históricas como evidência e nunca tratar a proposta #693 como vigente.
 
+RED adicional (28/11/2026): run 46141783363/job 140969089190, candidato 2304cfe9dc53e1802c30f7bbdd29df903ae5314b. Dois falsos PASS comprovados: corpus vazio (zero autenticações) e subconjunto de uma regra/sentença/fonte (seis autenticações sintéticas), além de cinco falhas esperadas de pin. O gate deve reconstruir o inventário, regras, sentenças e cobertura reversa diretamente dos blobs protegidos e confrontar integralmente o conteúdo recebido, antes de avaliar testemunhas. As contagens canônicas permanecem 137/118/381/9316, mesmo diante de input adulterado; flags, contagem isolada ou testemunhas sintéticas nunca substituem a origem protegida. Prova adicional de adulteração com mesma cardinalidade e preservação do caminho legítimo obrigatórias. Nenhum PASS sem CI vigente e dossiê material autenticado.
+
 ## 6. Implantação, rollback e continuidade
 
 1. Esta PR implementa código de diagnóstico, testes offline e adaptação de compatibilidade à fila **sem ativação**, com CI e revisão técnica independente de código.

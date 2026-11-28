@@ -3626,3 +3626,31 @@ test("P0 #863 RED: source-bound subset cannot masquerade as full corpus",async()
   assert.ok(actual.issues.includes("SEMANTIC_PROTECTED_CORPUS_MISMATCH"));
   assert.equal(calls,0,"truncated source set cannot reach external witness validation");
 });
+
+
+test("P0 #863 corpus integrity: same cardinality cannot hide replaced source or clause",async()=>{
+  const base=protectedSourceBase(),head="a".repeat(40);
+  const inventory=inventoryProtectedSemanticLines(readP0690ProtectedSources(base).semanticSources);
+  const worklist=buildSevenAxisSemanticBacklog(inventory);
+  const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
+  const reverseCoverage=auditSemanticReverseCoverage(inventory,worklist);
+  const input={inventory,worklist,sentenceInventory,reverseCoverage,head,base,release_stage:"PRE_PROD"};
+  let calls=0;
+  const clean=await assessSemanticPreauditGate({...input,authenticateWitness:async()=>{calls++;return true;}});
+  assert.equal(clean.semantic_preaudit,"INCONCLUSIVE");
+  assert.ok(!clean.issues.includes("SEMANTIC_PROTECTED_CORPUS_MISMATCH"),JSON.stringify(clean.issues));
+  assert.deepEqual([clean.rule_count,clean.source_count,clean.sentence_count,clean.pair_count],[137,118,381,9316]);
+  for(const mutant of [
+    {...input,inventory:{...inventory,lines:inventory.lines.map((x,i)=>i===0?{...x,text_sha256:"f".repeat(64)}:x)}},
+    {...input,inventory:{...inventory,lines:inventory.lines.map((x,i)=>i===0?{...x,text:x.text+" adulterated"}:x)}},
+    {...input,worklist:{...worklist,normative_rules:worklist.normative_rules.map((x,i)=>i===0?{...x,source_links:["SRC-FORGED"]}:x)}},
+    {...input,sentenceInventory:{...sentenceInventory,candidates:sentenceInventory.candidates.map((x,i)=>i===0?{...x,text_sha256:"f".repeat(64)}:x)}},
+    {...input,reverseCoverage:{...reverseCoverage,uncovered_source_count:0}},
+  ]){
+    const out=await assessSemanticPreauditGate({...mutant,authenticateWitness:async()=>{calls++;return true;}});
+    assert.equal(out.release,"NO_GO");
+    assert.ok(out.issues.includes("SEMANTIC_PROTECTED_CORPUS_MISMATCH"),JSON.stringify(out.issues));
+    assert.deepEqual([out.rule_count,out.source_count,out.sentence_count,out.pair_count],[137,118,381,9316]);
+  }
+  assert.equal(calls,0);
+});
