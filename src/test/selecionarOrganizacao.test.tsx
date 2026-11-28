@@ -157,6 +157,43 @@ describe("SYS-04 Selecionar organização", () => {
     expect(obterPreferenciaOrganizacao(U)).toBe("o2");
   });
 
+  // Controlled interleaving of the real preference read and an explicit DOM
+  // event. No replacement of selector, React state, or persistence logic.
+  it.each(["mouse", "teclado"] as const)("P0 #864 causal: escolha Beta durante inicialização Alfa via %s prevalece", async (mode) => {
+    definirPreferenciaOrganizacao(U, "o1");
+    m.resultado.mockReturnValue({ data: [org("o1", "Alfa"), org("o2", "Beta")], error: null });
+    const original = Storage.prototype.getItem;
+    let injected = 0;
+    const probe = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+      const prior = original.call(this, key);
+      if (key === "contaos.preferenciaOrganizacao" && injected === 0) {
+        const beta = screen.queryByRole("radio", { name: /Beta/ });
+        if (beta && beta.getAttribute("aria-checked") === "false") {
+          injected++;
+          if (mode === "mouse") {
+            beta.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+          } else {
+            beta.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+          }
+        }
+      }
+      return prior;
+    });
+    try {
+      montar();
+      await waitFor(() => expect(injected, "P0 #864 interleaving not exercised").toBe(1));
+      const clear = vi.spyOn(qc, "clear");
+      fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+      await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/" }));
+      expect(obterPreferenciaOrganizacao(U), "P0 #864 CAUSAL_SELECTION_OVERWRITTEN").toBe("o2");
+      expect(clear).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole("radio", { name: /Beta/ }).getAttribute("aria-checked")).toBe("true");
+      clear.mockRestore();
+    } finally {
+      probe.mockRestore();
+    }
+  });
+
   it("manter a mesma organização não chama clear()", async () => {
     definirPreferenciaOrganizacao(U, "o1");
     m.resultado.mockReturnValue({ data: [org("o1", "Alfa"), org("o2", "Beta")], error: null });
