@@ -47,3 +47,15 @@ Criar novo candidato a partir da main protegida após esta emenda, usando exatam
 
 ## Reancoragem final B1/F1 CODE fixture
 Frontend #855 integrado em eb0521c92959ede392c6f43a5438fc13e9867158, review assistida 6095269427; RED Zero-Drift 46095920726, RCA operacional 46099781456 PASS 12 casos, 96/96 focal 46099781461, sete workflows no candidato; cinco workflows push main PASS, inclusive Zero-Drift 46100069329. Backend #257 integrado em 93f14f051af6d04cf8cc5098d26118869a6c1c29, review assistida 6095021829, 97/97 focal e 23/23 regressão histórica 46095184887, guard 46095184890 PASS. Compare backend desde 44877eccb2bdea721f544d8ba1c8443d106ff967 confirma somente os quatro caminhos B1 autorizados; readback de 25 documentos e catálogo 100/97 confirma todos os 26 blobs idênticos. Atualizar exclusivamente âncoras de proveniência e esta nota; preservar RCA histórica e regular 76/77A. Rulesets reais 28271968 e 26495643 ativos, bypass vazio/current_user_can_bypass never. Frontend strict_required_status_checks_policy=false; o validador exige true e deve bloquear eventual coleta real até prova de configuração compatível. Sem alteração de ruleset, sem nova autorização, B2/F2, prova canário real, fiscalização, certificação global e HML permanecem pendentes. PROD NO-GO, LIVE NOT_RUN.
+
+## Emenda corretiva — sincronização da prova V2-04
+
+O job 140840927660 do run 46100282909, tentativa 1, falhou exclusivamente nesta prova do Vitest. A consulta de detalhe ainda tinha uma chamada quando o teste esperava duas. O recibo e a notificação da mutação antecedem o efeito que relê o detalhe e o portão. A tentativa 2 no mesmo SHA passou, confirmando que a observação precisa aguardar o efeito. Evidência [tentativa 1](https://github.com/contaos999999/contaos-hml-control/actions/runs/46100282909/attempts/1).
+
+Escopo da BUILD, após CI e merge desta emenda:
+
+- `src/test/v2-47-tela.test.tsx` — separar o sinal de notificação e o término da releitura no caso original. Aguardar o estado retornado pela segunda consulta, com exatamente duas chamadas de detalhe e duas do portão, e manter a verificação da mutação única e do recibo. Provar por observação determinística do callback que a segunda chamada ainda não ocorreu naquele ponto.
+- `scripts/p0-rca-impact-gate.test.mjs` — acrescentar caso focal que rechace a asserção síncrona dentro do caso V2-04, executado antes do gate RCA pelo Zero-Drift. Publicar o RED primeiro, junto ao registro histórico da falha React. Preservar todos os testes existentes.
+- `docs/frontend/rca/P0_RCA_ATIVO.json` — causa, baselines, RED e casos executáveis. O prompt 76 identifica somente o gate técnico vigente.
+
+Reusar limites do runner. Nenhuma alteração de produto, Supabase, workflow, gate, fiscal, regra de proteção ou certificado. Reversão por PR protegida. CODE_FIXTURE. LIVE NOT_RUN. PROD NO-GO.
