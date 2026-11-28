@@ -46,7 +46,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "Fontes canônicas preservadas após #250. Conferidas 26 identidades e o cruzamento do regular 76 com os atômicos 000 e 025–032.",
   "context_read_acknowledged_at": "2026-11-27T21:35:53Z",
-  "context_source_commit": "b45532dc6397b2c34763ff20ced56f3d0f604d8e",
+  "context_source_commit": "ab240aee0356d5c0d61236973a6f72ad24c6d0a5",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -593,6 +593,17 @@
       "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
       "semantic_delta": "Reancoragem367fc8c5→5eca44ae:11commits/exatamente2paths .github/workflows/c13-v8-focal-security.yml e docs/tasks/active-task.json, revisados. WorkflowC13HMLcontentsread/semsecrets testaOPTIONSpermitido204+ACAOexato,negado403semACAO ePOSTsemJWT401sem4camposprotegidos; aceitaACAOnulo/exato/*somente401gatewaysemJWT. Curlretry2/connect10/max25pertencesóharnessC, nãoA. NenhumaEdge/SQL/RLS/RPC/API_A/SRC/deps/policyCORSruntimealterada; não certificasegurançaintegral/deploy/HML/C13. Árvorecompleta601/truncatedfalse,25/25normativasiguais/catálogoe54e49e626e65a9c94c81709180fd192a1f0c079/10097/types8ea7750b75fd9d76b29c36ce7613392e3ab65e19preservados. GuardHEADvivoeA5s60ssemretryintactos; Asegueindependente.",
       "new_hml_execution": false
+    },
+    "reanchor_p0_actions_plan": {
+      "backend_previous": "b45532dc6397b2c34763ff20ced56f3d0f604d8e",
+      "backend_current": "ab240aee0356d5c0d61236973a6f72ad24c6d0a5",
+      "backend_plan_pr": 255,
+      "canonical_blobs_equal": 25,
+      "catalog_equal": true,
+      "failed_freshness_run": 46087719455,
+      "source_gate_preserved": true,
+      "regular_76_preserved": true,
+      "backend_hml_execution": false
     }
   },
   "unverified_operational": {

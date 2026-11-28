@@ -23,3 +23,6 @@ Caminhos candidatos exatos, exigem emenda fechada e integrada antes de BUILD:
 - docs/frontend/auditorias/CERTIFICADO_P0_ORQUESTRADOR_ACTIONS_CODE.md
 
 Caminhos de request e recibos específicos em PLAN próprio. Esta PR contém somente este documento. Sem BUILD, sem ativação, sem alteração dos controles. Rollback por PR protegida, preservando trilha. LIVE NOT_RUN, PROD NO-GO.
+
+## Reancoragem documental
+PLAN backend #255 integrado em ab240aee0356d5c0d61236973a6f72ad24c6d0a5; CI 46089022612, revisão assistida 6094686230, ruleset 28271968 ativo; PR bloqueada antes da aprovação e clean depois. CI frontend anterior 46087719455 falhou por HEAD canônico antigo b45532dc6397b2c34763ff20ced56f3d0f604d8e; comparados 25/25 blobs normativos e catálogo e54e49e626e65a9c94c81709180fd192a1f0c079, todos idênticos em árvore completa. Atualiza-se exclusivamente snapshot e âncora de proveniência de PLANO_ATIVO; prompt 76, status, escopo, gates, recibos e histórico permanecem. HML ainda não comprovado, sem autorização de ativação. Esta PR passa a ter três caminhos documentais, sem código. LIVE NOT_RUN; PROD NO-GO.
