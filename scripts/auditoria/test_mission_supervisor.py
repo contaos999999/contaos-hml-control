@@ -37,8 +37,8 @@ def contract():
         "last_proven": {"merge_sha": H, "verified": True},
         "activation_authorized": False,
         "requirements": {"required_checks": list(mod.REQUIRED),
-                         "audit_modality_by_stage": dict(mod.AUDIT_MODALITY_BY_STAGE),
-                         "audit_policy_authority": dict(mod.AUDIT_POLICY_AUTHORITY)},
+                         "audit_modality_by_stage": {"PRE_PROD": "ASSISTED_PRE_PROD", "PROD": "INDEPENDENT"},
+                         "audit_policy_authority": {"pr": 863, "merge": "18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e", "blob": "4e4473aef5335a6891e78e2d248be50718ea591e", "path": "docs/frontend/planos/EMENDA_P0_690_MODALIDADE_AUDITORIA_PRE_PROD_2026-11-28.md", "decision_id": 7237068104}},
         "immutable_plan": {
             "path": "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md",
             "blob": C,

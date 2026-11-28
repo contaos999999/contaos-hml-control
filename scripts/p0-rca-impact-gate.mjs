@@ -1091,7 +1091,7 @@ FULL_PROTOCOL_CASES.push(...[
 // still NO-GO. Binding is reviewed in PR #690, not independently approved.
 const FULL_PROTOCOL_GIT_BLOB="7f822731872177a14b600f9800f3cb6801a2085c";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
-  python:"ebdeac11617e279387cdc6164f926f7fad57b246",
+  python:"33462488ae65e51db73aef5d14c72cec7e6fa894",
   rca:"699a4226a346f71d3f99d9f027607154ed572d4d",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
