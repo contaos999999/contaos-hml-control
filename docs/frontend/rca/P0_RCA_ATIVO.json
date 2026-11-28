@@ -46,7 +46,8 @@
           "RED 46094671465, 78/78 falhas causais",
           "RED Zero-Drift 46095920726, job 140827102359, 104 PASS e 1 falha no novo caso",
           "CI 46096034996: RED histórico reconhecido; suíte RCA anterior ao setup Node 24 aprovou os três casos Unicode, mas o seletor individual após setup Node 24.22.3 não os reconheceu. Adicionados casos ASCII semanticamente equivalentes, mantendo provas originais e RED histórico, sem alterar o gate.",
-          "CI 46096184311: os equivalentes ASCII ainda falharam exclusivamente na seleção individual; hipótese Unicode descartada. Casos originais mantidos. Casos equivalentes isolados no arquivo focal sem imports de outras suítes e com execução real do guard; validação condicionada ao CI."
+          "CI 46096184311: os equivalentes ASCII ainda falharam exclusivamente na seleção individual; hipótese Unicode descartada. Casos originais mantidos. Casos equivalentes isolados no arquivo focal sem imports de outras suítes e com execução real do guard; validação condicionada ao CI.",
+          "Zero-Drift 46099671398: o caso isolado de contrato passou; somente as duas provas que importam o gate falharam. Reprodução local Node v22.16.0 com a expressão idêntica de entrypoint do gate e --experimental-test-isolation=none mostra argv[1] relativo e ERR_INVALID_FILE_URL_HOST; normalização temporária com path.resolve e restauração em finally produz PASS real. Corrigida apenas a fixture de importação, sem alterar o gate, flags, asserções ou RED. CI Node 24 deve confirmar a eficácia."
         ],
         "hipoteses_descartadas": [
           "Checkout/setup funcionais; 104 testes RCA preexistentes aprovados no RED oficial.",
