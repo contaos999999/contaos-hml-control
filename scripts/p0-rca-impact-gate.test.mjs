@@ -753,3 +753,36 @@ test("P0-ORQ F1 valida contrato CODE sem autoridade de execução", async () => 
   assert.equal(verdict.executionAllowed,false);
   assert.throws(()=>m.parseRequest(JSON.stringify({...q,environment:"PROD"})+"\n",q.repository));
 });
+
+// ASCII selectors for the existing RCA runner; original tests remain intact.
+test("P0 ORQ F1 CODE contract without execution authority", async () => {
+  const { existsSync } = await import("node:fs");
+  assert.ok(existsSync(new URL("./p0-actions-request.mjs", import.meta.url)), "RED_CAUSAL_TRANSPORT_VALIDATOR_ABSENT");
+  const m = await import("./p0-actions-request.mjs");
+  const q = {
+    schema:"contaos.p0.actions-request.v1", request_id:"11111111-1111-4111-8111-111111111111",
+    repository:"contaos999999/contaos-hml-control", mission_id:"P0-ORQ-ACTIONS-001",
+    operation:"CANARY_CODE", environment:"CODE", source_sha:"a".repeat(40),
+    source_pr:1, request_pr:2, plan_ref:"c".repeat(40), plan_blob:"e".repeat(40),
+    authorization_ref:"d".repeat(40), predecessor_checkpoint_ref:123
+  };
+  const c = {schema:"contaos.p0.actions-catalog.v1", repository:q.repository, operations:[
+    {operation:"CANARY_CODE",environment:"CODE",mode:"CODE_FIXTURE_ONLY",enabled:true},
+    {operation:"TESTE_C_FULL_CODE",environment:"CODE",mode:"DISABLED",enabled:false}
+  ]};
+  assert.deepEqual(m.parseRequest(JSON.stringify(q)+"\n",q.repository),q);
+  assert.deepEqual(m.validateCatalog(JSON.stringify(c)+"\n",q.repository),c);
+  const verdict = m.authorizeRequest(q,c,{});
+  assert.equal(verdict.status,"BLOCKED");
+  assert.equal(verdict.executionAllowed,false);
+  assert.throws(()=>m.parseRequest(JSON.stringify({...q,environment:"PROD"})+"\n",q.repository));
+});
+
+test("P0 RCA missing report blocks V2 build", () => {
+  mustFail(null, /sem ficha RCA/);
+});
+test("P0 RCA divergent plan scope blocks build", () => {
+  const f = fixture();
+  f.escopo[0].versao = "V3";
+  mustFail(f, /sem classificação/);
+});
