@@ -3308,3 +3308,52 @@ test("P0 FISCAL RCA MANDATED_FULL_DIFF rejects the eight foreign paths without w
   const r=validateRcaImpact({planId:"76",changed:manifest.files,prNumber:690,governancePlan:manifest,fullDiffPaths:[...manifest.files,...foreign]});
   for(const file of foreign)assert.ok(r.errors.some(x=>x.includes(file)),file);
 });
+
+
+test("P0 FISCAL #781 protected amendment revalidated without semantic certification",()=>{
+  const original=readP0690ProtectedSources("e007c4bad8f2c66c489c55e4752b71bb19c5ced0");
+  const current=readP0690ProtectedSources(protectedSourceBase());
+  assert.deepEqual(current.semanticSources,original.semanticSources);
+  assert.deepEqual(current.manifest,original.manifest);
+  assert.equal(current.normative.canonicalBlob,original.normative.canonicalBlob);
+  assert.equal(current.normative.activationAuthorized,false);
+  assert.deepEqual(current.normative.review_amendment,{
+    pr:781,merge:"cb39a0b59addadceaacf75ed5bc4dc04534dcb57",
+    blob:"eee5aac26c7be294f2237b32999481dc30d569a2",
+    revalidation_plan:"d9cfb6b03be8011b5ee1472c16cbe2ba350fca7b",
+    modality:"ASSISTED_PRE_PROD",semantic_certification:"NOT_CERTIFIED",
+    activation_authorized:false
+  });
+  // Identical source bytes without the protected merge or revalidation PLAN
+  // ancestry cannot grant the newly revalidated authority.
+  for(const unapproved of ["cd731d27b7024c9f47bf2dce0ae01e6cac932a12",
+    "cb39a0b59addadceaacf75ed5bc4dc04534dcb57"]){
+    assert.throws(()=>readP0690ProtectedSources(unapproved));
+  }
+});
+test("P0 FISCAL #781 later normative drift and rollback rejected in real isolated Git",t=>{
+  const dir=mkdtempSync(join(tmpdir(),"p0-fiscal-781-"));
+  t.after(()=>rmSync(dir,{recursive:true,force:true}));
+  const root=execFileSync("git",["rev-parse","--show-toplevel"],{encoding:"utf8"}).trim();
+  const env={PATH:process.env.PATH,HOME:process.env.HOME,LANG:"C",
+    GIT_CONFIG_NOSYSTEM:"1",GIT_CONFIG_GLOBAL:"/dev/null",
+    GIT_AUTHOR_NAME:"Fixture",GIT_AUTHOR_EMAIL:"fixture@example.invalid",
+    GIT_COMMITTER_NAME:"Fixture",GIT_COMMITTER_EMAIL:"fixture@example.invalid"};
+  execFileSync("git",["clone","--shared","--no-checkout",root,dir],{env,stdio:"pipe",timeout:60000});
+  const g=(args,input)=>execFileSync("git",["-C",dir,...args],{encoding:"utf8",env,input,timeout:20000}).trim();
+  const base=protectedSourceBase();
+  const path="docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md";
+  const before=execFileSync("git",["show",base+":"+path],{encoding:"utf8"});
+  const proposal=execFileSync("git",["show","ee88b81a18882d4810702a1fab0f06f132b5e7c3:"+path],{encoding:"utf8"});
+  for(const content of [before+"\nMudança normativa sem autorização.\n",proposal]){
+    g(["read-tree",base]);
+    const blob=g(["hash-object","-w","--stdin"],content);
+    g(["update-index","--cacheinfo","100644,"+blob+","+path]);
+    const tree=g(["write-tree"]);
+    const commit=g(["commit-tree",tree,"-p",base,"-m","synthetic unapproved normative change"]);
+    const script="import {readP0690ProtectedSources} from "+JSON.stringify(new URL("./p0-rca-impact-gate.mjs",import.meta.url).href)+"; readP0690ProtectedSources("+JSON.stringify(commit)+");";
+    const result=spawnSync(process.execPath,["--input-type=module","-e",script],{cwd:dir,env,encoding:"utf8",timeout:30000});
+    assert.equal(result.status,1,result.stdout+result.stderr);
+    assert.match(result.stderr,/alteração normativa posterior exige revalidação/);
+  }
+});

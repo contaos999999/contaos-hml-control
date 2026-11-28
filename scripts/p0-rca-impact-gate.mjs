@@ -1092,7 +1092,7 @@ FULL_PROTOCOL_CASES.push(...[
 const FULL_PROTOCOL_GIT_BLOB="bd9a19c4cb798884224813b4670bb62636d81504";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
   python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"c3cc3ec48c52a70deb8286e79b7252b979964339",
+  rca:"ca7bdd23f5e8e9c51c2359af0404e9059b28f9ad",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -1378,6 +1378,57 @@ const CSDI_PROPOSAL_BLOBS = Object.freeze({
   [ORCHESTRATION_PATH]: "6c8253c23a1b0d224ea4d5ac76dbdb1f79864f7e",
 });
 
+
+// #781 is a separately protected amendment of review modality only.
+// Its exact parent/head/merge, blobs and revalidation PLAN are closed;
+// the historical semantic corpus and original certification gates remain intact.
+const REVIEW_781 = Object.freeze({
+  pr:781,
+  parent:"e0823b6f4b398c13cca430cb0130f4f5dd95f521",
+  head:"cd731d27b7024c9f47bf2dce0ae01e6cac932a12",
+  merge:"cb39a0b59addadceaacf75ed5bc4dc04534dcb57",
+  blob:"eee5aac26c7be294f2237b32999481dc30d569a2",
+  plan:"d9cfb6b03be8011b5ee1472c16cbe2ba350fca7b",
+  planPath:"docs/frontend/planos/EMENDA_REVALIDACAO_FISCAL_690_PR781_2026-11-28.md",
+  planBlob:"53403369b84f667bf536f5ed60e8a5947445f9b0"
+});
+function sourceAncestor(ancestor,base) {
+  try {
+    execFileSync("git",["merge-base","--is-ancestor",ancestor,base],
+      {stdio:"pipe",timeout:15000});
+    return true;
+  } catch(error) {
+    if(error.status===1)return false;
+    throw error;
+  }
+}
+function verifyReview781(base,content,live,read) {
+  const fail=()=>{throw Error("alteração normativa posterior exige revalidação: "+ORCHESTRATION_PATH);};
+  if(!sourceAncestor(REVIEW_781.merge,base)||
+     !sourceAncestor(REVIEW_781.plan,base)||
+     !sourceAncestor(CSDI_PROPOSAL_MERGE,REVIEW_781.parent)||
+     !sourceAncestor(REVIEW_781.merge,REVIEW_781.plan))fail();
+  const parents=git("rev-list","--parents","-n","1",REVIEW_781.merge).split(/\s+/);
+  if(parents.join(" ")!==[REVIEW_781.merge,REVIEW_781.parent,REVIEW_781.head].join(" "))fail();
+  const prior=read(CSDI_PROPOSAL_MERGE,ORCHESTRATION_PATH);
+  if(gitBlobId(prior)!==CSDI_PROPOSAL_BLOBS[ORCHESTRATION_PATH]||
+     !prior.startsWith(content)||
+     read(REVIEW_781.parent,ORCHESTRATION_PATH)!==prior||
+     gitBlobId(live)!==REVIEW_781.blob||
+     read(REVIEW_781.merge,ORCHESTRATION_PATH)!==live||
+     read(REVIEW_781.head,ORCHESTRATION_PATH)!==live||
+     !live.includes("**PROPOSTA NÃO VIGENTE.**")||
+     !live.includes("revisão assistida pré-PROD")||
+     !live.includes("Permanecem exigíveis as validações técnicas"))fail();
+  const changed=git("diff","--name-only",REVIEW_781.parent,REVIEW_781.merge).split("\n");
+  if(changed.length!==2||!changed.includes("AGENTS.md")||!changed.includes(ORCHESTRATION_PATH))fail();
+  if(gitBlobId(read(REVIEW_781.plan,REVIEW_781.planPath))!==REVIEW_781.planBlob||
+     gitBlobId(read(base,REVIEW_781.planPath))!==REVIEW_781.planBlob)fail();
+  return {pr:REVIEW_781.pr,merge:REVIEW_781.merge,blob:REVIEW_781.blob,
+    revalidation_plan:REVIEW_781.plan,modality:"ASSISTED_PRE_PROD",
+    semantic_certification:"NOT_CERTIFIED",activation_authorized:false};
+}
+
 export function readP0690ProtectedSources(base) {
   const path = IMMUTABLE_P0_690_MANIFEST;
   if (!validSha(base) || git("rev-parse", base + ":" + path) !==
@@ -1389,12 +1440,17 @@ export function readP0690ProtectedSources(base) {
     [ORCHESTRATION_PATH]: "8a9d5824a83d43150589b97ad8cbd95d6b49cfdd" };
   const read = (ref, file) => execFileSync("git", ["show", ref + ":" + file],
     {encoding: "utf8", timeout: 15000});
+  let reviewAmendment=null;
+  const review781Integrated=sourceAncestor(REVIEW_781.merge,base);
   const sources = Object.fromEntries(Object.entries(expected).map(([file, blob]) => {
     const content = read(P0_690_PROTECTED_BASE, file);
     const live = read(base, file);
     if (gitBlobId(content) !== blob)
       throw Error("fonte #690 divergente no checkpoint protegido: " + file);
-    if (live !== content) {
+    if (file===ORCHESTRATION_PATH && review781Integrated) {
+      // The exact accepted amendment cannot be silently rolled back.
+      reviewAmendment=verifyReview781(base,content,live,read);
+    } else if (live !== content) {
       // PR #693 appended a proposal with expressly deferred effect. Keep the
       // approved text byte-for-byte; any subsequent delta requires new review.
       if (gitBlobId(live) !== CSDI_PROPOSAL_BLOBS[file] ||
@@ -1409,7 +1465,8 @@ export function readP0690ProtectedSources(base) {
     amendment: sources[manifest.emenda_fila]?.content,
     canonical: sources[ORCHESTRATION_PATH].content });
   if (normative.verdict !== "PASS") throw Error(normative.issues.join("; "));
-  return { manifest, normative, semanticSources: Object.fromEntries(
+  return { manifest, normative:reviewAmendment?{...normative,review_amendment:reviewAmendment}:normative,
+    semanticSources: Object.fromEntries(
     Object.keys(PROTECTED_SEMANTIC_SOURCES).map(file => [file, sources[file]])) };
 }
 
