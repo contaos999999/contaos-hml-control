@@ -863,5 +863,52 @@ class MissionSupervisorTests(unittest.TestCase):
 
 
 
+
+
+class AuditModality863Tests(unittest.TestCase):
+    """Synthetic RED only; no proof of actual audit or approval."""
+
+    def test_863_pre_prod_assisted_must_not_be_rejected_for_no_independence(self):
+        c = contract()
+        c["requirements"]["audit_modality_by_stage"] = {
+            "PRE_PROD": "ASSISTED_PRE_PROD", "PROD": "INDEPENDENT"}
+        e = evidence()
+        e["release_stage"] = "PRE_PROD"
+        e.pop("independent_audit")
+        e["assisted_audit"] = {
+            "verified_pass": True, "head": H, "base": B, "review_id": ID,
+            "author": "contaos9999", "reviewer": "Edivan5002",
+            "modality": "ASSISTED_PRE_PROD", "contradiction_completed": True,
+            "report_sha256": "a" * 64}
+        result = mod.evaluate(c, e)
+        self.assertNotIn("N06", codes(result),
+                         "P0 #863 assisted PRE_PROD false block: " + str(result["issues"]))
+        self.assertFalse(result["certified"])
+        self.assertFalse(result["eligible"])
+        self.assertIn("N16", codes(result))
+        for stage in ("PROD", "UNKNOWN", None):
+            bad = copy.deepcopy(e)
+            bad["release_stage"] = stage
+            denied = mod.evaluate(c, bad)
+            self.assertIn("N06", codes(denied))
+            self.assertFalse(denied["certified"])
+        for mutation in (
+            {"head": C}, {"base": C}, {"review_id": "wrong"},
+            {"reviewer": "contaos9999"}, {"contradiction_completed": False},
+            {"verified_pass": False},
+        ):
+            bad = copy.deepcopy(e)
+            bad["assisted_audit"].update(mutation)
+            self.assertIn("N06", codes(mod.evaluate(c, bad)))
+
+    def test_863_unknown_stage_must_not_inherit_independent_audit(self):
+        c = contract()
+        c["requirements"]["audit_modality_by_stage"] = {
+            "PRE_PROD": "ASSISTED_PRE_PROD", "PROD": "INDEPENDENT"}
+        e = evidence()
+        e["release_stage"] = "UNKNOWN"
+        self.assertIn("N06", codes(mod.evaluate(c, e)),
+                      "P0 #863 unknown stage accepted without explicit policy")
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

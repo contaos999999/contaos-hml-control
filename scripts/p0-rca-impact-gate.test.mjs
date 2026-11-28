@@ -3357,3 +3357,135 @@ test("P0 FISCAL #781 later normative drift and rollback rejected in real isolate
     assert.match(result.stderr,/alteração normativa posterior exige revalidação/);
   }
 });
+
+
+// PLAN #863: RED causal, synthetic contract only; never a semantic receipt.
+test("P0 #863 RED: full assisted semantic fixture must be admissible PRE_PROD, not PROD",async()=>{
+  const snapshots=readP0690ProtectedSources(protectedSourceBase()).semanticSources;
+  const inventory=inventoryProtectedSemanticLines(snapshots);
+  const worklist=buildSevenAxisSemanticBacklog(inventory);
+  const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
+  const reverseCoverage=auditSemanticReverseCoverage(inventory,worklist);
+  const head="f5de50d3a5106caea62a5fbcf423299436bfdcc9";
+  const independent={head,review_id:72652,author:"implementer",
+    reviewer:"independent-auditor",state:"APPROVED",
+    scope:"FULL_SEMANTIC_CORPUS"};
+  const axes={authority:{actor:"authorized reviewer",source:"protected PLAN"},
+    antecedent:{event:"head transition",source:"protected PLAN"},
+    outcomes:{positive:{decision:"allow qualified review",source:"PLAN"},
+      negative:{decision:"fail closed",source:"PLAN"}},
+    interactions:{clauses:["PLAN","EMENDA"],counterexample:"revoked review still green"},
+    live:{source:"authenticated job",url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head},
+    revocation:{trigger:"new head",source:"PLAN"},
+    boundary:{phase:"BUILD",external:"activation separate"}};
+  const proof=id=>({id,head,
+    interpretation:`Synthetic fixture statement for ${id}, not a substantive legal interpretation.`,
+    counterexample:`Synthetic contradictory case for ${id}, not executed evidence.`,
+    witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head},
+    negative_witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/2",head},
+    independent_review_id:independent.review_id});
+  const rules=worklist.normative_rules.map(x=>({
+    ...proof(x.rule_id),rule_id:x.rule_id,axes}));
+  const sentences=sentenceInventory.candidates.map(x=>({
+    ...proof(x.id),classification:"NORMATIVE",source_id:x.source_id,
+    text_sha256:x.text_sha256,axes}));
+  const sources=inventory.lines.map(x=>({
+    ...proof(x.id),source_id:x.id,text_sha256:x.text_sha256,blob:x.blob}));
+  const interactions=[];
+  for(let i=0;i<worklist.normative_rules.length;i++)
+    for(let j=i+1;j<worklist.normative_rules.length;j++){
+      const pair_id=worklist.normative_rules[i].rule_id+"|"+
+        worklist.normative_rules[j].rule_id;
+      interactions.push({...proof(pair_id),pair_id,decision:"NONINTERACTING",
+        left_rule_id:worklist.normative_rules[i].rule_id,
+        right_rule_id:worklist.normative_rules[j].rule_id,
+        pair_rationale:"Synthetic fixture only: "+pair_id+" not a real adjudication of two protected rules.",
+        separation_basis:"Synthetic non-interaction assumption unverified by independent reviewer."});
+    }
+  const input={inventory,worklist,sentenceInventory,reverseCoverage,
+    head,independent,rules,sentences,sources,interactions};
+
+  const base="18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e";
+  const assisted={head,base,review_id:72653,author:"contaos9999",
+    reviewer:"Edivan5002",state:"APPROVED",scope:"FULL_SEMANTIC_CORPUS",
+    modality:"ASSISTED_PRE_PROD",report_sha256:"a".repeat(64),contradiction_completed:true};
+  const assistedRow=({independent_review_id,...row})=>({...row,assisted_review_id:assisted.review_id});
+  const candidate={...input,base,release_stage:"PRE_PROD",independent:null,assisted,
+    rules:rules.map(assistedRow),sentences:sentences.map(assistedRow),
+    sources:sources.map(assistedRow),interactions:interactions.map(assistedRow),
+    authenticateAssisted:async()=>true,authenticateWitness:async()=>true};
+  const result=await assessSemanticCompletenessGate(candidate);
+  assert.equal(result.semantic_completeness,"PASS","P0 #863 assisted PRE_PROD false block: "+JSON.stringify(result.issues));
+  assert.equal(result.release,"SEMANTIC_REVIEW_CERTIFIED_ONLY");
+  assert.equal(result.review_modality,"ASSISTED_PRE_PROD");
+  assert.equal(result.independent_review_id,null);
+  for(const bad of [
+    {...candidate,release_stage:"PROD"},
+    {...candidate,release_stage:"UNKNOWN"},
+    {...candidate,release_stage:undefined},
+    {...candidate,assisted:null},
+    {...candidate,assisted:{...assisted,head:"c".repeat(40)}},
+    {...candidate,assisted:{...assisted,base:"c".repeat(40)}},
+    {...candidate,assisted:{...assisted,reviewer:assisted.author}},
+    {...candidate,assisted:{...assisted,state:"CHANGES_REQUESTED"}},
+    {...candidate,assisted:{...assisted,contradiction_completed:false}},
+    {...candidate,authenticateAssisted:async()=>false},
+    {...candidate,rules:rules.map(assistedRow).slice(1)},
+    {...candidate,authenticateWitness:async()=>false},
+  ]){
+    const denied=await assessSemanticCompletenessGate(bad);
+    assert.equal(denied.release,"NO_GO",JSON.stringify(denied.issues));
+  }
+});
+test("P0 #863 RED: missing or unknown release stage cannot inherit independent certification",async()=>{
+  const snapshots=readP0690ProtectedSources(protectedSourceBase()).semanticSources;
+  const inventory=inventoryProtectedSemanticLines(snapshots);
+  const worklist=buildSevenAxisSemanticBacklog(inventory);
+  const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
+  const reverseCoverage=auditSemanticReverseCoverage(inventory,worklist);
+  const head="f5de50d3a5106caea62a5fbcf423299436bfdcc9";
+  const independent={head,review_id:72652,author:"implementer",
+    reviewer:"independent-auditor",state:"APPROVED",
+    scope:"FULL_SEMANTIC_CORPUS"};
+  const axes={authority:{actor:"authorized reviewer",source:"protected PLAN"},
+    antecedent:{event:"head transition",source:"protected PLAN"},
+    outcomes:{positive:{decision:"allow qualified review",source:"PLAN"},
+      negative:{decision:"fail closed",source:"PLAN"}},
+    interactions:{clauses:["PLAN","EMENDA"],counterexample:"revoked review still green"},
+    live:{source:"authenticated job",url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head},
+    revocation:{trigger:"new head",source:"PLAN"},
+    boundary:{phase:"BUILD",external:"activation separate"}};
+  const proof=id=>({id,head,
+    interpretation:`Synthetic fixture statement for ${id}, not a substantive legal interpretation.`,
+    counterexample:`Synthetic contradictory case for ${id}, not executed evidence.`,
+    witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head},
+    negative_witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/2",head},
+    independent_review_id:independent.review_id});
+  const rules=worklist.normative_rules.map(x=>({
+    ...proof(x.rule_id),rule_id:x.rule_id,axes}));
+  const sentences=sentenceInventory.candidates.map(x=>({
+    ...proof(x.id),classification:"NORMATIVE",source_id:x.source_id,
+    text_sha256:x.text_sha256,axes}));
+  const sources=inventory.lines.map(x=>({
+    ...proof(x.id),source_id:x.id,text_sha256:x.text_sha256,blob:x.blob}));
+  const interactions=[];
+  for(let i=0;i<worklist.normative_rules.length;i++)
+    for(let j=i+1;j<worklist.normative_rules.length;j++){
+      const pair_id=worklist.normative_rules[i].rule_id+"|"+
+        worklist.normative_rules[j].rule_id;
+      interactions.push({...proof(pair_id),pair_id,decision:"NONINTERACTING",
+        left_rule_id:worklist.normative_rules[i].rule_id,
+        right_rule_id:worklist.normative_rules[j].rule_id,
+        pair_rationale:"Synthetic fixture only: "+pair_id+" not a real adjudication of two protected rules.",
+        separation_basis:"Synthetic non-interaction assumption unverified by independent reviewer."});
+    }
+  const input={inventory,worklist,sentenceInventory,reverseCoverage,
+    head,independent,rules,sentences,sources,interactions};
+
+  for(const release_stage of [undefined,"UNKNOWN"]){
+    const result=await assessSemanticCompletenessGate({...input,release_stage,
+      authenticateIndependent:async()=>true,authenticateWitness:async()=>true});
+    assert.equal(result.release,"NO_GO","P0 #863 missing/unknown stage improperly accepted: "+JSON.stringify(result.issues));
+    assert.ok(result.issues.includes("SEMANTIC_RELEASE_STAGE_UNKNOWN"));
+  }
+});
