@@ -118,12 +118,32 @@ async function novaTarefa(painel: ReturnType<typeof within>) {
 
 describe("V2-04", () => {
   it("abre o painel, registra a tarefa e rele o detalhe e o portao", async () => {
-    const { painel, aoRegistrar } = exibir();
+    dados.consultarPlanoAcao.mockResolvedValueOnce(plano).mockResolvedValueOnce({
+      ...plano,
+      tarefas: [{ ...tarefa, descricao: "Comprovante corrigido" }],
+    });
+    dados.consultarPortaoRodada
+      .mockResolvedValueOnce({ total: 1, tratados: 0, abertos: 1, liberado: false })
+      .mockResolvedValueOnce({ total: 1, tratados: 1, abertos: 0, liberado: true });
+    const chamadasAoNotificar: number[][] = [];
+    const aoRegistrar = vi.fn(() => {
+      chamadasAoNotificar.push([
+        dados.consultarPlanoAcao.mock.calls.length,
+        dados.consultarPortaoRodada.mock.calls.length,
+      ]);
+    });
+    const { painel } = exibir(aoRegistrar);
     await novaTarefa(painel);
     expect(await painel.findByText(CORRELACAO)).toBeInTheDocument();
     expect(aoRegistrar).toHaveBeenCalledTimes(1);
-    expect(dados.consultarPlanoAcao).toHaveBeenCalledTimes(2);
-    expect(dados.consultarPortaoRodada).toHaveBeenCalledWith(CICLO, expect.any(AbortSignal));
+    expect(chamadasAoNotificar).toEqual([[1, 1]]);
+    await waitFor(() => {
+      expect(dados.consultarPlanoAcao).toHaveBeenCalledTimes(2);
+      expect(dados.consultarPortaoRodada).toHaveBeenCalledTimes(2);
+      expect(painel.getByText("Comprovante corrigido")).toBeInTheDocument();
+      expect(painel.getByText("Apontamentos tratados na rodada 1 de 1.")).toBeInTheDocument();
+    });
+    expect(dados.consultarPortaoRodada).toHaveBeenNthCalledWith(2, CICLO, expect.any(AbortSignal));
     expect(dados.registrarAcaoTarefa).toHaveBeenCalledWith(
       escopo,
       ITEM,
