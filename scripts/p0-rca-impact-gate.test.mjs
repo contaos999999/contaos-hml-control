@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve, relative, isAbsolute } from "node:path";
@@ -785,4 +785,18 @@ test("P0 RCA divergent plan scope blocks build", () => {
   const f = fixture();
   f.escopo[0].versao = "V3";
   mustFail(f, /sem classificação/);
+});
+
+test("V2-04 aguarda o efeito antes de contar exatamente duas consultas", () => {
+  const source = readFileSync(new URL("../src/test/v2-47-tela.test.tsx", import.meta.url), "utf8");
+  const inicio = source.indexOf('it("abre o painel, registra a tarefa e rele o detalhe e o portao"');
+  assert.notEqual(inicio, -1, "Caso original V2-04 ausente");
+  const fim = source.indexOf("\n  it(", inicio + 1);
+  assert.notEqual(fim, -1, "Limite do caso original V2-04 ausente");
+  const caso = source.slice(inicio, fim);
+  assert.match(
+    caso,
+    /await waitFor\(\(\) => \{\s*expect\(dados\.consultarPlanoAcao\)\.toHaveBeenCalledTimes\(2\)/,
+    "RED_V2_04_CONTAGEM_PREMATURA: o caso conta as consultas sem aguardar o efeito",
+  );
 });
