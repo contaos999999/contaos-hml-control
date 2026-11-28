@@ -35,7 +35,8 @@
         "evidencias": [
           "Run 46100282909/1, job 140840927660, linha 125, esperadas 2 chamadas e observada 1.",
           "Run 46101748957/1, job 140845526711, RED_V2_04_CONTAGEM_PREMATURA no Zero-Drift.",
-          "Prova React local em execução focal registrou [1, 1] no callback antes da atualização."
+          "Prova React local em execução focal registrou [1, 1] no callback antes da atualização.",
+          "CI 46101916184/1: o seletor ancorado do Vitest exige nome completo, incluindo grupo V2-04. O Node sob isolamento none aciona a limitação de argv relativo do import legado já registrada em F1. O autoteste Node continua executado no Zero-Drift pré-RCA. A RCA operacional seleciona o teste de comportamento React exato."
         ],
         "hipoteses_descartadas": [
           "Sem falha de persistência ou chamada duplicada. A operação e o recibo já haviam sido confirmados antes da falha da asserção."
@@ -62,10 +63,10 @@
           {
             "risco": "Nova asserção antes da releitura.",
             "teste_preventivo": {
-              "id": "SINCRONIZACAO",
-              "caso": "V2-04 aguarda o efeito antes de contar exatamente duas consultas",
-              "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
-              "runner": "node"
+              "id": "RELEITURA",
+              "caso": "V2-04 abre o painel, registra a tarefa e rele o detalhe e o portao",
+              "arquivo": "src/test/v2-47-tela.test.tsx",
+              "runner": "vitest"
             }
           }
         ]
@@ -84,7 +85,7 @@
         "green": [
           {
             "id": "RELEITURA",
-            "caso": "abre o painel, registra a tarefa e rele o detalhe e o portao",
+            "caso": "V2-04 abre o painel, registra a tarefa e rele o detalhe e o portao",
             "arquivo": "src/test/v2-47-tela.test.tsx",
             "runner": "vitest"
           }
@@ -92,7 +93,7 @@
         "negativos": [
           {
             "id": "REPLAY",
-            "caso": "reutiliza a mesma chave apos perda de resposta",
+            "caso": "V2-04 reutiliza a mesma chave apos perda de resposta",
             "arquivo": "src/test/v2-47-tela.test.tsx",
             "runner": "vitest"
           }
@@ -100,7 +101,7 @@
         "regressao": [
           {
             "id": "EVIDENCIA",
-            "caso": "submete a versao escolhida e limita a decisao a capacidade oficial",
+            "caso": "V2-04 submete a versao escolhida e limita a decisao a capacidade oficial",
             "arquivo": "src/test/v2-47-tela.test.tsx",
             "runner": "vitest"
           }
