@@ -44,7 +44,8 @@
         "descricao": "O módulo de validação nativo não existia; o teste de contrato no workflow oficial registrou RED_CAUSAL_TRANSPORT_VALIDATOR_ABSENT. A conexão não disponibiliza workflow_dispatch, conforme PLAN #851. A fatia F1 corrige somente a ausência do mecanismo de validação, sem resolver ainda a execução operacional.",
         "evidencias": [
           "RED 46094671465, 78/78 falhas causais",
-          "RED Zero-Drift 46095920726, job 140827102359, 104 PASS e 1 falha no novo caso"
+          "RED Zero-Drift 46095920726, job 140827102359, 104 PASS e 1 falha no novo caso",
+          "CI 46096034996: RED histórico reconhecido; suíte RCA anterior ao setup Node 24 aprovou os três casos Unicode, mas o seletor individual após setup Node 24.22.3 não os reconheceu. Adicionados casos ASCII semanticamente equivalentes, mantendo provas originais e RED histórico, sem alterar o gate."
         ],
         "hipoteses_descartadas": [
           "Checkout/setup funcionais; 104 testes RCA preexistentes aprovados no RED oficial.",
@@ -114,7 +115,7 @@
               "id": "F1-REG-RCA",
               "runner": "node",
               "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
-              "caso": "P0 RCA — falta relatório no diff BUILD V2 falha"
+              "caso": "P0 RCA missing report blocks V2 build"
             }
           }
         ]
@@ -135,7 +136,7 @@
             "id": "F1-RED",
             "runner": "node",
             "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
-            "caso": "P0-ORQ F1 valida contrato CODE sem autoridade de execução"
+            "caso": "P0 ORQ F1 CODE contract without execution authority"
           },
           {
             "id": "F1-GREEN",
@@ -199,13 +200,13 @@
             "id": "F1-REG-RCA",
             "runner": "node",
             "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
-            "caso": "P0 RCA — falta relatório no diff BUILD V2 falha"
+            "caso": "P0 RCA missing report blocks V2 build"
           },
           {
             "id": "F1-REG-SCOPE",
             "runner": "node",
             "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
-            "caso": "P0 RCA — PLAN/escopo divergente bloqueado"
+            "caso": "P0 RCA divergent plan scope blocks build"
           }
         ]
       }
