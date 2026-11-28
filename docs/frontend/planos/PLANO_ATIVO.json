@@ -46,7 +46,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "Fontes canônicas preservadas após #250. Conferidas 26 identidades e o cruzamento do regular 76 com os atômicos 000 e 025–032.",
   "context_read_acknowledged_at": "2026-11-27T21:35:53Z",
-  "context_source_commit": "44877eccb2bdea721f544d8ba1c8443d106ff967",
+  "context_source_commit": "93f14f051af6d04cf8cc5098d26118869a6c1c29",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
