@@ -19,7 +19,6 @@
       "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
       "ContaOS P0-NR-001 Integridade e Provas"
     ],
-    "independent_audit_for_build": true,
     "formal_review": true,
     "merge_protected": true,
     "checkpoint_readback": true,
@@ -29,7 +28,18 @@
       "N13",
       "N16",
       "N17"
-    ]
+    ],
+    "audit_modality_by_stage": {
+      "PRE_PROD": "ASSISTED_PRE_PROD",
+      "PROD": "INDEPENDENT"
+    },
+    "audit_policy_authority": {
+      "pr": 863,
+      "merge": "18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e",
+      "blob": "4e4473aef5335a6891e78e2d248be50718ea591e",
+      "path": "docs/frontend/planos/EMENDA_P0_690_MODALIDADE_AUDITORIA_PRE_PROD_2026-11-28.md",
+      "decision_id": 7237068104
+    }
   },
   "immutable_plan": {
     "path": "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md",
@@ -43,7 +53,7 @@
   "pending": [
     "BUILD #690",
     "Testes negativos e mutação",
-    "Auditoria/revisão independente do BUILD",
+    "Revisão técnica assistida do BUILD pré-PROD e auditoria independente exclusivamente no GATE PROD",
     "Prova operacional de fila e revogação",
     "Autorização administrativa expressa para ativação",
     "Certificado de liberação da #679",

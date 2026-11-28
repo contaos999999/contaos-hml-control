@@ -7,6 +7,7 @@ prova deve ser autenticada pelo executor separado antes de ativar o App.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -17,6 +18,8 @@ from collections import Counter
 from pathlib import Path
 
 SHA = re.compile(r"^[0-9a-f]{40}$")
+AUDIT_MODALITY_BY_STAGE = {"PRE_PROD": "ASSISTED_PRE_PROD", "PROD": "INDEPENDENT"}
+AUDIT_POLICY_AUTHORITY = {"pr": 863,"merge": "18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e","blob": "4e4473aef5335a6891e78e2d248be50718ea591e","path": "docs/frontend/planos/EMENDA_P0_690_MODALIDADE_AUDITORIA_PRE_PROD_2026-11-28.md","decision_id": 7237068104}
 REPO = "contaos999999/contaos-hml-control"
 STATES = {"ACTIVE", "BLOCKED_EXTERNAL", "CANCELLED_BY_OWNER", "CERTIFIED"}
 OUTCOMES = {"success", "failure", "error", "pending", "skipped", "neutral", "cancelled"}
@@ -84,6 +87,9 @@ def check_contract(contract):
     required = contract["requirements"].get("required_checks")
     if required != list(REQUIRED):
         raise InvalidEvidence("required checks changed/omitted")
+    if (contract["requirements"].get("audit_modality_by_stage") != AUDIT_MODALITY_BY_STAGE or
+            contract["requirements"].get("audit_policy_authority") != AUDIT_POLICY_AUTHORITY):
+        raise InvalidEvidence("N06: protected stage-specific audit policy missing or changed")
     if contract.get("state") == "CERTIFIED" and not isinstance(contract.get("certification_receipt"), dict):
         raise InvalidEvidence("CERTIFIED without signed-off receipt")
     if contract.get("state") == "CANCELLED_BY_OWNER" and not isinstance(contract.get("cancellation_receipt"), dict):
@@ -154,8 +160,10 @@ def evaluate(contract, evidence):
         note("N08", "same attempt repeated without cause correction")
     if evidence.get("lock_conflict") is True:
         note("N09", "concurrent lease conflict")
-    if evidence.get("author") == evidence.get("reviewer"):
-        note("N06", "implementer and reviewer same identity")
+    author, reviewer = evidence.get("author"), evidence.get("reviewer")
+    if (not nonempty(author) or not nonempty(reviewer) or
+            author.casefold() == reviewer.casefold()):
+        note("N06", "implementer and reviewer same identity or absent")
     if evidence.get("runner_status") in ("cancelled", "interrupted"):
         note("N07", "auditor session not completed")
 
@@ -196,11 +204,48 @@ def evaluate(contract, evidence):
             auth.get("review_id") != (review.get("id") if isinstance(review, dict) else None) or
             auth.get("revoked") is not False):
             note("N17", "authorization stale or revoked")
-    audit = evidence.get("independent_audit")
-    if not isinstance(audit, dict) or not audit.get("verified_pass"):
-        note("N06", "no independent PASS evidence for code BUILD")
-    elif audit.get("head") != evidence.get("head"):
-        note("N12", "independent audit stale")
+    # Explicit release stage; PRE_PROD and PROD are never inferred from a
+    # green check or an arbitrary receipt. This evaluator remains diagnostic.
+    release_stage = evidence.get("release_stage")
+    mode = AUDIT_MODALITY_BY_STAGE.get(release_stage) if isinstance(release_stage, str) else None
+    if mode is None:
+        note("N06", "unknown or missing release stage")
+    else:
+        field = "assisted_audit" if release_stage == "PRE_PROD" else "independent_audit"
+        other = "independent_audit" if release_stage == "PRE_PROD" else "assisted_audit"
+        audit = evidence.get(field)
+        if not isinstance(audit, dict) or evidence.get(other) is not None:
+            note("N06", "missing or mixed audit modality for release stage")
+        else:
+            audit_author, audit_reviewer = audit.get("author"), audit.get("reviewer")
+            report = audit.get("report")
+            report_hash = audit.get("report_sha256")
+            report_ok = (isinstance(report, str) and len(report.strip()) >= 400
+                         and isinstance(report_hash, str)
+                         and hashlib.sha256(report.encode("utf-8")).hexdigest() == report_hash)
+            common_ok = (
+                audit.get("verified_pass") is True and audit.get("modality") == mode
+                and audit.get("head") == evidence.get("head")
+                and audit.get("base") == evidence.get("live_base")
+                and isinstance(review, dict) and nonempty(review.get("id"))
+                and audit.get("review_id") == review.get("id")
+                and nonempty(audit_author) and nonempty(audit_reviewer)
+                and nonempty(author) and audit_author.casefold() == author.casefold()
+                and audit_author.casefold() != audit_reviewer.casefold()
+                and audit.get("contradiction_completed") is True and report_ok)
+            if release_stage == "PRE_PROD":
+                modality_ok = (nonempty(reviewer) and nonempty(audit_reviewer)
+                               and reviewer.casefold() == audit_reviewer.casefold() == "edivan5002"
+                               and nonempty(audit_author) and audit_author.casefold() == "contaos9999"
+                               and audit.get("authorship_independent") is not True
+                               and isinstance(review, dict) and nonempty(review.get("login"))
+                               and review["login"].casefold() == "edivan5002")
+            else:
+                modality_ok = audit.get("authorship_independent") is True
+            if not common_ok or not modality_ok:
+                note("N06", "stage-specific audit evidence incomplete, stale or wrong modality")
+                if audit.get("head") != evidence.get("head") or audit.get("base") != evidence.get("live_base"):
+                    note("N12", "audit HEAD/base stale")
     published = evidence.get("publisher")
     if not isinstance(published, dict):
         published = {}
@@ -218,7 +263,9 @@ def evaluate(contract, evidence):
         if not (receipt.get("merged") is True and sha(receipt.get("merge_sha"))
                 and receipt.get("main_readback") is True
                 and sha(receipt.get("checkpoint_sha"))
-                and receipt.get("independent_audit_pass") is True
+                and receipt.get("release_stage") == release_stage
+                and mode is not None and receipt.get("audit_modality") == mode
+                and receipt.get("audit_pass") is True
                 and receipt.get("review_approved") is True):
             note("N01", "mission marked CERTIFIED without both proofs")
         # Este avaliador recebe JSON, não verifica assinaturas/API ou readback

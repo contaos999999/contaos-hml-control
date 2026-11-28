@@ -1579,23 +1579,26 @@ test("P0 FULL_PROTOCOL 100% of mapped authorization conditions require executed 
   assert.ok(activation.length>=11,"privileged activation is never certified by synthetic tests");
   assert.ok(activation.every(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED"));
   assert.equal(valid.activationBlocked,activation.length);
-  const independent=valid.rows.filter(x=>x.scope==="BUILD_NEGATIVE_PROOF_INDEPENDENT_AUDIT_EXTERNAL");
+  const independent=valid.rows.filter(x=>x.scope==="BUILD_NEGATIVE_PROOF_STAGE_REVIEW_PENDING");
   assert.deepEqual(independent.map(x=>x.id).sort(),[
     "PLAN-S3-RULE-05","PLAN-S3-RULE-06","S5.1:Revisão independente"].sort(),
-    "PLAN §3 technical auditor and post-merge CERTIFIED require independent proof");
+    "PLAN §3 technical review and post-merge CERTIFIED require stage-specific material proof");
   assert.equal(valid.independentAuditPending,3);
+  assert.equal(valid.independentAuditPendingStage,"PROD");
+  assert.equal(valid.stageReviewPending,3);
+  assert.ok(independent.every(x=>x.required_review_by_stage.PRE_PROD==="ASSISTED_PRE_PROD"&&x.required_review_by_stage.PROD==="INDEPENDENT"));
   assert.ok(independent.every(x=>
-    x.execution==="BUILD_NEGATIVE_PASS_INDEPENDENT_AUDIT_PENDING" &&
+    x.execution==="BUILD_NEGATIVE_PASS_STAGE_REVIEW_PENDING" &&
     valid.external.some(e=>e.requirement===x.id &&
-      e.status==="BLOCKED_EXTERNAL_FOR_INDEPENDENT_AUDIT")),
-    "none of three independent obligations may be self-certified");
-  assert.equal(valid.executed+valid.activationBlocked+valid.independentAuditPending,
+      e.status==="BLOCKED_EXTERNAL_FOR_STAGE_REVIEW")),
+    "none of three historical review obligations may be self-certified");
+  assert.equal(valid.executed+valid.activationBlocked+valid.stageReviewPending,
     valid.requirements);
   assert.ok(activation.every(x=>valid.external.some(e=>e.requirement===x.id &&
     e.status==="BLOCKED_EXTERNAL_FOR_ACTIVATION")));
   assert.ok(valid.external.length>=4);
   assert.ok(valid.external.every(x=>[
-    "BLOCKED_EXTERNAL_FOR_ACTIVATION","BLOCKED_EXTERNAL_FOR_INDEPENDENT_AUDIT"
+    "BLOCKED_EXTERNAL_FOR_ACTIVATION","BLOCKED_EXTERNAL_FOR_STAGE_REVIEW"
   ].includes(x.status)));
   // A successful test with the expected words embedded later in its title
   // is NOT the canonical executable witness for that requirement.
@@ -1747,7 +1750,7 @@ test("P0 PLAN protected ten mission rules require ten distinct BUILD witnesses",
     const independent=new Set(["05","06"]);
     const n=id.slice(-2);
     const expected=activation.has(n)?"BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL":
-      independent.has(n)?"BUILD_NEGATIVE_PROOF_INDEPENDENT_AUDIT_EXTERNAL":"BUILD";
+      independent.has(n)?"BUILD_NEGATIVE_PROOF_STAGE_REVIEW_PENDING":"BUILD";
     assert.equal(row.scope,expected,
       "PLAN §3 rule "+n+" must not be counted as operational certification");
     assert.equal(row.status,"TEST_DECLARED_NOT_EXECUTED");
@@ -2524,7 +2527,7 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   assert.equal(reverse.invalid.length,0);
   assert.equal(reverse.uncovered_source_count,18);
   assert.ok(reverse.uncovered.every(x=>
-    !!x.category&&x.assessment==="REQUIRES_INDEPENDENT_SEMANTIC_REVIEW"&&
+    !!x.category&&x.assessment==="REQUIRES_STAGE_SEMANTIC_REVIEW"&&
     x.semantic_evidence===null&&x.negative_witness===null));
   assert.ok(reverse.uncovered.some(x=>x.category==="FORBIDDEN_SCOPE"));
   assert.ok(reverse.uncovered.some(x=>x.category==="RED_GREEN_SECURITY_GATES"));
@@ -2630,7 +2633,7 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
   const base={source_id:one.id,path:one.path,blob:one.blob,line:one.line,
     text_sha256:one.text_sha256,axes:{},negative_witnesses:[],
     independent_review:null};
-  const incomplete=verifySemanticSourceClaims(out,[base]);
+  const incomplete=verifySemanticSourceClaims(out,[base],{release_stage:"PROD"});
   assert.equal(incomplete.verdict,"INCONCLUSIVE");
   assert.ok(incomplete.issues.some(x=>x.includes("UNPROVEN_AXES")));
   assert.ok(incomplete.issues.some(x=>x.includes("NO_EXECUTED_COUNTERPROOF")));
@@ -2642,7 +2645,7 @@ test("P0 SEMANTIC SOURCE: protected PLAN and amendment are byte-bound, comprehen
     [base,base],
     [{...base,source_id:"SRC-UNRECOGNIZED"}],
   ]){
-    const check=verifySemanticSourceClaims(out,mutation);
+    const check=verifySemanticSourceClaims(out,mutation,{release_stage:"PROD"});
     assert.ok(check.issues.length>0);
     assert.equal(check.verdict,"INCONCLUSIVE");
     assert.equal(check.release,"NO_GO");
@@ -2657,7 +2660,7 @@ test("P0 SEMANTIC COMPLETENESS requires authenticated 137/381/118/9316 evidence;
   const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
   const reverseCoverage=auditSemanticReverseCoverage(inventory,worklist);
   const head="f5de50d3a5106caea62a5fbcf423299436bfdcc9";
-  const input={inventory,worklist,sentenceInventory,reverseCoverage,head};
+  const input={inventory,worklist,sentenceInventory,reverseCoverage,head,base:protectedSourceBase(),release_stage:"PROD"};
   const empty=await assessSemanticCompletenessGate(input);
   assert.equal(empty.semantic_completeness,"INCONCLUSIVE");
   assert.equal(empty.release,"NO_GO");
@@ -2698,22 +2701,26 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
   const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
   const reverseCoverage=auditSemanticReverseCoverage(inventory,worklist);
   const head="f5de50d3a5106caea62a5fbcf423299436bfdcc9";
-  const independent={head,review_id:72652,author:"implementer",
+  const base=protectedSourceBase();
+  const report="Synthetic contract only, not independent audit evidence. ".repeat(9);
+  const independent={head,base,review_id:72652,author:"implementer",
     reviewer:"independent-auditor",state:"APPROVED",
-    scope:"FULL_SEMANTIC_CORPUS"};
+    scope:"FULL_SEMANTIC_CORPUS",modality:"INDEPENDENT",
+    authorship_independent:true,contradiction_completed:true,report,
+    report_sha256:createHash("sha256").update(report).digest("hex")};
   const axes={authority:{actor:"authorized reviewer",source:"protected PLAN"},
     antecedent:{event:"head transition",source:"protected PLAN"},
     outcomes:{positive:{decision:"allow qualified review",source:"PLAN"},
       negative:{decision:"fail closed",source:"PLAN"}},
     interactions:{clauses:["PLAN","EMENDA"],counterexample:"revoked review still green"},
-    live:{source:"authenticated job",url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head},
+    live:{source:"authenticated job",url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head,base},
     revocation:{trigger:"new head",source:"PLAN"},
     boundary:{phase:"BUILD",external:"activation separate"}};
-  const proof=id=>({id,head,
+  const proof=id=>({id,head,base,
     interpretation:`Synthetic fixture statement for ${id}, not a substantive legal interpretation.`,
     counterexample:`Synthetic contradictory case for ${id}, not executed evidence.`,
-    witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head},
-    negative_witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/2",head},
+    witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head,base},
+    negative_witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/2",head,base},
     independent_review_id:independent.review_id});
   const rules=worklist.normative_rules.map(x=>({
     ...proof(x.rule_id),rule_id:x.rule_id,axes}));
@@ -2734,7 +2741,7 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
         separation_basis:"Synthetic non-interaction assumption unverified by independent reviewer."});
     }
   const input={inventory,worklist,sentenceInventory,reverseCoverage,
-    head,independent,rules,sentences,sources,interactions};
+    head,base,release_stage:"PROD",independent,rules,sentences,sources,interactions};
   const recycledNegative=await assessSemanticCompletenessGate({...input,
     rules:rules.map((x,i)=>i===0?{...x,negative_witness:x.witness}:x),
     authenticateIndependent:async()=>true,
@@ -2790,6 +2797,12 @@ test("P0 SEMANTIC GATE fixture only: all 9316 pairs do not bypass authentication
   assert.equal(fixturePass.semantic_completeness,"PASS");
   assert.equal(fixturePass.release,"SEMANTIC_REVIEW_CERTIFIED_ONLY");
   assert.deepEqual(fixturePass.issues,[]);
+  assert.equal(fixturePass.review_modality,"INDEPENDENT");
+  assert.equal(fixturePass.assisted_review_id,null);
+  for(const mutation of [{...independent,authorship_independent:false},{...independent,base:"f".repeat(40)},{...independent,reviewer:independent.author.toUpperCase()},{...independent,report_sha256:"f".repeat(64)}]){
+    const rejected=await assessSemanticCompletenessGate({...input,independent:mutation,authenticateIndependent:async()=>true,authenticateWitness:async()=>true});
+    assert.equal(rejected.release,"NO_GO");
+  }
   // PREAUDIT is necessarily prior to independent review; a stage-specific
   // PASS never writes or implies SEMANTIC_COMPLETENESS=PASS.
   const preauditInput={...input,independent:null,
@@ -3051,7 +3064,7 @@ test("P0 REVERSE 18 MATERIAL: provenance and distinct interpretations for all re
   assert.equal(P0_REVERSE_GAP_REVIEWS.length,18);
   assert.ok(result.records.every(r=>r.text&&r.reason.length>=55&&
     r.independent_review===null&&r.positive_witness===null&&
-    r.verdict==="REQUIRES_INDEPENDENT_SEMANTIC_REVIEW"));
+    r.verdict==="REQUIRES_STAGE_SEMANTIC_REVIEW"));
   const missing=structuredClone(reverse);
   missing.uncovered.splice(2,1);
   assert.ok(materialReviewOfReverseGaps(inv,work,missing).issues.some(x=>
@@ -3406,10 +3419,12 @@ test("P0 #863 RED: full assisted semantic fixture must be admissible PRE_PROD, n
     head,independent,rules,sentences,sources,interactions};
 
   const base="18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e";
+  const report="Synthetic assisted contract only, never a real review or certificate. ".repeat(8);
   const assisted={head,base,review_id:72653,author:"contaos9999",
     reviewer:"Edivan5002",state:"APPROVED",scope:"FULL_SEMANTIC_CORPUS",
-    modality:"ASSISTED_PRE_PROD",report_sha256:"a".repeat(64),contradiction_completed:true};
-  const assistedRow=({independent_review_id,...row})=>({...row,assisted_review_id:assisted.review_id});
+    modality:"ASSISTED_PRE_PROD",report,report_sha256:createHash("sha256").update(report).digest("hex"),contradiction_completed:true};
+  const assistedRow=({independent_review_id,...row})=>({...row,base,
+    witness:{...row.witness,base},negative_witness:{...row.negative_witness,base},assisted_review_id:assisted.review_id});
   const candidate={...input,base,release_stage:"PRE_PROD",independent:null,assisted,
     rules:rules.map(assistedRow),sentences:sentences.map(assistedRow),
     sources:sources.map(assistedRow),interactions:interactions.map(assistedRow),
@@ -3419,6 +3434,14 @@ test("P0 #863 RED: full assisted semantic fixture must be admissible PRE_PROD, n
   assert.equal(result.release,"SEMANTIC_REVIEW_CERTIFIED_ONLY");
   assert.equal(result.review_modality,"ASSISTED_PRE_PROD");
   assert.equal(result.independent_review_id,null);
+  assert.equal(result.assisted_review_id,assisted.review_id);
+  const strip=({assisted_review_id,...row})=>row;
+  const preaudit=await assessSemanticPreauditGate({...candidate,assisted:null,
+    rules:candidate.rules.map(strip),sentences:candidate.sentences.map(strip),
+    sources:candidate.sources.map(strip),interactions:candidate.interactions.map(strip)});
+  assert.equal(preaudit.semantic_preaudit,"PASS");
+  assert.equal(preaudit.release,"ASSISTED_REVIEW_ELIGIBLE_ONLY");
+  assert.equal(preaudit.semantic_completeness,"INCONCLUSIVE");
   for(const bad of [
     {...candidate,release_stage:"PROD"},
     {...candidate,release_stage:"UNKNOWN"},
@@ -3429,9 +3452,15 @@ test("P0 #863 RED: full assisted semantic fixture must be admissible PRE_PROD, n
     {...candidate,assisted:{...assisted,reviewer:assisted.author}},
     {...candidate,assisted:{...assisted,state:"CHANGES_REQUESTED"}},
     {...candidate,assisted:{...assisted,contradiction_completed:false}},
+    {...candidate,assisted:{...assisted,report_sha256:"f".repeat(64)}},
+    {...candidate,assisted:{...assisted,authorship_independent:true}},
+    {...candidate,independent:{...independent,head}},
+    {...candidate,rules:rules.map(assistedRow).map((x,i)=>i===0?{...x,independent_review_id:72652}:x)},
     {...candidate,authenticateAssisted:async()=>false},
     {...candidate,rules:rules.map(assistedRow).slice(1)},
     {...candidate,authenticateWitness:async()=>false},
+    {...candidate,rules:candidate.rules.map((x,i)=>i===0?{...x,witness:{...x.witness,base:"f".repeat(40)}}:x)},
+    {...candidate,base:"d9cfb6b03be8011b5ee1472c16cbe2ba350fca7b",assisted:{...assisted,base:"d9cfb6b03be8011b5ee1472c16cbe2ba350fca7b"}},
   ]){
     const denied=await assessSemanticCompletenessGate(bad);
     assert.equal(denied.release,"NO_GO",JSON.stringify(denied.issues));
@@ -3487,5 +3516,58 @@ test("P0 #863 RED: missing or unknown release stage cannot inherit independent c
       authenticateIndependent:async()=>true,authenticateWitness:async()=>true});
     assert.equal(result.release,"NO_GO","P0 #863 missing/unknown stage improperly accepted: "+JSON.stringify(result.issues));
     assert.ok(result.issues.includes("SEMANTIC_RELEASE_STAGE_UNKNOWN"));
+  }
+});
+
+
+test("P0 #863 protected modality authority exact merge, blob and ancestry, no certification",t=>{
+  const base="18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e";
+  const prior="d9cfb6b03be8011b5ee1472c16cbe2ba350fca7b";
+  const path="docs/frontend/planos/EMENDA_P0_690_MODALIDADE_AUDITORIA_PRE_PROD_2026-11-28.md";
+  const current=readP0690ProtectedSources(base);
+  const historical=readP0690ProtectedSources(prior);
+  assert.deepEqual(current.semanticSources,historical.semanticSources);
+  assert.deepEqual(current.manifest,historical.manifest);
+  assert.equal(historical.normative.modality_amendment,undefined);
+  assert.deepEqual(current.normative.modality_amendment,{
+    pr:863,merge:base,blob:"4e4473aef5335a6891e78e2d248be50718ea591e",decision_id:7237068104,
+    required_review_by_stage:{PRE_PROD:"ASSISTED_PRE_PROD",PROD:"INDEPENDENT"},
+    activation_authorized:false,semantic_certification:"NOT_CERTIFIED"
+  });
+  assert.throws(()=>readP0690ProtectedSources("ec96b4708db8ea8075ef9c7b49b20ba09ef9e7e1"),/modalidade #863/);
+  const dir=mkdtempSync(join(tmpdir(),"p0-fiscal-863-"));
+  t.after(()=>rmSync(dir,{recursive:true,force:true}));
+  const root=execFileSync("git",["rev-parse","--show-toplevel"],{encoding:"utf8"}).trim();
+  const env={PATH:process.env.PATH,HOME:process.env.HOME,LANG:"C",
+    GIT_CONFIG_NOSYSTEM:"1",GIT_CONFIG_GLOBAL:"/dev/null",
+    GIT_AUTHOR_NAME:"Fixture",GIT_AUTHOR_EMAIL:"fixture@example.invalid",
+    GIT_COMMITTER_NAME:"Fixture",GIT_COMMITTER_EMAIL:"fixture@example.invalid"};
+  execFileSync("git",["clone","--shared","--no-checkout",root,dir],{env,stdio:"pipe",timeout:60000});
+  const g=(args,input)=>execFileSync("git",["-C",dir,...args],{encoding:"utf8",env,input,timeout:20000}).trim();
+  for(const action of ["alter","remove"]){
+    g(["read-tree",base]);
+    if(action==="alter"){
+      const blob=g(["hash-object","-w","--stdin"],"unapproved change");
+      g(["update-index","--cacheinfo","100644,"+blob+","+path]);
+    }else g(["update-index","--force-remove",path]);
+    const tree=g(["write-tree"]);
+    const commit=g(["commit-tree",tree,"-p",base,"-m","synthetic #863 authority mutation"]);
+    const script="import {readP0690ProtectedSources} from "+JSON.stringify(new URL("./p0-rca-impact-gate.mjs",import.meta.url).href)+"; readP0690ProtectedSources("+JSON.stringify(commit)+");";
+    const result=spawnSync(process.execPath,["--input-type=module","-e",script],{cwd:dir,env,encoding:"utf8",timeout:30000});
+    assert.equal(result.status,1,result.stdout+result.stderr);
+    assert.match(result.stderr,/modalidade #863/);
+  }
+});
+test("P0 #863 review stage priority models preserve independent PROD and no missing stage",()=>{
+  for(const id of ["ACTIVE_VERSUS_CERTIFIED","CERTIFICATION_VERSUS_RECOVERY"]){
+    const probe=P0_PRIORITY_CAUSAL_PROBES.find(x=>x.caseId===id);
+    const check=P0_PRIORITY_CAUSAL_MODELS[id];
+    assert.equal(check(probe.positive),true);
+    assert.equal(check({...probe.positive,release_stage:"PROD"}),false);
+    assert.equal(check({...probe.positive,release_stage:undefined}),false);
+    assert.equal(check({...probe.positive,release_stage:"UNKNOWN"}),false);
+    assert.equal(check({...probe.positive,assistedReview:false}),false);
+    assert.equal(check({...probe.positive,independentReview:true}),false);
+    assert.equal(check({...probe.positive,release_stage:"PROD",assistedReview:false,independentReview:true}),true);
   }
 });

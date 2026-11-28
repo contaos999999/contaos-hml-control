@@ -1089,10 +1089,10 @@ FULL_PROTOCOL_CASES.push(...[
 // even when all existing names and tests remain green.
 // Candidate protocol snapshot §5.10–5.12: append-only material evidence,
 // still NO-GO. Binding is reviewed in PR #690, not independently approved.
-const FULL_PROTOCOL_GIT_BLOB="bd9a19c4cb798884224813b4670bb62636d81504";
+const FULL_PROTOCOL_GIT_BLOB="7f822731872177a14b600f9800f3cb6801a2085c";
 const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
-  python:"27235effb053fc01fbf30472dbe2075a6abfe1e8",
-  rca:"ca7bdd23f5e8e9c51c2359af0404e9059b28f9ad",
+  python:"ebdeac11617e279387cdc6164f926f7fad57b246",
+  rca:"699a4226a346f71d3f99d9f027607154ed572d4d",
   queue:"534cb078de0abf63b8c5235724332333bbda56bd",
 });
 // A passing name without its reviewed test body does not establish semantic
@@ -1127,8 +1127,19 @@ export function verifyFullProtocolSourcePins({protocol,tests}={}){
 
 // Normative BUILD tests prove NO-GO behavior for future activation, not
 // that a dedicated App, live merge queue or third-party N17(c) ran.
-const INDEPENDENT_AUDIT_ONLY_IDS=new Set(["S5.1:Revisão independente",
+const AUDIT_MODALITY_BY_STAGE=Object.freeze({PRE_PROD:"ASSISTED_PRE_PROD",PROD:"INDEPENDENT"});
+const STAGE_REVIEW_IDS=new Set(["S5.1:Revisão independente",
   "PLAN-S3-RULE-05","PLAN-S3-RULE-06"]);
+// Preserve all 228 historical requirements; extend rather than replace the matrix.
+FULL_PROTOCOL_CASES.push(
+  {id:"MODALITY-863-SUPERVISOR",file:"python",pattern:"test_863_pre_prod_assisted_must_not_be_rejected_for_no_independence"},
+  {id:"MODALITY-863-SUPERVISOR-STAGE",file:"python",pattern:"test_863_unknown_stage_must_not_inherit_independent_audit"},
+  {id:"MODALITY-863-SUPERVISOR-AUTHORITY",file:"python",pattern:"test_863_protected_policy_and_independent_prod_cannot_be_substituted"},
+  {id:"MODALITY-863-SEMANTIC",file:"rca",pattern:"P0 #863 RED: full assisted semantic fixture"},
+  {id:"MODALITY-863-SEMANTIC-STAGE",file:"rca",pattern:"P0 #863 RED: missing or unknown release stage"},
+  {id:"MODALITY-863-AUTHORITY",file:"rca",pattern:"P0 #863 protected modality authority"},
+  {id:"MODALITY-863-PRIORITY",file:"rca",pattern:"P0 #863 review stage priority models"}
+);
 const ACTIVATION_ONLY_PROTOCOL_IDS=new Set([
   "S3-N17C-THIRD-AUTHOR","S3-N17C-TWO-APPROVALS","S3-N17C-EXTERNAL",
   "S4-APP-ONLY","S4-ENTRY-SHA-BASE","S4-GROUP-REVALIDATE",
@@ -1162,7 +1173,7 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
   }
   const expectedSections=["## 1.","## 2.","## 3.","## 4.","## 5.",
     "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 5.6.",
-    "## 5.7.","## 5.8.","## 5.9.","## 5.10.","## 5.11.","## 5.12.","## 6."];
+    "## 5.7.","## 5.8.","## 5.9.","## 5.10.","## 5.11.","## 5.12.","## 5.13.","## 6."];
   // Fail closed when the protected protocol grows without a corresponding
   // executable authorization requirement. A summary checkbox is insufficient.
   const section51=typeof protocol==="string"?
@@ -1214,8 +1225,9 @@ export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
     rows.push({id:item.id,status:ok?"TEST_DECLARED_NOT_EXECUTED":"MISSING_TEST",
       scope:ACTIVATION_ONLY_PROTOCOL_IDS.has(item.id)?
         "BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL":
-        INDEPENDENT_AUDIT_ONLY_IDS.has(item.id)?
-          "BUILD_NEGATIVE_PROOF_INDEPENDENT_AUDIT_EXTERNAL":"BUILD",
+        STAGE_REVIEW_IDS.has(item.id)?
+          "BUILD_NEGATIVE_PROOF_STAGE_REVIEW_PENDING":"BUILD",
+      ...(STAGE_REVIEW_IDS.has(item.id)?{required_review_by_stage:AUDIT_MODALITY_BY_STAGE}:{}),
       source:PROTOCOL_FULL_AUDIT_FILES[item.file],witness:item.pattern});
     if(!ok)issues.push("Protocolo sem caso executavel: "+item.id+" / "+item.pattern);
   }
@@ -1429,6 +1441,42 @@ function verifyReview781(base,content,live,read) {
     semantic_certification:"NOT_CERTIFIED",activation_authorized:false};
 }
 
+
+// The owner's specific stage amendment is effective only through its exact
+// protected merge. A byte-identical unmerged PLAN, rollback or changed blob
+// cannot authorize assisted PRE_PROD review.
+const REVIEW_863=Object.freeze({
+  pr:863,parent:"d9cfb6b03be8011b5ee1472c16cbe2ba350fca7b",
+  head:"ec96b4708db8ea8075ef9c7b49b20ba09ef9e7e1",
+  merge:"18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e",blob:"4e4473aef5335a6891e78e2d248be50718ea591e",
+  path:"docs/frontend/planos/EMENDA_P0_690_MODALIDADE_AUDITORIA_PRE_PROD_2026-11-28.md",decision_id:7237068104
+});
+function verifyReview863(base,read){
+  const fail=()=>{throw Error("modalidade #863: alteração normativa posterior exige revalidação");};
+  const liveEntry=git("ls-tree",base,"--",REVIEW_863.path);
+  if(!sourceAncestor(REVIEW_863.merge,base)){
+    if(liveEntry)fail();
+    return null; // historical sources retain their original authority
+  }
+  if(!sourceAncestor(REVIEW_781.merge,REVIEW_863.parent)||
+     !sourceAncestor(REVIEW_781.plan,REVIEW_863.parent)||
+     git("rev-list","--parents","-n","1",REVIEW_863.merge)!==
+       [REVIEW_863.merge,REVIEW_863.parent,REVIEW_863.head].join(" ")||
+     git("diff","--name-only",REVIEW_863.parent,REVIEW_863.merge)!==REVIEW_863.path||
+     git("ls-tree",REVIEW_863.parent,"--",REVIEW_863.path)||
+     !liveEntry.startsWith("100644 blob "+REVIEW_863.blob+"\t"))fail();
+  const live=read(base,REVIEW_863.path);
+  if(gitBlobId(live)!==REVIEW_863.blob||
+     read(REVIEW_863.merge,REVIEW_863.path)!==live||
+     read(REVIEW_863.head,REVIEW_863.path)!==live||
+     !live.includes("7237068104")||
+     !live.includes("auditoria independente é exclusiva do GATE PROD")||
+     !live.includes("Não tratar a proposta CSDI #693 como vigente"))fail();
+  return {pr:REVIEW_863.pr,merge:REVIEW_863.merge,blob:REVIEW_863.blob,
+    decision_id:REVIEW_863.decision_id,required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+    activation_authorized:false,semantic_certification:"NOT_CERTIFIED"};
+}
+
 export function readP0690ProtectedSources(base) {
   const path = IMMUTABLE_P0_690_MANIFEST;
   if (!validSha(base) || git("rev-parse", base + ":" + path) !==
@@ -1441,6 +1489,7 @@ export function readP0690ProtectedSources(base) {
   const read = (ref, file) => execFileSync("git", ["show", ref + ":" + file],
     {encoding: "utf8", timeout: 15000});
   let reviewAmendment=null;
+  const modalityAmendment=verifyReview863(base,read);
   const review781Integrated=sourceAncestor(REVIEW_781.merge,base);
   const sources = Object.fromEntries(Object.entries(expected).map(([file, blob]) => {
     const content = read(P0_690_PROTECTED_BASE, file);
@@ -1465,7 +1514,9 @@ export function readP0690ProtectedSources(base) {
     amendment: sources[manifest.emenda_fila]?.content,
     canonical: sources[ORCHESTRATION_PATH].content });
   if (normative.verdict !== "PASS") throw Error(normative.issues.join("; "));
-  return { manifest, normative:reviewAmendment?{...normative,review_amendment:reviewAmendment}:normative,
+  return { manifest, normative:{...normative,
+    ...(reviewAmendment?{review_amendment:reviewAmendment}:{}),
+    ...(modalityAmendment?{modality_amendment:modalityAmendment}:{})},
     semanticSources: Object.fromEntries(
     Object.keys(PROTECTED_SEMANTIC_SOURCES).map(file => [file, sources[file]])) };
 }
@@ -1508,12 +1559,13 @@ export function inventoryProtectedSemanticLines(sources){
     semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
 }
 /** Rejects fabricated, reused, outdated and non-source-bound interpretations. */
-export function verifySemanticSourceClaims(inventory,claims){
+export function verifySemanticSourceClaims(inventory,claims,{release_stage}={}){
   const issues=[...(inventory?.issues||[])];
   const rows=inventory?.lines||[];
   const byId=new Map(rows.map(row=>[row.id,row]));
   const seen=new Set();
   if(!inventory?.inventory_verified)issues.push("SEMANTIC_INVENTORY_NOT_VERIFIED");
+  if(release_stage!=="PRE_PROD"&&release_stage!=="PROD")issues.push("SEMANTIC_RELEASE_STAGE_UNKNOWN");
   for(const claim of claims||[]){
     const row=byId.get(claim?.source_id);
     if(!row){issues.push("SEMANTIC_CLAIM_UNKNOWN_SOURCE");continue;}
@@ -1531,15 +1583,19 @@ export function verifySemanticSourceClaims(inventory,claims){
        claim.negative_witnesses.some(w=>typeof w!=="object"||
          !w.case_id||!w.run_url||!w.head||!validSha(w.head)))
       issues.push("SEMANTIC_CLAIM_NO_EXECUTED_COUNTERPROOF: "+row.id);
-    if(claim.independent_review?.verdict!=="APPROVED"||
-       !claim.independent_review?.review_id)
+    if(release_stage==="PRE_PROD" && (claim.assisted_review?.verdict!=="APPROVED"||
+       claim.assisted_review?.modality!=="ASSISTED_PRE_PROD"||!claim.assisted_review?.review_id||claim.independent_review!=null))
+      issues.push("SEMANTIC_CLAIM_NO_ASSISTED_REVIEW: "+row.id);
+    if(release_stage==="PROD" && (claim.independent_review?.verdict!=="APPROVED"||
+       claim.independent_review?.authorship_independent!==true||!claim.independent_review?.review_id||claim.assisted_review!=null))
       issues.push("SEMANTIC_CLAIM_NO_INDEPENDENT_REVIEW: "+row.id);
   }
   return {schema:"contaos.semantic-source-claims.v1",
     anchored_count:seen.size,source_lines:rows.length,
     unmapped:rows.filter(row=>!seen.has(row.id)).map(row=>row.id),
     issues,verdict:"INCONCLUSIVE",release:"NO_GO",
-    note:"Even a structurally complete self-report needs authenticated LIVE counterproof and independent contradiction."};
+    release_stage:release_stage??null,required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+    note:"Even a structurally complete self-report needs authenticated LIVE counterproof and stage-specific material contradiction."};
 }
 
 
@@ -1875,7 +1931,7 @@ export function auditSemanticReverseCoverage(inventory,worklist){
     const collection=row.path.includes("/EMENDA_")?"EMENDA":"PLAN";
     const category=SEMANTIC_GAP_REVIEW_CATEGORIES[collection][row.line]||null;
     return {...row,category,
-      assessment:"REQUIRES_INDEPENDENT_SEMANTIC_REVIEW",
+      assessment:"REQUIRES_STAGE_SEMANTIC_REVIEW",
       semantic_evidence:null,negative_witness:null};
   });
   if(triaged.some(row=>!row.category))
@@ -1912,14 +1968,30 @@ export function auditSemanticReverseCoverage(inventory,worklist){
 async function assessSemanticGate({
   inventory,worklist,sentenceInventory,reverseCoverage,
   rules=[],sentences=[],sources=[],interactions=[],
-  independent=null,head=null,stage="FINAL",
-  authenticateWitness=null,authenticateIndependent=null,
+  independent=null,assisted=null,head=null,base=null,stage="FINAL",release_stage=null,
+  authenticateWitness=null,authenticateIndependent=null,authenticateAssisted=null,
 }={}){
   const issues=[];
   const fail=x=>issues.push(x);
   const preaudit=stage==="PREAUDIT";
+  const preProd=release_stage==="PRE_PROD",prod=release_stage==="PROD";
+  const modality=preProd?AUDIT_MODALITY_BY_STAGE.PRE_PROD:prod?AUDIT_MODALITY_BY_STAGE.PROD:null;
   if(!["FINAL","PREAUDIT"].includes(stage))fail("SEMANTIC_STAGE_UNKNOWN");
+  if(!modality)fail("SEMANTIC_RELEASE_STAGE_UNKNOWN");
+  if(!validSha(base))fail("SEMANTIC_BASE_UNPROVEN");
+  let policy=null;
+  if(validSha(base)&&modality){
+    try{
+      policy=readP0690ProtectedSources(base).normative.modality_amendment;
+      if(!policy||policy.activation_authorized!==false||
+         policy.required_review_by_stage?.[release_stage]!==modality)
+        fail("SEMANTIC_STAGE_POLICY_UNPROVEN");
+    }catch{fail("SEMANTIC_STAGE_POLICY_UNPROVEN");}
+  }
   if(preaudit&&independent!==null)fail("SEMANTIC_PREAUDIT_INDEPENDENT_STAGE_CONFUSION");
+  if(preaudit&&assisted!==null)fail("SEMANTIC_PREAUDIT_ASSISTED_STAGE_CONFUSION");
+  if(!preaudit&&((preProd&&independent!==null)||(prod&&assisted!==null)))
+    fail("SEMANTIC_MIXED_REVIEW_MODALITY");
   const expectedRules=worklist?.normative_rules||[];
   const expectedSentences=sentenceInventory?.candidates||[];
   const expectedSources=inventory?.lines||[];
@@ -1969,16 +2041,17 @@ async function assessSemanticGate({
       owners.set(value,claim.id);
     }
   }
-  const proofOk=(p,id)=>!!p&&p.head===head&&
+  const proofOk=(p,id)=>!!p&&p.head===head&&p.base===base&&
     typeof p.interpretation==="string"&&p.interpretation.trim().length>=35&&
     typeof p.counterexample==="string"&&p.counterexample.trim().length>=25&&
     typeof p.witness==="object"&&p.witness!==null&&
-    !!p.witness.run_url&&p.witness.head===head&&
+    !!p.witness.run_url&&p.witness.head===head&&p.witness.base===base&&
     typeof p.negative_witness==="object"&&p.negative_witness!==null&&
-    !!p.negative_witness.run_url&&p.negative_witness.head===head&&
+    !!p.negative_witness.run_url&&p.negative_witness.head===head&&p.negative_witness.base===base&&
     p.negative_witness.run_url!==p.witness.run_url&&
-    (preaudit?p.independent_review_id==null:
-      p.independent_review_id===independent?.review_id)&&
+    (preaudit?p.independent_review_id==null&&p.assisted_review_id==null:
+      preProd?p.assisted_review_id===assisted?.review_id&&p.independent_review_id==null:
+      prod?p.independent_review_id===independent?.review_id&&p.assisted_review_id==null:false)&&
     p.id===id;
   for(const record of rules){
     const origin=expectedRules.find(x=>x.rule_id===record?.rule_id);
@@ -2026,26 +2099,40 @@ async function assessSemanticGate({
       fail("SEMANTIC_PAIR_UNPROVEN: "+pair?.pair_id);break;
     }
   }
-  if(!preaudit&&(independent?.head!==head||!Number.isSafeInteger(independent?.review_id)||
-     independent.review_id<=0||independent.author===independent.reviewer||
-     independent.state!=="APPROVED"||independent.scope!=="FULL_SEMANTIC_CORPUS"))
+  const login=x=>typeof x==="string"?x.trim().toLowerCase():"";
+  const validReview=r=>!!r&&r.head===head&&r.base===base&&
+    Number.isSafeInteger(r.review_id)&&r.review_id>0&&
+    !!login(r.author)&&!!login(r.reviewer)&&login(r.author)!==login(r.reviewer)&&
+    r.state==="APPROVED"&&r.scope==="FULL_SEMANTIC_CORPUS"&&r.modality===modality&&
+    r.contradiction_completed===true&&typeof r.report==="string"&&r.report.trim().length>=400&&
+    r.report_sha256===createHash("sha256").update(r.report).digest("hex");
+  if(!preaudit&&preProd&&(!validReview(assisted)||login(assisted.author)!=="contaos9999"||
+      login(assisted.reviewer)!=="edivan5002"||assisted.authorship_independent===true))
+    fail("SEMANTIC_ASSISTED_REVIEW_UNPROVEN");
+  if(!preaudit&&prod&&(!validReview(independent)||independent.authorship_independent!==true))
     fail("SEMANTIC_INDEPENDENCE_UNPROVEN");
   if(typeof authenticateWitness!=="function"||
-     (!preaudit&&typeof authenticateIndependent!=="function"))
+     (!preaudit&&((preProd&&typeof authenticateAssisted!=="function")||
+       (prod&&typeof authenticateIndependent!=="function"))))
     fail("SEMANTIC_AUTHENTICATED_CONTRADICTION_MISSING");
   // Authenticate only once all the local evidence is complete. Do not
   // perform thousands of calls for an incomplete or fabricated ledger.
   if(issues.length===0){
     try {
-      if(!preaudit&&await authenticateIndependent(independent,head)!==true)
+      // The external read-only authenticator must verify the exact review,
+      // report digest, current base and authority; unit callbacks are fixtures.
+      const context={base,release_stage,modality,policy};
+      if(!preaudit&&preProd&&await authenticateAssisted(assisted,head,context)!==true)
+        fail("SEMANTIC_ASSISTED_REVIEW_NOT_AUTHENTICATED");
+      if(!preaudit&&prod&&await authenticateIndependent(independent,head,context)!==true)
         fail("SEMANTIC_INDEPENDENT_REVIEW_NOT_AUTHENTICATED");
       const all=[...rules,...sentences,...sources,...interactions];
       if(issues.length===0)
         for(const row of all){
-          if(await authenticateWitness(row.witness,head,row.id,"POSITIVE")!==true){
+          if(await authenticateWitness(row.witness,head,row.id,"POSITIVE",context)!==true){
             fail("SEMANTIC_POSITIVE_WITNESS_NOT_AUTHENTICATED: "+row.id);break;
           }
-          if(await authenticateWitness(row.negative_witness,head,row.id,"NEGATIVE")!==true){
+          if(await authenticateWitness(row.negative_witness,head,row.id,"NEGATIVE",context)!==true){
             fail("SEMANTIC_NEGATIVE_WITNESS_NOT_AUTHENTICATED: "+row.id);break;
           }
         }
@@ -2053,25 +2140,27 @@ async function assessSemanticGate({
   }
   return {schema:preaudit?"contaos.semantic-preaudit-gate.v1":
       "contaos.semantic-completeness-gate.v1",
-    stage,head,rule_count:expectedRules.length,sentence_count:expectedSentences.length,
+    stage,head,base,release_stage,review_modality:modality,required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+    rule_count:expectedRules.length,sentence_count:expectedSentences.length,
     source_count:expectedSources.length,pair_count:pairs.length,
     supplied:{rules:rules.length,sentences:sentences.length,
       sources:sources.length,pairs:interactions.length},
     ...(preaudit?{
       semantic_preaudit:issues.length?"INCONCLUSIVE":"PASS",
       semantic_completeness:"INCONCLUSIVE",
-      release:issues.length?"NO_GO":"INDEPENDENT_REVIEW_ELIGIBLE_ONLY",
-      independent_review_id:null,
+      release:issues.length?"NO_GO":preProd?"ASSISTED_REVIEW_ELIGIBLE_ONLY":"INDEPENDENT_REVIEW_ELIGIBLE_ONLY",
+      independent_review_id:null,assisted_review_id:null,
     }:{
       semantic_completeness:issues.length?"INCONCLUSIVE":"PASS",
       release:issues.length?"NO_GO":"SEMANTIC_REVIEW_CERTIFIED_ONLY",
-      independent_review_id:issues.length?null:independent.review_id,
+      independent_review_id:issues.length||!prod?null:independent.review_id,
+      assisted_review_id:issues.length||!preProd?null:assisted.review_id,
     }),issues};
 }
 
 // Pre-audit and final certification use the identical substantive inventory,
 // seven-axis checks, positive/negative witnesses and read-only authentication.
-// Only the final stage consumes an independently authored GitHub review.
+// Only the final stage consumes an authenticated, stage-specific review.
 export async function assessSemanticPreauditGate(input={}){
   return assessSemanticGate({...input,stage:"PREAUDIT"});
 }
@@ -2111,7 +2200,8 @@ export function auditNormativeSemanticCompleteness(matrix,claims={}){
     sourceExpected:CLOSED_PLAN_SEMANTIC_UNITS.length,
     sourceUnmapped,sourceComplete:sourceUnmapped.length===0,
     findings,issues,
-    reason:"Seven narrative axes need source-backed verification and independent adversarial contradiction; neither self-assertion nor BUILD PASS is a semantic certificate"};
+    required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+    reason:"Seven narrative axes need source-backed verification and stage-specific adversarial contradiction; neither self-assertion nor BUILD PASS is a semantic certificate"};
 }
 export function attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha}={}){
   const issues=[...(coverage?.issues||[])];
@@ -2157,8 +2247,8 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
     rows.push({...row,compoundTests:compound.names,execution:good?
       (row.scope==="BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL"?
         "BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED":
-       row.scope==="BUILD_NEGATIVE_PROOF_INDEPENDENT_AUDIT_EXTERNAL"?
-        "BUILD_NEGATIVE_PASS_INDEPENDENT_AUDIT_PENDING":"EXECUTED_PASS"):"UNPROVEN",
+       row.scope==="BUILD_NEGATIVE_PROOF_STAGE_REVIEW_PENDING"?
+        "BUILD_NEGATIVE_PASS_STAGE_REVIEW_PENDING":"EXECUTED_PASS"):"UNPROVEN",
       suite:item?.file||null,matchedTests:matches,
       outputSha256:suite?.outputSha256||null});
     if(!good)issues.push("EXECUTION: requisito sem teste executado PASS: "+row.id);
@@ -2168,14 +2258,19 @@ export function attestFullProtocolExecutions(coverage,suites,{head,base,checkout
     head,base,checkoutSha,requirements:rows.length,
     executed:rows.filter(x=>x.execution==="EXECUTED_PASS").length,
     activationBlocked:rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED").length,
-    independentAuditPending:rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_INDEPENDENT_AUDIT_PENDING").length,
+    stageReviewPending:rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_STAGE_REVIEW_PENDING").length,
+    // Legacy count retained but explicitly classified as PROD, never a PRE_PROD prerequisite.
+    independentAuditPending:rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_STAGE_REVIEW_PENDING").length,
+    independentAuditPendingStage:"PROD",
+    required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
     structural:rows.filter(x=>x.execution==="STRUCTURAL_CHECK_ONLY").length,
     rows,external:[...(coverage?.external||[]),
       ...rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED")
         .map(x=>({requirement:x.id,status:"BLOCKED_EXTERNAL_FOR_ACTIVATION",
           negativeBuildTest:x.matchedTests?.[0]||null})),
-      ...rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_INDEPENDENT_AUDIT_PENDING")
-        .map(x=>({requirement:x.id,status:"BLOCKED_EXTERNAL_FOR_INDEPENDENT_AUDIT",
+      ...rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_STAGE_REVIEW_PENDING")
+        .map(x=>({requirement:x.id,status:"BLOCKED_EXTERNAL_FOR_STAGE_REVIEW",
+          required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
           negativeBuildTest:x.matchedTests?.[0]||null}))],issues,
     suites:Object.fromEntries(suiteKeys.map(k=>[k,suites?.[k]?{
       exitCode:suites[k].exitCode,executed:suites[k].executed,
@@ -3052,12 +3147,12 @@ if (process.argv[1] && fileURLToPath(import.meta.url) ===
           worklist:buildSevenAxisSemanticBacklog(inventory),
           sentenceInventory:inventorySemanticSentenceCandidates(inventory),
           reverseCoverage:auditSemanticReverseCoverage(inventory,buildSevenAxisSemanticBacklog(inventory)),
-          head:git("rev-parse","HEAD")}),
+          head:git("rev-parse","HEAD"),base,release_stage:"PRE_PROD"}),
         semantic_release_gate:await assessSemanticCompletenessGate({inventory,
           worklist:buildSevenAxisSemanticBacklog(inventory),
           sentenceInventory:inventorySemanticSentenceCandidates(inventory),
           reverseCoverage:auditSemanticReverseCoverage(inventory,buildSevenAxisSemanticBacklog(inventory)),
-          head:git("rev-parse","HEAD")}),
+          head:git("rev-parse","HEAD"),base,release_stage:"PRE_PROD"}),
         semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
       console.log(JSON.stringify(result));
       if(!result.source_verified)process.exitCode=1;
@@ -3482,7 +3577,7 @@ export function assembleSemanticContradictionDossier(triage) {
       :relationship==="QUEUE_SOURCE_FRESHNESS"
         ?"Change HEAD/base/group without changing prior status, then verify a new group decision."
       :relationship==="CERTIFICATION_INDEPENDENCE"
-        ?"Withhold independent approval while leaving BUILD green; ensure certification remains blocked."
+        ?"Withhold the required stage-specific material review while leaving BUILD green; ensure certification remains blocked."
       :relationship==="SHARED_ACTOR_STAGE"
         ?"Hold the shared actor and stage fixed while alternating the predicates of the two rules."
       :relationship==="COMMON_NORMATIVE_THEME"
@@ -3500,7 +3595,7 @@ export function assembleSemanticContradictionDossier(triage) {
       review_priority:relationship==="SHARED_NORMATIVE_SOURCE"||
         relationship==="AUTHORIZATION_REVOCATION_BOUNDARY"||
         relationship==="QUEUE_SOURCE_FRESHNESS"?"HIGH":"OPEN",
-      missing:["LIVE_POSITIVE","LIVE_NEGATIVE","INDEPENDENT_PAIR_ADJUDICATION"]
+      missing:["LIVE_POSITIVE","LIVE_NEGATIVE","STAGE_BOUND_PAIR_ADJUDICATION"]
     };
     return {pair_id:p.pair_id,source_a:a?.anchor??null,source_b:b?.anchor??null,
       rule_a:a?.rule_id??null,rule_b:b?.rule_id??null,
@@ -3511,7 +3606,7 @@ export function assembleSemanticContradictionDossier(triage) {
       applicability_hypothesis,discriminating_probes,
       counterfactual_question:"Em qual estado ambas as cláusulas se aplicam, qual prevalece e qual contraprova discrimina a hipótese?",
       judgement:"UNADJUDICATED",positive_witness:null,negative_witness:null,
-      independent_review_id:null};
+      independent_review_id:null,assisted_review_id:null,required_review_by_stage:AUDIT_MODALITY_BY_STAGE};
   });
   const counts={rules:dossiers.length,axes:dossiers.length*7,
     sentences:sentences.length,pairs:interactions.length,
@@ -3527,6 +3622,7 @@ export function assembleSemanticContradictionDossier(triage) {
   return {schema:"contaos.semantic-contradiction-dossier.v1",
     counts,issues,rules:dossiers,sentences,interactions,
     source_read_verified:issues.length===0,
+    required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
     rules_certified:0,sentences_certified:0,interactions_certified:0,
     semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
     release:"NO_GO",activation:"NO_GO"};
@@ -3576,7 +3672,7 @@ export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}
        !x.discriminating_probes?.negative?.includes(x.rule_a)||
        x.discriminating_probes.missing?.length!==3||
        x.judgement!=="UNADJUDICATED"||x.positive_witness!==null||
-       x.negative_witness!==null))
+       x.negative_witness!==null||x.independent_review_id!==null||x.assisted_review_id!==null))
     throw Error("SEMANTIC_DOSSIER_CONTENT_INVALID");
   const resolved=resolvePath(outputDirectory),root=resolvePath(process.cwd());
   if(resolved===root||resolved.startsWith(root+pathSep))
@@ -3598,7 +3694,8 @@ export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}
   const manifest={schema:"contaos.semantic-audit-export.v1",
     head:head??null,protected_base:base??null,files,counts:dossier.counts,
     semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
-    reviewed_by_independent_auditor:false,release:"NO_GO"};
+    reviewed_by_independent_auditor:false,reviewed_assisted_pre_prod:false,
+    required_review_by_stage:AUDIT_MODALITY_BY_STAGE,release:"NO_GO"};
   writeFileSync(joinPath(resolved,"manifest.json"),
     JSON.stringify(manifest,null,2)+"\n",{encoding:"utf8",flag:"w"});
   return manifest;
@@ -3610,6 +3707,8 @@ export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}
  * Each counterexample is run against a closed predicate taken from the
  * protected PLAN/EMENDA. These computations cannot change LIVE fields.
  */
+const stageReviewOk=f=>f.release_stage==="PRE_PROD"?f.assistedReview===true&&f.independentReview===false:
+  f.release_stage==="PROD"?f.independentReview===true&&f.assistedReview===false:false;
 export const P0_PRIORITY_CAUSAL_MODELS=Object.freeze({
   AUTHORIZATION_OUTLIVES_REVIEW: f=>
     f.reviewApproved===true&&f.authorizationCurrent===true&&
@@ -3621,7 +3720,7 @@ export const P0_PRIORITY_CAUSAL_MODELS=Object.freeze({
     f.admissionApproved===true&&f.groupShaFresh===true&&
     f.parentsMatch===true&&f.groupCheckSuccess===true,
   ACTIVE_VERSUS_CERTIFIED: f=>
-    f.buildPass===true&&f.independentReview===true&&f.merged===true&&
+    f.buildPass===true&&stageReviewOk(f)&&f.merged===true&&
     f.mainReadback===true&&f.checkpointIntegrated===true,
   APP_IDENTITY_VERSUS_CHECK_NAME: f=>
     f.expectedIntegrationId!==null&&f.expectedIntegrationId!==undefined&&
@@ -3640,7 +3739,7 @@ export const P0_PRIORITY_CAUSAL_MODELS=Object.freeze({
     f.scopeAllowlisted===true&&
     (f.productDiff===false||f.visualGateExecuted===true),
   CERTIFICATION_VERSUS_RECOVERY: f=>
-    f.buildPass===true&&f.independentReview===true&&
+    f.buildPass===true&&stageReviewOk(f)&&
     f.mainReadback===true&&f.checkpointIntegrated===true
 });
 export const P0_PRIORITY_CAUSAL_PROBES=Object.freeze([
@@ -3654,7 +3753,7 @@ export const P0_PRIORITY_CAUSAL_PROBES=Object.freeze([
     {admissionApproved:true,groupShaFresh:true,parentsMatch:true,
       groupCheckSuccess:true},"groupShaFresh"],
   ["ACTIVE_VERSUS_CERTIFIED",
-    {buildPass:true,independentReview:true,merged:true,mainReadback:true,
+    {buildPass:true,release_stage:"PRE_PROD",assistedReview:true,independentReview:false,merged:true,mainReadback:true,
       checkpointIntegrated:true},"mainReadback"],
   ["APP_IDENTITY_VERSUS_CHECK_NAME",
     {expectedIntegrationId:101,emitterIntegrationId:101,
@@ -3672,7 +3771,7 @@ export const P0_PRIORITY_CAUSAL_PROBES=Object.freeze([
     {scopeAllowlisted:true,productDiff:true,
       visualGateExecuted:true},"visualGateExecuted"],
   ["CERTIFICATION_VERSUS_RECOVERY",
-    {buildPass:true,independentReview:true,
+    {buildPass:true,release_stage:"PRE_PROD",assistedReview:true,independentReview:false,
       mainReadback:true,checkpointIntegrated:true},"checkpointIntegrated"]
 ].map(([caseId,positive,discriminator])=>
   Object.freeze({caseId,positive:Object.freeze(positive),discriminator})));
@@ -3740,8 +3839,9 @@ export function materialReviewOfReverseGaps(inventory,worklist,reverse){
       kind:def?.kind??"MISSING_INTERPRETATION",
       reason:def?.reason??null,related:def?.related??[],
       review_level:"AUTHOR_PROPOSAL",
-      independent_review:null,positive_witness:null,negative_witness:null,
-      verdict:"REQUIRES_INDEPENDENT_SEMANTIC_REVIEW"};
+      independent_review:null,assisted_review:null,required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+      positive_witness:null,negative_witness:null,
+      verdict:"REQUIRES_STAGE_SEMANTIC_REVIEW"};
   });
   for(const def of P0_REVERSE_GAP_REVIEWS)
     if(!seen.has(def.doc+":"+def.line))
@@ -3752,7 +3852,7 @@ export function materialReviewOfReverseGaps(inventory,worklist,reverse){
     total:records.length,unique:seen.size,
     source_linked:records.filter(r=>r.related.length>0).length,
     structural_or_historical:records.filter(r=>r.related.length===0).length,
-    issues,adjudicated_independently:0,uncovered_spans_remaining:18,
+    issues,adjudicated_independently:0,adjudicated_assisted_pre_prod:0,uncovered_spans_remaining:18,
     semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
 }
 
@@ -3861,7 +3961,7 @@ export function executeSemanticCorpusIntegrityMutants(dossier){
 }
 
 /** Authored, source-linked substantive proposals for ten priority conflicts; not independent final adjudications. */
-export const P0_PRIORITY_SEMANTIC_PROPOSALS=Object.freeze([["AUTHORIZATION_OUTLIVES_REVIEW","CUMULATIVE_AUTHORIZATION","APPROVED vigente é condição necessária mas não suficiente: a autorização específica do titular deve continuar válida no mesmo repo, PR, HEAD e base.","Após a revogação, o status positivo anterior não sustenta nova publicação nem admite a PR na fila.","A autorização vigente, a revisão elegível e os checks atuais devem coincidir antes de qualquer tentativa.","A review histórica continua existente, mas a autorização temporalmente revogada tem precedência para bloquear o próximo passo."],["N17_TWO_REVIEWS_AUTHORIZATION_ONLY","NATIVE_ENFORCEMENT_GAP","Duas aprovações elegíveis com autoria terceira não restauram uma autorização específica que o titular revogou.","O estado nativo de revisão pode permanecer satisfeito; é necessário bloqueio próprio e nativo da entrada no grupo.","Somente a manutenção simultânea das duas aprovações e a retirada efetiva da autorização em fonte autenticada distingue o caso de um simples dismiss.","Sem terceiro autor autorizado e sem prova do veto nativo antes do merge, N17(c) continua sem execução e ativação proibida."],["ADMISSION_VERSUS_MERGE_GROUP","SEQUENTIAL_GATE_DEPENDENCE","Admissão da PR e autorização no SHA efêmero do merge_group são fases cumulativas com proveniência distinta.","O success de admissão não pode ser reutilizado quando o grupo, os pais ou o HEAD mudarem.","Composição autenticada da base e da PR, seguida de status do grupo para o SHA realmente ativo.","Qualquer mudança do grupo exige nova avaliação, sem transferir o status anterior."],["ACTIVE_VERSUS_CERTIFIED","LIFECYCLE_PRECEDENCE","A missão ACTIVE pode ter BUILD e testes aprovados sem ter cumprido merge, readback e checkpoint protegido.","A transição a CERTIFIED depende das duas provas aplicáveis e de parecer independente no HEAD.","Readback pós-merge e checkpoint integrado são fatos distintos do parecer e do resultado CI.","Relatório local DONE ou encerramento de sessão não cancelam nem certificam a missão."],["APP_IDENTITY_VERSUS_CHECK_NAME","AUTHENTICITY_REQUIREMENT","A igualdade textual do nome de um check não comprova sua origem autorizada.","Somente commit status do App dedicado com integration_id exigido e SHA correto atende a identidade do publicador.","Check Run homônimo de Actions e status do integration_id errado devem falhar mesmo com conclusão verde.","Instalar App, credencial e required check requer gate administrativo de ativação separado do BUILD."],["FULL_DIFF_NO_DOCUMENTAL_ESCAPE","FULL_SCOPE_PRECEDENCE","Um manifesto full_diff verdadeiro obriga a verificar todos os caminhos, inclusive documentos extras.","Marcar a mudança como documental ou visual N/A não autoriza arquivo fora da lista protegida.","Comparar diff total com manifesto obtido na base protegida anterior, antes de qualquer filtro por código.","Tentativa de manifesto autocriado no HEAD candidato não substitui a origem protegida."],["WATCHDOG_VERSUS_ANTISTAGNATION","MONITORING_NOT_AUTHORITY","O watchdog pode diagnosticar falta de progresso; não é executor, aprovador ou certificador.","Duas tentativas sem delta causal exigem RCA ampliada e vedam retry idêntico.","Nova evidência causal permite examinar nova tentativa, mas não substitui lock, contrato e critérios de conclusão.","Heartbeat sem evidência de avanço causal não altera o estado formal da missão nem autoriza certificação."],["REVOCATION_AFTER_GREEN_STATUS","TEMPORAL_SAFETY_OBLIGATION","A revogação após status verde deve impedir nativamente a tentativa ativa antes do merge.","Novo status ou polling tardio não comprovam bloqueio atômico de entrada já elegível.","Somente recibo de retirada/invalidação com confronto de tempo anterior ao merge comprova efetividade.","Sem garantia verificável da plataforma contra a corrida revogação/merge, manter NO-GO de ativação."],["VISUAL_NA_WITH_REAL_APP_DIFF","SCOPE_GUARD_DOMINATES_NA","A dispensa de avaliação visual só cabe no diff estritamente não visual autorizado.","Mudar src/public ou interface de produto com rótulo visual N/A deve reprovar o gate de escopo.","Teste C verifica a natureza do diff do HEAD real e exige plano visual para mudanças aplicáveis.","O campo de impacto visual da PR é alegação, não prova de ausência de impacto."],["CERTIFICATION_VERSUS_RECOVERY","CERTIFICATION_EVIDENCE_CHAIN","Recuperar um processo ou concluir BUILD não produz certificado sem revisão e integração.","Certificação exige readback da main, evidência independente e checkpoint preservado no GitHub.","HEAD/base divergentes reabrem as verificações sem descartar o último checkpoint comprovado.","Encerramento de agente, retry e atualização documental não dispensam o rito de aprovação e integração."]].map(
+export const P0_PRIORITY_SEMANTIC_PROPOSALS=Object.freeze([["AUTHORIZATION_OUTLIVES_REVIEW","CUMULATIVE_AUTHORIZATION","APPROVED vigente é condição necessária mas não suficiente: a autorização específica do titular deve continuar válida no mesmo repo, PR, HEAD e base.","Após a revogação, o status positivo anterior não sustenta nova publicação nem admite a PR na fila.","A autorização vigente, a revisão elegível e os checks atuais devem coincidir antes de qualquer tentativa.","A review histórica continua existente, mas a autorização temporalmente revogada tem precedência para bloquear o próximo passo."],["N17_TWO_REVIEWS_AUTHORIZATION_ONLY","NATIVE_ENFORCEMENT_GAP","Duas aprovações elegíveis com autoria terceira não restauram uma autorização específica que o titular revogou.","O estado nativo de revisão pode permanecer satisfeito; é necessário bloqueio próprio e nativo da entrada no grupo.","Somente a manutenção simultânea das duas aprovações e a retirada efetiva da autorização em fonte autenticada distingue o caso de um simples dismiss.","Sem terceiro autor autorizado e sem prova do veto nativo antes do merge, N17(c) continua sem execução e ativação proibida."],["ADMISSION_VERSUS_MERGE_GROUP","SEQUENTIAL_GATE_DEPENDENCE","Admissão da PR e autorização no SHA efêmero do merge_group são fases cumulativas com proveniência distinta.","O success de admissão não pode ser reutilizado quando o grupo, os pais ou o HEAD mudarem.","Composição autenticada da base e da PR, seguida de status do grupo para o SHA realmente ativo.","Qualquer mudança do grupo exige nova avaliação, sem transferir o status anterior."],["ACTIVE_VERSUS_CERTIFIED","LIFECYCLE_PRECEDENCE","A missão ACTIVE pode ter BUILD e testes aprovados sem ter cumprido merge, readback e checkpoint protegido.","A transição a CERTIFIED depende das duas provas aplicáveis e de revisão material no HEAD conforme o estágio: assistida pré-PROD ou independente PROD.","Readback pós-merge e checkpoint integrado são fatos distintos do parecer e do resultado CI.","Relatório local DONE ou encerramento de sessão não cancelam nem certificam a missão."],["APP_IDENTITY_VERSUS_CHECK_NAME","AUTHENTICITY_REQUIREMENT","A igualdade textual do nome de um check não comprova sua origem autorizada.","Somente commit status do App dedicado com integration_id exigido e SHA correto atende a identidade do publicador.","Check Run homônimo de Actions e status do integration_id errado devem falhar mesmo com conclusão verde.","Instalar App, credencial e required check requer gate administrativo de ativação separado do BUILD."],["FULL_DIFF_NO_DOCUMENTAL_ESCAPE","FULL_SCOPE_PRECEDENCE","Um manifesto full_diff verdadeiro obriga a verificar todos os caminhos, inclusive documentos extras.","Marcar a mudança como documental ou visual N/A não autoriza arquivo fora da lista protegida.","Comparar diff total com manifesto obtido na base protegida anterior, antes de qualquer filtro por código.","Tentativa de manifesto autocriado no HEAD candidato não substitui a origem protegida."],["WATCHDOG_VERSUS_ANTISTAGNATION","MONITORING_NOT_AUTHORITY","O watchdog pode diagnosticar falta de progresso; não é executor, aprovador ou certificador.","Duas tentativas sem delta causal exigem RCA ampliada e vedam retry idêntico.","Nova evidência causal permite examinar nova tentativa, mas não substitui lock, contrato e critérios de conclusão.","Heartbeat sem evidência de avanço causal não altera o estado formal da missão nem autoriza certificação."],["REVOCATION_AFTER_GREEN_STATUS","TEMPORAL_SAFETY_OBLIGATION","A revogação após status verde deve impedir nativamente a tentativa ativa antes do merge.","Novo status ou polling tardio não comprovam bloqueio atômico de entrada já elegível.","Somente recibo de retirada/invalidação com confronto de tempo anterior ao merge comprova efetividade.","Sem garantia verificável da plataforma contra a corrida revogação/merge, manter NO-GO de ativação."],["VISUAL_NA_WITH_REAL_APP_DIFF","SCOPE_GUARD_DOMINATES_NA","A dispensa de avaliação visual só cabe no diff estritamente não visual autorizado.","Mudar src/public ou interface de produto com rótulo visual N/A deve reprovar o gate de escopo.","Teste C verifica a natureza do diff do HEAD real e exige plano visual para mudanças aplicáveis.","O campo de impacto visual da PR é alegação, não prova de ausência de impacto."],["CERTIFICATION_VERSUS_RECOVERY","CERTIFICATION_EVIDENCE_CHAIN","Recuperar um processo ou concluir BUILD não produz certificado sem revisão e integração.","Certificação exige readback da main, evidência de revisão material conforme o estágio e checkpoint preservado no GitHub.","HEAD/base divergentes reabrem as verificações sem descartar o último checkpoint comprovado.","Encerramento de agente, retry e atualização documental não dispensam o rito de aprovação e integração."]].map(
   ([caseId,classification,interpretation,risk,evidence,precedence])=>
     Object.freeze({caseId,classification,interpretation,risk,evidence,precedence})));
 export function analyzePrioritySemanticProposals(triage){

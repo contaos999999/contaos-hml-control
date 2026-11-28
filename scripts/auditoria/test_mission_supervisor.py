@@ -3,6 +3,7 @@
 Tests use synthetic data strictly as negative fixtures, not GitHub evidence.
 """
 import copy
+import hashlib
 import importlib.util
 import json
 import io
@@ -35,12 +36,18 @@ def contract():
         "dependency_heads": {"690": H},
         "last_proven": {"merge_sha": H, "verified": True},
         "activation_authorized": False,
-        "requirements": {"required_checks": list(mod.REQUIRED)},
+        "requirements": {"required_checks": list(mod.REQUIRED),
+                         "audit_modality_by_stage": dict(mod.AUDIT_MODALITY_BY_STAGE),
+                         "audit_policy_authority": dict(mod.AUDIT_POLICY_AUTHORITY)},
         "immutable_plan": {
             "path": "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md",
             "blob": C,
         },
     }
+
+
+REPORT = "SYNTHETIC fixture only, not an actual audited report or evidence. " * 8
+REPORT_HASH = hashlib.sha256(REPORT.encode("utf-8")).hexdigest()
 
 
 def evidence():
@@ -71,7 +78,12 @@ def evidence():
         ],
         "review": {"id": ID, "head": H, "state": "APPROVED", "login": "Edivan5002"},
         "owner_authorization": {"verified": True, "review_id": ID, "head": H, "base": B, "revoked": False},
-        "independent_audit": {"verified_pass": True, "head": H},
+        "release_stage": "PROD",  # synthetic independent stage regression only
+        "independent_audit": {"verified_pass": True, "head": H, "base": B,
+                              "review_id": ID, "author": "contaos9999",
+                              "reviewer": "independent-auditor", "modality": "INDEPENDENT",
+                              "authorship_independent": True, "contradiction_completed": True,
+                              "report": REPORT, "report_sha256": REPORT_HASH},
         "publisher": {"available": True},
     }
 
@@ -104,7 +116,9 @@ class MissionSupervisorTests(unittest.TestCase):
             "merge_sha": C,
             "main_readback": True,
             "checkpoint_sha": B,
-            "independent_audit_pass": True,
+            "release_stage": "PROD",
+            "audit_modality": "INDEPENDENT",
+            "audit_pass": True,
             "review_approved": True,
         }
         result = mod.evaluate(c, evidence())
@@ -879,7 +893,7 @@ class AuditModality863Tests(unittest.TestCase):
             "verified_pass": True, "head": H, "base": B, "review_id": ID,
             "author": "contaos9999", "reviewer": "Edivan5002",
             "modality": "ASSISTED_PRE_PROD", "contradiction_completed": True,
-            "report_sha256": "a" * 64}
+            "report": REPORT, "report_sha256": REPORT_HASH}
         result = mod.evaluate(c, e)
         self.assertNotIn("N06", codes(result),
                          "P0 #863 assisted PRE_PROD false block: " + str(result["issues"]))
@@ -895,11 +909,38 @@ class AuditModality863Tests(unittest.TestCase):
         for mutation in (
             {"head": C}, {"base": C}, {"review_id": "wrong"},
             {"reviewer": "contaos9999"}, {"contradiction_completed": False},
-            {"verified_pass": False},
+            {"verified_pass": False}, {"report_sha256": "f" * 64},
+            {"authorship_independent": True}, {"modality": "INDEPENDENT"},
         ):
             bad = copy.deepcopy(e)
             bad["assisted_audit"].update(mutation)
             self.assertIn("N06", codes(mod.evaluate(c, bad)))
+
+    def test_863_protected_policy_and_independent_prod_cannot_be_substituted(self):
+        c = contract()
+        self.assertNotIn("N06", codes(mod.evaluate(c, evidence())))
+        for bad in ({}, {"PRE_PROD": "ASSISTED_PRE_PROD", "PROD": "ASSISTED_PRE_PROD"}):
+            poisoned = copy.deepcopy(c)
+            poisoned["requirements"]["audit_modality_by_stage"] = bad
+            with self.assertRaises(mod.InvalidEvidence):
+                mod.evaluate(poisoned, evidence())
+        poisoned = copy.deepcopy(c)
+        poisoned["requirements"]["audit_policy_authority"]["blob"] = "f" * 40
+        with self.assertRaises(mod.InvalidEvidence):
+            mod.evaluate(poisoned, evidence())
+        for mutation in ({"authorship_independent": False},
+                         {"reviewer": "CONTAOS9999"}, {"base": C},
+                         {"report_sha256": "f" * 64}):
+            e = evidence()
+            e["independent_audit"].update(mutation)
+            self.assertIn("N06", codes(mod.evaluate(c, e)))
+        for stage in (None, "UNKNOWN", [], "PRE_PROD"):
+            e = evidence()
+            e["release_stage"] = stage
+            self.assertIn("N06", codes(mod.evaluate(c, e)))
+        e = evidence()
+        e["assisted_audit"] = copy.deepcopy(e["independent_audit"])
+        self.assertIn("N06", codes(mod.evaluate(c, e)))
 
     def test_863_unknown_stage_must_not_inherit_independent_audit(self):
         c = contract()
