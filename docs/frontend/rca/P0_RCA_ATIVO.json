@@ -3,193 +3,121 @@
   "versao": "V2",
   "prompt_id": "76",
   "baseline": {
-    "frontend_sha": "481878739489d68ee725ae9e3a908a36d1b9e31e",
-    "backend_sha": "b45532dc6397b2c34763ff20ced56f3d0f604d8e"
+    "frontend_sha": "75c2e87df99385c98add6e2da056fb764239cdb7",
+    "backend_sha": "44877eccb2bdea721f544d8ba1c8443d106ff967"
   },
   "escopo": [
     {
-      "arquivo": "src/routes/competencias_.$id_.pareceres-contratante.tsx",
+      "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
       "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
+      "justificativa": "Missão transversal P0-ORQ-ACTIONS-001, correção do bloqueio de transporte, escopo fechado #852/#854; prompt 76 identifica o gate vigente, não recertifica o regular."
     },
     {
-      "arquivo": "src/routeTree.gen.ts",
+      "arquivo": "scripts/p0-actions-request.test.mjs",
       "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
+      "justificativa": "Missão transversal P0-ORQ-ACTIONS-001, correção do bloqueio de transporte, escopo fechado #852/#854; prompt 76 identifica o gate vigente, não recertifica o regular."
     },
     {
-      "arquivo": "src/components/diligencias/DiligenciasCompetencia.tsx",
+      "arquivo": "scripts/p0-actions-request.mjs",
       "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
+      "justificativa": "Missão transversal P0-ORQ-ACTIONS-001, correção do bloqueio de transporte, escopo fechado #852/#854; prompt 76 identifica o gate vigente, não recertifica o regular."
     },
     {
-      "arquivo": "src/components/competencias/CompetenciaProtocolo.tsx",
+      "arquivo": ".github/workflows/p0-actions-orchestrator-code.yml",
       "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
-    },
-    {
-      "arquivo": "src/components/diligencias/PareceresContratante.tsx",
-      "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
-    },
-    {
-      "arquivo": "src/lib/diligencias/pareceresContratanteDados.ts",
-      "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
-    },
-    {
-      "arquivo": "src/test/v2-76-contrato.test.ts",
-      "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
-    },
-    {
-      "arquivo": "src/test/v2-76-tela.test.tsx",
-      "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
-    },
-    {
-      "arquivo": "scripts/testc/visual-audit.mjs",
-      "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
-    },
-    {
-      "arquivo": "scripts/testc/visual-audit.test.mjs",
-      "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
-    },
-    {
-      "arquivo": "scripts/testc/v2-integracao-visual.mjs",
-      "versao": "V2",
-      "justificativa": "Pareceres externos, navegação, contrato ou prova previstos no PLAN #848."
+      "justificativa": "Missão transversal P0-ORQ-ACTIONS-001, correção do bloqueio de transporte, escopo fechado #852/#854; prompt 76 identifica o gate vigente, não recertifica o regular."
     }
   ],
   "itens": [
     {
-      "id": "V2-07-PARECERES",
-      "tipo": "NOVA_FUNCIONALIDADE",
+      "id": "P0-ORQ-ACTIONS-001-F1",
+      "tipo": "CORRECAO",
+      "reproducao": {
+        "confirmada": true,
+        "sintoma": "Inexistência de mecanismo nativo de validação de solicitações de Actions, impedindo continuidade controlada.",
+        "esperado": "Validação CODE fixture com negações fail-closed, sem qualquer autoridade de execução.",
+        "observado": "Ausência do módulo: RED causal focal #853 e RED no próprio Zero-Drift #855; 104 testes do conjunto RCA passaram, exclusivamente o novo caso falhou.",
+        "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46095920726"
+      },
+      "causa": {
+        "status": "CONFIRMADA",
+        "descricao": "O módulo de validação nativo não existia; o teste de contrato no workflow oficial registrou RED_CAUSAL_TRANSPORT_VALIDATOR_ABSENT. A conexão não disponibiliza workflow_dispatch, conforme PLAN #851. A fatia F1 corrige somente a ausência do mecanismo de validação, sem resolver ainda a execução operacional.",
+        "evidencias": [
+          "RED 46094671465, 78/78 falhas causais",
+          "RED Zero-Drift 46095920726, job 140827102359, 104 PASS e 1 falha no novo caso",
+          "CI 46096034996: RED histórico reconhecido; suíte RCA anterior ao setup Node 24 aprovou os três casos Unicode, mas o seletor individual após setup Node 24.22.3 não os reconheceu. Adicionados casos ASCII semanticamente equivalentes, mantendo provas originais e RED histórico, sem alterar o gate.",
+          "CI 46096184311: os equivalentes ASCII ainda falharam exclusivamente na seleção individual; hipótese Unicode descartada. Casos originais mantidos. Casos equivalentes isolados no arquivo focal sem imports de outras suítes e com execução real do guard; validação condicionada ao CI.",
+          "Zero-Drift 46099671398: o caso isolado de contrato passou; somente as duas provas que importam o gate falharam. Reprodução local Node v22.16.0 com a expressão idêntica de entrypoint do gate e --experimental-test-isolation=none mostra argv[1] relativo e ERR_INVALID_FILE_URL_HOST; normalização temporária com path.resolve e restauração em finally produz PASS real. Corrigida apenas a fixture de importação, sem alterar o gate, flags, asserções ou RED. CI Node 24 deve confirmar a eficácia."
+        ],
+        "hipoteses_descartadas": [
+          "Checkout/setup funcionais; 104 testes RCA preexistentes aprovados no RED oficial.",
+          "O erro observado é a ausência do módulo, não uma falha de ambiente ou de banco."
+        ]
+      },
       "solucao": {
-        "descricao": "A rota e o cenário de Teste C inexistiam no RED autenticado 46073815380. Implementação candidata usa consultas com escopo exato, RPCs oficiais, envio privado existente e origem V120. Reconciliar árvore conforme diff GOV-020 e manter inventário cumulativo. Validação GREEN condicionada ao CI.",
-        "rollback": "Reverter por PR protegida, preservando registros oficiais e migrações backend.",
+        "descricao": "Reaplicar quatro arquivos CODE do #853 byte a byte, acrescentar prova complementar na suíte existente e ficha RCA. Sem dispatch, acesso a banco, alteração de gate, fiscal ou regra de proteção.",
+        "rollback": "Reverter a PR por merge protegido, preservar artefatos, RED e recibos históricos; nenhuma mutação de HML/PROD.",
         "arquivos": [
-          "src/routes/competencias_.$id_.pareceres-contratante.tsx",
-          "src/routeTree.gen.ts",
-          "src/components/diligencias/DiligenciasCompetencia.tsx",
-          "src/components/competencias/CompetenciaProtocolo.tsx",
-          "src/components/diligencias/PareceresContratante.tsx",
-          "src/lib/diligencias/pareceresContratanteDados.ts",
-          "src/test/v2-76-contrato.test.ts",
-          "src/test/v2-76-tela.test.tsx",
-          "scripts/testc/visual-audit.mjs",
-          "scripts/testc/visual-audit.test.mjs",
-          "scripts/testc/v2-integracao-visual.mjs"
+          "scripts/p0-rca-impact-gate.test.mjs",
+          "scripts/p0-actions-request.test.mjs",
+          "scripts/p0-actions-request.mjs",
+          ".github/workflows/p0-actions-orchestrator-code.yml"
         ]
       },
       "impacto": {
         "dependencias": [
-          "V2-01, V2-02, V2-03, V2-06, V120",
-          "Contratos HML #247 e #250"
+          "Zero-Drift e RCA operacional existentes",
+          "P0-NR-001",
+          "PLAN #852/#854, B1 backend #257 e fonte canônica",
+          "Regular 76/77A e fiscal #690 preservados"
         ],
         "versoes_afetadas": [
-          "V1",
           "V2"
         ],
         "riscos": [
           {
-            "risco": "Escopo de organização/contrato divergente",
+            "risco": "Autorização indevida de PROD",
             "teste_preventivo": {
-              "id": "76-ESCOPO",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-76-contrato.test.ts",
-              "caso": "V2-07 contrato pagina pareceres e apresentações pelo escopo exato e rejeita resposta cruzada"
+              "id": "F1-PROD",
+              "runner": "node",
+              "arquivo": "scripts/p0-actions-request.test.mjs",
+              "caso": "schema rejects PROD"
             }
           },
           {
-            "risco": "Repetição e efeito duplicado",
+            "risco": "Replay",
             "teste_preventivo": {
-              "id": "76-RETRY",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-76-tela.test.tsx",
-              "caso": "V2-07 tela usa upload privado e repete a intenção original após resposta incerta"
+              "id": "F1-REPLAY",
+              "runner": "node",
+              "arquivo": "scripts/p0-actions-request.test.mjs",
+              "caso": "evidence rejects replay"
             }
           },
           {
-            "risco": "Arquivo ou apresentação de outra competência",
+            "risco": "Origem obsoleta",
             "teste_preventivo": {
-              "id": "76-NEGATIVO",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-76-contrato.test.ts",
-              "caso": "V2-07 contrato nega arquivo ou apresentação divergente antes da mutação e preserva 403 e 409"
+              "id": "F1-STALE",
+              "runner": "node",
+              "arquivo": "scripts/p0-actions-request.test.mjs",
+              "caso": "evidence rejects stale main"
             }
           },
           {
-            "risco": "Fila ou resultado divergente",
+            "risco": "Revisão divergente",
             "teste_preventivo": {
-              "id": "76-FILA",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-76-contrato.test.ts",
-              "caso": "V2-07 contrato consulta processamento por RPC sem ler a fila e rejeita recibo divergente"
+              "id": "F1-REVIEW",
+              "runner": "node",
+              "arquivo": "scripts/p0-actions-request.test.mjs",
+              "caso": "evidence rejects stale approval"
             }
           },
           {
-            "risco": "Exibição de registros após mudança de sessão",
+            "risco": "Regressão do gate RCA existente",
             "teste_preventivo": {
-              "id": "76-SESSAO",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-76-tela.test.tsx",
-              "caso": "V2-07 tela descarta a consulta anterior na mudança de organização"
-            }
-          },
-          {
-            "risco": "Vincular apontamento de outro parecer da mesma rodada",
-            "teste_preventivo": {
-              "id": "76-ORIGEM",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-76-contrato.test.ts",
-              "caso": "V2-07 contrato vincula apenas apontamentos com origem confirmada no parecer exato"
-            }
-          }
-        ]
-      },
-      "preflight": {
-        "status": "VERIFICADO",
-        "baseline_sha": "481878739489d68ee725ae9e3a908a36d1b9e31e",
-        "arquivo_evidencia": "docs/frontend/auditorias/preflight/V2_PROMPT76_CONTRATO_2026-11-27.json",
-        "arquivo_sha256": "3308904d3ece8954d914f45f2bbbf479318f482ade390c94905038c7ea091c58",
-        "checks": [
-          {
-            "tipo": "CONTRATO",
-            "teste": {
-              "id": "76-RPC",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-76-contrato.test.ts",
-              "caso": "V2-07 contrato registra exclusivamente pela RPC oficial e preserva a intenção em repetição"
-            }
-          },
-          {
-            "tipo": "RBAC_RLS",
-            "teste": {
-              "id": "76-NEGATIVO",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-76-contrato.test.ts",
-              "caso": "V2-07 contrato nega arquivo ou apresentação divergente antes da mutação e preserva 403 e 409"
-            }
-          },
-          {
-            "tipo": "DADOS_INTEGRIDADE",
-            "teste": {
-              "id": "76-ESCOPO",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-76-contrato.test.ts",
-              "caso": "V2-07 contrato pagina pareceres e apresentações pelo escopo exato e rejeita resposta cruzada"
-            }
-          },
-          {
-            "tipo": "DEPENDENCIAS",
-            "teste": {
-              "id": "76-VINCULO",
-              "runner": "vitest",
-              "arquivo": "src/test/v2-76-tela.test.tsx",
-              "caso": "V2-07 tela preserva apresentação exata e exibe processamento e prazo oficiais"
+              "id": "F1-REG-RCA",
+              "runner": "node",
+              "arquivo": "scripts/p0-actions-request.test.mjs",
+              "caso": "F1 isolated RCA missing report blocks V2 build"
             }
           }
         ]
@@ -197,108 +125,90 @@
       "testes": {
         "red": [
           {
-            "id": "76-RED",
+            "id": "F1-RED",
             "runner": "node",
-            "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-07 registra a rota de pareceres e sua prova visual",
-            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46073815380",
-            "run_sha": "1cbd759062f2b29f0fa5464a93ad91cbff2f2bc7"
+            "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+            "caso": "P0-ORQ F1 valida contrato CODE sem autoridade de execução",
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46095920726",
+            "run_sha": "5c7a489c95edd96281a5893e2b97601d24757800"
           }
         ],
         "green": [
           {
-            "id": "76-ESCOPO",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-76-contrato.test.ts",
-            "caso": "V2-07 contrato pagina pareceres e apresentações pelo escopo exato e rejeita resposta cruzada"
-          },
-          {
-            "id": "76-RPC",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-76-contrato.test.ts",
-            "caso": "V2-07 contrato registra exclusivamente pela RPC oficial e preserva a intenção em repetição"
-          },
-          {
-            "id": "76-FILA",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-76-contrato.test.ts",
-            "caso": "V2-07 contrato consulta processamento por RPC sem ler a fila e rejeita recibo divergente"
-          },
-          {
-            "id": "76-VINCULO",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-76-tela.test.tsx",
-            "caso": "V2-07 tela preserva apresentação exata e exibe processamento e prazo oficiais"
-          },
-          {
-            "id": "76-RED",
+            "id": "F1-RED",
             "runner": "node",
-            "arquivo": "scripts/testc/visual-audit.test.mjs",
-            "caso": "V2-07 registra a rota de pareceres e sua prova visual"
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "F1 isolated contract without execution authority"
           },
           {
-            "id": "76-ORIGEM",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-76-contrato.test.ts",
-            "caso": "V2-07 contrato vincula apenas apontamentos com origem confirmada no parecer exato"
+            "id": "F1-GREEN",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "positive: canonical closed request and fixed catalog"
+          },
+          {
+            "id": "F1-API",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "collector reconstructs a fully paginated fixture without granting execution"
           }
         ],
         "negativos": [
           {
-            "id": "76-NEGATIVO",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-76-contrato.test.ts",
-            "caso": "V2-07 contrato nega arquivo ou apresentação divergente antes da mutação e preserva 403 e 409"
+            "id": "F1-PROD",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "schema rejects PROD"
           },
           {
-            "id": "76-RETRY",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-76-tela.test.tsx",
-            "caso": "V2-07 tela usa upload privado e repete a intenção original após resposta incerta"
+            "id": "F1-DISABLED",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "disabled operation never authorizes execution"
           },
           {
-            "id": "76-RLS",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-76-tela.test.tsx",
-            "caso": "V2-07 tela nega a consulta sem exibir registros nem formulário"
+            "id": "F1-STALE",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "evidence rejects stale main"
           },
           {
-            "id": "76-SESSAO",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-76-tela.test.tsx",
-            "caso": "V2-07 tela descarta a consulta anterior na mudança de organização"
+            "id": "F1-REVIEW",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "evidence rejects stale approval"
+          },
+          {
+            "id": "F1-REPLAY",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "evidence rejects replay"
+          },
+          {
+            "id": "F1-HTTP",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "collector fails closed on HTTP error"
+          },
+          {
+            "id": "F1-SCOPE",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "evidence rejects unapproved delta"
           }
         ],
         "regressao": [
           {
-            "id": "46-SESSAO",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-46-tela.test.tsx",
-            "caso": "V2-03 limpa o item obsoleto na troca de organizacao ou sessao"
+            "id": "F1-REG-RCA",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "F1 isolated RCA missing report blocks V2 build"
           },
           {
-            "id": "45-PROTOCOLO",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-45-tela.test.tsx",
-            "caso": "V2-02 retorna a lista e chega ao protocolo da propria competencia"
-          },
-          {
-            "id": "44-COMPETENCIA",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-44-tela.test.tsx",
-            "caso": "V2-01 liga a entrada de diligencias a V114 sem trocar o contexto"
-          },
-          {
-            "id": "48-PORTAO",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-48-tela.test.tsx",
-            "caso": "V2-05 abre a contestacao mostra mapa e registra decisao humana com releitura"
-          },
-          {
-            "id": "49-FLUXO",
-            "runner": "vitest",
-            "arquivo": "src/test/v2-49-tela.test.tsx",
-            "caso": "V2-06 libera registra e relê o recibo distinguindo a rodada anterior"
+            "id": "F1-REG-SCOPE",
+            "runner": "node",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "caso": "F1 isolated RCA divergent plan scope blocks build"
           }
         ]
       }
