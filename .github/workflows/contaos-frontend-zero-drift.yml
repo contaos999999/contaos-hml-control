@@ -74,6 +74,23 @@ jobs:
           node scripts/ci/install-pinned-bun.mjs
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
+      - name: P0 #864 RED causal temporario no Zero-Drift original
+        if: github.event_name == 'pull_request' && github.event.pull_request.number == 866 && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          EXPECTED_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          checkout="$(git rev-parse HEAD)"
+          if [ "$checkout" != "$EXPECTED_HEAD" ]; then
+            test "$(git rev-parse HEAD^1)" = "$EXPECTED_BASE"
+            test "$(git rev-parse HEAD^2)" = "$EXPECTED_HEAD"
+          fi
+          git merge-base --is-ancestor "$EXPECTED_BASE" "$EXPECTED_HEAD"
+          test "$(git rev-parse "$EXPECTED_BASE:docs/frontend/planos/P0_GOV_PLAN_866.json")" = "a7c16b162186c06f50838d8880a9022c0d9b0cb9"
+          test "$(git rev-parse "$EXPECTED_HEAD:src/components/organizacao/OrganizationSelector.tsx")" = "$(git rev-parse "$EXPECTED_BASE:src/components/organizacao/OrganizationSelector.tsx")"
+          git diff --name-only "$EXPECTED_BASE" "$EXPECTED_HEAD"
+          bunx vitest run src/test/selecionarOrganizacao.test.tsx --reporter=verbose
       - name: P0 RCA V1-V5 — verificar escopo, RED GitHub e executar GREEN/REG reais
         env:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
