@@ -3,70 +3,142 @@
   "versao": "V2",
   "prompt_id": "76",
   "baseline": {
-    "frontend_sha": "6e66af077e27345b6de30d9f3858dabb4f7627df",
-    "backend_sha": "93f14f051af6d04cf8cc5098d26118869a6c1c29"
+    "frontend_sha": "b3d00574c6ba358bd5d0134bdb15c2e41e025d68",
+    "backend_sha": "d88bf0deff9b53fd10bb29036005f70a5c8613c9"
   },
   "escopo": [
     {
-      "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+      "arquivo": "scripts/p0-actions-transport.mjs",
       "versao": "V2",
-      "justificativa": "Correção de teste V2-04 prevista no PLAN #857. Nenhuma alteração no componente."
+      "justificativa": "Escopo fechado da emenda F2 #859; transporte nativo somente CANARY_CODE, sem autoridade material, prompt 76 identifica gate."
     },
     {
-      "arquivo": "src/test/v2-47-tela.test.tsx",
+      "arquivo": "scripts/p0-actions-transport.test.mjs",
       "versao": "V2",
-      "justificativa": "Correção de teste V2-04 prevista no PLAN #857. Nenhuma alteração no componente."
+      "justificativa": "Escopo fechado da emenda F2 #859; transporte nativo somente CANARY_CODE, sem autoridade material, prompt 76 identifica gate."
+    },
+    {
+      "arquivo": ".github/workflows/p0-actions-orchestrator-code.yml",
+      "versao": "V2",
+      "justificativa": "Escopo fechado da emenda F2 #859; transporte nativo somente CANARY_CODE, sem autoridade material, prompt 76 identifica gate."
+    },
+    {
+      "arquivo": ".github/workflows/p0-actions-orchestrator-request.yml",
+      "versao": "V2",
+      "justificativa": "Escopo fechado da emenda F2 #859; transporte nativo somente CANARY_CODE, sem autoridade material, prompt 76 identifica gate."
+    },
+    {
+      "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+      "versao": "V2",
+      "justificativa": "Escopo fechado da emenda F2 #859; transporte nativo somente CANARY_CODE, sem autoridade material, prompt 76 identifica gate."
     }
   ],
   "itens": [
     {
-      "id": "P0-V2-04-RELEITURA",
+      "id": "P0-ORQ-ACTIONS-001-F2",
       "tipo": "CORRECAO",
       "reproducao": {
         "confirmada": true,
-        "sintoma": "A prova intermitente lê a contagem antes do efeito React.",
-        "esperado": "Aguardar dados atualizados e comprovar exatamente duas chamadas de cada consulta.",
-        "observado": "O Vitest observou uma chamada em 46100282909/1. Reprodução React focal captura [1, 1] no callback; o teste determinístico da asserção síncrona falhou em 46101748957/1.",
-        "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46100282909/attempts/1"
+        "sintoma": "Ausência de recepção nativa CODE de requests revisados por PR protegida.",
+        "esperado": "Contrato de transporte, validação do checkout e proveniência, negações fail-closed, efeito local sanitizado restrito ao canário.",
+        "observado": "RED focal 34/34 e RED complementar Zero-Drift: 109 testes existentes passaram, exclusivamente novo caso falhou pela ausência do módulo.",
+        "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46124527087"
       },
       "causa": {
         "status": "CONFIRMADA",
-        "descricao": "A confirmação do registro e o callback ocorrem antes do useEffect que reconsulta os dados. A presença do recibo não é uma barreira para a releitura.",
+        "descricao": "B1/F1 somente validam e coletam fixtures sem executar; módulo de transporte e workflow nativo ausentes, como demonstrado no RED autenticado.",
         "evidencias": [
-          "Run 46100282909/1, job 140840927660, linha 125, esperadas 2 chamadas e observada 1.",
-          "Run 46101748957/1, job 140845526711, RED_V2_04_CONTAGEM_PREMATURA no Zero-Drift.",
-          "Prova React local em execução focal registrou [1, 1] no callback antes da atualização.",
-          "CI 46101916184/1: o seletor ancorado do Vitest exige nome completo, incluindo grupo V2-04. O Node sob isolamento none aciona a limitação de argv relativo do import legado já registrada em F1. O autoteste Node continua executado no Zero-Drift pré-RCA. A RCA operacional seleciona o teste de comportamento React exato."
+          "Backend RED 46123872002, 34 falhas causais",
+          "Frontend RED focal 46124527107 job 140916076488, 34 falhas causais; artefato 15255476482",
+          "Frontend Zero-Drift 46124527087 job 140916076655, not ok 110 P0 ORQ F2 native transport rejects non-main event; RED_CAUSAL_NATIVE_TRANSPORT_ABSENT"
         ],
         "hipoteses_descartadas": [
-          "Sem falha de persistência ou chamada duplicada. A operação e o recibo já haviam sido confirmados antes da falha da asserção."
+          "Setup e 109 casos preexistentes aprovados. Validador F1 permanece integrado. A falha reproduz ausência do transporte, não indisponibilidade de banco."
         ]
       },
       "solucao": {
-        "descricao": "Aguardar o detalhe e o portão após a primeira notificação e confirmar as contagens exatas.",
-        "rollback": "Reversão por PR protegida dos testes e da ficha correspondente.",
+        "descricao": "Adicionar transporte CODE por push main, checkout imutável, diff append-only e único, catálogo restrito, coletor real somente GET, árvore e HEAD revalidados, recibo sanitizado sem execução material e workflow estático. Fixture não é certificação.",
+        "rollback": "Reverter por PR protegida preservando RED e artefatos; nenhum efeito material em HML/PROD.",
         "arquivos": [
-          "scripts/p0-rca-impact-gate.test.mjs",
-          "src/test/v2-47-tela.test.tsx"
+          "scripts/p0-actions-transport.mjs",
+          "scripts/p0-actions-transport.test.mjs",
+          ".github/workflows/p0-actions-orchestrator-code.yml",
+          ".github/workflows/p0-actions-orchestrator-request.yml",
+          "scripts/p0-rca-impact-gate.test.mjs"
         ]
       },
       "impacto": {
         "dependencias": [
-          "PlanoAcaoDiligencia",
-          "React useEffect",
-          "Vitest e Testing Library"
+          "Validador B1/F1",
+          "Rulesets 26495643 e 28271968",
+          "Zero-Drift e RCA operacional",
+          "PLAN #258/#859; ledger/fiscal pendentes"
         ],
         "versoes_afetadas": [
           "V2"
         ],
         "riscos": [
           {
-            "risco": "Nova asserção antes da releitura.",
+            "risco": "Evento fora da main",
             "teste_preventivo": {
-              "id": "RELEITURA",
-              "caso": "V2-04 abre o painel, registra a tarefa e rele o detalhe e o portao",
-              "arquivo": "src/test/v2-47-tela.test.tsx",
-              "runner": "vitest"
+              "id": "F2-EVENT",
+              "caso": "F2 rejects non-main",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "Reexecução",
+            "teste_preventivo": {
+              "id": "F2-RETRY",
+              "caso": "F2 rejects retry attempt",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "Origem obsoleta",
+            "teste_preventivo": {
+              "id": "F2-STALE",
+              "caso": "F2 transport fails closed on late stale main",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "Árvore divergente",
+            "teste_preventivo": {
+              "id": "F2-TREE",
+              "caso": "F2 transport fails closed on reviewed head tree differs",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "Proteção insuficiente",
+            "teste_preventivo": {
+              "id": "F2-RULESET",
+              "caso": "F2 transport fails closed on strict protection disabled",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "Replay",
+            "teste_preventivo": {
+              "id": "F2-REPLAY",
+              "caso": "F2 transport fails closed on replay history",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "PROD indevido",
+            "teste_preventivo": {
+              "id": "F2-PROD",
+              "caso": "F2 rejects PROD",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
             }
           }
         ]
@@ -74,34 +146,94 @@
       "testes": {
         "red": [
           {
-            "id": "SINCRONIZACAO",
-            "caso": "V2-04 aguarda o efeito antes de contar exatamente duas consultas",
+            "id": "F2-RED",
+            "caso": "P0 ORQ F2 native transport rejects non-main event",
             "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
             "runner": "node",
-            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46101748957",
-            "run_sha": "dcc667f9ef1e2fe0428173c6afceb38ab894df1f"
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46124527087",
+            "run_sha": "4323b28c27938c14eb0bbd0adb30b741d9df1168"
           }
         ],
         "green": [
           {
-            "id": "RELEITURA",
-            "caso": "V2-04 abre o painel, registra a tarefa e rele o detalhe e o portao",
-            "arquivo": "src/test/v2-47-tela.test.tsx",
-            "runner": "vitest"
+            "id": "F2-PUSH",
+            "caso": "F2 native transport validates a single immutable CODE request",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-PROVENANCE",
+            "caso": "F2 transport reconstructs protected provenance fixture without execution",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-RECEIPT",
+            "caso": "F2 receipt is sanitized and never certifies or grants execution",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
           }
         ],
         "negativos": [
           {
-            "id": "REPLAY",
-            "caso": "V2-04 reutiliza a mesma chave apos perda de resposta",
-            "arquivo": "src/test/v2-47-tela.test.tsx",
-            "runner": "vitest"
+            "id": "F2-EVENT",
+            "caso": "F2 rejects non-main",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-RETRY",
+            "caso": "F2 rejects retry attempt",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-STALE",
+            "caso": "F2 transport fails closed on late stale main",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-TREE",
+            "caso": "F2 transport fails closed on reviewed head tree differs",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-RULESET",
+            "caso": "F2 transport fails closed on strict protection disabled",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-REPLAY",
+            "caso": "F2 transport fails closed on replay history",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-API",
+            "caso": "F2 fails closed with unavailable real evidence, no local effect",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-PROD",
+            "caso": "F2 rejects PROD",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
           }
         ],
         "regressao": [
           {
-            "id": "EVIDENCIA",
-            "caso": "V2-04 submete a versao escolhida e limita a decisao a capacidade oficial",
+            "id": "F1-PRESERVED",
+            "caso": "collector reconstructs a fully paginated fixture without granting execution",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "V2-04-REG",
+            "caso": "V2-04 abre o painel, registra a tarefa e rele o detalhe e o portao",
             "arquivo": "src/test/v2-47-tela.test.tsx",
             "runner": "vitest"
           }
