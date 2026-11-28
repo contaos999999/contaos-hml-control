@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "ab240aee0356d5c0d61236973a6f72ad24c6d0a5",
+  "source_commit": "44877eccb2bdea721f544d8ba1c8443d106ff967",
   "source_date": "2026-11-28",
   "context_documents": [
     {
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "Reancoragem após #254/#255: 25/25 documentos canônicos e catálogo 100/97 iguais, sem certificação de 77A ou do orquestrador; PLAN backend integrado, migração pendente."
+  "p0_reanchor_note": "Reancoragem #256: compare GitHub confirma dois commits, somente PLAN backend e active-task alterados; documentos normativos e catálogo não atingidos. Sem certificação ou ativação."
 }
