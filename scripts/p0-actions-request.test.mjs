@@ -306,14 +306,14 @@ test('collector reconstructs a fully paginated fixture without granting executio
    assert.throws(()=>m.parseRequest(raw({...q,environment:'PROD'}),repo));
  });
  test('F1 isolated RCA missing report blocks V2 build', async () => {
-   const {validateRcaImpact} = await import('./p0-rca-impact-gate.mjs');
+   const {validateRcaImpact} = await importRcaGateForTest();
    const result = validateRcaImpact({planId:'76',changed:['scripts/p0-actions-request.mjs'],report:null,reportExists:false});
    assert.equal(result.applicable,true);
    assert.equal(result.version,'V2');
    assert.match(result.errors.join(' '),/sem ficha RCA/);
  });
  test('F1 isolated RCA divergent plan scope blocks build', async () => {
-   const {validateRcaImpact} = await import('./p0-rca-impact-gate.mjs');
+   const {validateRcaImpact} = await importRcaGateForTest();
    const code='scripts/p0-actions-request.mjs', reportPath='docs/frontend/rca/P0_RCA_ATIVO.json';
    const report={schema:'contaos.p0.rca-report.v2',versao:'V2',prompt_id:'76',
      baseline:{frontend_sha:sha('a'),backend_sha:sha('b')},
@@ -323,3 +323,17 @@ test('collector reconstructs a fully paginated fixture without granting executio
    assert.equal(result.version,'V2');
    assert.match(result.errors.join(' '),/sem classificação/);
  });
+
+// Node's no-isolation selector may preserve a relative argv[1]. The existing
+// RCA CLI entrypoint expects an absolute file path when imported. Normalize
+// the fixture process argument only during import; restore it even on failure.
+async function importRcaGateForTest() {
+  const {resolve} = await import('node:path');
+  const original = process.argv[1];
+  try {
+    if (original) process.argv[1] = resolve(original);
+    return await import('./p0-rca-impact-gate.mjs');
+  } finally {
+    if (original) process.argv[1] = original;
+  }
+}
