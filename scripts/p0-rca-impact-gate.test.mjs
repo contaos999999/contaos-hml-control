@@ -3571,3 +3571,58 @@ test("P0 #863 review stage priority models preserve independent PROD and no miss
     assert.equal(check({...probe.positive,release_stage:"PROD",assistedReview:false,independentReview:true}),true);
   }
 });
+
+
+test("P0 #863 RED: verified flags cannot replace protected corpus or permit zero witnesses",async()=>{
+  // Real protected source reconstruction; witnesses are deliberately absent.
+  const base=protectedSourceBase();
+  const head="a".repeat(40);
+  let calls=0;
+  const empty={inventory:{inventory_verified:true,lines:[]},
+    worklist:{worklist_verified:true,normative_rules:[]},
+    sentenceInventory:{partition_verified:true,candidates:[]},
+    reverseCoverage:{source_count:0,unproven_rule_count:0},
+    head,base,release_stage:"PRE_PROD",
+    authenticateWitness:async()=>{calls++;return false;}};
+  const actual=await assessSemanticPreauditGate(empty);
+  assert.equal(actual.release,"NO_GO",
+    "P0 CORPUS_EMPTY_FALSE_PASS: "+JSON.stringify({actual,calls}));
+  assert.equal(actual.semantic_preaudit,"INCONCLUSIVE");
+  assert.ok(actual.issues.includes("SEMANTIC_PROTECTED_CORPUS_MISMATCH"));
+  assert.equal(calls,0,"incomplete corpus must fail before evidence requests");
+});
+
+test("P0 #863 RED: source-bound subset cannot masquerade as full corpus",async()=>{
+  // Synthetic evidence is intentionally structurally valid for one row per
+  // collection, never proof of actual semantic review.
+  const base=protectedSourceBase(),head="a".repeat(40);
+  const inventory=inventoryProtectedSemanticLines(readP0690ProtectedSources(base).semanticSources);
+  const worklist=buildSevenAxisSemanticBacklog(inventory);
+  const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
+  const rule=worklist.normative_rules[0],sentence=sentenceInventory.candidates[0],source=inventory.lines[0];
+  const axes={authority:{actor:"authorized reviewer",source:"PLAN"},
+    antecedent:{event:"head transition",source:"PLAN"},
+    outcomes:{positive:{decision:"allow qualified review",source:"PLAN"},negative:{decision:"fail closed",source:"PLAN"}},
+    interactions:{clauses:["PLAN","EMENDA"],counterexample:"revoked review still green"},
+    live:{source:"synthetic fixture only",url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head,base},
+    revocation:{trigger:"new head",source:"PLAN"},boundary:{phase:"BUILD",external:"activation separate"}};
+  const proof=id=>({id,head,base,interpretation:"Synthetic interpretation for "+id+"; not a real audit.",
+    counterexample:"Synthetic counterexample for "+id+"; not a real witness.",
+    witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/1",head,base},
+    negative_witness:{run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/2",head,base}});
+  let calls=0;
+  const actual=await assessSemanticPreauditGate({
+    inventory:{...inventory,lines:[source]},
+    worklist:{...worklist,normative_rules:[rule]},
+    sentenceInventory:{...sentenceInventory,candidates:[sentence]},
+    reverseCoverage:{source_count:1,unproven_rule_count:1},
+    rules:[{...proof(rule.rule_id),rule_id:rule.rule_id,axes}],
+    sentences:[{...proof(sentence.id),classification:"NORMATIVE",source_id:sentence.source_id,text_sha256:sentence.text_sha256,axes}],
+    sources:[{...proof(source.id),source_id:source.id,blob:source.blob,text_sha256:source.text_sha256}],
+    interactions:[],head,base,release_stage:"PRE_PROD",
+    authenticateWitness:async()=>{calls++;return true;}});
+  assert.equal(actual.release,"NO_GO",
+    "P0 CORPUS_SUBSET_FALSE_PASS: "+JSON.stringify({actual,calls}));
+  assert.ok(actual.issues.includes("SEMANTIC_PROTECTED_CORPUS_MISMATCH"));
+  assert.equal(calls,0,"truncated source set cannot reach external witness validation");
+});
