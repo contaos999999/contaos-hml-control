@@ -1,0 +1,55 @@
+{
+  "schema": "contaos.ifv1.f8.code-consolidation-receipt.v1",
+  "state": "CONSOLIDATED_CERTIFICATE_PENDING",
+  "scope": "INTEGRACAO_FUNCIONAL_V1_CODE",
+  "head": "2762abd98c21c9d8fc51ba82a8d2c7fdb6515782",
+  "tree": "89e3fbc5618f28ae7f458443951497fe9af3aaf5",
+  "run": 45818730548,
+  "attempt": 1,
+  "backend": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "sourceSha256": "39a7bf3214b22e2d77344c8aefaed551184c0645a727559c47b6f29c64c9b7f2",
+  "criteria": {
+    "criteria": 488,
+    "legacyCriteria": 416,
+    "normalizedCriteria": 72,
+    "regulares": 45,
+    "atomicV1Brand": 25,
+    "nfr": 12,
+    "historicalDecisions": {
+      "PASS_REAL": 473,
+      "ACEITE_RESSALVA_R03": 15
+    },
+    "unresolved": 0,
+    "criteriaTraceSha256": "006a84d84221364361208250e0af5036a5dfe22ee1ef14b0ae9a494f92b1b3b7"
+  },
+  "f7Counts": {
+    "certificates": 6,
+    "navigation": 52,
+    "canonical": 138,
+    "mandatory": 120,
+    "conditional": 18,
+    "codeProofs": 1104,
+    "supplementaryProofs": 8
+  },
+  "previous": {
+    "historical": "78f58e81b53d94defe4ac0e78e914ada7c47ba33",
+    "integrationF7": "f4395961bc7ccf2d66260ea61c97befa4e6f29f2",
+    "receipt": "e866606f09d4abddb77d3a07c62132fbf5489cc1c7a8f458a136e83f473a8cbb"
+  },
+  "governance": {
+    "historicalCheckpoints": 7,
+    "historicalRequiredRuns": 2,
+    "f7RequiredRuns": 6,
+    "nativeF7Artifact": 15115892489,
+    "compatibleCodeFixes": 4
+  },
+  "limits": {
+    "live": "NOT_RUN",
+    "production": "NO-GO",
+    "accepted": [
+      "R-01",
+      "R-02",
+      "R-03"
+    ]
+  }
+}

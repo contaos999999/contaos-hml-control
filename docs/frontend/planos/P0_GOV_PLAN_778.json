@@ -1,0 +1,40 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 778,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Harness F5 CODE e F5.1: 54 IDs, 108 provas mínimas (52 obrigatórios, 2 condicionais).",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_1_CASE_CONTRACTS_PROPOSAL.json",
+    "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+    "src/test/f5-code-context-session-isolation.test.tsx",
+    "src/test/f5-code-sys04-competence-isolation.test.ts",
+    "src/test/f5-code-sys04-data-isolation.test.ts",
+    "src/test/f5-code-sys04-actions-isolation.test.ts",
+    ".github/workflows/contaos-f5-code-material.yml",
+    "scripts/hml/f5-code-material-evidence.mjs",
+    "scripts/hml/f5-code-material-evidence.test.mjs",
+    "scripts/p0-rca-impact-gate.test.mjs",
+    "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json"
+  ],
+  "baseline_main": "c28069b1b69d07cc55bd061c50327dc2f0f5961a",
+  "plan_pr": 777,
+  "authorization": "PLAN #777 integrado, ordem do titular de execução integral registrada em #777. Eficácia condicionada à revisão deste PLAN P0 e CI/merge protegido. A revisão assistida autorizada para #777 não constitui autorização para revisão futura.",
+  "acceptance": [
+    "Reconciliar os 54 IDs do inventário da PR #778 com matriz canônica e contratos versionados no backend a1516de1d8949e505d83b5e000eb1cc558b217a7. Registrar cada oracle validado, papel/tenant, fronteira real, operação e dados sintéticos distintos. C0033/C0067: confirmar aplicabilidade.",
+    "Separar lotes ADM01 (25: C0002,C0007,C0009,C0011,C0012,C0014,C0016–C0034), contexto (4: C0005,C0036,C0037,C0043), competência (5: C0058,C0059,C0060,C0061,C0063), dados (10: C0050–C0056,C0062,C0064,C0065), ações (10: C0041,C0045–C0049,C0057,C0066–C0068). Exact set de 54, duas provas por ID no mínimo. Cada lote usa fonte real, transporte fixture exclusivamente na fronteira, sem reproduzir lógica fiscalizada em mock. Verificar ação ou leitura material, IDs e contexto exatos, respostas tardias e ausência de exposição/efeito indevido; não usar MASTER global como negativa cross-tenant quando acesso é legítimo.",
+    "Harness dedicado F5 sem tocar F4/F3: comparar identidade canônica por lote e título, resultado Vitest, caso, tipo, perfil, tenant, fronteira, expectativa e observação sanitizada, status de negação versus falha de transporte, SHA frontend/backend/harness e identidade real run/job. Rejeitar ausente/extra/duplicado, skip/fail, par faltante, observação vazia, tenant/papel incompatível, SHA divergente, erro genérico disfarçado, modo LIVE forjado. Testes de adulteração em Node e importação somente aditiva dos autotestes no RCA; nenhuma edição do guard. Produzir recibo NOT_CERTIFIED, SHA256SUMS e artifacts reais por lote, sem sobrescrever evidências anteriores.",
+    "Workflow usa dependências fixadas e bun frozen lockfile, leitura mínima de permissões, checkout sem credenciais persistidas; sem secrets ou dados reais. CI material F5.1 54/108 no mesmo SHA, CI obrigatório e revisão no HEAD exato; reancorar BUILD após merge deste PLAN e comprovar readback.",
+    "RED causal para eventual falha de produto; interromper lote e abrir PLAN P0 separado para corrigir raiz, sem alterar produto na #778. Hipótese AppShell libera antes de RBAC: testar exposição real com resposta pendente/negada e proteção do consumidor, sem pressupor vulnerabilidade. Distinguir testes de CODE e RLS remota.",
+    "Emenda documental: Zero-Drift run 45600835643 job 139159136439 falhou no HEAD a91fe529ca15b1ea410b0434504c4457f6b88b94 por ausência da ficha RCA V1 no diff. Acrescentar exclusivamente a ficha obrigatória P0_ESCOPO_V1_ATIVO.json, com baseline real da main após integração desta emenda, escopo exato dos arquivos src efetivamente alterados, extensão da correção de identidade do coletor F4 para F5 (RED ancestral real 45546975968, job 138978826762, teste nominal F4 CODE material verifier rejects noncanonical case IDs, confirmado por releitura dos logs; não alegar RED de produto ou reusar provas F4 como F5), GREEN/NEG/REG específicos F5 executáveis e preservação da regressão F4. Não tratar a falha documental como teste material de segurança. Reancorar #778 e exigir novo CI integral."
+  ],
+  "constraints": [
+    "Somente caminhos exatos acima. Arquivos src restritos exclusivamente à PR #778; não incluir na allowlist global nem mudar guard, políticas ou LOCK.",
+    "Sem código de produto, backend, HML LIVE, F4/F3 histórico, PROD, credenciais reais ou alterações para mascarar falhas.",
+    "Sem antecipar certificado ou aceitar contagem como evidência; revisão independente ou autorização específica de modalidade assistida por titular, registrada antes de merge.",
+    "Nenhuma execução material F5 alegada neste PLAN.",
+    "Única ampliação: ficha RCA obrigatória; nenhum outro caminho, guard, allowlist, norma ou regra de validação alterado."
+  ],
+  "certification": "F5_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 786,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "F5.4 CODE_FIXTURE. Documentos de contrato e competência, versões e evidências. Quatorze casos e 28 provas materiais.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_4_CASE_CONTRACTS_PROPOSAL.json",
+    "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
+    "src/test/f5-code-v115-document-scope-isolation.test.ts",
+    ".github/workflows/contaos-f5-code-material.yml",
+    "scripts/hml/f5-code-material-evidence.mjs",
+    "scripts/hml/f5-code-material-evidence.test.mjs",
+    "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json"
+  ],
+  "baseline_main": "b3009b3e5e0e3f776d0e2149b724961c368feb96",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 777,
+  "authorization": "F5.4 prevista no PLAN #777. A #784 integrou a F5.3. A #786 fixa o inventário. O escopo prospectivo entra em vigor após CI, revisão assistida de acordo com #781, merge protegido e conferência na main.",
+  "acceptance": [
+    "Reconciliar os 14 IDs do PLAN #777 e da matriz bb7ce43f9c334f2f03e9aafab405addadfe5e19a. Executar onze casos obrigatórios e três condicionais com os adaptadores reais de V110, V111 e V115 e o consumidor de cada conexão.",
+    "Conferir os vínculos entre contrato, competência, requisito, documento, versão, arquivo e SHA-256. Exercitar a preservação da versão anterior e de referências de fonte, página e trecho. Quando o contrato muda materialmente, verificar o efeito em análise, resultado corrente, histórico, parecer e portão conforme cada conexão.",
+    "Usar o transporte sintético com duas identidades e dois tenants. Exercitar upload/assinatura e download nas fronteiras reais dos adaptadores quando aplicável, sem URLs ou credenciais reais. Verificar falta de exposição, ausência de efeitos e readback do escopo próprio após negativa. Conferir a classificação de autorização, integridade, conflito e falha de transporte conforme a fonte normativa.",
+    "Para V123, conferir DocumentoContratoMetadadosCompletos, VersaoDocumentoContratoCriada e DocumentoCompetenciaCriado com organização, entidade material e correlação verificáveis. Distinguir o evento final do wrapper V110 do evento DocumentoContratoCriado produzido no comando interno.",
+    "Gerar 28 provas próprias e reexecutar os 95 casos anteriores no mesmo HEAD, totalizando 109 casos e 218 provas. Conferir a identidade dos pares, o SHA e a árvore, run, job, tentativa, SHA256SUMS, relatório, recibo e artefato original. Preservar os recibos já verificados.",
+    "Atualizar a ficha RCA no mesmo diff com os caminhos src afetados, HEADs reais, testes GREEN, negativos e regressões. Preservar o RED ancestral aplicável do coletor e abrir PLAN próprio para eventual falha de produto. Exigir CI integral, revisão assistida, merge protegido e readback."
+  ],
+  "constraints": [
+    "Escopo fechado na PR #786. As duas restrições por PR devem existir na base protegida. Preservar as restrições das fatias anteriores e a allowlist geral.",
+    "A alteração se limita a testes CODE_FIXTURE, inventário, coletor, workflow material e ficha causal. Zero-Drift, LOCK-TYPES, Anti-Reincidência, Teste C e proteção de main continuam obrigatórios.",
+    "O backend normativo é consultado em leitura. Alterações de produto, tipos gerados, HML, Supabase real, dados reais e produção ficam fora do escopo do BUILD."
+  ],
+  "certification": "F5_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

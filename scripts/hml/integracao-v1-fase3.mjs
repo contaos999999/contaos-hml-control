@@ -432,18 +432,94 @@ export const F3_E87_COUNTER_SCREENS = Object.freeze(["V101", "V104", "V112", "V1
 // Equivalências de harness revisadas para preservar PASS do ledger (plano mestre 16.3). Cada
 // item {from, to, reviewId} entra só por PR revisada. Vazio: só o mesmo harness preserva.
 export const F3_HARNESS_EQUIVALENCES = Object.freeze([]);
-// Política de duplicidade por produtor (PLAN 4.3). null = ainda sem fonte no código: nenhum caso
-// do produtor fecha PASS. O BUILD-2b-2 preenche cada produtor mutante com REJECTED ou
-// DUPLICATE_NOT_DEFINED e a fonte no código do produto, por PR revisada.
+// Política de duplicidade por produtor (PLAN 4.3). null = sem prova de contrato:
+// nenhum caso fecha PASS. IDEMPOTENT_REPLAY exige ledger com evento replay e binds
+// iguais à intenção original; ACCEPTED continua sendo falha. Fontes são do frontend.
 const NO_MUTATION_POLICY = Object.freeze({
   result: "DUPLICATE_NOT_DEFINED",
   source: "PLAN 7.2: produtor sem mutação",
+});
+const F3_MUTATING_DUPLICATE_RULES = Object.freeze({
+  2: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/organizacao/criarOrganizacaoDados.ts:25-65",
+  }),
+  4: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/administracao/admUsuariosRpc.ts:183-230",
+  }),
+  5: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/contratantes/novoContratanteDados.ts:127-148",
+  }),
+  6: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/contratantes/editarContratanteDados.ts:93-125",
+  }),
+  7: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/contratos/novoContratoDados.ts:107-129",
+  }),
+  8: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/cadastros/cadastroOperacionalDados.ts:195-232",
+  }),
+  9: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/components/contratos/OrcamentoContrato.tsx:1500-1513",
+  }),
+  10: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/components/contratos/BaseNormativaContrato.tsx:1465-1472",
+  }),
+  11: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/contratos/listaOperacionalDados.ts:276-317",
+  }),
+  12: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/contratos/documentosDados.ts:755-774",
+  }),
+  13: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/contratos/documentosDados.ts:776-791",
+  }),
+  14: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/contratos/novaCompetenciaDados.ts:65-75",
+  }),
+  15: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/competencias/competenciaDocumentosDados.ts:299-317",
+  }),
+  16: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/competencias/competenciaAnaliseDados.ts:188-200",
+  }),
+  17: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/competencias/revisaoRequisitoDados.ts:112-177",
+  }),
+  18: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/competencias/parecerInternoDados.ts:150-166",
+  }),
+  19: Object.freeze({
+    result: "IDEMPOTENT_REPLAY",
+    source: "src/lib/competencias/apresentacaoDados.ts:88-104",
+  }),
+  20: Object.freeze({
+    result: "DUPLICATE_NOT_DEFINED",
+    source: "src/lib/contratos/ingestaoHistoricoDados.ts:72-90",
+  }),
 });
 export const F3_DUPLICATE_POLICY = Object.freeze(
   Object.fromEntries(
     F3_PRODUCERS.map((p) => [
       String(p.order),
-      F3_MUTATING_ORDERS.includes(p.order) ? null : NO_MUTATION_POLICY,
+      F3_MUTATING_ORDERS.includes(p.order)
+        ? (F3_MUTATING_DUPLICATE_RULES[p.order] ?? null)
+        : NO_MUTATION_POLICY,
     ]),
   ),
 );
@@ -477,7 +553,13 @@ const ACCESS = Object.freeze(["ALLOW", "DENY"]);
 const OBSERVED = Object.freeze(["ALLOW", "DENY", "ERROR", null]);
 const POSITIVE = Object.freeze(["PASS", "FAIL", "NOT_RUN"]);
 const NEGATIVE = Object.freeze(["NEGADO", "VAZAMENTO", "SEM_ENTIDADE", "NOT_RUN"]);
-const DUPLICATE = Object.freeze(["REJECTED", "DUPLICATE_NOT_DEFINED", "ACCEPTED", "NOT_RUN"]);
+const DUPLICATE = Object.freeze([
+  "REJECTED",
+  "DUPLICATE_NOT_DEFINED",
+  "IDEMPOTENT_REPLAY",
+  "ACCEPTED",
+  "NOT_RUN",
+]);
 const APPLICABILITY = Object.freeze(["APLICAVEL", "N_A_JUSTIFICADO"]);
 const PROVENANCE_KEYS = Object.freeze([
   "frontendSha",
@@ -522,7 +604,7 @@ export function validateF3DuplicatePolicy(policy) {
     }
     if (v === null) continue;
     strictPlain(v, ["result", "source"], code);
-    if (!["REJECTED", "DUPLICATE_NOT_DEFINED"].includes(v.result)) fail(code);
+    if (!["REJECTED", "DUPLICATE_NOT_DEFINED", "IDEMPOTENT_REPLAY"].includes(v.result)) fail(code);
     if (typeof v.source !== "string" || !/^src\/[A-Za-z0-9_./-]+:[0-9]+-[0-9]+$/.test(v.source))
       fail(code);
   }
@@ -730,6 +812,7 @@ const EVENT_OPS = Object.freeze([
   "absent",
   "resend",
   "abandon",
+  "replay",
 ]);
 const INTENT_KEYS = Object.freeze([
   "requestId",
@@ -879,8 +962,23 @@ function authorizedF3IdentityReuse(state, event, intent) {
   // Aprovar a versão normativa não cria outra versão: é uma transição do mesmo UUID.
   const approval =
     intent.producerOrder === 10 && intent.kind === "prerequisito" && intent.action === "aprovacao";
+  const opinionApproval = intent.producerOrder === 18 && intent.kind === "principal";
+  const proposalPublication = intent.producerOrder === 9 && intent.kind === "principal";
+  const listTransition =
+    intent.producerOrder === 11 &&
+    intent.kind === "prerequisito" &&
+    ["item", "publicacao"].includes(intent.action);
+  const docVersion = intent.producerOrder === 13 && intent.kind === "principal";
   const source = F3_UPDATE_IDENTITY_SOURCE[intent.producerOrder];
-  if (!approval && (!source || intent.kind !== "principal")) return false;
+  if (
+    !approval &&
+    !opinionApproval &&
+    !proposalPublication &&
+    !listTransition &&
+    !docVersion &&
+    (!source || intent.kind !== "principal")
+  )
+    return false;
   return state.created.some((entry) => {
     const maker = state.intents.get(entry.requestId);
     return (
@@ -889,7 +987,19 @@ function authorizedF3IdentityReuse(state, event, intent) {
       entry.kind === "registro" &&
       (approval
         ? maker?.producerOrder === 10 && maker.kind === "prerequisito" && maker.action === "versao"
-        : maker?.producerOrder === source && maker.kind === "principal")
+        : opinionApproval
+          ? maker?.producerOrder === 18 &&
+            maker.kind === "prerequisito" &&
+            maker.action === "parecer"
+          : proposalPublication
+            ? maker?.producerOrder === 9 &&
+              maker.kind === "prerequisito" &&
+              maker.action === "versao"
+            : listTransition
+              ? maker?.producerOrder === 11 && maker.kind === "principal"
+              : docVersion
+                ? maker?.producerOrder === 12 && maker.kind === "principal"
+                : maker?.producerOrder === source && maker.kind === "principal")
     );
   });
 }
@@ -956,6 +1066,7 @@ function applyEvent(st, run, e) {
   const from = {
     confirm: ["sealed"],
     reject: ["sealed"],
+    replay: ["sealed"],
     uncertain: ["sealed"],
     found: ["uncertain", "abandoned"],
     absent: ["uncertain", "abandoned"],
@@ -965,7 +1076,7 @@ function applyEvent(st, run, e) {
   if (!from.includes(i.state)) fail(e.op === "resend" ? "F3_UNCERTAIN_RESEND" : "F3_INTENT_STATE");
   // Desfecho do envio corrente só com vínculo: sem ele, o evento bind seria removível sem
   // rastro. Confirmação só com todos os passos do fluxo declarado.
-  if (["confirm", "reject", "uncertain"].includes(e.op)) {
+  if (["confirm", "reject", "uncertain", "replay"].includes(e.op)) {
     const steps = stepsOf(i);
     if (!i.sendBinds || (e.op === "confirm" && steps && i.sendBinds !== steps.length))
       fail("F3_INTENT_BIND");
@@ -992,7 +1103,20 @@ function applyEvent(st, run, e) {
     i.sendBinds = 0;
     i.state = "sealed";
   } else if (e.op === "confirm" || e.op === "found") recordEntity(st, e, i);
-  else if (e.op === "absent") i.state = i.state === "abandoned" ? "abandoned" : "absent";
+  else if (e.op === "replay") {
+    if (i.kind !== "duplicidade") fail("F3_INTENT_REPLAY");
+    const original = st.intents.get(i.duplicateOf);
+    if (original?.state !== "confirmed" || !original.entityId) fail("F3_INTENT_REPLAY");
+    // A prova de replay exige o mesmo corpo, chave e referências da intenção original.
+    // Uma resposta bem-sucedida com payload distinto não é repetição idempotente.
+    if (
+      !i.binds.length ||
+      i.binds.length !== original.binds.length ||
+      JSON.stringify(i.binds) !== JSON.stringify(original.binds)
+    )
+      fail("F3_INTENT_REPLAY_BIND");
+    i.state = "replayed";
+  } else if (e.op === "absent") i.state = i.state === "abandoned" ? "abandoned" : "absent";
   else i.state = { reject: "rejected", uncertain: "uncertain", abandon: "abandoned" }[e.op];
 }
 
@@ -1324,12 +1448,17 @@ export function createF3IntentBook(options = {}) {
 // inventory liga o campo à ordem do produtor que criou a entidade (2 é a organização F3);
 // derived liga o campo de versão observada ao campo de inventário da entidade lida. O que não é
 // declarado é literal (gerado_harness) e nunca contém UUID fora do inventário isolado.
-const step = (target, name, { query = "", free = [], inventory = {}, derived = {}, source }) =>
+const step = (
+  target,
+  name,
+  { query = "", free = [], pathFields = [], inventory = {}, derived = {}, source },
+) =>
   Object.freeze({
     target,
     name,
     query,
     free: Object.freeze([...free]),
+    pathFields: Object.freeze([...pathFields]),
     inventory: Object.freeze(
       Object.fromEntries(
         Object.entries(inventory).map(([field, origin]) => [
@@ -1356,6 +1485,29 @@ const flow = (principal, prerequisito = null) =>
             ),
       ),
   });
+/**
+ * Quatro passos reais do upload simples V110/V111/V115/V122.
+ * Storage somente no bucket homologado pelo backend, path gerado e vinculado
+ * entre PUT e confirmar_upload_arquivo. TUS continua proibido.
+ */
+const f3UploadSteps = (businessStep) => [
+  step("edge", "storage-sign-upload", {
+    inventory: { id_organizacao: 2, id_contrato: 7 },
+    source: "src/lib/contratos/documentosDados.ts:410-454",
+  }),
+  step("storage", "contaos-documentos", {
+    free: ["path"],
+    pathFields: ["path"],
+    source: "src/lib/contratos/documentosDados.ts:454-461",
+  }),
+  step("rpc", "confirmar_upload_arquivo", {
+    free: ["p_path"],
+    pathFields: ["p_path"],
+    inventory: { p_id_organizacao: 2, p_id_contrato: 7 },
+    source: "src/lib/contratos/documentosDados.ts:639-660",
+  }),
+  businessStep,
+];
 export const F3_MUTATION_FLOWS = Object.freeze({
   2: flow([
     step("rpc", "criar_organizacao", {
@@ -1444,6 +1596,130 @@ export const F3_MUTATION_FLOWS = Object.freeze({
       ],
     },
   ),
+  // V108: três preparações genuínas e publicação da versão previamente inventariada.
+  9: flow(
+    [
+      step("rpc", "publicar_versao_proposta_v108", {
+        free: ["p_chave_idempotencia"],
+        inventory: { p_id_versao: { producerOrder: 9, action: "versao" } },
+        source: "src/components/contratos/OrcamentoContrato.tsx:981-1517",
+      }),
+    ],
+    {
+      proposta: [
+        step("rpc", "salvar_proposta_orcamentaria_v108", {
+          free: ["p_chave_idempotencia"],
+          inventory: { p_id_contrato: 7 },
+          source: "src/components/contratos/OrcamentoContrato.tsx:981-1061",
+        }),
+      ],
+      versao: [
+        step("edge", "storage-sign-upload", {
+          inventory: { id_organizacao: 2, id_contrato: 7 },
+          source: "src/lib/contratos/baseNormativaDados.ts:173-184",
+        }),
+        step("storage", "contaos-documentos", {
+          free: ["path"],
+          pathFields: ["path"],
+          source: "src/lib/contratos/baseNormativaDados.ts:181-184",
+        }),
+        step("rpc", "confirmar_upload_arquivo", {
+          free: ["p_path"],
+          pathFields: ["p_path"],
+          inventory: { p_id_organizacao: 2, p_id_contrato: 7 },
+          source: "src/lib/contratos/baseNormativaDados.ts:187-219",
+        }),
+        step("rpc", "registrar_versao_proposta_v108", {
+          free: ["p_id_arquivo_origem", "p_chave_idempotencia"],
+          inventory: { p_id_proposta: { producerOrder: 9, action: "proposta" } },
+          source: "src/components/contratos/OrcamentoContrato.tsx:981-1150",
+        }),
+      ],
+      rubrica: [
+        step("rpc", "salvar_linha_orcamentaria_v108", {
+          free: ["p_chave_idempotencia"],
+          inventory: { p_id_versao_proposta: { producerOrder: 9, action: "versao" } },
+          source: "src/components/contratos/OrcamentoContrato.tsx:981-1305",
+        }),
+      ],
+    },
+  ),
+  // V109: lista base, item e publicação por um único adaptador RPC do produto.
+  11: flow(
+    [
+      step("rpc", "executar_comando_lista_v1", {
+        free: ["p_request_id"],
+        inventory: { p_id_contrato: 7 },
+        source: "src/lib/contratos/listaOperacionalDados.ts:276-317",
+      }),
+    ],
+    {
+      item: [
+        step("rpc", "executar_comando_lista_v1", {
+          free: ["p_request_id"],
+          inventory: { p_id_lista: 11, p_id_contrato: 7 },
+          derived: { p_versao_esperada: "p_id_lista" },
+          source: "src/lib/contratos/listaOperacionalDados.ts:275-317",
+        }),
+      ],
+      publicacao: [
+        step("rpc", "executar_comando_lista_v1", {
+          free: ["p_request_id"],
+          inventory: { p_id_lista: 11, p_id_contrato: 7 },
+          derived: { p_versao_esperada: "p_id_lista" },
+          source: "src/lib/contratos/listaOperacionalDados.ts:275-317",
+        }),
+      ],
+    },
+  ),
+  12: flow(
+    f3UploadSteps(
+      step("rpc", "criar_documento_contrato_completo", {
+        free: ["p_id_arquivo", "p_chave_idempotencia"],
+        inventory: { p_id_contrato: 7 },
+        source: "src/lib/contratos/documentosDados.ts:755-774",
+      }),
+    ),
+  ),
+  13: flow(
+    f3UploadSteps(
+      step("rpc", "adicionar_versao_documento_contrato", {
+        free: ["p_id_arquivo", "p_chave_idempotencia"],
+        inventory: { p_id_documento: 12 },
+        source: "src/lib/contratos/documentosDados.ts:776-791",
+      }),
+    ),
+  ),
+  15: flow(
+    f3UploadSteps(
+      step("rpc", "criar_documento_competencia_v115", {
+        free: ["p_id_requisito", "p_id_arquivo", "p_chave_idempotencia"],
+        inventory: { p_id_competencia: 14 },
+        source: "src/lib/competencias/competenciaDocumentosDados.ts:299-317",
+      }),
+    ),
+  ),
+  20: flow(
+    [
+      step("rpc", "registrar_relatorio_historico_hml", {
+        inventory: { p_id_arquivo: { producerOrder: 20, action: "documento" } },
+        source: "src/lib/contratos/ingestaoHistoricoDados.ts:72-82",
+      }),
+      step("rpc", "enfileirar_ingestao_historica_hml", {
+        free: ["p_id_relatorio", "p_id_versao_documento"],
+        source: "src/lib/contratos/ingestaoHistoricoDados.ts:84-90",
+      }),
+    ],
+    {
+      documento: f3UploadSteps(
+        step("rpc", "criar_documento_contrato_completo", {
+          free: ["p_id_arquivo", "p_chave_idempotencia"],
+          inventory: { p_id_contrato: 7 },
+          source: "src/lib/contratos/documentosDados.ts:755-774",
+        }),
+      ),
+    },
+  ),
   // S3: contratos de mutacao oficiais sem upload (fluxos de competencia e parecer).
   14: flow([
     step("rpc", "criar_competencia", {
@@ -1455,6 +1731,14 @@ export const F3_MUTATION_FLOWS = Object.freeze({
     step("rpc", "solicitar_analise_competencia", {
       inventory: { p_id_competencia: 14 },
       source: "src/lib/competencias/competenciaAnaliseDados.ts:188-197",
+    }),
+  ]),
+  // V117: revisão humana efetiva, amarrada à competência F3 e com idempotência do produto.
+  17: flow([
+    step("rpc", "registrar_revisao_requisito_v117", {
+      free: ["p_request_id"],
+      inventory: { p_id_competencia: 14 },
+      source: "src/lib/competencias/revisaoRequisitoDados.ts:112-177",
     }),
   ]),
   18: flow(
@@ -1626,8 +1910,9 @@ function assertArmedBody(body, s, isolated) {
   const walk = (v, top) => {
     if (typeof v === "string") {
       if (v.startsWith(SLOT)) {
-        if (!SLOT_RE.test(v) || !v.startsWith(SLOT + "uuid:")) fail("F3_FENCE_ARM");
-        if (top === null || !s.free.includes(top)) fail("F3_FENCE_ARM");
+        if (!SLOT_RE.test(v) || top === null || !s.free.includes(top)) fail("F3_FENCE_ARM");
+        const expected = s.pathFields.includes(top) ? "path" : "uuid";
+        if (!v.startsWith(SLOT + expected + ":")) fail("F3_FENCE_ARM");
       } else
         for (const m of v.matchAll(UUID_ANY))
           if (!isolated.has(m[0].toLowerCase())) fail("F3_FOREIGN_ORG");
@@ -1657,8 +1942,21 @@ function matchUrl(u, s, armed, slots, got) {
  */
 function bindOf(s, stepIndex, body, placeholder = false) {
   const slots = s.free.map((k) => {
-    const v = placeholder ? crypto.randomUUID() : body[k];
-    if (!isUuid(v)) fail("F3_VALUE_ORIGIN");
+    const pathField = s.pathFields.includes(k);
+    const v = placeholder
+      ? pathField
+        ? "isolated/uploads/" + crypto.randomUUID() + "/proof.pdf"
+        : crypto.randomUUID()
+      : body[k];
+    if (
+      pathField
+        ? typeof v !== "string" ||
+          !/^[A-Za-z0-9_.\/-]{1,512}$/.test(v) ||
+          v.includes("..") ||
+          !v.includes("/uploads/")
+        : !isUuid(v)
+    )
+      fail("F3_VALUE_ORIGIN");
     return sha256hex(v);
   });
   const refs = [
@@ -1686,6 +1984,27 @@ const ORIGIN_CODES = Object.freeze(["F3_FOREIGN_ORG", "F3_VALUE_ORIGIN"]);
  * policy() vai para installNativeFence. settle() devolve o que saiu e as vagas capturadas; o
  * desfecho (confirm, rejected, uncertain) é do driver, pela UI e pela releitura.
  */
+function isolatedBookList(book, id, organizationId, contractId) {
+  if (!isUuid(id) || !isUuid(organizationId) || !isUuid(contractId)) return false;
+  if (organizationId !== book.organizationF3()) return false;
+  return book
+    .created()
+    .some(
+      (entry) =>
+        entry.id === id &&
+        entry.organizationId === organizationId &&
+        book
+          .summary()
+          .requests.some(
+            (q) =>
+              q.requestId === entry.requestId &&
+              q.producerOrder === 11 &&
+              q.kind === "principal" &&
+              q.outcome === "confirmed",
+          ),
+    );
+}
+
 export function createF3MutationFence(options = {}) {
   if (Object.keys(options).some((k) => k !== "book")) fail("F3_FENCE_OPTIONS");
   const book = options.book;
@@ -1697,6 +2016,8 @@ export function createF3MutationFence(options = {}) {
   control.fenced = true;
   let active = null;
   const observedVersions = new Map();
+  // UUID secundário emitido com a lista, vinculado por RPC ao ID primário do livro.
+  const observedListVersions = new Map();
   const tickets = new Map();
   const ticketOf = (r) =>
     typeof r.sessionId === "string" && typeof r.interceptionId === "string"
@@ -1754,6 +2075,12 @@ export function createF3MutationFence(options = {}) {
     let body = null;
     if (s.target === "storage") {
       if (request.method !== "PUT") return freeze();
+      const scope = book.organizationF3() + "/uploads/";
+      const path = u.pathname.slice(("/storage/v1/object/upload/sign/" + s.name + "/").length);
+      if (!path.startsWith(scope) || !/^[0-9a-f-]{36}\/[^/]+$/.test(path.slice(scope.length))) {
+        return freeze("F3_FOREIGN_ORG");
+      }
+      body = { path };
     } else {
       if (request.method !== "POST") return freeze();
       body = parseJsonBody(request.postData);
@@ -1787,7 +2114,7 @@ export function createF3MutationFence(options = {}) {
     tickets.set(ticket, {
       url: request.url,
       method: request.method,
-      body: body === null ? null : canonicalJson(body),
+      body: s.target === "storage" ? null : canonicalJson(body),
     });
     return true;
   }
@@ -1824,6 +2151,20 @@ export function createF3MutationFence(options = {}) {
         if (args?.p_id_organizacao !== org || args.p_entidade !== "contratos") return false;
         id = args.p_id;
         order = 8;
+      } else if (
+        request.method() === "POST" &&
+        url.pathname === "/rest/v1/rpc/obter_lista_operacional_v1" &&
+        !url.search
+      ) {
+        const args = parseJsonBody(request.postData());
+        if (
+          args?.p_id_organizacao !== org ||
+          !isUuid(args.p_id_contrato) ||
+          !isUuid(args.p_id_lista)
+        )
+          return false;
+        id = args.p_id_lista;
+        order = 11;
       } else return false;
       if (!isUuid(id)) return false;
       const data = await response.json();
@@ -1832,9 +2173,15 @@ export function createF3MutationFence(options = {}) {
           ? data?.schema_versao === "crud-cadastro-v1" &&
             data.entidade === "contratos" &&
             data.registro
-          : Array.isArray(data) && data.length === 1
-            ? data[0]
-            : data;
+          : order === 11
+            ? data?.schema_versao === "crud-lista-v1" &&
+              data.id_organizacao === org &&
+              data.lista?.id === id &&
+              data.lista?.id_contrato === data.id_contrato &&
+              data.lista
+            : Array.isArray(data) && data.length === 1
+              ? data[0]
+              : data;
       if (
         control.frozen ||
         row?.id !== id ||
@@ -1845,6 +2192,40 @@ export function createF3MutationFence(options = {}) {
         return false;
       const reference = order + ":" + id;
       if ((observedVersions.get(reference) ?? 0) > row.versao_registro) return false;
+      if (order === 11) {
+        const args = parseJsonBody(request.postData());
+        if (
+          data.versao?.id_lista !== id ||
+          data.versao.id_organizacao !== org ||
+          data.versao.id_contrato !== args.p_id_contrato ||
+          !isUuid(data.versao.id) ||
+          !book
+            .created()
+            .some(
+              (entry) =>
+                entry.id === id &&
+                entry.organizationId === org &&
+                book
+                  .summary()
+                  .requests.some(
+                    (q) =>
+                      q.requestId === entry.requestId &&
+                      q.producerOrder === 11 &&
+                      q.kind === "principal" &&
+                      q.outcome === "confirmed",
+                  ),
+            )
+        )
+          return false;
+        observedListVersions.set(
+          id,
+          Object.freeze({
+            versionId: data.versao.id,
+            organizationId: org,
+            contractId: args.p_id_contrato,
+          }),
+        );
+      }
       observedVersions.set(reference, row.versao_registro);
       return true;
     },
@@ -1901,6 +2282,13 @@ export function createF3MutationFence(options = {}) {
           .created()
           .filter((c) => ISOLATED_KINDS.includes(c.kind))
           .map((c) => c.id),
+        // A versão filha de uma lista é conhecida apenas por readback assinado da
+        // RPC do produto, vinculada ao registro-pai já confirmado no mesmo livro.
+        ...[...observedListVersions.entries()]
+          .filter(([id, observed]) =>
+            isolatedBookList(book, id, observed.organizationId, observed.contractId),
+          )
+          .map(([, observed]) => observed.versionId),
       ]);
       // Origem por posição, por um verificador único: a forma do corpo armado, a versão
       // observada e, pela regra do próprio livro (simulação do selo e dos vínculos), o
@@ -1914,7 +2302,7 @@ export function createF3MutationFence(options = {}) {
             if (typeof b.path !== "string" || !b.path.startsWith(SLOT + "path:"))
               fail("F3_FENCE_ARM");
             if (!SLOT_RE.test(b.path)) fail("F3_FENCE_ARM");
-            return null;
+            return bindOf(s, i, b, true);
           }
           for (const field of Object.keys(s.inventory))
             if (!isUuid(b[field])) fail("F3_FOREIGN_ORG");
@@ -2112,7 +2500,16 @@ function crossCheck(report, requests, created) {
     if (of.length !== duplicates.length) fail(code);
     const accepted = of.some((d) => d.outcome === "confirmed"),
       rejected = of.some((d) => d.outcome === "rejected");
-    const expected = accepted ? "ACCEPTED" : rejected ? "REJECTED" : of.length ? "NOT_RUN" : null;
+    const replay = of.some((d) => d.outcome === "replayed");
+    const expected = accepted
+      ? "ACCEPTED"
+      : replay
+        ? "IDEMPOTENT_REPLAY"
+        : rejected
+          ? "REJECTED"
+          : of.length
+            ? "NOT_RUN"
+            : null;
     if (expected === null) {
       if (!["NOT_RUN", "DUPLICATE_NOT_DEFINED"].includes(head.duplicate)) fail(code);
     } else if (head.duplicate !== expected) fail(code);
@@ -4371,6 +4768,3234 @@ export function assertF3V117AuditConsumer({
     caseId: "IFV1-F3-C0465",
     auditRoleContract: Object.freeze({ master: "ALLOW", leitor: "DENY" }),
     resultId: receipt.resultId,
+  });
+}
+
+/**
+ * SYS04 preferência: estado local de navegação, jamais prova de autorização/RLS.
+ * Lê a escolha que a tela realmente persistiu, em vez de inferir pelo clique.
+ */
+export function assertF3S1PreferenceReadback({ value, userId, organizationId }) {
+  if (
+    !isUuid(userId) ||
+    !isUuid(organizationId) ||
+    value?.idUsuario !== userId ||
+    value?.idOrganizacao !== organizationId
+  ) {
+    fail("F3_SYS04_PREFERENCE_READBACK");
+  }
+  return organizationId;
+}
+export async function f3S1SelectPreference({ page, fence, book, userId, organizationId, name }) {
+  if (
+    !page ||
+    !fence ||
+    !BOOKS.has(book) ||
+    !isUuid(userId) ||
+    !isUuid(organizationId) ||
+    organizationId !== book.organizationF3() ||
+    typeof name !== "string" ||
+    !name.trim()
+  ) {
+    fail("F3_SYS04_PREFERENCE_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/selecionar-organizacao", { waitUntil: "networkidle" });
+  const radio = page.getByRole("radio").filter({ hasText: name });
+  if ((await radio.count()) !== 1) fail("F3_SYS04_PREFERENCE_CARD");
+  await fence.drain();
+  fence.assertSafe();
+  await radio.click();
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.waitForURL((url) => url.origin === HML_ORIGIN && url.pathname === "/");
+  const stored = await page.evaluate(() =>
+    sessionStorage.getItem("contaos.preferenciaOrganizacao"),
+  );
+  let value;
+  try {
+    value = JSON.parse(stored);
+  } catch {
+    fail("F3_SYS04_PREFERENCE_READBACK");
+  }
+  assertF3S1PreferenceReadback({ value, userId, organizationId });
+  await fence.drain();
+  fence.assertSafe();
+  book.assertIsolation();
+  return organizationId;
+}
+
+/** A aplicabilidade V107 só pode ser salva depois de fonte, versão e aprovação no livro. */
+export function assertF3S3ApplicabilityReadback({ before, after, versionId }) {
+  if (
+    !isUuid(versionId) ||
+    (before !== null && before?.id_fonte_versao !== versionId) ||
+    after?.id_fonte_versao !== versionId ||
+    after.aplicavel !== true ||
+    typeof after.atualizado_em !== "string" ||
+    !after.atualizado_em ||
+    after.atualizado_em === before?.atualizado_em
+  ) {
+    fail("F3_V107_APPLICABILITY_READBACK");
+  }
+  return versionId;
+}
+export async function f3S3SetApplicability({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  versionId,
+  versionNumber,
+  before,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    organizationId !== book.organizationF3() ||
+    !isUuid(contractId) ||
+    !isUuid(versionId) ||
+    !Number.isSafeInteger(versionNumber) ||
+    versionNumber < 1 ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === versionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 10 &&
+                q.action === "versao" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_V107_APPLICABILITY_PRECONDITION");
+  }
+  if (before !== null && before?.id_fonte_versao !== versionId) {
+    fail("F3_V107_APPLICABILITY_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/base-normativa", {
+    waitUntil: "networkidle",
+  });
+  await page
+    .getByRole("button", {
+      name: "Definir aplicabilidade da versão " + versionNumber,
+      exact: true,
+    })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Aplicável", { exact: true }).check();
+  await dialog.getByLabel("Fundamento").fill("Teste funcional isolado F3 CODE");
+  await fence.drain();
+  fence.assertSafe();
+  const body = {
+    p_id_organizacao: organizationId,
+    p_id_contrato: contractId,
+    p_id_versao: versionId,
+    p_aplicavel: true,
+    p_fundamento: "Teste funcional isolado F3 CODE",
+    p_atualizado_em_esperado: before?.atualizado_em ?? null,
+    p_chave_idempotencia: f3Slot("uuid", "v107_aplicabilidade"),
+  };
+  const requestId = mutationFence.arm({ producerOrder: 10, bodies: [body] });
+  try {
+    const posted = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/definir_aplicabilidade_fonte_v107",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Salvar aplicabilidade", exact: true }).click();
+    const response = await posted;
+    if (response.status() !== 200) fail("F3_V107_APPLICABILITY_HTTP");
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V107_APPLICABILITY_UNCERTAIN");
+    }
+    const listed = page.waitForResponse(
+      (r) => {
+        const u = new URL(r.url());
+        return (
+          r.request().method() === "GET" &&
+          u.origin === API_ORIGIN &&
+          u.pathname === "/rest/v1/aplicabilidades_fonte" &&
+          u.searchParams.get("id_contrato") === "eq." + contractId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const listResponse = await listed;
+    if (listResponse.status() !== 200) fail("F3_V107_APPLICABILITY_READBACK");
+    const rows = await listResponse.json();
+    const relevant = Array.isArray(rows)
+      ? rows.filter((row) => row?.id_fonte_versao === versionId)
+      : [];
+    if (relevant.length !== 1) fail("F3_V107_APPLICABILITY_READBACK");
+    assertF3S3ApplicabilityReadback({ before, after: relevant[0], versionId });
+    if (!isUuid(relevant[0].id)) fail("F3_V107_APPLICABILITY_READBACK");
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: relevant[0].id, organizationId });
+    book.assertIsolation();
+    return relevant[0].id;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Falha incerta: nenhuma repetição com outra chave.
+    }
+    throw error;
+  }
+}
+
+/** V118: aprovação é sobre o parecer real do job e exige leitura posterior. */
+export function assertF3S5OpinionReadback({ before, after, opinionId, competenceId }) {
+  if (
+    !isUuid(opinionId) ||
+    !isUuid(competenceId) ||
+    before?.id !== opinionId ||
+    before.id_competencia !== competenceId ||
+    before.status === "aprovado" ||
+    after?.id !== opinionId ||
+    after.id_competencia !== competenceId ||
+    after.status !== "aprovado" ||
+    !after.aprovado_em ||
+    after.versao < before.versao
+  ) {
+    fail("F3_V118_OPINION_READBACK");
+  }
+  return opinionId;
+}
+export async function f3S5ApproveOpinion({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  competenceId,
+  opinionId,
+  before,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    organizationId !== book.organizationF3() ||
+    !isUuid(competenceId) ||
+    !isUuid(opinionId) ||
+    before?.id !== opinionId ||
+    before.id_competencia !== competenceId ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === opinionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 18 &&
+                q.action === "parecer" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_V118_OPINION_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/competencias/" + competenceId + "/parecer", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Aprovar parecer", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Confirmar aprovação" });
+  await dialog.locator("#v118-fundamento").fill("Revisão técnica isolada F3 CODE");
+  await fence.drain();
+  fence.assertSafe();
+  const payload = {
+    p_id_parecer: opinionId,
+    p_aprovar: true,
+    p_fundamento: "Revisão técnica isolada F3 CODE",
+  };
+  const requestId = mutationFence.arm({ producerOrder: 18, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/aprovar_parecer_interno",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Confirmar decisão", exact: true }).click();
+    if ((await posted).status() !== 200) fail("F3_V118_OPINION_HTTP");
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V118_OPINION_UNCERTAIN");
+    }
+    const reread = page.waitForResponse(
+      (response) => {
+        const url = new URL(response.url());
+        return (
+          response.request().method() === "GET" &&
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/pareceres_internos" &&
+          url.searchParams.get("id_competencia") === "eq." + competenceId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const response = await reread;
+    if (response.status() !== 200) fail("F3_V118_OPINION_READBACK");
+    const rows = await response.json();
+    const matches = Array.isArray(rows) ? rows.filter((row) => row?.id === opinionId) : [];
+    if (matches.length !== 1) fail("F3_V118_OPINION_READBACK");
+    assertF3S5OpinionReadback({ before, after: matches[0], opinionId, competenceId });
+    book.confirm(requestId, { entityId: opinionId, organizationId });
+    book.assertIsolation();
+    return requestId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Não repetir aprovação incerta.
+    }
+    throw error;
+  }
+}
+
+/** V119 registra somente após a pré-aprovação de apresentação (V119, action aprovacao). */
+export function hasF3V119PresentationApproval(requests) {
+  return (
+    Array.isArray(requests) &&
+    requests.some(
+      (q) => q?.producerOrder === 19 && q.action === "aprovacao" && q.outcome === "confirmed",
+    )
+  );
+}
+
+/** V119: registro gera um pacote novo e não é confirmação da aprovação anterior. */
+export function assertF3S5PresentationReadback({ presentationId, rows, competenceId }) {
+  if (
+    !isUuid(presentationId) ||
+    !isUuid(competenceId) ||
+    !Array.isArray(rows) ||
+    rows.filter((row) => row?.id === presentationId && row.id_competencia === competenceId)
+      .length !== 1
+  ) {
+    fail("F3_V119_PRESENTATION_READBACK");
+  }
+  return presentationId;
+}
+export async function f3S5RegisterPresentation({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  competenceId,
+  contractId,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    organizationId !== book.organizationF3() ||
+    !isUuid(competenceId) ||
+    !isUuid(contractId) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === contractId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 7 &&
+                q.outcome === "confirmed",
+            ),
+      ) ||
+    !hasF3V119PresentationApproval(book.summary().requests)
+  ) {
+    fail("F3_V119_PRESENTATION_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/competencias/" + competenceId + "/apresentar", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Registrar apresentação", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Confirmar envio ao contratante" });
+  await fence.drain();
+  fence.assertSafe();
+  const payload = {
+    p_id_competencia: competenceId,
+    p_idempotency_key: f3Slot("uuid", "v119_presentation"),
+  };
+  const requestId = mutationFence.arm({ producerOrder: 19, bodies: [payload] });
+  try {
+    const posted = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/registrar_apresentacao",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Confirmar registro", exact: true }).click();
+    const response = await posted;
+    if (response.status() !== 200) fail("F3_V119_PRESENTATION_HTTP");
+    const presentationId = await response.json();
+    if (!isUuid(presentationId)) fail("F3_V119_PRESENTATION_RESPONSE");
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V119_PRESENTATION_UNCERTAIN");
+    }
+    const listed = page.waitForResponse(
+      (r) => {
+        const url = new URL(r.url());
+        return (
+          r.request().method() === "GET" &&
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/apresentacoes_contratante" &&
+          url.searchParams.get("id_competencia") === "eq." + competenceId &&
+          url.searchParams.get("id_organizacao") === "eq." + organizationId &&
+          url.searchParams.get("id_contrato") === "eq." + contractId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.goto(HML_ORIGIN + "/competencias/" + competenceId, {
+      waitUntil: "networkidle",
+    });
+    const listedResponse = await listed;
+    if (listedResponse.status() !== 200) fail("F3_V119_PRESENTATION_READBACK");
+    assertF3S5PresentationReadback({
+      presentationId,
+      rows: await listedResponse.json(),
+      competenceId,
+    });
+    book.confirm(requestId, { entityId: presentationId, organizationId });
+    book.assertIsolation();
+    return presentationId;
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Uma apresentação incerta não pode ser repetida com nova chave.
+    }
+    throw error;
+  }
+}
+
+/** V108 — prova CODE do resultado publicado; não substitui UP e W1. */
+export function assertF3V108ProposalReadback({ before, after, contractId, versionId }) {
+  if (
+    !isUuid(contractId) ||
+    !isUuid(versionId) ||
+    before?.id !== versionId ||
+    before.id_contrato !== contractId ||
+    before.situacao !== "rascunho" ||
+    after?.id !== versionId ||
+    after.id_contrato !== contractId ||
+    after.situacao !== "publicada" ||
+    after.hash !== before.hash ||
+    !/^[a-f0-9]{64}$/i.test(after.hash ?? "") ||
+    after.rubricas_count < 1 ||
+    after.arquivo_origem?.status_seguranca !== "aprovado"
+  ) {
+    fail("F3_V108_PROPOSAL_READBACK");
+  }
+  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 9, versionId });
+}
+
+/** V108: proposta inicial via formulário real, com ID capturado pela consulta do produto. */
+export async function f3S3CreateProposal({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === contractId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 7 &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V108_PROPOSAL_PRECONDITION");
+  const title = "ContaOS HML F3 " + book.provenance().workflowRunId + " Proposta";
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Criar proposta", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Criar proposta" });
+  await dialog.getByLabel("Título da proposta").fill(title);
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 9,
+    kind: "prerequisito",
+    action: "proposta",
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_contrato: contractId,
+        p_id_proposta: null,
+        p_titulo: title,
+        p_versao_esperada: null,
+        p_chave_idempotencia: f3Slot("uuid", "v108_proposal"),
+      },
+    ],
+  });
+  try {
+    const posted = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/salvar_proposta_orcamentaria_v108",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Salvar proposta", exact: true }).click();
+    const response = await posted;
+    if (response.status() !== 200) fail("F3_V108_PROPOSAL_HTTP");
+    const args = response.request().postDataJSON();
+    if (
+      args?.p_id_organizacao !== organizationId ||
+      args.p_id_contrato !== contractId ||
+      args.p_titulo !== title ||
+      args.p_id_proposta !== null
+    ) {
+      fail("F3_V108_PROPOSAL_COMMAND");
+    }
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V108_PROPOSAL_UNCERTAIN");
+    }
+    const read = page.waitForResponse(
+      (r) => {
+        if (r.request().method() !== "GET") return false;
+        const url = new URL(r.url());
+        return (
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/propostas_orcamentarias" &&
+          url.searchParams.get("id_contrato") === "eq." + contractId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const snapshot = await read;
+    if (snapshot.status() !== 200) fail("F3_V108_PROPOSAL_READBACK");
+    const rows = await snapshot.json();
+    const matches = Array.isArray(rows)
+      ? rows.filter(
+          (row) =>
+            isUuid(row?.id) &&
+            row.id_organizacao === organizationId &&
+            row.id_contrato === contractId &&
+            row.titulo === title &&
+            row.situacao === "rascunho",
+        )
+      : [];
+    if (matches.length !== 1) fail("F3_V108_PROPOSAL_READBACK");
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: matches[0].id, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId,
+      proposalId: matches[0].id,
+    });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {}
+    throw error;
+  }
+}
+
+/** V108: upload simples no formulário de versão; só registra após arquivo capturado. */
+export async function f3S3CreateProposalVersion({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  proposalId,
+  file,
+  startDate,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(proposalId) ||
+    !file ||
+    !/^[A-Za-z0-9_.-]{1,80}\.pdf$/.test(file.name ?? "") ||
+    file.mimeType !== "application/pdf" ||
+    !(file.buffer instanceof Uint8Array) ||
+    file.buffer.byteLength < 16 ||
+    file.buffer.byteLength > 1048576 ||
+    typeof startDate !== "string" ||
+    !/^20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(startDate) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === proposalId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 9 &&
+                q.action === "proposta" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V108_VERSION_PRECONDITION");
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Nova versão", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Nova versão" });
+  await dialog.getByLabel("Enviar novo documento-base").setInputFiles(file);
+  await dialog.getByLabel("Início da vigência").fill(startDate);
+  const pathSlot = f3Slot("path", "v108_base_signed_path");
+  const edge = {
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    nome_arquivo: file.name,
+    mime: file.mimeType,
+    tamanho: file.buffer.byteLength,
+  };
+  const confirmation = {
+    p_id_organizacao: organizationId,
+    p_id_contrato: contractId,
+    p_path: pathSlot,
+    p_nome_original: file.name,
+    p_mime: file.mimeType,
+    p_tamanho: file.buffer.byteLength,
+    p_sha256: sha256(file.buffer),
+    p_origem: "upload_usuario",
+  };
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 9,
+    kind: "prerequisito",
+    action: "versao",
+    bodies: [
+      edge,
+      { path: pathSlot },
+      confirmation,
+      {
+        p_id_organizacao: organizationId,
+        p_id_proposta: proposalId,
+        p_vigencia_inicio: startDate,
+        p_vigencia_fim: null,
+        p_id_arquivo_origem: f3Slot("uuid", "v108_base_file"),
+        p_chave_idempotencia: f3Slot("uuid", "v108_proposal_version"),
+      },
+    ],
+  });
+  try {
+    const read = (url) =>
+      page.waitForResponse((r) => r.request().method() === "POST" && r.url() === API_ORIGIN + url, {
+        timeout: F3_S1_UI.timeout,
+      });
+    const edgeResp = read("/functions/v1/storage-sign-upload");
+    const storageResp = page.waitForResponse(
+      (r) =>
+        r.request().method() === "PUT" &&
+        r.url().startsWith(API_ORIGIN + "/storage/v1/object/upload/sign/contaos-documentos/"),
+      { timeout: F3_S1_UI.timeout },
+    );
+    const confirmResp = read("/rest/v1/rpc/confirmar_upload_arquivo");
+    await dialog.getByRole("button", { name: "Enviar arquivo", exact: true }).click();
+    const [authorization, stored, confirmed] = await Promise.all([
+      edgeResp,
+      storageResp,
+      confirmResp,
+    ]);
+    if (
+      authorization.status() !== 200 ||
+      ![200, 201].includes(stored.status()) ||
+      confirmed.status() !== 200
+    )
+      fail("F3_V108_BASE_UPLOAD_HTTP");
+    const grant = await authorization.json();
+    const fileId = await confirmed.json();
+    if (
+      grant?.ok !== true ||
+      grant.bucket !== "contaos-documentos" ||
+      grant.usar_upload_resumivel === true ||
+      typeof grant.path !== "string" ||
+      !grant.path.startsWith(organizationId + "/uploads/") ||
+      !stored.url().includes("/contaos-documentos/" + grant.path + "?") ||
+      !isUuid(fileId)
+    )
+      fail("F3_V108_BASE_UPLOAD_READBACK");
+    const confirmArgs = confirmed.request().postDataJSON();
+    if (
+      confirmArgs?.p_id_organizacao !== organizationId ||
+      confirmArgs.p_id_contrato !== contractId ||
+      confirmArgs.p_path !== grant.path ||
+      confirmArgs.p_sha256 !== sha256(file.buffer)
+    )
+      fail("F3_V108_BASE_UPLOAD_READBACK");
+    await dialog.getByLabel("Documento-base").selectOption(fileId);
+    const send = read("/rest/v1/rpc/registrar_versao_proposta_v108");
+    await dialog.getByRole("button", { name: "Registrar versão", exact: true }).click();
+    const versionResponse = await send;
+    if (versionResponse.status() !== 200) fail("F3_V108_VERSION_HTTP");
+    const args = versionResponse.request().postDataJSON();
+    if (
+      args?.p_id_proposta !== proposalId ||
+      args.p_id_organizacao !== organizationId ||
+      args.p_id_arquivo_origem !== fileId ||
+      args.p_vigencia_inicio !== startDate
+    )
+      fail("F3_V108_VERSION_COMMAND");
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V108_VERSION_UNCERTAIN");
+    }
+    const listed = page.waitForResponse(
+      (r) => {
+        if (r.request().method() !== "GET") return false;
+        const url = new URL(r.url());
+        return (
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/versoes_proposta" &&
+          url.searchParams.get("id_proposta") === "eq." + proposalId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const listResponse = await listed;
+    if (listResponse.status() !== 200) fail("F3_V108_VERSION_READBACK");
+    const rows = await listResponse.json();
+    const matched = Array.isArray(rows)
+      ? rows.filter(
+          (row) =>
+            isUuid(row?.id) &&
+            row.id_proposta === proposalId &&
+            row.id_arquivo_origem === fileId &&
+            row.vigencia_inicio === startDate &&
+            row.situacao === "rascunho" &&
+            Number.isSafeInteger(row.numero_versao) &&
+            row.numero_versao > 0,
+        )
+      : [];
+    if (matched.length !== 1) fail("F3_V108_VERSION_READBACK");
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: matched[0].id, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId,
+      versionId: matched[0].id,
+      versionNumber: matched[0].numero_versao,
+      fileId,
+    });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {}
+    throw error;
+  }
+}
+
+/** V108: rubrica material para a versão do livro, com leitura independente posterior. */
+export async function f3S3CreateProposalRubric({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  versionId,
+  versionNumber,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(versionId) ||
+    !Number.isSafeInteger(versionNumber) ||
+    versionNumber < 1 ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === versionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 9 &&
+                q.action === "versao" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V108_RUBRIC_PRECONDITION");
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
+    waitUntil: "networkidle",
+  });
+  await page
+    .getByRole("button", {
+      name: "Ver rubricas da versão " + versionNumber,
+      exact: true,
+    })
+    .click();
+  await page.getByRole("button", { name: "Nova rubrica", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Nova rubrica" });
+  const group = "F3-" + book.provenance().workflowRunId;
+  const rubric = "Evidência documental obrigatória";
+  await dialog.getByLabel("Grupo").fill(group);
+  await dialog.getByLabel("Rubrica", { exact: true }).fill(rubric);
+  await dialog.getByLabel("Valor mensal previsto (R$)").fill("100,00");
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 9,
+    kind: "prerequisito",
+    action: "rubrica",
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_versao_proposta: versionId,
+        p_id_linha: null,
+        p_codigo: null,
+        p_grupo: group,
+        p_rubrica: rubric,
+        p_subrubrica: null,
+        p_descricao: null,
+        p_valor_mensal: 100,
+        p_valor_anual: null,
+        p_permite_remanejamento: false,
+        p_limite_remanejamento_percentual: null,
+        p_observacoes: null,
+        p_versao_esperada: null,
+        p_chave_idempotencia: f3Slot("uuid", "v108_rubric"),
+      },
+    ],
+  });
+  try {
+    const sent = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/salvar_linha_orcamentaria_v108",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Salvar rubrica", exact: true }).click();
+    const response = await sent;
+    if (response.status() !== 200) fail("F3_V108_RUBRIC_HTTP");
+    const sentArgs = response.request().postDataJSON();
+    if (
+      sentArgs?.p_id_versao_proposta !== versionId ||
+      sentArgs.p_id_organizacao !== organizationId ||
+      sentArgs.p_grupo !== group ||
+      sentArgs.p_rubrica !== rubric
+    ) {
+      fail("F3_V108_RUBRIC_COMMAND");
+    }
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V108_RUBRIC_UNCERTAIN");
+    }
+    const listed = page.waitForResponse(
+      (r) => {
+        if (r.request().method() !== "GET") return false;
+        const url = new URL(r.url());
+        return (
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/linhas_orcamentarias" &&
+          url.searchParams.get("id_versao_proposta") === "eq." + versionId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const snapshot = await listed;
+    if (snapshot.status() !== 200) fail("F3_V108_RUBRIC_READBACK");
+    const rows = await snapshot.json();
+    const matches = Array.isArray(rows)
+      ? rows.filter(
+          (row) =>
+            isUuid(row?.id) &&
+            row.id_versao_proposta === versionId &&
+            row.grupo === group &&
+            row.rubrica === rubric &&
+            row.valor_mensal_previsto === 100,
+        )
+      : [];
+    if (matches.length !== 1) fail("F3_V108_RUBRIC_READBACK");
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: matches[0].id, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId,
+      rubricId: matches[0].id,
+    });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {}
+    throw error;
+  }
+}
+
+/** V108: publicação pela interface com mutação cercada e três readbacks autoritativos. */
+export async function f3S3PublishProposal({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  versionId,
+  before,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(organizationId) ||
+    organizationId !== book.organizationF3() ||
+    !isUuid(contractId) ||
+    !isUuid(versionId) ||
+    before?.id !== versionId ||
+    before.id_contrato !== contractId ||
+    !isUuid(before.id_proposta) ||
+    !isUuid(before.id_arquivo_origem) ||
+    !Number.isSafeInteger(before.numero_versao) ||
+    before.numero_versao < 1 ||
+    before.situacao !== "rascunho" ||
+    !SHA64.test(before.hash ?? "") ||
+    before.arquivo_origem?.status_seguranca !== "aprovado" ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === versionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (request) =>
+                request.requestId === entry.requestId &&
+                request.producerOrder === 9 &&
+                request.kind === "prerequisito" &&
+                request.action === "versao" &&
+                request.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_V108_PUBLISH_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/orcamento", {
+    waitUntil: "networkidle",
+  });
+  await page
+    .getByRole("button", {
+      name: "Ver rubricas da versão " + before.numero_versao,
+      exact: true,
+    })
+    .click();
+  await page.getByRole("button", { name: "Publicar versão", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  const fundamento = "Publicação F3 isolada com versão e documento-base aprovados";
+  await dialog.getByLabel("Fundamento da publicação").fill(fundamento);
+  await dialog
+    .getByRole("checkbox", {
+      name: "Confirmo que revisei a versão e desejo publicá-la.",
+    })
+    .check();
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 9,
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_versao: versionId,
+        p_hash_esperado: before.hash,
+        p_fundamento: fundamento,
+        p_chave_idempotencia: f3Slot("uuid", "v108_publicar"),
+      },
+    ],
+  });
+  try {
+    const sent = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/publicar_versao_proposta_v108",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await dialog.getByRole("button", { name: "Confirmar publicação", exact: true }).click();
+    if ((await sent).status() !== 200) fail("F3_V108_PUBLISH_HTTP");
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V108_PUBLISH_UNCERTAIN");
+    }
+    const matchingGet = (table, field, value) => (response) => {
+      if (response.request().method() !== "GET") return false;
+      const url = new URL(response.url());
+      return (
+        url.origin === API_ORIGIN &&
+        url.pathname === "/rest/v1/" + table &&
+        url.searchParams.get(field) === "eq." + value
+      );
+    };
+    const propostaPending = page.waitForResponse(
+      matchingGet("propostas_orcamentarias", "id_contrato", contractId),
+      { timeout: F3_S1_UI.timeout },
+    );
+    const versaoPending = page.waitForResponse(
+      matchingGet("versoes_proposta", "id_proposta", before.id_proposta),
+      { timeout: F3_S1_UI.timeout },
+    );
+    const rubricaPending = page.waitForResponse(
+      matchingGet("linhas_orcamentarias", "id_versao_proposta", versionId),
+      { timeout: F3_S1_UI.timeout },
+    );
+    const arquivoPending = page.waitForResponse(
+      (response) => {
+        if (response.request().method() !== "GET") return false;
+        const url = new URL(response.url());
+        return (
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/arquivos" &&
+          (url.searchParams.get("id") ?? "").includes(before.id_arquivo_origem)
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const observed = await Promise.all([
+      propostaPending,
+      versaoPending,
+      rubricaPending,
+      arquivoPending,
+    ]);
+    if (observed.some((response) => response.status() !== 200)) {
+      fail("F3_V108_PUBLISH_READBACK");
+    }
+    const [propostas, versoes, rubricas, arquivos] = await Promise.all(
+      observed.map((response) => response.json()),
+    );
+    if (
+      ![propostas, versoes, rubricas, arquivos].every(Array.isArray) ||
+      propostas.filter(
+        (row) =>
+          row?.id === before.id_proposta &&
+          row.id_contrato === contractId &&
+          row.id_organizacao === organizationId,
+      ).length !== 1
+    ) {
+      fail("F3_V108_PUBLISH_READBACK");
+    }
+    const matchingVersions = versoes.filter(
+      (row) =>
+        row?.id === versionId &&
+        row.id_proposta === before.id_proposta &&
+        row.id_arquivo_origem === before.id_arquivo_origem,
+    );
+    // A projeção real COLUNAS_ARQUIVO não contém id_organizacao/id_contrato.
+    // A origem do arquivo é vinculada pela versão da proposta, cuja organização
+    // e contrato foram comprovados no readback da proposta acima.
+    const matchingFiles = arquivos.filter((row) => row?.id === before.id_arquivo_origem);
+    if (matchingVersions.length !== 1 || matchingFiles.length !== 1 || rubricas.length < 1) {
+      fail("F3_V108_PUBLISH_READBACK");
+    }
+    assertF3V108ProposalReadback({
+      before,
+      after: {
+        ...matchingVersions[0],
+        id_contrato: contractId,
+        rubricas_count: rubricas.filter((row) => row?.id_versao_proposta === versionId).length,
+        arquivo_origem: matchingFiles[0],
+      },
+      contractId,
+      versionId,
+    });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: versionId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({ requestId, versionId, state: "UI_OBSERVED_NOT_CERTIFIED" });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Readback incerto não autoriza nova publicação com outra chave.
+    }
+    throw error;
+  }
+}
+
+/** V109 — lista só libera o snapshot após uma versão publicada e item material válido. */
+export function assertF3V109ListReadback({ before, after, organizationId, contractId, listId }) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(listId) ||
+    before?.id === undefined ||
+    before.id !== listId ||
+    before.id_organizacao !== organizationId ||
+    before.id_contrato !== contractId ||
+    after?.id !== listId ||
+    after.id_organizacao !== organizationId ||
+    after.id_contrato !== contractId ||
+    after.versao_registro <= before.versao_registro ||
+    !isUuid(after.id_versao_publicada) ||
+    !Array.isArray(after.itens) ||
+    !after.itens.some(
+      (item) =>
+        item.obrigatorio === true &&
+        item.aplicavel === true &&
+        isUuid(item.id_fonte_versao) &&
+        item.regra_validacao?.documento?.obrigatorio === true,
+    )
+  ) {
+    fail("F3_V109_LIST_READBACK");
+  }
+  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 11, listId });
+}
+
+/**
+ * Pipeline autenticado de upload simples, ligado à UI. Não aceita TUS.
+ * A mutação deve ser disparada exclusivamente pela tela (submit), sob a cerca.
+ * O POST da Edge, o PUT, a confirmação e o RPC de negócio são observados
+ * na rede, nunca gerados pelo harness. Nenhum segredo é devolvido ou gravado.
+ */
+export async function f3RunSignedDocumentUpload({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  order,
+  kind = "principal",
+  action,
+  file,
+  business,
+  submit,
+  verifyReadback,
+}) {
+  const expectedBusiness = {
+    12: "criar_documento_contrato_completo",
+    13: "adicionar_versao_documento_contrato",
+    15: "criar_documento_competencia_v115",
+    20: "criar_documento_contrato_completo",
+  };
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !Object.hasOwn(expectedBusiness, order) ||
+    (order === 20 ? kind !== "prerequisito" || action !== "documento" : kind !== "principal") ||
+    !file ||
+    !/^[a-zA-Z0-9_.-]{1,80}\.pdf$/.test(file.name ?? "") ||
+    file.mimeType !== "application/pdf" ||
+    !(file.buffer instanceof Uint8Array) ||
+    file.buffer.byteLength < 16 ||
+    file.buffer.byteLength > 1024 * 1024 ||
+    typeof submit !== "function" ||
+    typeof verifyReadback !== "function" ||
+    !business ||
+    typeof business !== "object" ||
+    Array.isArray(business) ||
+    !book
+      .created()
+      .some(
+        (entity) =>
+          entity.id === contractId &&
+          entity.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (r) =>
+                r.requestId === entity.requestId &&
+                r.producerOrder === 7 &&
+                r.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_UPLOAD_PRECONDITION");
+  }
+  const actualFlow = F3_MUTATION_FLOWS[order];
+  const steps = kind === "prerequisito" ? actualFlow.prerequisito[action] : actualFlow.principal;
+  if (
+    !steps ||
+    steps.length !== 4 ||
+    steps[3].name !== expectedBusiness[order] ||
+    Object.keys(business).some((k) => k.startsWith("p_") && !k.match(/^p_[a-z_]+$/))
+  ) {
+    fail("F3_UPLOAD_PRECONDITION");
+  }
+  const bytesSha256 = sha256(file.buffer);
+  const edge = {
+    id_organizacao: organizationId,
+    id_contrato: contractId,
+    nome_arquivo: file.name,
+    mime: file.mimeType,
+    tamanho: file.buffer.byteLength,
+  };
+  const pathSlot = f3Slot("path", "signed_document_path");
+  const confirmedFile = f3Slot("uuid", "confirmed_upload_file");
+  const docKey = f3Slot("uuid", "document_idempotence");
+  const confirmation = {
+    p_id_organizacao: organizationId,
+    p_id_contrato: contractId,
+    p_path: pathSlot,
+    p_nome_original: file.name,
+    p_mime: file.mimeType,
+    p_tamanho: file.buffer.byteLength,
+    p_sha256: bytesSha256,
+    p_origem: "upload_usuario",
+  };
+  const body = {
+    ...business,
+    p_id_arquivo: confirmedFile,
+    p_chave_idempotencia: docKey,
+  };
+  const requestId = mutationFence.arm({
+    producerOrder: order,
+    ...(kind === "prerequisito" ? { kind, action } : {}),
+    bodies: [edge, { path: pathSlot }, confirmation, body],
+  });
+  const responseFor = (url, method) =>
+    page.waitForResponse(
+      (response) => response.url() === API_ORIGIN + url && response.request().method() === method,
+      { timeout: F3_S1_UI.timeout },
+    );
+  try {
+    const edgePromise = responseFor("/functions/v1/storage-sign-upload", "POST");
+    const uploadPromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PUT" &&
+        response
+          .url()
+          .startsWith(API_ORIGIN + "/storage/v1/object/upload/sign/contaos-documentos/"),
+      { timeout: F3_S1_UI.timeout },
+    );
+    const confirmationPromise = responseFor("/rest/v1/rpc/confirmar_upload_arquivo", "POST");
+    const businessPromise = responseFor("/rest/v1/rpc/" + expectedBusiness[order], "POST");
+    await fence.drain();
+    fence.assertSafe();
+    await submit();
+    const [auth, upload, confirmationResponse, businessResponse] = await Promise.all([
+      edgePromise,
+      uploadPromise,
+      confirmationPromise,
+      businessPromise,
+    ]);
+    if (
+      auth.status() !== 200 ||
+      ![200, 201].includes(upload.status()) ||
+      confirmationResponse.status() !== 200 ||
+      businessResponse.status() !== 200
+    ) {
+      fail("F3_UPLOAD_HTTP");
+    }
+    const authorization = await auth.json();
+    if (
+      authorization?.ok !== true ||
+      authorization.bucket !== "contaos-documentos" ||
+      authorization.usar_upload_resumivel !== false ||
+      typeof authorization.path !== "string" ||
+      !authorization.path.startsWith(organizationId + "/uploads/") ||
+      !upload.url().includes("/contaos-documentos/" + authorization.path + "?")
+    ) {
+      fail("F3_UPLOAD_SIGNED_PATH");
+    }
+    const confirmArgs = confirmationResponse.request().postDataJSON();
+    if (
+      confirmArgs?.p_path !== authorization.path ||
+      confirmArgs.p_id_organizacao !== organizationId ||
+      confirmArgs.p_id_contrato !== contractId ||
+      confirmArgs.p_sha256 !== bytesSha256
+    ) {
+      fail("F3_UPLOAD_CONFIRM_ARGS");
+    }
+    const fileId = await confirmationResponse.json();
+    const businessArgs = businessResponse.request().postDataJSON();
+    const businessResult = await businessResponse.json();
+    if (
+      !isUuid(fileId) ||
+      businessArgs?.p_id_arquivo !== fileId ||
+      !isUuid(businessResult?.id_documento) ||
+      !isUuid(businessResult.id_versao) ||
+      businessResult.numero_versao < 1 ||
+      businessResult.id_arquivo !== fileId
+    ) {
+      fail("F3_UPLOAD_BUSINESS_RESPONSE");
+    }
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_UPLOAD_FENCE_UNCERTAIN");
+    }
+    if ((await verifyReadback({ businessResult, fileId })) !== true) {
+      fail("F3_UPLOAD_READBACK");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    const entityId =
+      order === 15 ? businessResult.id_versao : order === 20 ? fileId : businessResult.id_documento;
+    book.confirm(requestId, { entityId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId,
+      businessResult: Object.freeze({ ...businessResult }),
+      fileId,
+      documentId: businessResult.id_documento,
+      versionId: businessResult.id_versao,
+    });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Erro ou operação incerta não admite uma segunda chave.
+    }
+    throw error;
+  }
+}
+
+/** V110: upload da UI e readback independente de documento, versão e arquivo. */
+export async function f3S3CreateContractDocument({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  file,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId)
+  ) {
+    fail("F3_V110_PRECONDITION");
+  }
+  const title = "ContaOS HML F3 " + book.provenance().workflowRunId + " Documento";
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/documentos", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Enviar documentos", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Enviar documentos" });
+  await dialog.locator("#v110-novo-arquivos").setInputFiles(file);
+  await dialog.getByLabel("Título de " + file.name, { exact: true }).fill(title);
+  await dialog.getByLabel("Tipo do documento").selectOption("outro");
+  await dialog.getByLabel("Categoria").fill("hml");
+  const verifyReadback = async ({ businessResult, fileId }) => {
+    const getResponse = (table) =>
+      page.waitForResponse(
+        (response) =>
+          response.request().method() === "GET" &&
+          new URL(response.url()).origin === API_ORIGIN &&
+          new URL(response.url()).pathname === "/rest/v1/" + table,
+        { timeout: F3_S1_UI.timeout },
+      );
+    const documentRead = getResponse("documentos_contrato");
+    const versionRead = getResponse("versoes_documento");
+    const fileRead = getResponse("arquivos");
+    await page.reload({ waitUntil: "networkidle" });
+    const [docResponse, versionResponse, fileResponse] = await Promise.all([
+      documentRead,
+      versionRead,
+      fileRead,
+    ]);
+    if (
+      [docResponse, versionResponse, fileResponse].some((response) => response.status() !== 200)
+    ) {
+      fail("F3_V110_READBACK");
+    }
+    const [docs, versions, files] = await Promise.all(
+      [docResponse, versionResponse, fileResponse].map((response) => response.json()),
+    );
+    if (![docs, versions, files].every(Array.isArray)) fail("F3_V110_READBACK");
+    const document = docs.filter(
+      (row) =>
+        row?.id === businessResult.id_documento &&
+        row.id_contrato === contractId &&
+        row.titulo === title,
+    );
+    const version = versions.filter(
+      (row) =>
+        row?.id === businessResult.id_versao &&
+        row.id_documento_contrato === businessResult.id_documento &&
+        row.id_arquivo === fileId,
+    );
+    const metadata = files.filter((row) => row?.id === fileId);
+    if (document.length !== 1 || version.length !== 1 || metadata.length !== 1) {
+      fail("F3_V110_READBACK");
+    }
+    assertF3V110DocumentReadback({
+      after: {
+        ...document[0],
+        numero_versao: version[0].numero_versao,
+        id_arquivo: version[0].id_arquivo,
+        status_seguranca: metadata[0].status_seguranca,
+      },
+      contractId,
+      fileId,
+    });
+    return true;
+  };
+  return f3RunSignedDocumentUpload({
+    page,
+    fence,
+    mutationFence,
+    book,
+    organizationId,
+    contractId,
+    order: 12,
+    file,
+    business: {
+      p_id_contrato: contractId,
+      p_tipo: "outro",
+      p_titulo: title,
+      p_categoria: "hml",
+      p_vigencia_inicio: null,
+      p_vigencia_fim: null,
+      p_observacoes: null,
+    },
+    submit: async () =>
+      dialog.getByRole("button", { name: "Enviar e registrar", exact: true }).click(),
+    verifyReadback,
+  });
+}
+
+/** V111: nova versão via UI, sem substituição da anterior. */
+export async function f3S3AddContractDocumentVersion({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  documentId,
+  title,
+  before,
+  file,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(documentId) ||
+    typeof title !== "string" ||
+    !title ||
+    before?.id !== documentId ||
+    !Number.isSafeInteger(before.numero_versao) ||
+    before.numero_versao < 1 ||
+    !isUuid(before.id_arquivo) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === documentId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (request) =>
+                request.requestId === entry.requestId &&
+                request.producerOrder === 12 &&
+                request.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_V111_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/documentos", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Nova versão de " + title, exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Nova versão — " + title });
+  await dialog.locator("#v110-versao-arquivos").setInputFiles(file);
+  const motive = "Atualização documental isolada e versionada F3";
+  await dialog.getByLabel("Motivo da nova versão").fill(motive);
+  const verifyReadback = async ({ businessResult, fileId }) => {
+    const getResponse = (table) =>
+      page.waitForResponse(
+        (response) =>
+          response.request().method() === "GET" &&
+          new URL(response.url()).origin === API_ORIGIN &&
+          new URL(response.url()).pathname === "/rest/v1/" + table,
+        { timeout: F3_S1_UI.timeout },
+      );
+    const documentRead = getResponse("documentos_contrato");
+    const versionRead = getResponse("versoes_documento");
+    const fileRead = getResponse("arquivos");
+    await page.reload({ waitUntil: "networkidle" });
+    const [docResponse, versionResponse, fileResponse] = await Promise.all([
+      documentRead,
+      versionRead,
+      fileRead,
+    ]);
+    if ([docResponse, versionResponse, fileResponse].some((r) => r.status() !== 200)) {
+      fail("F3_V111_READBACK");
+    }
+    const [docs, versions, files] = await Promise.all(
+      [docResponse, versionResponse, fileResponse].map((r) => r.json()),
+    );
+    if (![docs, versions, files].every(Array.isArray)) fail("F3_V111_READBACK");
+    const doc = docs.filter(
+      (row) => row?.id === documentId && row.id_contrato === contractId && row.titulo === title,
+    );
+    const version = versions.filter(
+      (row) =>
+        row?.id === businessResult.id_versao &&
+        row.id_documento_contrato === documentId &&
+        row.id_arquivo === fileId,
+    );
+    const meta = files.filter((row) => row?.id === fileId);
+    if (
+      doc.length !== 1 ||
+      version.length !== 1 ||
+      meta.length !== 1 ||
+      businessResult.id_documento !== documentId
+    ) {
+      fail("F3_V111_READBACK");
+    }
+    assertF3V111DocumentVersionReadback({
+      before,
+      after: {
+        id: documentId,
+        numero_versao: version[0].numero_versao,
+        id_arquivo: version[0].id_arquivo,
+        status_seguranca: meta[0].status_seguranca,
+      },
+      documentId,
+      fileId,
+    });
+    return true;
+  };
+  return f3RunSignedDocumentUpload({
+    page,
+    fence,
+    mutationFence,
+    book,
+    organizationId,
+    contractId,
+    order: 13,
+    file,
+    business: { p_id_documento: documentId, p_motivo: motive },
+    submit: async () =>
+      dialog.getByRole("button", { name: "Enviar nova versão", exact: true }).click(),
+    verifyReadback,
+  });
+}
+
+/** V115: documento de competência e vínculo ao requisito pela UI nativa. */
+export async function f3S4CreateCompetenceDocument({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  competenceId,
+  requirementId,
+  type,
+  file,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(competenceId) ||
+    !isUuid(requirementId) ||
+    typeof type !== "string" ||
+    !/^[a-z_]{2,40}$/.test(type) ||
+    !book
+      .created()
+      .some(
+        (entity) =>
+          entity.id === competenceId &&
+          entity.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (r) =>
+                r.requestId === entity.requestId &&
+                r.producerOrder === 14 &&
+                r.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_V115_PRECONDITION");
+  }
+  const title = "ContaOS HML F3 " + book.provenance().workflowRunId + " Evidencia";
+  await page.goto(HML_ORIGIN + "/competencias/" + competenceId + "/documentos", {
+    waitUntil: "networkidle",
+  });
+  await page.locator("#v115-arquivo").setInputFiles(file);
+  await page.locator("#v115-req").selectOption(requirementId);
+  await page.locator("#v115-tipo").selectOption(type);
+  await page.locator("#v115-titulo").fill(title);
+  await page.locator("#v115-cat").fill("hml");
+  const verifyReadback = async ({ businessResult, fileId }) => {
+    const observed = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/obter_documentos_competencia_v115",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    const response = await observed;
+    if (response.status() !== 200) fail("F3_V115_READBACK");
+    const args = response.request().postDataJSON();
+    const snapshot = await response.json();
+    if (
+      args?.p_id_competencia !== competenceId ||
+      snapshot?.competencia?.id !== competenceId ||
+      snapshot.competencia.id_organizacao !== organizationId ||
+      snapshot.competencia.id_contrato !== contractId ||
+      !Array.isArray(snapshot.documentos)
+    ) {
+      fail("F3_V115_READBACK");
+    }
+    const matched = snapshot.documentos.filter(
+      (d) =>
+        d?.id === businessResult.id_documento &&
+        d.titulo === title &&
+        d.requisito?.id === requirementId &&
+        d.versao?.id_arquivo === fileId &&
+        d.arquivo?.id === fileId,
+    );
+    if (matched.length !== 1) fail("F3_V115_READBACK");
+    assertF3V115CompetenceDocumentReadback({
+      document: {
+        id: businessResult.id_versao,
+        id_competencia: competenceId,
+        id_requisito: requirementId,
+        id_arquivo: fileId,
+        status_seguranca: matched[0].arquivo.status_seguranca,
+      },
+      competenceId,
+      requirementId,
+      fileId,
+    });
+    return true;
+  };
+  return f3RunSignedDocumentUpload({
+    page,
+    fence,
+    mutationFence,
+    book,
+    organizationId,
+    contractId,
+    order: 15,
+    file,
+    business: {
+      p_id_competencia: competenceId,
+      p_tipo: type,
+      p_titulo: title,
+      p_categoria: "hml",
+      p_id_requisito: requirementId,
+    },
+    submit: async () => page.getByRole("button", { name: "Enviar", exact: true }).click(),
+    verifyReadback,
+  });
+}
+
+/** V122: primeiro só se comprova upload histórico, nunca aprovação automática. */
+export async function f3S5UploadHistoricalReport({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  file,
+  competence,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    typeof competence !== "string" ||
+    !/^20\d{2}-(0[1-9]|1[0-2])$/.test(competence)
+  ) {
+    fail("F3_V122_UPLOAD_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/historico/importar", {
+    waitUntil: "networkidle",
+  });
+  await page.locator("#historico-arquivos").setInputFiles(file);
+  const article = page.getByRole("article").filter({ hasText: file.name });
+  if ((await article.count()) !== 1) fail("F3_V122_UPLOAD_CARD");
+  await article.locator('input[type="month"]').fill(competence);
+  await article.getByLabel("Tipo de relatório").selectOption("relatorio_contratante");
+  const verifyReadback = async ({ businessResult, fileId }) => {
+    const get = (table) =>
+      page.waitForResponse(
+        (response) => {
+          if (response.request().method() !== "GET") return false;
+          const url = new URL(response.url());
+          return (
+            url.origin === API_ORIGIN &&
+            url.pathname === "/rest/v1/" + table &&
+            url.searchParams.get("id_organizacao") === "eq." + organizationId &&
+            url.searchParams.get("id_contrato") === "eq." + contractId
+          );
+        },
+        { timeout: F3_S1_UI.timeout },
+      );
+    const fileResponse = get("arquivos");
+    const versionResponse = get("versoes_documento");
+    await article.getByRole("button", { name: "Verificar processamento", exact: true }).click();
+    const [f, v] = await Promise.all([fileResponse, versionResponse]);
+    if (f.status() !== 200 || v.status() !== 200) fail("F3_V122_UPLOAD_READBACK");
+    const [fileRow, versionRow] = await Promise.all([f.json(), v.json()]);
+    if (
+      fileRow?.id !== fileId ||
+      fileRow.id_organizacao !== organizationId ||
+      fileRow.id_contrato !== contractId ||
+      versionRow?.id !== businessResult.id_versao ||
+      versionRow.id_arquivo !== fileId ||
+      versionRow.id_organizacao !== organizationId ||
+      versionRow.id_contrato !== contractId
+    ) {
+      fail("F3_V122_UPLOAD_READBACK");
+    }
+    return true;
+  };
+  const result = await f3RunSignedDocumentUpload({
+    page,
+    fence,
+    mutationFence,
+    book,
+    organizationId,
+    contractId,
+    order: 20,
+    kind: "prerequisito",
+    action: "documento",
+    file,
+    business: {
+      p_id_contrato: contractId,
+      p_tipo: "outro",
+      p_titulo: "Histórico — " + file.name,
+      p_categoria: "historico",
+      p_vigencia_inicio: null,
+      p_vigencia_fim: null,
+      p_observacoes: "Competência informada: " + competence,
+    },
+    submit: async () =>
+      article.getByRole("button", { name: "Enviar documento", exact: true }).click(),
+    verifyReadback,
+  });
+  return Object.freeze({ ...result, competence, fileName: file.name });
+}
+
+/** V122: correlaciona dois RPCs executados pela UI com o relatório lido no consumidor. */
+export function assertF3S5HistoricalEnqueueReadback({
+  row,
+  organizationId,
+  contractId,
+  reportId,
+  fileId,
+  executionId,
+  registeredId,
+  enqueuedId,
+  versionId,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(reportId) ||
+    !isUuid(fileId) ||
+    !isUuid(executionId) ||
+    !isUuid(versionId) ||
+    registeredId !== reportId ||
+    enqueuedId !== executionId ||
+    row?.id !== reportId ||
+    row.id_organizacao !== organizationId ||
+    row.id_contrato !== contractId ||
+    row.id_arquivo !== fileId
+  ) {
+    fail("F3_V122_ENQUEUE_READBACK");
+  }
+  return true;
+}
+
+export async function f3S5EnqueueHistoricalReport({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  prior,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(prior?.fileId) ||
+    !isUuid(prior.versionId) ||
+    typeof prior.competence !== "string" ||
+    !/^20\d{2}-(0[1-9]|1[0-2])$/.test(prior.competence) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === prior.fileId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (request) =>
+                request.requestId === entry.requestId &&
+                request.producerOrder === 20 &&
+                request.action === "documento" &&
+                request.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V122_ENQUEUE_PRECONDITION");
+  const article = page.getByRole("article").filter({
+    hasText: prior.fileName ?? "",
+  });
+  if ((await article.count()) !== 1) fail("F3_V122_ENQUEUE_CARD");
+  // O backend é autoritativo: somente botão habilitado depois dos GETs de
+  // segurança e processamento completos pode iniciar a fila.
+  await article.getByRole("button", { name: "Verificar processamento", exact: true }).click();
+  const enqueue = article.getByRole("button", { name: "Enfileirar ingestão", exact: true });
+  if ((await enqueue.count()) !== 1 || !(await enqueue.isEnabled())) {
+    fail("F3_V122_WAIT_PENDING");
+  }
+  const requestId = mutationFence.arm({
+    producerOrder: 20,
+    bodies: [
+      {
+        p_id_arquivo: prior.fileId,
+        p_competencia: prior.competence + "-01",
+        p_tipo: "relatorio_contratante",
+      },
+      {
+        p_id_relatorio: f3Slot("uuid", "historic_report"),
+        p_id_versao_documento: f3Slot("uuid", "historic_version"),
+      },
+    ],
+  });
+  try {
+    const register = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/registrar_relatorio_historico_hml",
+      { timeout: F3_S1_UI.timeout },
+    );
+    const queue = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/enfileirar_ingestao_historica_hml",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await fence.drain();
+    fence.assertSafe();
+    await enqueue.click();
+    const [r, e] = await Promise.all([register, queue]);
+    if (r.status() !== 200 || e.status() !== 200) fail("F3_V122_QUEUE_HTTP");
+    const reportId = await r.json();
+    const executionId = await e.json();
+    const sent = e.request().postDataJSON();
+    if (
+      !isUuid(reportId) ||
+      !isUuid(executionId) ||
+      sent?.p_id_relatorio !== reportId ||
+      sent.p_id_versao_documento !== prior.versionId
+    )
+      fail("F3_V122_QUEUE_CORRELATION");
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V122_QUEUE_UNCERTAIN");
+    }
+    const reportRead = page.waitForResponse(
+      (response) => {
+        if (response.request().method() !== "GET") return false;
+        const url = new URL(response.url());
+        return (
+          url.origin === API_ORIGIN &&
+          url.pathname === "/rest/v1/relatorios_historicos_contratante" &&
+          url.searchParams.get("id_contrato") === "eq." + contractId &&
+          url.searchParams.get("id_organizacao") === "eq." + organizationId
+        );
+      },
+      { timeout: F3_S1_UI.timeout },
+    );
+    await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/historico", {
+      waitUntil: "networkidle",
+    });
+    const response = await reportRead;
+    if (response.status() !== 200) fail("F3_V122_QUEUE_READBACK");
+    const rows = await response.json();
+    const matching = Array.isArray(rows)
+      ? rows.filter((row) => row?.id === reportId && row.id_arquivo === prior.fileId)
+      : [];
+    if (matching.length !== 1) fail("F3_V122_QUEUE_READBACK");
+    assertF3S5HistoricalEnqueueReadback({
+      row: matching[0],
+      organizationId,
+      contractId,
+      reportId,
+      fileId: prior.fileId,
+      executionId,
+      registeredId: reportId,
+      enqueuedId: executionId,
+      versionId: prior.versionId,
+    });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: reportId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId,
+      reportId,
+      executionId,
+    });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Uma fila incerta exige readback, jamais nova chave silenciosa.
+    }
+    throw error;
+  }
+}
+
+/** V109: resultado do comando conferido contra uma segunda consulta do produto. */
+export function assertF3S3ListCreationReadback({
+  receipt,
+  snapshot,
+  organizationId,
+  contractId,
+  name,
+}) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    typeof name !== "string" ||
+    !name.trim() ||
+    receipt?.schema_versao !== "crud-lista-v1" ||
+    receipt.acao !== "criar_lista" ||
+    receipt.id_organizacao !== organizationId ||
+    receipt.id_contrato !== contractId ||
+    !isUuid(receipt.request_id) ||
+    !isUuid(receipt.lista?.id) ||
+    receipt.lista.id_organizacao !== organizationId ||
+    receipt.lista.id_contrato !== contractId ||
+    receipt.lista.nome !== name ||
+    !isUuid(receipt.id_versao) ||
+    snapshot?.schema_versao !== "crud-lista-v1" ||
+    snapshot.id_organizacao !== organizationId ||
+    snapshot.id_contrato !== contractId ||
+    snapshot.lista?.id !== receipt.lista.id ||
+    snapshot.lista.nome !== name ||
+    snapshot.lista.id_organizacao !== organizationId ||
+    snapshot.lista.id_contrato !== contractId ||
+    snapshot.versao?.id !== receipt.id_versao ||
+    snapshot.versao.id_lista !== receipt.lista.id ||
+    snapshot.versao.id_organizacao !== organizationId ||
+    snapshot.versao.id_contrato !== contractId ||
+    snapshot.total_versoes < 1
+  ) {
+    fail("F3_V109_CREATE_READBACK");
+  }
+  return Object.freeze({
+    state: "UI_OBSERVED_NOT_CERTIFIED",
+    listId: receipt.lista.id,
+    versionId: receipt.id_versao,
+    requestId: receipt.request_id,
+  });
+}
+
+/** Criar lista pela UI real, com cerca do comando e leitura posterior da RPC consumidora. */
+export async function f3S3CreateList({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  name,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    typeof name !== "string" ||
+    name !== "ContaOS HML F3 " + book.provenance().workflowRunId + " Lista" ||
+    !book
+      .created()
+      .some(
+        (item) =>
+          item.id === contractId &&
+          item.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (r) =>
+                r.requestId === item.requestId &&
+                r.producerOrder === 7 &&
+                r.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_V109_CREATE_PRECONDITION");
+  }
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/regras", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Gestão de listas" });
+  await panel.getByRole("button", { name: "Criar lista", exact: true }).click();
+  await panel.getByLabel("Nome", { exact: true }).fill(name);
+  const motive = "Criação isolada de lista e leitura do consumidor V109";
+  await panel.getByLabel("Motivo", { exact: true }).fill(motive);
+  await panel.getByRole("button", { name: "Revisar operação", exact: true }).click();
+  await fence.drain();
+  fence.assertSafe();
+  const intent = mutationFence.arm({
+    producerOrder: 11,
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_contrato: contractId,
+        p_id_lista: null,
+        p_versao_esperada: null,
+        p_acao: "criar_lista",
+        p_payload: { nome: name, descricao: null, vigencia_inicio: null, vigencia_fim: null },
+        p_motivo: motive,
+        p_request_id: f3Slot("uuid", "v109_criar"),
+      },
+    ],
+  });
+  try {
+    const posted = page.waitForResponse(
+      (response) =>
+        response.url() === API_ORIGIN + "/rest/v1/rpc/executar_comando_lista_v1" &&
+        response.request().method() === "POST",
+      { timeout: F3_S1_UI.timeout },
+    );
+    const readback = page.waitForResponse(
+      (response) =>
+        response.url() === API_ORIGIN + "/rest/v1/rpc/obter_lista_operacional_v1" &&
+        response.request().method() === "POST" &&
+        (() => {
+          try {
+            const args = response.request().postDataJSON();
+            return (
+              args.p_id_organizacao === organizationId &&
+              args.p_id_contrato === contractId &&
+              isUuid(args.p_id_lista)
+            );
+          } catch {
+            return false;
+          }
+        })(),
+      { timeout: F3_S1_UI.timeout },
+    );
+    await panel.getByRole("button", { name: "Confirmar operação", exact: true }).click();
+    const response = await posted;
+    if (response.status() !== 200) fail("F3_V109_CREATE_HTTP");
+    const cmd = response.request().postDataJSON();
+    const receipt = await response.json();
+    if (
+      cmd?.p_id_contrato !== contractId ||
+      cmd.p_id_organizacao !== organizationId ||
+      cmd.p_acao !== "criar_lista" ||
+      cmd.p_request_id !== receipt.request_id
+    ) {
+      fail("F3_V109_CREATE_RESPONSE");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== intent) {
+      fail("F3_V109_CREATE_UNCERTAIN");
+    }
+    const observed = await readback;
+    if (observed.status() !== 200) fail("F3_V109_CREATE_READBACK");
+    const snapshot = await observed.json();
+    const result = assertF3S3ListCreationReadback({
+      receipt,
+      snapshot,
+      organizationId,
+      contractId,
+      name,
+    });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(intent, { entityId: result.listId, organizationId });
+    book.assertIsolation();
+    return result;
+  } catch (error) {
+    try {
+      if (book.state(intent) === "sealed") book.uncertain(intent);
+    } catch {
+      // Um comando incerto não pode ser repetido com nova chave.
+    }
+    throw error;
+  }
+}
+
+/** V109: snapshot da RPC real para a lista da organização/contrato selecionados. */
+export function assertF3S3ListSnapshot(dto, { organizationId, contractId, listId, versionId }) {
+  if (
+    !isUuid(organizationId) ||
+    !isUuid(contractId) ||
+    !isUuid(listId) ||
+    !isUuid(versionId) ||
+    dto?.schema_versao !== "crud-lista-v1" ||
+    dto.id_organizacao !== organizationId ||
+    dto.id_contrato !== contractId ||
+    dto.lista?.id !== listId ||
+    dto.lista.id_organizacao !== organizationId ||
+    dto.lista.id_contrato !== contractId ||
+    !Number.isSafeInteger(dto.lista.versao_registro) ||
+    dto.lista.versao_registro < 1 ||
+    dto.versao?.id !== versionId ||
+    dto.versao.id_lista !== listId ||
+    dto.versao.id_organizacao !== organizationId ||
+    dto.versao.id_contrato !== contractId ||
+    !Array.isArray(dto.itens)
+  )
+    fail("F3_V109_SNAPSHOT");
+  return dto;
+}
+
+async function f3S3ReadListNative({
+  page,
+  mutationFence,
+  organizationId,
+  contractId,
+  listId,
+  versionId,
+}) {
+  const requestMatches = (response) => {
+    if (
+      response.request().method() !== "POST" ||
+      response.url() !== API_ORIGIN + "/rest/v1/rpc/obter_lista_operacional_v1"
+    )
+      return false;
+    try {
+      const args = response.request().postDataJSON();
+      return (
+        args.p_id_organizacao === organizationId &&
+        args.p_id_contrato === contractId &&
+        args.p_id_lista === listId
+      );
+    } catch {
+      return false;
+    }
+  };
+  const read = page.waitForResponse(requestMatches, { timeout: F3_S1_UI.timeout });
+  await page.reload({ waitUntil: "networkidle" });
+  const response = await read;
+  if (response.status() !== 200) fail("F3_V109_SNAPSHOT");
+  const dto = assertF3S3ListSnapshot(await response.json(), {
+    organizationId,
+    contractId,
+    listId,
+    versionId,
+  });
+  if ((await mutationFence.observeVersion(response)) !== true) {
+    fail("F3_V109_VERSION_NOT_OBSERVED");
+  }
+  return dto;
+}
+
+export function assertF3S3ListItemReadback({
+  before,
+  after,
+  organizationId,
+  contractId,
+  listId,
+  versionId,
+  sourceVersionId,
+  code,
+}) {
+  assertF3S3ListSnapshot(before, { organizationId, contractId, listId, versionId });
+  assertF3S3ListSnapshot(after, { organizationId, contractId, listId, versionId });
+  const matched = after.itens.filter(
+    (row) =>
+      row?.codigo === code &&
+      row.id_fonte_versao === sourceVersionId &&
+      row.obrigatorio === true &&
+      row.aplicavel === true &&
+      row.regra_validacao?.documento?.obrigatorio === true,
+  );
+  if (
+    !isUuid(sourceVersionId) ||
+    after.lista.versao_registro <= before.lista.versao_registro ||
+    matched.length !== 1 ||
+    !isUuid(matched[0].id) ||
+    before.itens.some((row) => row?.id === matched[0].id)
+  )
+    fail("F3_V109_ITEM_READBACK");
+  return matched[0].id;
+}
+
+/** V109: salvar_item pela UI e releitura do mesmo requisito, não apenas status HTTP. */
+export async function f3S3SaveListItem({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  listId,
+  versionId,
+  sourceVersionId,
+  code,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(listId) ||
+    !isUuid(versionId) ||
+    !isUuid(sourceVersionId) ||
+    typeof code !== "string" ||
+    !/^F3-[A-Z0-9-]{2,32}$/.test(code) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === listId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 11 &&
+                q.kind === "principal" &&
+                q.outcome === "confirmed",
+            ),
+      ) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === sourceVersionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 10 &&
+                q.action === "versao" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V109_ITEM_PRECONDITION");
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/regras", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Gestão de listas" });
+  await panel.getByLabel("Lista selecionada").selectOption(listId);
+  const before = await f3S3ReadListNative({
+    page,
+    mutationFence,
+    organizationId,
+    contractId,
+    listId,
+    versionId,
+  });
+  if (before.versao.situacao !== "rascunho") fail("F3_V109_ITEM_PRECONDITION");
+  await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
+  await panel.getByLabel("Lista selecionada").selectOption(listId);
+  await panel.getByRole("button", { name: "Adicionar item", exact: true }).click();
+  await panel.getByLabel("Código").fill(code);
+  await panel.getByLabel("Descrição do item").fill("Evidência documental obrigatória F3");
+  await panel.getByLabel("Identificador da versão da fonte formal").fill(sourceVersionId);
+  await panel
+    .getByLabel("Regra de validação e condição (JSON)")
+    .fill(JSON.stringify({ documento: { obrigatorio: true } }));
+  const motive = "Vincular requisito e fonte normativa aprovada F3";
+  await panel.getByLabel("Motivo").fill(motive);
+  await panel.getByRole("button", { name: "Revisar operação", exact: true }).click();
+  const payload = {
+    id_versao: versionId,
+    id_item: null,
+    codigo: code,
+    descricao: "Evidência documental obrigatória F3",
+    categoria: null,
+    obrigatorio: true,
+    aplicavel: true,
+    impeditivo: false,
+    criticidade: "media",
+    id_fonte_versao: sourceVersionId,
+    regra_validacao: { documento: { obrigatorio: true } },
+    ordem: 0,
+  };
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 11,
+    kind: "prerequisito",
+    action: "item",
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_contrato: contractId,
+        p_id_lista: listId,
+        p_versao_esperada: before.lista.versao_registro,
+        p_acao: "salvar_item",
+        p_payload: payload,
+        p_motivo: motive,
+        p_request_id: f3Slot("uuid", "v109_item"),
+      },
+    ],
+  });
+  try {
+    const sent = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/executar_comando_lista_v1",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await panel.getByRole("button", { name: "Confirmar operação", exact: true }).click();
+    const response = await sent;
+    if (response.status() !== 200) fail("F3_V109_ITEM_HTTP");
+    const args = response.request().postDataJSON();
+    if (args?.p_acao !== "salvar_item" || args.p_id_lista !== listId) {
+      fail("F3_V109_ITEM_COMMAND");
+    }
+    const result = await response.json();
+    if (
+      result?.acao !== "salvar_item" ||
+      result.id_organizacao !== organizationId ||
+      result.id_contrato !== contractId ||
+      result.lista?.id !== listId
+    ) {
+      fail("F3_V109_ITEM_RECEIPT");
+    }
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V109_ITEM_UNCERTAIN");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    const after = await f3S3ReadListNative({
+      page,
+      mutationFence,
+      organizationId,
+      contractId,
+      listId,
+      versionId,
+    });
+    const itemId = assertF3S3ListItemReadback({
+      before,
+      after,
+      organizationId,
+      contractId,
+      listId,
+      versionId,
+      sourceVersionId,
+      code,
+    });
+    book.confirm(requestId, { entityId: itemId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({ state: "UI_OBSERVED_NOT_CERTIFIED", itemId, requestId });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      /* sem reenvio automático em incerteza */
+    }
+    throw error;
+  }
+}
+
+export function assertF3S3ListPublicationReadback({
+  before,
+  after,
+  organizationId,
+  contractId,
+  listId,
+  versionId,
+}) {
+  assertF3S3ListSnapshot(before, { organizationId, contractId, listId, versionId });
+  assertF3S3ListSnapshot(after, { organizationId, contractId, listId, versionId });
+  if (
+    before.versao.situacao !== "rascunho" ||
+    !["publicada", "vigente"].includes(after.versao.situacao) ||
+    after.lista.versao_registro <= before.lista.versao_registro ||
+    !after.itens.some(
+      (item) =>
+        item?.obrigatorio === true &&
+        item.aplicavel === true &&
+        item.regra_validacao?.documento?.obrigatorio === true,
+    )
+  )
+    fail("F3_V109_PUBLICATION_READBACK");
+  return versionId;
+}
+
+export async function f3S3PublishListVersion({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  listId,
+  versionId,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(listId) ||
+    !isUuid(versionId) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (q) =>
+                q.requestId === entry.requestId &&
+                q.producerOrder === 11 &&
+                q.action === "item" &&
+                q.outcome === "confirmed",
+            ),
+      )
+  )
+    fail("F3_V109_PUBLICATION_PRECONDITION");
+  await page.goto(HML_ORIGIN + "/contratos/" + contractId + "/regras", {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Gestão de listas" });
+  await panel.getByLabel("Lista selecionada").selectOption(listId);
+  const before = await f3S3ReadListNative({
+    page,
+    mutationFence,
+    organizationId,
+    contractId,
+    listId,
+    versionId,
+  });
+  if (before.versao.situacao !== "rascunho") fail("F3_V109_PUBLICATION_PRECONDITION");
+  await page.getByRole("button", { name: "Gerenciar listas", exact: true }).click();
+  await panel.getByLabel("Lista selecionada").selectOption(listId);
+  await panel.getByRole("button", { name: "Publicar versão", exact: true }).click();
+  const motive = "Publicação F3 após validação de item documental";
+  await panel.getByLabel("Motivo").fill(motive);
+  await panel.getByRole("button", { name: "Revisar operação", exact: true }).click();
+  await fence.drain();
+  fence.assertSafe();
+  const requestId = mutationFence.arm({
+    producerOrder: 11,
+    kind: "prerequisito",
+    action: "publicacao",
+    bodies: [
+      {
+        p_id_organizacao: organizationId,
+        p_id_contrato: contractId,
+        p_id_lista: listId,
+        p_versao_esperada: before.lista.versao_registro,
+        p_acao: "publicar_versao",
+        p_payload: { id_versao: versionId },
+        p_motivo: motive,
+        p_request_id: f3Slot("uuid", "v109_publish"),
+      },
+    ],
+  });
+  try {
+    const posted = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        r.url() === API_ORIGIN + "/rest/v1/rpc/executar_comando_lista_v1",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await panel.getByRole("button", { name: "Confirmar operação", exact: true }).click();
+    const response = await posted;
+    if (response.status() !== 200) fail("F3_V109_PUBLICATION_HTTP");
+    const args = response.request().postDataJSON();
+    const receipt = await response.json();
+    if (
+      args?.p_acao !== "publicar_versao" ||
+      args.p_id_lista !== listId ||
+      receipt?.acao !== "publicar_versao" ||
+      receipt.lista?.id !== listId
+    ) {
+      fail("F3_V109_PUBLICATION_RECEIPT");
+    }
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V109_PUBLICATION_UNCERTAIN");
+    }
+    await fence.drain();
+    fence.assertSafe();
+    const after = await f3S3ReadListNative({
+      page,
+      mutationFence,
+      organizationId,
+      contractId,
+      listId,
+      versionId,
+    });
+    assertF3S3ListPublicationReadback({
+      before,
+      after,
+      organizationId,
+      contractId,
+      listId,
+      versionId,
+    });
+    book.confirm(requestId, { entityId: versionId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({ state: "UI_OBSERVED_NOT_CERTIFIED", versionId, requestId });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      /* sem repetição com chave nova */
+    }
+    throw error;
+  }
+}
+
+/** V110 — arquivo confirmado não é prova de documento até leitura da nova versão. */
+export function assertF3V110DocumentReadback({ after, contractId, fileId }) {
+  if (
+    !isUuid(contractId) ||
+    !isUuid(fileId) ||
+    !isUuid(after?.id) ||
+    after.id_contrato !== contractId ||
+    after.numero_versao !== 1 ||
+    after.id_arquivo !== fileId ||
+    !["pendente", "aprovado"].includes(after.status_seguranca)
+  ) {
+    fail("F3_V110_DOCUMENT_READBACK");
+  }
+  return Object.freeze({
+    state: "CONTRACT_NOT_CERTIFIED",
+    producerOrder: 12,
+    documentId: after.id,
+  });
+}
+
+/** V111 — incremento não pode substituir ou destruir a versão anterior. */
+export function assertF3V111DocumentVersionReadback({ before, after, documentId, fileId }) {
+  if (
+    !isUuid(documentId) ||
+    !isUuid(fileId) ||
+    before?.id !== documentId ||
+    after?.id !== documentId ||
+    !Number.isSafeInteger(before.numero_versao) ||
+    after.numero_versao !== before.numero_versao + 1 ||
+    after.id_arquivo !== fileId ||
+    before.id_arquivo === fileId ||
+    !["pendente", "aprovado"].includes(after.status_seguranca)
+  ) {
+    fail("F3_V111_VERSION_READBACK");
+  }
+  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 13, documentId });
+}
+
+/** V115 — evidência do requisito deve pertencer à competência e à versão segura. */
+export function assertF3V115CompetenceDocumentReadback({
+  document,
+  competenceId,
+  requirementId,
+  fileId,
+}) {
+  if (
+    !isUuid(competenceId) ||
+    !isUuid(requirementId) ||
+    !isUuid(fileId) ||
+    !isUuid(document?.id) ||
+    document.id_competencia !== competenceId ||
+    document.id_requisito !== requirementId ||
+    document.id_arquivo !== fileId ||
+    !["pendente", "aprovado"].includes(document.status_seguranca)
+  ) {
+    fail("F3_V115_COMPETENCE_DOCUMENT_READBACK");
+  }
+  return Object.freeze({
+    state: "CONTRACT_NOT_CERTIFIED",
+    producerOrder: 15,
+    documentId: document.id,
+  });
+}
+
+/** V117 — concatena os contratos CODE já integrados, nunca declara PASS de caso. */
+export function assertF3V117DriverCodeContract({
+  review,
+  analysisBefore,
+  analysisAfter,
+  organizationId,
+  contractId,
+  competenceId,
+  requirementId,
+  documentVersionId,
+}) {
+  const receipt = assertF3V117ReviewReceipt({
+    ...review,
+    organizationId,
+    contractId,
+    competenceId,
+    requirementId,
+    documentVersionId,
+  });
+  const consumer = assertF3V117V116ConsumerReadback({
+    receipt,
+    before: analysisBefore,
+    after: analysisAfter,
+    competenceId,
+    requirementId,
+  });
+  return Object.freeze({
+    state: "CONTRACT_NOT_CERTIFIED",
+    producerOrder: 17,
+    requestId: receipt.requestId,
+    resultId: consumer.resultId,
+  });
+}
+
+/** V117: revisão pela UI e leitura posterior V116; não certifica caseId. */
+export async function f3S4ReviewRequirement({
+  page,
+  fence,
+  mutationFence,
+  book,
+  organizationId,
+  contractId,
+  competenceId,
+  requirementId,
+  requirementCode,
+  documentVersionId,
+  documentName,
+  documentVersionNumber,
+}) {
+  if (
+    !page ||
+    !fence ||
+    !mutationFence ||
+    !BOOKS.has(book) ||
+    !isUuid(organizationId) ||
+    book.organizationF3() !== organizationId ||
+    !isUuid(contractId) ||
+    !isUuid(competenceId) ||
+    !isUuid(requirementId) ||
+    !isUuid(documentVersionId) ||
+    typeof requirementCode !== "string" ||
+    !requirementCode.trim() ||
+    typeof documentName !== "string" ||
+    !documentName.trim() ||
+    !Number.isSafeInteger(documentVersionNumber) ||
+    documentVersionNumber < 1 ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === competenceId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (request) =>
+                request.requestId === entry.requestId &&
+                request.producerOrder === 14 &&
+                request.outcome === "confirmed",
+            ),
+      ) ||
+    !book
+      .created()
+      .some(
+        (entry) =>
+          entry.id === documentVersionId &&
+          entry.organizationId === organizationId &&
+          book
+            .summary()
+            .requests.some(
+              (request) =>
+                request.requestId === entry.requestId &&
+                request.producerOrder === 15 &&
+                request.outcome === "confirmed",
+            ),
+      )
+  ) {
+    fail("F3_V117_UI_PRECONDITION");
+  }
+  const reading = (response) =>
+    response.request().method() === "POST" &&
+    response.url() === API_ORIGIN + "/rest/v1/rpc/obter_analise_competencia_v116";
+  const initial = page.waitForResponse(reading, { timeout: F3_S1_UI.timeout });
+  await page.goto(HML_ORIGIN + "/competencias/" + competenceId + "/analise", {
+    waitUntil: "networkidle",
+  });
+  const initialResponse = await initial;
+  if (initialResponse.status() !== 200) fail("F3_V117_UI_INITIAL");
+  const analysisBefore = await initialResponse.json();
+  if (
+    analysisBefore?.competencia?.id !== competenceId ||
+    analysisBefore.competencia.id_organizacao !== organizationId ||
+    analysisBefore.competencia.id_contrato !== contractId ||
+    analysisBefore.estado_analise !== "complete" ||
+    analysisBefore.stale !== false ||
+    !isUuid(analysisBefore.execucao_atual?.id)
+  ) {
+    fail("F3_V117_UI_PRECONDITION");
+  }
+  await page
+    .getByRole("button", {
+      name: "Abrir requisito " + requirementCode,
+      exact: true,
+    })
+    .click();
+  const editor = page.getByRole("region", { name: "Revisão humana do requisito" });
+  const contextRead = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url() === API_ORIGIN + "/rest/v1/rpc/obter_contexto_revisao_v117",
+    { timeout: F3_S1_UI.timeout },
+  );
+  await editor.getByRole("button", { name: "Revisar resultado", exact: true }).click();
+  const contextResponse = await contextRead;
+  if (contextResponse.status() !== 200) fail("F3_V117_UI_CONTEXT");
+  const contextRequest = contextResponse.request().postDataJSON();
+  if (
+    contextRequest?.p_id_competencia !== competenceId ||
+    contextRequest?.p_id_requisito !== requirementId
+  ) {
+    fail("F3_V117_UI_CONTEXT");
+  }
+  const context = await contextResponse.json();
+  if (
+    context?.schema_versao !== "revisao-v117" ||
+    context.id_organizacao !== organizationId ||
+    context.id_contrato !== contractId ||
+    context.id_competencia !== competenceId ||
+    context.id_requisito !== requirementId ||
+    context.pode_revisar !== true ||
+    context.id_execucao_esperada !== analysisBefore.execucao_atual.id
+  ) {
+    fail("F3_V117_UI_PRECONDITION");
+  }
+  await editor.getByLabel("Resultado da revisão").selectOption("conforme");
+  const justificativa = "Revisão funcional F3 vinculada ao requisito e evidência aprovada";
+  const fundamento = "Validação de integração F3 CODE";
+  await editor.getByLabel("Justificativa da revisão").fill(justificativa);
+  await editor.getByLabel("Fundamento da revisão").fill(fundamento);
+  await editor
+    .getByRole("checkbox", {
+      name: "Selecionar " + documentName + " versão " + documentVersionNumber,
+      exact: true,
+    })
+    .check();
+  await editor.getByRole("button", { name: "Revisar e confirmar", exact: true }).click();
+  await fence.drain();
+  fence.assertSafe();
+  const payload = {
+    p_id_competencia: competenceId,
+    p_id_requisito: requirementId,
+    p_id_execucao_esperada: context.id_execucao_esperada,
+    p_id_resultado_esperado: context.id_resultado_esperado,
+    p_hash_esperado: context.hash_esperado,
+    p_resultado: "conforme",
+    p_justificativa: justificativa,
+    p_fundamento: fundamento,
+    p_evidencias: [{ id_versao_documento: documentVersionId }],
+    p_request_id: f3Slot("uuid", "v117_review"),
+  };
+  const requestId = mutationFence.arm({ producerOrder: 17, bodies: [payload] });
+  try {
+    const sent = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url() === API_ORIGIN + "/rest/v1/rpc/registrar_revisao_requisito_v117",
+      { timeout: F3_S1_UI.timeout },
+    );
+    await editor.getByRole("button", { name: "Confirmar revisão", exact: true }).click();
+    const posted = await sent;
+    if (posted.status() !== 200) fail("F3_V117_UI_HTTP");
+    const command = posted.request().postDataJSON();
+    const result = await posted.json();
+    await fence.drain();
+    fence.assertSafe();
+    const settled = mutationFence.settle();
+    if (!settled.sealed || !settled.complete || settled.requestId !== requestId) {
+      fail("F3_V117_UI_UNCERTAIN");
+    }
+    const reread = page.waitForResponse(reading, { timeout: F3_S1_UI.timeout });
+    await page.reload({ waitUntil: "networkidle" });
+    const consumer = await reread;
+    if (consumer.status() !== 200) fail("F3_V117_UI_READBACK");
+    const correlated = assertF3V117DriverCodeContract({
+      review: { context, command, result },
+      analysisBefore,
+      analysisAfter: await consumer.json(),
+      organizationId,
+      contractId,
+      competenceId,
+      requirementId,
+      documentVersionId,
+    });
+    await fence.drain();
+    fence.assertSafe();
+    book.confirm(requestId, { entityId: correlated.resultId, organizationId });
+    book.assertIsolation();
+    return Object.freeze({
+      state: "UI_OBSERVED_NOT_CERTIFIED",
+      requestId,
+      resultId: correlated.resultId,
+    });
+  } catch (error) {
+    try {
+      if (book.state(requestId) === "sealed") book.uncertain(requestId);
+    } catch {
+      // Resultado incerto: exige readback e nunca repete com outra chave.
+    }
+    throw error;
+  }
+}
+
+/** V122 — só há relatório utilizável quando a ingestão foi vinculada ao arquivo seguro. */
+export function assertF3V122HistoricalReadback({ before, after, reportId, fileId, executionId }) {
+  if (
+    !isUuid(reportId) ||
+    !isUuid(fileId) ||
+    !isUuid(executionId) ||
+    before?.id_arquivo !== fileId ||
+    before.status_seguranca !== "aprovado" ||
+    after?.id !== reportId ||
+    after.id_arquivo !== fileId ||
+    after.id_execucao !== executionId ||
+    !["enfileirada", "processando", "concluida"].includes(after.status_ingestao) ||
+    after.processamento_documental !== "concluido"
+  ) {
+    fail("F3_V122_HISTORICAL_READBACK");
+  }
+  return Object.freeze({ state: "CONTRACT_NOT_CERTIFIED", producerOrder: 20, reportId });
+}
+
+/**
+ * Onze cadeias de UI com dependências reais. Os argumentos são observações
+ * obtidas nas telas/na sessão, jamais credenciais ou UUID de outra organização.
+ * Não existe PASS de caseId nesta camada: apenas resultado UI_OBSERVED_NOT_CERTIFIED.
+ */
+export const F3_NATIVE_UI_PRODUCERS = Object.freeze({
+  3: async (ctx) => f3S1SelectPreference(ctx),
+  9: async (ctx) => {
+    const proposal = await f3S3CreateProposal(ctx);
+    const version = await f3S3CreateProposalVersion({
+      ...ctx,
+      proposalId: proposal.proposalId,
+    });
+    await f3S3CreateProposalRubric({
+      ...ctx,
+      versionId: version.versionId,
+      versionNumber: version.versionNumber,
+    });
+    // A segurança do arquivo-base é autoritativa e deve ser relida antes de W1.
+    if (typeof ctx.readReadyVersion !== "function") fail("F3_V108_READBACK_PENDING");
+    const before = await ctx.readReadyVersion({
+      proposalId: proposal.proposalId,
+      versionId: version.versionId,
+      fileId: version.fileId,
+    });
+    if (!before || before.arquivo_origem?.status_seguranca !== "aprovado") {
+      fail("F3_V108_WAIT_VERIFICADOR");
+    }
+    return f3S3PublishProposal({
+      ...ctx,
+      versionId: version.versionId,
+      before,
+    });
+  },
+  10: async (ctx) => f3S3SetApplicability(ctx),
+  11: async (ctx) => {
+    const list = await f3S3CreateList(ctx);
+    await f3S3SaveListItem({
+      ...ctx,
+      listId: list.listId,
+      versionId: list.versionId,
+    });
+    return f3S3PublishListVersion({
+      ...ctx,
+      listId: list.listId,
+      versionId: list.versionId,
+    });
+  },
+  12: async (ctx) => f3S3CreateContractDocument(ctx),
+  13: async (ctx) => f3S3AddContractDocumentVersion(ctx),
+  15: async (ctx) => f3S4CreateCompetenceDocument(ctx),
+  17: async (ctx) => f3S4ReviewRequirement(ctx),
+  18: async (ctx) => f3S5ApproveOpinion(ctx),
+  19: async (ctx) => f3S5RegisterPresentation(ctx),
+  20: async (ctx) => {
+    const upload = await f3S5UploadHistoricalReport(ctx);
+    return f3S5EnqueueHistoricalReport({ ...ctx, prior: upload });
+  },
+});
+
+/**
+ * 138 contratos CODE: cada ID usa produtor uma única vez (sem replicar mutações)
+ * e consulta o consumidor exato, em ambos os cenários positivo e negativo.
+ * Não constrói comprovantes a partir da matriz; exige observação real entregue
+ * pelo adaptador do produto e contraditório independente. No CODE, as
+ * observações são de testes com fixtures; HML LIVE somente após V5.
+ */
+export function createF3CodeCaseRuntime({
+  catalogue,
+  coverage,
+  producerDrivers,
+  consumerDrivers,
+  negativeDrivers,
+  independentVerifier,
+}) {
+  if (
+    catalogue?.count !== 138 ||
+    !Array.isArray(catalogue.cases) ||
+    catalogue.cases.length !== 138 ||
+    coverage?.cases?.length !== 138 ||
+    !producerDrivers ||
+    typeof producerDrivers !== "object" ||
+    !consumerDrivers ||
+    typeof consumerDrivers !== "object" ||
+    !negativeDrivers ||
+    typeof negativeDrivers !== "object" ||
+    typeof independentVerifier !== "function"
+  )
+    fail("F3_CODE_RUNTIME_INPUT");
+  const all = new Set();
+  for (let i = 0; i < 138; i++) {
+    const c = catalogue.cases[i];
+    const m = coverage.cases[i];
+    if (
+      !/^IFV1-F3-C[0-9]{4}$/.test(c?.caseId ?? "") ||
+      all.has(c.caseId) ||
+      m?.caseId !== c.caseId ||
+      m.producerOrder !== c.producerOrder ||
+      m.producer !== c.producer ||
+      m.consumer !== c.consumer ||
+      !Array.isArray(m.sourceHints) ||
+      m.sourceHints.length !== 2 ||
+      !/^src\/[A-Za-z0-9_./-]+\.(ts|tsx):[1-9]\d*$/.test(m.sourceHints[1])
+    )
+      fail("F3_CODE_RUNTIME_CATALOGUE");
+    all.add(c.caseId);
+  }
+  const producerRuns = new Map();
+  const observations = new Map();
+  const caseDrivers = Object.create(null);
+  const caseVerifiers = Object.create(null);
+  const requireDriver = (obj, key, code) => {
+    const driver = Object.getOwnPropertyDescriptor(obj, String(key))?.value;
+    if (typeof driver !== "function") fail(code);
+    return driver;
+  };
+  const assertObservation = (c, kind, value) => {
+    if (
+      !value ||
+      Object.getPrototypeOf(value) !== Object.prototype ||
+      value.caseId !== c.caseId ||
+      value.consumer !== c.consumer ||
+      value.producerOrder !== c.producerOrder ||
+      value.kind !== kind ||
+      typeof value.testId !== "string" ||
+      !/^[A-Za-z0-9_.:/#-]{3,240}$/.test(value.testId) ||
+      value.state !== "EXECUTED" ||
+      value.assertion !== "PASS" ||
+      !value.network ||
+      typeof value.network !== "object" ||
+      !["GET", "POST"].includes(value.network.method) ||
+      (value.network.status !== 200 &&
+        value.network.status !== 403 &&
+        value.network.status !== 404) ||
+      value.producerEntityId === null ||
+      !isUuid(value.producerEntityId) ||
+      !isUuid(value.organizationId) ||
+      !value.readback ||
+      typeof value.readback !== "object" ||
+      (kind === "positive" && (value.network.status !== 200 || value.readback.matched !== true)) ||
+      (kind === "negative" &&
+        !["DENY", "NOT_FOUND", "NO_FOREIGN_DATA"].includes(value.readback.outcome))
+    )
+      fail("F3_CODE_OBSERVATION");
+    assertJsonTree(value, "F3_CODE_OBSERVATION");
+    return Object.freeze(structuredClone(value));
+  };
+  for (let i = 0; i < 138; i++) {
+    const fixed = catalogue.cases[i];
+    const sourcePath = coverage.cases[i].sourceHints[1].split(":")[0];
+    caseDrivers[fixed.caseId] = async (c) => {
+      if (canonicalJson(c) !== canonicalJson(fixed)) fail("F3_CODE_CASE_MISMATCH");
+      const producer = requireDriver(producerDrivers, c.producerOrder, "F3_DRIVER_PENDING");
+      const positive = requireDriver(consumerDrivers, c.consumer, "F3_CONSUMER_PENDING");
+      const negative = requireDriver(negativeDrivers, c.consumer, "F3_NEGATIVE_PENDING");
+      if (!producerRuns.has(c.producerOrder)) {
+        producerRuns.set(
+          c.producerOrder,
+          Promise.resolve().then(() => producer(Object.freeze(structuredClone(c)))),
+        );
+      }
+      // A falha do produtor fica memorizada: nunca repetir mutação com nova chave.
+      const written = await producerRuns.get(c.producerOrder);
+      if (
+        !written ||
+        typeof written !== "object" ||
+        written.state !== "UI_OBSERVED_NOT_CERTIFIED" ||
+        !isUuid(written.producerEntityId) ||
+        !isUuid(written.organizationId)
+      )
+        fail("F3_PRODUCER_EVIDENCE");
+      const pos = assertObservation(
+        c,
+        "positive",
+        await positive({
+          case: Object.freeze(structuredClone(c)),
+          producer: Object.freeze(structuredClone(written)),
+        }),
+      );
+      const neg = assertObservation(
+        c,
+        "negative",
+        await negative({
+          case: Object.freeze(structuredClone(c)),
+          producer: Object.freeze(structuredClone(written)),
+        }),
+      );
+      if (
+        pos.producerEntityId !== written.producerEntityId ||
+        neg.producerEntityId !== written.producerEntityId ||
+        pos.organizationId !== written.organizationId ||
+        neg.organizationId !== written.organizationId ||
+        pos.testId === neg.testId
+      )
+        fail("F3_CODE_CROSS_PROOF");
+      // Evidência derivada do evento observado pelo navegador/fixture, jamais
+      // do texto ou dos hints da matriz. Hash de payload redigido, sem tokens.
+      const entries = [pos, neg].map((value) => ({
+        caseId: c.caseId,
+        kind: value.kind,
+        testId: value.testId,
+        outcome: "PASS",
+        sourcePath,
+        outputSha256: sha256(canonicalJson(value)),
+      }));
+      observations.set(
+        c.caseId,
+        Object.freeze({
+          producer: Object.freeze(structuredClone(written)),
+          positive: pos,
+          negative: neg,
+        }),
+      );
+      return Object.freeze({ applicability: "APPLICABLE", tests: entries });
+    };
+    caseVerifiers[fixed.caseId] = async (c, tests) => {
+      if (canonicalJson(c) !== canonicalJson(fixed)) return false;
+      const observed = observations.get(c.caseId);
+      if (
+        !observed ||
+        !Array.isArray(tests) ||
+        tests.length !== 2 ||
+        tests[0]?.caseId !== c.caseId ||
+        tests[1]?.caseId !== c.caseId ||
+        tests[0].kind !== "positive" ||
+        tests[1].kind !== "negative" ||
+        tests[0].sourcePath !== sourcePath ||
+        tests[1].sourcePath !== sourcePath ||
+        tests[0].outputSha256 !== sha256(canonicalJson(observed.positive)) ||
+        tests[1].outputSha256 !== sha256(canonicalJson(observed.negative))
+      )
+        return false;
+      // Não delega aprovação ao produtor: verificador distinto deve confrontar
+      // as duas observações e o vínculo da versão no consumidor.
+      return (
+        (await independentVerifier(
+          Object.freeze(structuredClone(c)),
+          Object.freeze(structuredClone(observed)),
+        )) === true
+      );
+    };
+  }
+  return Object.freeze({
+    caseDrivers: Object.freeze(caseDrivers),
+    caseVerifiers: Object.freeze(caseVerifiers),
+    coveredCaseIds: Object.freeze([...all]),
+  });
+}
+
+/**
+ * Liga o coletor CODE aos contratos exatos de cada caseId, sem atalhos por produtor.
+ * Ausência de driver falha; verificador ausente jamais aprova um recibo.
+ * Somente drivers reais geram provas. A coleta continua UNREVIEWED_NOT_CERTIFIED.
+ */
+export function bindF3CodeCaseDrivers({ catalogue, caseDrivers, caseVerifiers }) {
+  if (
+    !catalogue ||
+    catalogue.count !== 138 ||
+    !Array.isArray(catalogue.cases) ||
+    catalogue.cases.length !== 138 ||
+    !caseDrivers ||
+    typeof caseDrivers !== "object" ||
+    Array.isArray(caseDrivers) ||
+    !caseVerifiers ||
+    typeof caseVerifiers !== "object" ||
+    Array.isArray(caseVerifiers)
+  ) {
+    fail("F3_CODE_DRIVER_REGISTRY");
+  }
+  const cases = new Map(catalogue.cases.map((c) => [c.caseId, c]));
+  if (
+    cases.size !== 138 ||
+    Object.keys(caseDrivers).some((id) => !cases.has(id)) ||
+    Object.keys(caseVerifiers).some((id) => !cases.has(id))
+  ) {
+    fail("F3_CODE_DRIVER_REGISTRY");
+  }
+  const assertCase = (c) => {
+    const expected = cases.get(c?.caseId);
+    if (!expected || canonicalJson(expected) !== canonicalJson(c)) {
+      fail("F3_CODE_CASE_MISMATCH");
+    }
+  };
+  return Object.freeze({
+    executeCase: async (c) => {
+      assertCase(c);
+      const run = Object.getOwnPropertyDescriptor(caseDrivers, c.caseId)?.value;
+      if (typeof run !== "function") fail("F3_DRIVER_PENDING");
+      return run(Object.freeze(structuredClone(c)));
+    },
+    verifyCase: async (c, tests) => {
+      assertCase(c);
+      const verify = Object.getOwnPropertyDescriptor(caseVerifiers, c.caseId)?.value;
+      if (typeof verify !== "function") return false;
+      return (
+        (await verify(Object.freeze(structuredClone(c)), Object.freeze(structuredClone(tests)))) ===
+        true
+      );
+    },
+    registeredCaseIds: Object.freeze(
+      catalogue.cases
+        .filter(
+          (c) =>
+            typeof Object.getOwnPropertyDescriptor(caseDrivers, c.caseId)?.value === "function" &&
+            typeof Object.getOwnPropertyDescriptor(caseVerifiers, c.caseId)?.value === "function",
+        )
+        .map((c) => c.caseId),
+    ),
+  });
+}
+
+/** Executor CODE, com validação do catálogo e dos recibos pelo coletor existente. */
+export async function collectF3CodeCaseEvidence({
+  catalogue,
+  catalogueRaw,
+  provenance,
+  caseDrivers,
+  caseVerifiers,
+  collector,
+}) {
+  if (typeof collector !== "function") fail("F3_CODE_COLLECTOR_REQUIRED");
+  const binding = bindF3CodeCaseDrivers({ catalogue, caseDrivers, caseVerifiers });
+  return collector({
+    catalogue,
+    catalogueRaw,
+    provenance,
+    executeCase: binding.executeCase,
+    verifyCase: binding.verifyCase,
   });
 }
 

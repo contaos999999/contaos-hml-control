@@ -1,0 +1,28 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 813,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Versionar o candidato atestado em comparação com os bytes do artefato nativo e da reprodução independente.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_CODE_PROMOTION_SOURCE.json",
+    "scripts/hml/integracao-v1-fase6-code-promotion.mjs",
+    "scripts/hml/integracao-v1-fase6-code-promotion.test.mjs",
+    ".github/workflows/contaos-f6-code-promotion.yml",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_CODE_ATTESTATION_CANDIDATE.json"
+  ],
+  "acceptance": [
+    "Exigir PR de atestação integrada e revisão assistida no HEAD, árvore, tentativa, job e artefato assinados pela plataforma.",
+    "Comparar byte a byte o candidato original, a reprodução dos ZIPs de origem e o ledger versionado, com SHA-256.",
+    "Preservar o caráter append-only do ledger e publicar recibo do CI. O CERT ocorre em PR documental separada."
+  ],
+  "baseline_main": "66d3238a17134d02d25285826a7c78820e9724d7",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 796,
+  "authorization": "Execução integral indicada pelo titular e itens F6.8 e F6.9 do PLAN #796. Base material protegida #810. O escopo torna-se eficaz após CI, revisão assistida, merge protegido e readback deste PLAN.",
+  "constraints": [
+    "Sem alterações no produto, backend normativo ou controles existentes. Preservar Fases 1 a 5 e seus certificados. Atestação e promoção são PRs distintas anteriores ao CERT documental."
+  ],
+  "certification": "F6_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

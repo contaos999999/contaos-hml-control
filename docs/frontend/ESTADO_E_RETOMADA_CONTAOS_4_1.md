@@ -1,3 +1,26 @@
+## P0-AUD-UNIVERSAL-001 — reconciliação do BUILD #690 · 28/11/2026
+
+Candidato anterior `079c70d6be769ce8aaa6334583f46f07604aa443`: 22 caminhos contra os 14 do manifesto protegido. RED autenticado no Zero-Drift 45517192343 e FULL_PROTOCOL 45517192296 (MANDATED_FULL_DIFF). O manifesto protegido permanece byte a byte imutável. A reconciliação preserva a main e os testes cumulativos, não inclui os oito caminhos alheios do F3, não muda as regras de escopo, nem autoriza ativação. A única mudança na pinagem do fiscal é vincular a suíte de testes RCA reconciliada, sujeita a revisão e CI. O candidato ainda depende de CI, recibo V2 e parecer/revisão elegível; NO-GO de ativação, App privilegiado, fila real, HML e PROD. Os marcos a seguir são históricos; não substituem o estado atual nem os checkpoints do regular 77A.
+
+## Situação atual · V2 CODE, próximo regular 46 · 26/11/2026
+
+Os regulares 44 e 45 e seus recibos estão integrados. [BUILD 45 #832](https://github.com/contaos999999/contaos-hml-control/pull/832), merge `423869bf317fcae4e98acb659ca818c372cbaf8d`, revisão 6078585220 no HEAD exato e Teste C 45869787335 com oito casos do ciclo e regressão V2-01. [Recibo #833](https://github.com/contaos999999/contaos-hml-control/pull/833), merge `b372f481c67156d429cbe9fb738990493a924cc7`, revisão 6078619814 e leitura na main.
+
+A [BUILD I05 #232](https://github.com/contaos999999/develop/pull/232) integrou a proveniência dos itens em `31f3ef9b95c8dc4e9eadbc786a2125e3c02a266d`. A migração 20261126221545 foi aplicada em HML com paridade de 139 versões no [run 45905601026](https://github.com/contaos999999/develop/actions/runs/45905601026). O worker v6 foi lido de volta com os três arquivos iguais aos da main. O [recibo #235](https://github.com/contaos999999/develop/pull/235) entrou em `cbf247724ecede59fdcba0d18d7b0e37c76f247f`. O contexto foi conferido contra 25 blobs e o catálogo 100/97, com os hashes preservados. [Checkpoint oficial](https://github.com/contaos999999/contaos-hml-control/issues/708#issuecomment-7204850136)
+
+A execução segue com o [PLAN P0 46](planos/PROMPT_46_V2_03_APONTAMENTO_DETALHE_2026-11-26.md), sua validação integrada, RED, BUILD, Teste C e recibo. Gates V2 e certificados cumulativos continuam em execução. LIVE NOT_RUN e PROD NO-GO.
+
+## Histórico de retomadas
+
+## Situação atual · V2 CODE, recibo 44 concluído na main · 26/11/2026
+
+O certificado CODE V1 e o recibo de integração interna estão integrados pelas PRs #821 e #822. A V2 segue o plano mestre [#825](https://github.com/contaos999999/contaos-hml-control/pull/825) e sua matriz. Diligências V2-01 entrou pela [BUILD #827](https://github.com/contaos999999/contaos-hml-control/pull/827), merge `ea5802ce4544abeba7549c70070f121652490054`, com oito casos visuais confirmados.
+O controle foi integrado pela [PR #829](https://github.com/contaos999999/contaos-hml-control/pull/829). O recibo 44 foi integrado pela [PR #830](https://github.com/contaos999999/contaos-hml-control/pull/830), merge `55454f9ba2b21f549dc19975fe7f2aa9e3a05357`, revisão assistida 6078249286, CI 45866334980 e readback dos arquivos. O P0 efetivo aponta 45. [Checkpoint GitHub](https://github.com/contaos999999/contaos-hml-control/issues/708#issuecomment-7198853039)
+
+O próximo recorte é o PLAN P0 45 e sua BUILD protegida de Ciclo de diligência. A entrega depende do rito do PLAN, RED, GREEN, Teste C e do recibo do regular. Depois seguem 46, 47, 48, 49, 76 e 77 e as três certificações CODE da V2. Backend normativo `a1516de1d8949e505d83b5e000eb1cc558b217a7`, blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` de types.ts verificado, LIVE NOT_RUN e PROD NO-GO.
+
+Os registros abaixo documentam marcos históricos.
+
 ## P0-AUD-UNIVERSAL-001 — PLAN integrado, 20/11/2026
 
 A PR #689 integrou o PLAN documental na main no merge 3ee94171f2fc4cbec2e2d2b6f9efad88fc8ec9ff, HEAD e2ad6157613b98f1f92144e970507c8987dc3907. Revisão 5999759560 de Edivan5002 aprovada por decisão expressa do titular, com o parecer técnico CHANGES_REQUESTED preservado. O BUILD requer primeiro o manifesto de governança específico integrado em main. A ativação requer prova de proteção contra revogação da revisão durante a fila. A PR de BUILD começa em rascunho documental para reservar o número usado pelo manifesto. Certificação e liberação da PR #679 pendentes.

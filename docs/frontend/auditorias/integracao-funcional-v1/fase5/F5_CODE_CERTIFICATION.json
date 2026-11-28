@@ -1,0 +1,235 @@
+{
+  "schema": "contaos.ifv1.f5.code-certification.v1",
+  "phase": "IFV1_F5_CODE",
+  "result": "PASS",
+  "effectiveCondition": "ONLY_ON_PROTECTED_MAIN_AFTER_CERT_PR_CI_REVIEW_MERGE_READBACK",
+  "scope": "CODE_FIXTURE",
+  "date": "2026-11-25",
+  "counts": {
+    "cases": 138,
+    "mandatory": 120,
+    "conditional": 18,
+    "positive": 138,
+    "negative": 138,
+    "proofs": 276,
+    "failed": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "notRun": 0,
+    "notApplicable": 0
+  },
+  "material": {
+    "pr": 790,
+    "head": "aa5640e52cec265e2b250fce9b1d85452763d0b0",
+    "merge": "ee46e1ddde75b24954e61b0081b8ab6b167c127f",
+    "tree": "f651eee882b30139e75caf4ffebb99a6fb780b09",
+    "run": 45743224190,
+    "attempt": 1,
+    "harness": "b7c6187e5e805403174e4910be2bb29770cce053",
+    "review": 6067826851,
+    "artifacts": [
+      {
+        "name": "closure",
+        "job": 139653010928,
+        "artifact": 15081778608,
+        "path": "src/test/f5-code-closure-scope-isolation.test.ts",
+        "digest": "5533a3d6726b9d60eca43cf3e150d88ce59e52462e70884a85c7873eb0eb6c93",
+        "receiptDigest": "a40da241027618265296f1538d6350f303c5b2f5312cb9c67393e5bbee39f79e",
+        "observationsDigest": "456644b8a9943ef92f947291defff1fbee9a94ebb06d587e36af5ede0142ec3e",
+        "reportDigest": "df9b82e9d28c7e5341adc4be7945a86629a47b29af315be3711642ebe79b573c"
+      },
+      {
+        "name": "competenceactions",
+        "job": 139653010961,
+        "artifact": 15081504824,
+        "path": "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+        "digest": "119e09cc7e818c0ee130d74685bb7df04a7e723b654e09b06cdc791280cb729d",
+        "receiptDigest": "93b648576a8740b4b60a4ed7634bd476086bf43b568d9b7caacee8a197788a7f",
+        "observationsDigest": "2fbafb47954237613eab87cbd24ac2321ac20b8ac5d448cfb8ff3f82875b67bf",
+        "reportDigest": "3ca99ecddf78b777fcbccf033f8cb0aad7a9993c6d1721c4cb5d5af2f544a05c"
+      },
+      {
+        "name": "contractdocuments",
+        "job": 139653011043,
+        "artifact": 15081194255,
+        "path": "src/test/f5-code-v110-v111-document-scope-isolation.test.ts",
+        "digest": "5dca0281cd07d235e7b7db4ff76d24453a8cfc4a65ecb43a53d7ef39aad93396",
+        "receiptDigest": "58cc80ac6edb2afebe9363a71916f77846652d4f971d8611a8da107042d60776",
+        "observationsDigest": "969c6b1d9e2906c33823f615435ceae279b718499d75fc2e90af36778c260fc2",
+        "reportDigest": "95999f264dc28b3500c3b4f12767028ee63024e873acc78ab883c80d76232d8c"
+      },
+      {
+        "name": "competencedocuments",
+        "job": 139653011064,
+        "artifact": 15080959625,
+        "path": "src/test/f5-code-v115-document-scope-isolation.test.ts",
+        "digest": "199452a4dbb484db31cdab4e493670ac518173773020bbab6db1718007b65fcd",
+        "receiptDigest": "b0aade509d6985d8d92b3f330c912ae2a58ab63ea8503bf27cb2a45df5913ce3",
+        "observationsDigest": "c7e4e47af83157a852dacda8b8e21c58c05e1b8bbaac56cbadab7153e809b594",
+        "reportDigest": "bc4287700d1ee530d554ff4df33f0e30db68bcf8791737c48215ad264bf4ab69"
+      },
+      {
+        "name": "adm01",
+        "job": 139653011013,
+        "artifact": 15082007998,
+        "path": "src/test/f5-code-adm01-rbac-isolation.test.tsx",
+        "digest": "10265af07f81c6ce296e3bd6fa98d6d26e70b2aa1cb60994e13ba6467764aa01",
+        "receiptDigest": "f2eb9dcbc7064965177292f42363ec1399eb7c353ff8b4720126f3b4859e6f88",
+        "observationsDigest": "a8194c73d5b20f04ad5e4b585d5a9b2ab8602724c2060a7bc0497912cbb6ed25",
+        "reportDigest": "4ad404b64341cbfc8b0e0f161822bbf432054f5262afaee80e348de9922969fc"
+      },
+      {
+        "name": "context",
+        "job": 139653011287,
+        "artifact": 15082390905,
+        "path": "src/test/f5-code-context-session-isolation.test.tsx",
+        "digest": "2546c3571eac771b5575bdb0190a9f1b7223689bd5930838628a38b71ed262ad",
+        "receiptDigest": "615529cfadfa6b8256ff558f2fee2caf9451945a6eb62afc7d4ccea90372944b",
+        "observationsDigest": "1d92bdf33eb4726dedc1d034611c6775dd8768b1f9be9980bba419d11b900b7e",
+        "reportDigest": "1b30f15385afacefecff25205aefd7b27753134b061cff0ef95a9f4cc53c2130"
+      },
+      {
+        "name": "competence",
+        "job": 139653011014,
+        "artifact": 15082246235,
+        "path": "src/test/f5-code-sys04-competence-isolation.test.ts",
+        "digest": "cc3212f57c6be01d871cb053b079daf7072e85af83ff4b04c12416d29773e439",
+        "receiptDigest": "0c470b8f92fdc3f334ad6a28081cb1fc78262c5a62a79576c4e0e79d0725fa36",
+        "observationsDigest": "6080da4bb19d37af7bab7eefc860ccffebfa1499e2582996c96294c9721d0d5f",
+        "reportDigest": "b76661a20a0e89d47101702be59f1a858d6b33e46588eb2c39eae6a89c74918e"
+      },
+      {
+        "name": "data",
+        "job": 139653011059,
+        "artifact": 15081534531,
+        "path": "src/test/f5-code-sys04-data-isolation.test.ts",
+        "digest": "260735dcf7c0197248d9fa6d77467ad5bf633afbc74240b1c008da0357aa2ef1",
+        "receiptDigest": "4bfc4cededd5c697b27a974bf166f74920dc75de2114f2d92dcfbbd83a7398d5",
+        "observationsDigest": "c38f5241e928b2e61fe1c9894c152747e437662bcdebed310e9d06ffcb7aea79",
+        "reportDigest": "f48ca4050eac5448a99717b9ee03de0b1dc2ac8957664f3518db2c897bdd59ba"
+      },
+      {
+        "name": "actions",
+        "job": 139653010741,
+        "artifact": 15082320920,
+        "path": "src/test/f5-code-sys04-actions-isolation.test.ts",
+        "digest": "3069e72646fecfff3f9711680d9f495de94b1c559f1416605162654616d9743a",
+        "receiptDigest": "a1c5a2b2f9b3db2d91b1e54f57318d54cac37279dcbc85b64b9ee9ee1ef29d2c",
+        "observationsDigest": "5c784cfe55b8c1075837b8a07225c5c311f538b305a6595b88823b9790d430b8",
+        "reportDigest": "64b3b3052cae23747fa107dd8b558af737b44f44d88d9a21040b5862ca873b33"
+      },
+      {
+        "name": "parties",
+        "job": 139653011193,
+        "artifact": 15081394836,
+        "path": "src/test/f5-code-v102-v103-scope-isolation.test.ts",
+        "digest": "f6ab5c25839d9bada390461af37aa31720d3b6100b6244c9a26e01d8da96aee7",
+        "receiptDigest": "97bbc19e562c0c5a81bc3d1336c77628f397589e822958cfd61507465c9dffa4",
+        "observationsDigest": "6f9acffc8168609497a3750dc3f5b0c4fe0b896ba5c242b6099c0aec0bd887ca",
+        "reportDigest": "1771262ef5f7e19c5261e95d436f1f2310be09495d3cfce8309d47604f93b9e8"
+      },
+      {
+        "name": "contracts",
+        "job": 139653010935,
+        "artifact": 15081459083,
+        "path": "src/test/f5-code-v105-v106-scope-isolation.test.tsx",
+        "digest": "a5a027b5d7f938976e3fb20e546d0ad4b0ece28afbcf3a6de48b1ab67f133332",
+        "receiptDigest": "99f13c5798a1fd507215a4c6dcbf1c9f3cf23b6609205130986abfbfa0d105d2",
+        "observationsDigest": "c5ea973a485c28c8ce294799c14d7482338cb59ae0b914198223d257b8946c8b",
+        "reportDigest": "a15d5b53cdc7d5d0f0773397157169a20fa5159172ff587df322230f0ae7d5d6"
+      },
+      {
+        "name": "normatives",
+        "job": 139653010991,
+        "artifact": 15081978300,
+        "path": "src/test/f5-code-v107-v108-v109-scope-isolation.test.ts",
+        "digest": "4a0a1138d512e6a7da75c7d8189d1c8efb29d77cb348a36e727b1d75822860b1",
+        "receiptDigest": "28937b660295c3abfa565389b294140c919491cc1cbdd539d10a6479f96cbfd7",
+        "observationsDigest": "afc8d10b51ecd5f450712ccc207b49e8980b96b1fc910bf568c246a3f6814d0c",
+        "reportDigest": "9140bc9f8d0b86474a3f17bb4e0c4c074a84d1855a1252a76e428ed50c641521"
+      }
+    ],
+    "ci": [
+      {
+        "id": 45743224176,
+        "name": "ContaOS LOCK-TYPES-01 Double Barrier",
+        "attempt": 1
+      },
+      {
+        "id": 45743224279,
+        "name": "ContaOS F3 CODE - Coletor offline (nao certificador)",
+        "attempt": 1
+      },
+      {
+        "id": 45743224324,
+        "name": "ContaOS F3 CODE - 138 case preflight (not certification)",
+        "attempt": 1
+      },
+      {
+        "id": 45743224349,
+        "name": "ContaOS P0-NR-001 Anti-Reincidencia",
+        "attempt": 1
+      },
+      {
+        "id": 45743224190,
+        "name": "ContaOS F5 CODE - provas materiais parciais",
+        "attempt": 1
+      },
+      {
+        "id": 45743224155,
+        "name": "ContaOS F3 CODE - 138 execucoes funcionais individuais",
+        "attempt": 1
+      },
+      {
+        "id": 45743224297,
+        "name": "ContaOS Frontend Zero-Drift",
+        "attempt": 1
+      }
+    ]
+  },
+  "attestation": {
+    "pr": 792,
+    "base": "3bdf06f7d3fe55acf517a847292dc4efc8c57847",
+    "head": "c0f2e16b1262df686645d50306804df9ee597fea",
+    "merge": "daeda38ebb222e29a28cb9630985a7a8fc0178ea",
+    "tree": "44654e0636e37a2240be492e59ee822fc195a3d6",
+    "review": 6067888121,
+    "run": 45744571463,
+    "attempt": 1,
+    "job": 139657390158,
+    "artifact": 15082816424,
+    "zipDigest": "b8efff21a096a8bde1644052b72510413bc88b3c0a531dc00351ddce999f586d",
+    "candidateDigest": "f4e37ec14b05db5bf1b849cdf4d95ea24169762dc2a380e10b057bbf7d4b6656",
+    "materialPr": 790,
+    "materialHead": "aa5640e52cec265e2b250fce9b1d85452763d0b0"
+  },
+  "promotion": {
+    "pr": 793,
+    "head": "72764785d24d713b6d5eaa7390dff96d97ff4501",
+    "merge": "a641e800292e2321c6913dbd332388f91dc3378e",
+    "tree": "773d2a0d301ade2bdcc1a76b329a1eb35d05638c",
+    "review": 6067913750,
+    "run": 45744991051,
+    "attempt": 1,
+    "job": 139658760332,
+    "artifact": 15083046331,
+    "archiveDigest": "b0eff863bafe40c8107926822fc1b5553cc0e552dcb7ed4a58326dd15b66ad7a",
+    "receiptDigest": "5811adb824af5b0e7629822effcb60f830671bf6b1ba83d01d3902813b566eed",
+    "ledgerBlob": "8caedaea89a706f07d4f19eb7d7fb321f12a6d64"
+  },
+  "ledger": {
+    "path": "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_CODE_ATTESTATION_CANDIDATE.json",
+    "blob": "8caedaea89a706f07d4f19eb7d7fb321f12a6d64",
+    "sha256": "f4e37ec14b05db5bf1b849cdf4d95ea24169762dc2a380e10b057bbf7d4b6656"
+  },
+  "receipt": {
+    "path": "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_CODE_PROMOTION_RECEIPT.json",
+    "sha256": "5811adb824af5b0e7629822effcb60f830671bf6b1ba83d01d3902813b566eed"
+  },
+  "certificate": "docs/frontend/auditorias/integracao-funcional-v1/fase5/CERTIFICADO_FASE5_CODE_2026-11-25.md",
+  "reviewMode": "ASSISTED_PRE_PRODUCTION_PER_PR_781",
+  "backendNormativeSha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "live": "NOT_RUN",
+  "production": "NO-GO",
+  "next": "F6_CODE_ONLY_AFTER_EFFECTIVE_CERTIFICATION_AND_OWN_PLAN"
+}

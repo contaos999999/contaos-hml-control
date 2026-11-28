@@ -3169,3 +3169,142 @@ test("P0 CRYPTO SNAPSHOT: independent SHA256 pins all 118 sources, 381 sentences
   process.stdout.write("P0-CRYPTO-SNAPSHOT "+JSON.stringify({
     sourceDigest,sentenceDigest,rulesDigest,pairDigest})+"\n");
 });
+
+// Cumulative protected-main tests preserved during reconciliation of #690.
+
+test("F3 CODE RED-GREEN — registry covers the canonical 138 cases and 20 producers", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const catalogue = JSON.parse(await readFile(new URL("../docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json", import.meta.url), "utf8"));
+  assert.equal(catalogue.cases.length, 138);
+  assert.equal(new Set(catalogue.cases.map(c => c.caseId)).size, 138);
+  const executorPath = fileURLToPath(new URL("./hml/integracao-v1-fase3-functional-138.mjs", import.meta.url));
+  // This pre-install step must not import TypeScript-dependent product code.
+  // Existence, syntax and actual exports are verified here; the functional CI
+  // and RCA operational tests execute the module after frozen dependencies.
+  const executor = await readFile(executorPath, "utf8");
+  assert.equal(spawnSync(process.execPath, ["--check", executorPath]).status, 0);
+  const drivers = await import("./hml/f3-code-functional-drivers.mjs");
+  assert.match(executor, /export async function executeF3Functional138\(/);
+  assert.match(executor, /export function validateF3AutomaticGate\(/);
+  assert.equal(Object.keys(drivers.producerDrivers).length, 20);
+  for (const c of catalogue.cases) {
+    assert.equal(typeof drivers.producerDrivers[c.producerOrder], "function", c.caseId);
+    assert.equal(typeof drivers.consumerDrivers[c.consumer], "function", c.caseId);
+    assert.equal(typeof drivers.negativeDrivers[c.consumer], "function", c.caseId);
+  }
+});
+
+// RED/GREEN F4: exercita o verificador de identidade realmente usado no CI.
+import "./hml/f4-code-material-evidence.test.mjs";
+
+// F5 CODE partial verifier: reject corrupted observations, not a phase certificate.
+import "./hml/f5-code-material-evidence.test.mjs";
+
+test("P0-ORQ F1 valida contrato CODE sem autoridade de execução", async () => {
+  const { existsSync } = await import("node:fs");
+  assert.ok(existsSync(new URL("./p0-actions-request.mjs", import.meta.url)), "RED_CAUSAL_TRANSPORT_VALIDATOR_ABSENT");
+  const m = await import("./p0-actions-request.mjs");
+  const q = {
+    schema:"contaos.p0.actions-request.v1", request_id:"11111111-1111-4111-8111-111111111111",
+    repository:"contaos999999/contaos-hml-control", mission_id:"P0-ORQ-ACTIONS-001",
+    operation:"CANARY_CODE", environment:"CODE", source_sha:"a".repeat(40),
+    source_pr:1, request_pr:2, plan_ref:"c".repeat(40), plan_blob:"e".repeat(40),
+    authorization_ref:"d".repeat(40), predecessor_checkpoint_ref:123
+  };
+  const c = {schema:"contaos.p0.actions-catalog.v1", repository:q.repository, operations:[
+    {operation:"CANARY_CODE",environment:"CODE",mode:"CODE_FIXTURE_ONLY",enabled:true},
+    {operation:"TESTE_C_FULL_CODE",environment:"CODE",mode:"DISABLED",enabled:false}
+  ]};
+  assert.deepEqual(m.parseRequest(JSON.stringify(q)+"\n",q.repository),q);
+  assert.deepEqual(m.validateCatalog(JSON.stringify(c)+"\n",q.repository),c);
+  const verdict = m.authorizeRequest(q,c,{});
+  assert.equal(verdict.status,"BLOCKED");
+  assert.equal(verdict.executionAllowed,false);
+  assert.throws(()=>m.parseRequest(JSON.stringify({...q,environment:"PROD"})+"\n",q.repository));
+});
+
+// ASCII selectors for the existing RCA runner; original tests remain intact.
+test("P0 ORQ F1 CODE contract without execution authority", async () => {
+  const { existsSync } = await import("node:fs");
+  assert.ok(existsSync(new URL("./p0-actions-request.mjs", import.meta.url)), "RED_CAUSAL_TRANSPORT_VALIDATOR_ABSENT");
+  const m = await import("./p0-actions-request.mjs");
+  const q = {
+    schema:"contaos.p0.actions-request.v1", request_id:"11111111-1111-4111-8111-111111111111",
+    repository:"contaos999999/contaos-hml-control", mission_id:"P0-ORQ-ACTIONS-001",
+    operation:"CANARY_CODE", environment:"CODE", source_sha:"a".repeat(40),
+    source_pr:1, request_pr:2, plan_ref:"c".repeat(40), plan_blob:"e".repeat(40),
+    authorization_ref:"d".repeat(40), predecessor_checkpoint_ref:123
+  };
+  const c = {schema:"contaos.p0.actions-catalog.v1", repository:q.repository, operations:[
+    {operation:"CANARY_CODE",environment:"CODE",mode:"CODE_FIXTURE_ONLY",enabled:true},
+    {operation:"TESTE_C_FULL_CODE",environment:"CODE",mode:"DISABLED",enabled:false}
+  ]};
+  assert.deepEqual(m.parseRequest(JSON.stringify(q)+"\n",q.repository),q);
+  assert.deepEqual(m.validateCatalog(JSON.stringify(c)+"\n",q.repository),c);
+  const verdict = m.authorizeRequest(q,c,{});
+  assert.equal(verdict.status,"BLOCKED");
+  assert.equal(verdict.executionAllowed,false);
+  assert.throws(()=>m.parseRequest(JSON.stringify({...q,environment:"PROD"})+"\n",q.repository));
+});
+
+test("P0 RCA missing report blocks V2 build", () => {
+  mustFail(null, /sem ficha RCA/);
+});
+test("P0 RCA divergent plan scope blocks build", () => {
+  const f = fixture();
+  f.escopo[0].versao = "V3";
+  mustFail(f, /sem classificação/);
+});
+
+test("V2-04 aguarda o efeito antes de contar exatamente duas consultas", () => {
+  const source = readFileSync(new URL("../src/test/v2-47-tela.test.tsx", import.meta.url), "utf8");
+  const inicio = source.indexOf('it("abre o painel, registra a tarefa e rele o detalhe e o portao"');
+  assert.notEqual(inicio, -1, "Caso original V2-04 ausente");
+  const fim = source.indexOf("\n  it(", inicio + 1);
+  assert.notEqual(fim, -1, "Limite do caso original V2-04 ausente");
+  const caso = source.slice(inicio, fim);
+  assert.match(
+    caso,
+    /await waitFor\(\(\) => \{\s*expect\(dados\.consultarPlanoAcao\)\.toHaveBeenCalledTimes\(2\)/,
+    "RED_V2_04_CONTAGEM_PREMATURA: o caso conta as consultas sem aguardar o efeito",
+  );
+});
+
+test("P0 ORQ F2 native transport rejects non-main event", async () => {
+  const { existsSync } = await import("node:fs");
+  assert.ok(existsSync(new URL("./p0-actions-transport.mjs", import.meta.url)), "RED_CAUSAL_NATIVE_TRANSPORT_ABSENT");
+  const { validatePush } = await import("./p0-actions-transport.mjs");
+  const result = await validatePush({ context: { eventName: "pull_request", ref: "refs/heads/other" } });
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.executionAllowed, false);
+});
+
+
+test("P0 FISCAL RCA MANDATED_FULL_DIFF rejects the eight foreign paths without weakening scope",()=>{
+  const manifest=JSON.parse(readFileSync("docs/frontend/planos/P0_GOV_PLAN_690.json","utf8"));
+  assert.equal(manifest.files.length,14);
+  assert.equal(manifest.full_diff,true);
+  const foreign=[
+    "scripts/hml/integracao-v1-fase3-backend-138.mjs",
+    "scripts/hml/integracao-v1-fase3-backend-138.test.mjs",
+    "scripts/hml/integracao-v1-fase3-backend.mjs",
+    "scripts/hml/integracao-v1-fase3-backend.test.mjs",
+    "scripts/hml/integracao-v1-fase3-code-138-runner.mjs",
+    "scripts/hml/integracao-v1-fase3-code-138-runner.test.mjs",
+    "scripts/hml/integracao-v1-fase3-code-drivers.mjs",
+    "scripts/hml/integracao-v1-fase3-code-drivers.test.mjs"
+  ];
+  const args={protocol:readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8"),
+    tests:{python:readFileSync("scripts/auditoria/test_mission_supervisor.py","utf8"),rca:readFileSync("scripts/p0-rca-impact-gate.test.mjs","utf8"),queue:readFileSync("scripts/ci/merge-group-context.test.mjs","utf8")},
+    source:readFileSync("scripts/p0-rca-impact-gate.mjs","utf8"),
+    workflow:readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8"),
+    manifest,mission:{activation_authorized:false}};
+  const structural=auditFullProtocolCoverage({...args,paths:[...manifest.files]});
+  assert.equal(structural.rows.find(x=>x.id==="MANDATED_FULL_DIFF").status,"STRUCTURAL_WITNESS");
+  const bad=auditFullProtocolCoverage({...args,paths:[...manifest.files,...foreign]});
+  assert.equal(bad.verdict,"CHANGES_REQUESTED");
+  assert.equal(bad.rows.find(x=>x.id==="MANDATED_FULL_DIFF").status,"MISSING_WITNESS");
+  assert.ok(bad.issues.includes("Controle critico sem testemunha: MANDATED_FULL_DIFF"));
+  const r=validateRcaImpact({planId:"76",changed:manifest.files,prNumber:690,governancePlan:manifest,fullDiffPaths:[...manifest.files,...foreign]});
+  for(const file of foreign)assert.ok(r.errors.some(x=>x.includes(file)),file);
+});

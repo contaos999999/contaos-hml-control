@@ -1,0 +1,28 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 800,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "F6.2 CODE_FIXTURE. Jornadas de contratantes e contratos em 24 jornadas e 48 provas novas.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_JOURNEY_MATRIX.json",
+    "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json",
+    ".github/workflows/contaos-f6-code-material.yml",
+    "src/test/f6-code-party-journeys.test.ts",
+    "src/test/f6-code-contract-journeys.test.tsx"
+  ],
+  "baseline_main": "1a00a15688af8262442075616ef2dacb124a6242",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 796,
+  "authorization": "PLAN #796 e matriz do PLAN #797. Execução integral autorizada pelo titular. O escopo se torna eficaz após CI, revisão assistida, merge protegido e readback.",
+  "acceptance": [
+    "Percorrer 24 jornadas inclusas em V102, V103, V105 e V106, da precondição à persistência e aos consumidores de cadastro, orçamento, competência, documentos, histórico, painel e auditoria.",
+    "Exercitar a recuperação após resposta de gravação interrompida por leitura do estado persistido. Reconciliar concorrência de edição, idempotência de comando e a rejeição de vínculo ou escopo cruzado.",
+    "Conferir identidades, matriz e artefatos originais no mesmo HEAD. Meta de 78 casos e 156 provas cumulativas. CI integral, revisão assistida, merge protegido e readback."
+  ],
+  "constraints": [
+    "Escopo fechado em testes CODE_FIXTURE, matriz, evidência e RCA. Preservar produto, tipos protegidos, backend normativo e as barreiras existentes. LIVE NOT_RUN e PROD NO-GO."
+  ],
+  "certification": "F6_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

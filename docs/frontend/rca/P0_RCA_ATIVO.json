@@ -1,0 +1,251 @@
+{
+  "schema": "contaos.p0.rca-report.v2",
+  "versao": "V2",
+  "prompt_id": "76",
+  "baseline": {
+    "frontend_sha": "b3d00574c6ba358bd5d0134bdb15c2e41e025d68",
+    "backend_sha": "d88bf0deff9b53fd10bb29036005f70a5c8613c9"
+  },
+  "escopo": [
+    {
+      "arquivo": "scripts/p0-actions-transport.mjs",
+      "versao": "V2",
+      "justificativa": "Escopo fechado da emenda F2 #859; transporte nativo somente CANARY_CODE, sem autoridade material, prompt 76 identifica gate."
+    },
+    {
+      "arquivo": "scripts/p0-actions-transport.test.mjs",
+      "versao": "V2",
+      "justificativa": "Escopo fechado da emenda F2 #859; transporte nativo somente CANARY_CODE, sem autoridade material, prompt 76 identifica gate."
+    },
+    {
+      "arquivo": ".github/workflows/p0-actions-orchestrator-code.yml",
+      "versao": "V2",
+      "justificativa": "Escopo fechado da emenda F2 #859; transporte nativo somente CANARY_CODE, sem autoridade material, prompt 76 identifica gate."
+    },
+    {
+      "arquivo": ".github/workflows/p0-actions-orchestrator-request.yml",
+      "versao": "V2",
+      "justificativa": "Escopo fechado da emenda F2 #859; transporte nativo somente CANARY_CODE, sem autoridade material, prompt 76 identifica gate."
+    },
+    {
+      "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+      "versao": "V2",
+      "justificativa": "Escopo fechado da emenda F2 #859; transporte nativo somente CANARY_CODE, sem autoridade material, prompt 76 identifica gate."
+    }
+  ],
+  "itens": [
+    {
+      "id": "P0-ORQ-ACTIONS-001-F2",
+      "tipo": "CORRECAO",
+      "reproducao": {
+        "confirmada": true,
+        "sintoma": "Ausência de recepção nativa CODE de requests revisados por PR protegida.",
+        "esperado": "Contrato de transporte, validação do checkout e proveniência, negações fail-closed, efeito local sanitizado restrito ao canário.",
+        "observado": "RED focal 34/34 e RED complementar Zero-Drift: 109 testes existentes passaram, exclusivamente novo caso falhou pela ausência do módulo.",
+        "evidencia": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46124527087"
+      },
+      "causa": {
+        "status": "CONFIRMADA",
+        "descricao": "B1/F1 somente validam e coletam fixtures sem executar; módulo de transporte e workflow nativo ausentes, como demonstrado no RED autenticado.",
+        "evidencias": [
+          "Backend RED 46123872002, 34 falhas causais",
+          "Frontend RED focal 46124527107 job 140916076488, 34 falhas causais; artefato 15255476482",
+          "Frontend Zero-Drift 46124527087 job 140916076655, not ok 110 P0 ORQ F2 native transport rejects non-main event; RED_CAUSAL_NATIVE_TRANSPORT_ABSENT",
+          "GREEN intermediário backend 46124736211 97+43+23 PASS; acrescentada prova de checkout Git local com diff único, rejeição de múltiplos caminhos/symlink e SHA256 dos quatro arquivos-fonte fixos, sem alterar validador B1/F1."
+        ],
+        "hipoteses_descartadas": [
+          "Setup e 109 casos preexistentes aprovados. Validador F1 permanece integrado. A falha reproduz ausência do transporte, não indisponibilidade de banco."
+        ]
+      },
+      "solucao": {
+        "descricao": "Adicionar transporte CODE por push main, checkout imutável, diff append-only e único, catálogo restrito, coletor real somente GET, árvore e HEAD revalidados, recibo sanitizado sem execução material e workflow estático. Fixture não é certificação.",
+        "rollback": "Reverter por PR protegida preservando RED e artefatos; nenhum efeito material em HML/PROD.",
+        "arquivos": [
+          "scripts/p0-actions-transport.mjs",
+          "scripts/p0-actions-transport.test.mjs",
+          ".github/workflows/p0-actions-orchestrator-code.yml",
+          ".github/workflows/p0-actions-orchestrator-request.yml",
+          "scripts/p0-rca-impact-gate.test.mjs"
+        ]
+      },
+      "impacto": {
+        "dependencias": [
+          "Validador B1/F1",
+          "Rulesets 26495643 e 28271968",
+          "Zero-Drift e RCA operacional",
+          "PLAN #258/#859; ledger/fiscal pendentes"
+        ],
+        "versoes_afetadas": [
+          "V2"
+        ],
+        "riscos": [
+          {
+            "risco": "Evento fora da main",
+            "teste_preventivo": {
+              "id": "F2-EVENT",
+              "caso": "F2 rejects non-main",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "Reexecução",
+            "teste_preventivo": {
+              "id": "F2-RETRY",
+              "caso": "F2 rejects retry attempt",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "Origem obsoleta",
+            "teste_preventivo": {
+              "id": "F2-STALE",
+              "caso": "F2 transport fails closed on late stale main",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "Árvore divergente",
+            "teste_preventivo": {
+              "id": "F2-TREE",
+              "caso": "F2 transport fails closed on reviewed head tree differs",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "Proteção insuficiente",
+            "teste_preventivo": {
+              "id": "F2-RULESET",
+              "caso": "F2 transport fails closed on strict protection disabled",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "Replay",
+            "teste_preventivo": {
+              "id": "F2-REPLAY",
+              "caso": "F2 transport fails closed on replay history",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          },
+          {
+            "risco": "PROD indevido",
+            "teste_preventivo": {
+              "id": "F2-PROD",
+              "caso": "F2 rejects PROD",
+              "arquivo": "scripts/p0-actions-transport.test.mjs",
+              "runner": "node"
+            }
+          }
+        ]
+      },
+      "testes": {
+        "red": [
+          {
+            "id": "F2-RED",
+            "caso": "P0 ORQ F2 native transport rejects non-main event",
+            "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
+            "runner": "node",
+            "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/46124527087",
+            "run_sha": "4323b28c27938c14eb0bbd0adb30b741d9df1168"
+          }
+        ],
+        "green": [
+          {
+            "id": "F2-PUSH",
+            "caso": "F2 native transport validates a single immutable CODE request",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-PROVENANCE",
+            "caso": "F2 transport reconstructs protected provenance fixture without execution",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-RECEIPT",
+            "caso": "F2 receipt is sanitized and never certifies or grants execution",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-GIT-CHECKOUT",
+            "caso": "F2 real git checkout binds append-only diff and source hashes",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          }
+        ],
+        "negativos": [
+          {
+            "id": "F2-EVENT",
+            "caso": "F2 rejects non-main",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-RETRY",
+            "caso": "F2 rejects retry attempt",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-STALE",
+            "caso": "F2 transport fails closed on late stale main",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-TREE",
+            "caso": "F2 transport fails closed on reviewed head tree differs",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-RULESET",
+            "caso": "F2 transport fails closed on strict protection disabled",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-REPLAY",
+            "caso": "F2 transport fails closed on replay history",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-API",
+            "caso": "F2 fails closed with unavailable real evidence, no local effect",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "F2-PROD",
+            "caso": "F2 rejects PROD",
+            "arquivo": "scripts/p0-actions-transport.test.mjs",
+            "runner": "node"
+          }
+        ],
+        "regressao": [
+          {
+            "id": "F1-PRESERVED",
+            "caso": "collector reconstructs a fully paginated fixture without granting execution",
+            "arquivo": "scripts/p0-actions-request.test.mjs",
+            "runner": "node"
+          },
+          {
+            "id": "V2-04-REG",
+            "caso": "V2-04 abre o painel, registra a tarefa e rele o detalhe e o portao",
+            "arquivo": "src/test/v2-47-tela.test.tsx",
+            "runner": "vitest"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -8,6 +8,11 @@ import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
+import {
+  APONTAMENTO_V2_FIXTURE,
+  CICLO_V2_FIXTURE,
+  collectDiligenciasVisual,
+} from "./v2-integracao-visual.mjs";
 
 export const WIDTHS = [1440, 1280, 768, 390];
 export const THEMES = ["light", "dark"];
@@ -42,6 +47,24 @@ export const ROUTES = [
   { id: "V121", path: "/contratos/" + UUID + "/historico" },
   { id: "V122", path: "/contratos/" + UUID + "/historico/importar" },
   { id: "V123", path: "/administracao/auditoria" },
+  { id: "V2-01", path: "/competencias/" + UUID + "/diligencias" },
+  { id: "V2-02", path: "/diligencias/" + CICLO_V2_FIXTURE },
+  {
+    id: "V2-03",
+    path: "/diligencias/" + CICLO_V2_FIXTURE + "/apontamentos/" + APONTAMENTO_V2_FIXTURE,
+  },
+  {
+    id: "V2-04",
+    path: "/diligencias/" + CICLO_V2_FIXTURE + "/apontamentos/" + APONTAMENTO_V2_FIXTURE,
+    requiresDrawer: true,
+  },
+  {
+    id: "V2-05",
+    path: "/diligencias/" + CICLO_V2_FIXTURE + "/apontamentos/" + APONTAMENTO_V2_FIXTURE,
+    requiresDrawer: true,
+  },
+  { id: "V2-06", path: "/diligencias/" + CICLO_V2_FIXTURE + "/reapresentar" },
+  { id: "V2-07", path: "/competencias/" + UUID + "/pareceres-contratante" },
 ];
 export function cases() {
   return ROUTES.flatMap((route) =>
@@ -965,7 +988,7 @@ export function phase2DeltaFixtureFiles(root) {
     "client.ts":
       "export const C='44444444-4444-4444-8444-444444444444',O='11111111-1111-4111-8111-111111111111',K='22222222-2222-4222-8222-222222222222',A='33333333-3333-4333-8333-333333333333',P='55555555-5555-4555-8555-555555555555';\nconst vg={competencia:{id:C,id_contrato:K,id_organizacao:O,competencia_referencia:'2026-09-01',situacao:'aguardando_contratante',periodo_inicio:'2026-09-01',periodo_fim:'2026-09-30',data_limite:null,atualizado_em:'2026-11-11T12:00:00Z',percentual_conformidade:100,versao_pacote_atual:1,versao_registro:1},portao:{liberado:true,total:1,conformes_ou_na_validos:1,pendentes:0,nao_conformes:0,inconclusivos:0,em_analise:0,nao_conformidades_bloqueantes:0,percentual:100},blocking_summary:{pendentes:0,nao_conformes:0,inconclusivos:0,em_analise:0,nao_conformidades_bloqueantes:0,parecer_aprovado:true,analise_concluida_atual:true,aprovacao_apresentacao_atual:true},allowed_actions:{abrir_documentos:true,analisar:true,abrir_parecer:true,apresentar:false}};\nconst ap={id:A,id_competencia:C,id_contrato:K,id_organizacao:O,id_pacote:P,protocolo:'PROTOCOLO-SINTETICO-2026-09',forma_apresentacao:'Portal',apresentado_em:'2026-11-11T12:00:00Z',tipo:'apresentacao',numero_rodada:1};\nconst pk={id:P,id_competencia:C,id_contrato:K,id_organizacao:O,hash_pacote:'a'.repeat(64),numero:1,tipo:'apresentacao',status:'congelado',congelado_em:'2026-11-11T12:00:00Z'};\nconst item={id:'66666666-6666-4666-8666-666666666666',id_pacote:P,id_competencia:C,id_contrato:K,id_organizacao:O,entidade_tipo:'documento',entidade_id:A,versao_id:null,hash:'b'.repeat(64),ordem:1};\nexport const supabase={auth:{getUser:async()=>({data:{user:{id:'fixture-user'}},error:null})},rpc:(name:string)=>{if(name!=='obter_visao_geral_competencia')throw Error('UNEXPECTED_RPC');return{abortSignal:async()=>({data:vg,error:null,status:200})};},from:(table:string)=>{const values=table==='apresentacoes_contratante'?[ap]:table==='pacotes_competencia'?[pk]:table==='itens_pacote_competencia'?[item]:null;if(!values)throw Error('UNEXPECTED_TABLE');const result={data:values,count:values.length,error:null,status:200};const q:any={},filters:Record<string,unknown>={};for(const n of ['select','order','range','abortSignal'])q[n]=()=>q;q.eq=(key:string,value:unknown)=>{filters[key]=value;return q;};const check=()=>{if(filters.id_competencia!==C||filters.id_contrato!==K||filters.id_organizacao!==O)throw Error('FIXTURE_OWNERSHIP');return result;};q.maybeSingle=async()=>({...check(),data:values[0]});q.then=(resolve:any,reject:any)=>Promise.resolve().then(check).then(resolve,reject);return q;}};\n",
     "router.tsx":
-      "import React from 'react';const navigate=({to}:any)=>{history.pushState({},'',to);dispatchEvent(new PopStateEvent('popstate'));};export const useNavigate=()=>navigate;export function Link({to,params,children,activeOptions,...props}:any){const href=Object.entries(params||{}).reduce((s,[k,v])=>s.replace('$'+k,String(v)),to);return <a href={href} {...props} onClick={e=>{e.preventDefault();navigate({to:href});}}>{children}</a>;}",
+      "import React from 'react';const navigate=({to}:any)=>{history.pushState({},'',to);dispatchEvent(new PopStateEvent('popstate'));};export const useNavigate=()=>navigate;export function Link({to,params,children,activeOptions,search,...props}:any){const path=Object.entries(params||{}).reduce((s,[k,v])=>s.replace('$'+k,String(v)),to);const query=new URLSearchParams();for(const [k,v] of Object.entries(search||{}))if(v!==undefined)query.set(k,String(v));const href=query.size?path+'?'+query.toString():path;return <a href={href} {...props} onClick={e=>{e.preventDefault();navigate({to:href});}}>{children}</a>;}",
     "entry.tsx":
       "import React,{useState,useEffect}from'react';import{createRoot}from'react-dom/client';import{CompetenciaVisaoGeral}from'ROOT/src/components/competencias/CompetenciaVisaoGeral.tsx';import{CompetenciaProtocolo}from'ROOT/src/components/competencias/CompetenciaProtocolo.tsx';import{definirPreferenciaOrganizacao}from'ROOT/src/lib/organizacao/preferenciaOrganizacao.ts';import{C,O,A}from'./client';definirPreferenciaOrganizacao('fixture-user',O);function App(){const[path,setPath]=useState(location.pathname);useEffect(()=>{const cb=()=>setPath(location.pathname);addEventListener('popstate',cb);return()=>removeEventListener('popstate',cb);},[]);return path.includes('/apresentacoes/')?<CompetenciaProtocolo id={C} apresentacaoId={A}/>:<CompetenciaVisaoGeral id={C}/>;}createRoot(document.getElementById('root')!).render(<App/>);".replaceAll(
         "ROOT",
@@ -1530,6 +1553,18 @@ async function run() {
       filename: "phase2-delta/SHA256SUMS",
       sha256: hash(readFileSync(join(output, "phase2-delta/SHA256SUMS"))),
     });
+    await collectDiligenciasVisual(browser, {
+      base,
+      output,
+      headSha: sha,
+      widths: WIDTHS,
+      themes: THEMES,
+      baseFixtures: phase2DeltaFixtureFiles(process.cwd()),
+    });
+    images.push({
+      filename: "v2-diligencias/SHA256SUMS",
+      sha256: hash(readFileSync(join(output, "v2-diligencias/SHA256SUMS"))),
+    });
   } finally {
     await browser.close();
   }
@@ -1540,6 +1575,47 @@ async function run() {
       mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
       cases: 16,
       report: "phase2-delta/report.json",
+    },
+    offline_v2_diligencias: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+    },
+    offline_v2_ciclo: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+      records: "cycleRecords",
+    },
+    offline_v2_apontamento: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+      records: "itemRecords",
+    },
+    offline_v2_plano_acao: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+      records: "planoRecords",
+    },
+    offline_v2_contestacao: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+      records: "contestacaoRecords",
+    },
+    offline_v2_reapresentacao: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+      records: "reapresentacaoRecords",
+    },
+    offline_v2_parecer: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 8,
+      report: "v2-diligencias/report.json",
+      records: "parecerRecords",
     },
     started_utc: started,
     finished_utc: new Date().toISOString(),

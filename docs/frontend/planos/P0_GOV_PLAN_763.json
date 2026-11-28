@@ -1,0 +1,28 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 763,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Segundo lote F4.1, C0005/C0036/C0037/C0043, oito provas de atualização do vínculo, seleção, releitura de dashboard, invalidação real de cache e resposta tardia.",
+  "files": [
+    "src/test/f4-code-context-dashboard-sync.test.tsx",
+    ".github/workflows/contaos-f4-code-material.yml"
+  ],
+  "baseline_main": "7a9a799ef2ad801b4eb405d9e289f4c40e1a7e04",
+  "plan_pr": 759,
+  "authorization": "PLAN #759 integrado; autorização de implementação material e revisão assistida Edivan5002 específica à F4 CODE.",
+  "acceptance": [
+    "Associar restritivamente a nova fonte à PR 763 em PLANO_ATIVO; preservar as restrições anteriores.",
+    "Reancorar BUILD após merge #760 e deste PLAN, sem reescrever main.",
+    "Reutilizar workflow material de #760, exigir execução de 25 casos anteriores e 4 novos, 58 testes distintos e observações verificáveis, sem substituir recibos anteriores.",
+    "Provar troca real no OrganizationSelector e releitura Dashboard, incluindo resposta A tardia e conflito PT409; diálogos fora do escopo isolados.",
+    "CI integral e revisão no HEAD exato antes de merge."
+  ],
+  "constraints": [
+    "Não alterar guard, código de produto, F3, backend ou contratos.",
+    "Sem LIVE/PROD; não certificar F4 antecipadamente.",
+    "Nenhum PASS por teste não executado."
+  ],
+  "certification": "F4_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

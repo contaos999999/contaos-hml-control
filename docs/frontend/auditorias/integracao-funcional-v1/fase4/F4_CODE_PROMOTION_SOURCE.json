@@ -1,0 +1,13 @@
+{
+  "pr": 774,
+  "head": "edec3d751ab02ec2051dc9ef40415f6f8d9ddaf1",
+  "merge": "32807481056f51b8bb20b716a379016258bd87fe",
+  "testedSha": "97eed215ed79fc6a50f43a91ff29985c7663f3aa",
+  "review": 6055460042,
+  "run": 45590645550,
+  "attempt": 1,
+  "job": 139123667258,
+  "artifact": 15010199452,
+  "archiveDigest": "7c55048b173f7dd1f05041ce32ab6d03e4cdfc67e96a0f98cdb85d6891fed250",
+  "candidateDigest": "b896b935a407e04264c33389a574d8137aa84b6afd81719117bfb052c86b676f"
+}

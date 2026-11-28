@@ -1,0 +1,1 @@
+{"schema":"contaos.p0.actions-catalog.v1","repository":"contaos999999/contaos-hml-control","operations":[{"operation":"CANARY_CODE","environment":"CODE","mode":"CODE_FIXTURE_ONLY","enabled":true},{"operation":"TESTE_C_FULL_CODE","environment":"CODE","mode":"DISABLED","enabled":false}]}

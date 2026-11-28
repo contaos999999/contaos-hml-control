@@ -1,0 +1,166 @@
+{
+  "schema": "contaos.ifv1.code-global-certification.v1",
+  "phase": "IFV1_F8_CODE",
+  "functionalIntegration": "IFV1_CODE",
+  "result": "PASS",
+  "scope": "INTEGRACAO_FUNCIONAL_V1_CODE",
+  "date": "2026-11-26",
+  "effectiveCondition": "ONLY_ON_PROTECTED_MAIN_AFTER_CERT_PR_CI_REVIEW_MERGE_READBACK",
+  "backendNormativeSha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "protectedTypesBlob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+  "historicalV1": {
+    "pr": 591,
+    "merge": "78f58e81b53d94defe4ac0e78e914ada7c47ba33",
+    "certificate": {
+      "path": "docs/frontend/auditorias/P0_V1_CERTIFICACAO_FASE8_2026-11-11.md",
+      "sha256": "8673b4b5a2afe0624f79144721a98da5a4171e1e45d09efdb11c2702315a5c25",
+      "blob": "7045c0a02243b242835e7ea6817b850287917141"
+    },
+    "reconciliation": {
+      "path": "docs/frontend/auditorias/P0_V1_FASE8_RECONCILIACAO_488_2026-11-11.json",
+      "sha256": "b8a70476d35e9d356d90e06d4b4250ba7b5aea67c1cf09ff3d3cf4e01c64e864",
+      "blob": "6c8021a6f09a22a773e55482571021b993ee75f1"
+    },
+    "governanceBlob": "8ce1f23a2a7db6eb16f348fa5d991f063e4f17ff",
+    "checkpoints": [
+      {
+        "phase": 1,
+        "id": 6798359508,
+        "author": "contaos9999",
+        "bodySha256": "c8441c3295c50e137587cfe8eb6afe2fa21e83c2e8fa6e8f98a31921e51578c7"
+      },
+      {
+        "phase": 2,
+        "id": 6798360599,
+        "author": "contaos9999",
+        "bodySha256": "cdc9abac4b45fe1f09116f5470a836b64de80c0aea03e4f1222730549aefb07a"
+      },
+      {
+        "phase": 3,
+        "id": 6798361715,
+        "author": "contaos9999",
+        "bodySha256": "ce152d6017b8625b28fadaad1649c26993aade6c21ddd610798abb5364b92f05"
+      },
+      {
+        "phase": 4,
+        "id": 6797364641,
+        "author": "contaos9999",
+        "bodySha256": "27832e22dd12825c1b7bab78e14c77f39d0857e1181cd5a0b4508ccb728f41b5"
+      },
+      {
+        "phase": 5,
+        "id": 6797965561,
+        "author": "contaos9999",
+        "bodySha256": "a112761a69c05e1c3f571b10223da6dbee33d7550f9b4477e0d67de56f3720a6"
+      },
+      {
+        "phase": 6,
+        "id": 6797840596,
+        "author": "contaos9999",
+        "bodySha256": "5d86dc64f0c4648bba3120ddadcdaea9d3acf4f472cf1d03dc7215d3d2d2a2ba"
+      },
+      {
+        "phase": 7,
+        "id": 6796791384,
+        "author": "contaos9999",
+        "bodySha256": "260a87c01c69233de946694fb3d9a9b6d7f63968971a355adf91e2c06c3f0136"
+      }
+    ]
+  },
+  "integrationF7": {
+    "pr": 818,
+    "merge": "f4395961bc7ccf2d66260ea61c97befa4e6f29f2",
+    "certificate": {
+      "path": "docs/frontend/auditorias/integracao-funcional-v1/fase7/CERTIFICADO_FASE7_CODE.md",
+      "sha256": "0c6e8c9d87c6c6d9bb7c24bb554182e9b1132857bc4955d99835a5d3979163dc",
+      "blob": "3fdb08bff22399c45043fd61387e26bac5cc7ea9"
+    },
+    "receiptSha256": "e866606f09d4abddb77d3a07c62132fbf5489cc1c7a8f458a136e83f473a8cbb",
+    "previousPhases": [
+      {
+        "phase": 1,
+        "pr": 594,
+        "merge": "538c52d909a5a9929c10740e6f961e38beb8ee11"
+      },
+      {
+        "phase": 2,
+        "pr": 652,
+        "merge": "b2feca7f5d8976709ba95a2ce44407f910eabe19"
+      },
+      {
+        "phase": 3,
+        "pr": 758,
+        "merge": "019a38e4aca6ec7d09a298875627d9c896f72600"
+      },
+      {
+        "phase": 4,
+        "pr": 776,
+        "merge": "e322301e58419e78eb4dfad77a956326b449ecc1"
+      },
+      {
+        "phase": 5,
+        "pr": 795,
+        "merge": "4ea895059dcdac2cb2dc2558a9918f5392ecc8b0"
+      },
+      {
+        "phase": 6,
+        "pr": 815,
+        "merge": "a8587643ae91e544d869454ff5b7d702d65435e9"
+      }
+    ]
+  },
+  "consolidated": {
+    "pr": 819,
+    "base": "8ffa338be96402cdf369c64b2991b4b2a3c07332",
+    "head": "2762abd98c21c9d8fc51ba82a8d2c7fdb6515782",
+    "tree": "89e3fbc5618f28ae7f458443951497fe9af3aaf5",
+    "review": 6074061639,
+    "merge": "d0280d0c2eb072868f7d6fddc08f4a2997ec0f0d",
+    "run": 45818730548,
+    "attempt": 1,
+    "job": 139905111580,
+    "artifact": 15116413781,
+    "zipSha256": "1a2bce1102505a22bcd599852a51658013d31560a3f3a3a4f8da9a6ebb05b60b"
+  },
+  "source": {
+    "path": "docs/frontend/auditorias/integracao-funcional-v1/fase8/F8_CODE_SOURCES.json",
+    "sha256": "39a7bf3214b22e2d77344c8aefaed551184c0645a727559c47b6f29c64c9b7f2"
+  },
+  "receipt": {
+    "path": "docs/frontend/auditorias/integracao-funcional-v1/fase8/F8_CODE_CONSOLIDATION_RECEIPT.json",
+    "sha256": "b6f3823dcdab007d2b47643fa0a832dca6af472dbdde4bbafc0f305c897d9471"
+  },
+  "certificate": "docs/frontend/auditorias/integracao-funcional-v1/fase8/CERTIFICADO_INTEGRACAO_FUNCIONAL_V1_CODE.md",
+  "checksums": "docs/frontend/auditorias/integracao-funcional-v1/fase8/SHA256SUMS",
+  "counts": {
+    "criteria": 488,
+    "legacyCriteria": 416,
+    "normalizedCriteria": 72,
+    "regulares": 45,
+    "atomicV1Brand": 25,
+    "nfr": 12,
+    "historicalDecisions": {
+      "PASS_REAL": 473,
+      "ACEITE_RESSALVA_R03": 15
+    },
+    "unresolved": 0,
+    "criteriaTraceSha256": "006a84d84221364361208250e0af5036a5dfe22ee1ef14b0ae9a494f92b1b3b7",
+    "integration": {
+      "certificates": 6,
+      "navigation": 52,
+      "canonical": 138,
+      "mandatory": 120,
+      "conditional": 18,
+      "codeProofs": 1104,
+      "supplementaryProofs": 8
+    }
+  },
+  "reviewMode": "TECHNICAL_ASSISTED_EDIVAN5002_PR_781",
+  "live": "NOT_RUN",
+  "production": "NO-GO",
+  "acceptedCaveats": [
+    "R-01",
+    "R-02",
+    "R-03"
+  ]
+}

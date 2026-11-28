@@ -1,0 +1,95 @@
+{
+  "schema": "contaos.v2.preflight.regular.v1",
+  "regular": "49",
+  "status": "VERIFICADO",
+  "backend": {
+    "plan_pr": 242,
+    "build_pr": 243,
+    "build_merge": "cb58d238b96a7f36644a1fac4d601df2f7b85be3",
+    "review": 6090895628,
+    "receipt_pr": 244,
+    "receipt_main": "369c9b9640cb06963eda3878685417d1c815d763",
+    "receipt_review": 6090957499
+  },
+  "contrato": [
+    "avaliar_portao_reapresentacao",
+    "liberar_reapresentacao",
+    "registrar_reapresentacao",
+    "ciclos_diligencia",
+    "pacotes_reapresentacao",
+    "pacotes_competencia",
+    "apresentacoes_contratante",
+    "arquivos"
+  ],
+  "rbac_rls": {
+    "escopo": [
+      "organizacao",
+      "contrato",
+      "competencia",
+      "rodada",
+      "ator",
+      "pedido"
+    ],
+    "catalogo_leitura": [
+      [
+        "apresentacoes_contratante",
+        "apresentacoes_contratante_select"
+      ],
+      [
+        "apresentacoes_contratante",
+        "rbac_v1_select"
+      ],
+      [
+        "arquivos",
+        "arquivos_select"
+      ],
+      [
+        "arquivos",
+        "rbac_v1_select"
+      ],
+      [
+        "pacotes_competencia",
+        "pacotes_competencia_select"
+      ],
+      [
+        "pacotes_competencia",
+        "rbac_v1_select"
+      ],
+      [
+        "pacotes_reapresentacao",
+        "pacotes_reapresentacao_select"
+      ]
+    ],
+    "portao": "backend"
+  },
+  "prova": {
+    "run": 46032059442,
+    "tentativa": 1,
+    "job": 140618050018,
+    "artefato": 15214502870,
+    "sha256": "0e09f39a62f0058e4c9a49b2c300a5240cbb488bc436e652657e9d64073ec286",
+    "restore": 46032059405
+  },
+  "hml": {
+    "run": 46033217866,
+    "tentativa": 1,
+    "job": 140622013336,
+    "migration": "20261127160826",
+    "migration_sha256": "ab364a7150f413b29b7f4d7b2ab053d594053d7585c1c64e3547164a1243356d",
+    "versions": 142,
+    "catalogo_exato": true
+  },
+  "frontend": {
+    "recibo_predecessor": 844,
+    "testes_exigidos": [
+      "contrato",
+      "RBAC_RLS",
+      "portao",
+      "idempotencia",
+      "linhagem",
+      "Teste C"
+    ]
+  },
+  "live": "NOT_RUN",
+  "prod": "NO-GO"
+}

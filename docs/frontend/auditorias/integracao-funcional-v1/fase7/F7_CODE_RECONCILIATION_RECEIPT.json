@@ -1,0 +1,36 @@
+{
+  "schema": "contaos.ifv1.f7.code-reconciliation-receipt.v1",
+  "state": "EVIDENCE_VERIFIED_CERTIFICATE_PENDING",
+  "scope": "IFV1_CODE",
+  "head": "ed01f5bebead913bf0bf66b1933418b400df85cc",
+  "tree": "1ac4473437b7c0a203aebf5da998123791be951e",
+  "run": 45816836888,
+  "attempt": 1,
+  "backend": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "sourceSha256": "63da51596f14ca7fde5771be3220f20da90dcca715e1628912091bce15e312ba",
+  "traceSha256": "79336321adcce1d408bce2841d7e46403014fe107772d348b537314db573bb21",
+  "counts": {
+    "certificates": 6,
+    "navigation": 52,
+    "canonical": 138,
+    "mandatory": 120,
+    "conditional": 18,
+    "codeProofs": 1104,
+    "supplementaryProofs": 8
+  },
+  "provenance": {
+    "certificates": 6,
+    "archives": 48,
+    "originalMembers": 10,
+    "checkedRuns": 45
+  },
+  "limits": {
+    "live": "NOT_RUN",
+    "production": "NO-GO",
+    "accepted": [
+      "R-01",
+      "R-02",
+      "R-03"
+    ]
+  }
+}

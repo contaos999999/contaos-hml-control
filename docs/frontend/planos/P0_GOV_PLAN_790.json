@@ -1,0 +1,32 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 790,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "F5.6 CODE_FIXTURE. Parecer, apresentação e histórico em 10 casos e 20 provas materiais.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_6_CASE_CONTRACTS_PROPOSAL.json",
+    "src/test/f5-code-closure-scope-isolation.test.ts",
+    ".github/workflows/contaos-f5-code-material.yml",
+    "scripts/hml/f5-code-material-evidence.mjs",
+    "scripts/hml/f5-code-material-evidence.test.mjs",
+    "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json"
+  ],
+  "baseline_main": "332ebbc507efb79a30936afb9a3afd692e03a51f",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 777,
+  "authorization": "F5.6 prevista no PLAN #777 e solicitada pelo titular após a F5.5 integrada na #788. A #790 fixa o inventário. Escopo eficaz após CI, revisão assistida #781, merge protegido e readback.",
+  "acceptance": [
+    "Reconciliar os 10 IDs do PLAN #777 à matriz de blob bb7ce43f9c334f2f03e9aafab405addadfe5e19a. Sete casos obrigatórios e três condicionais nos adaptadores V118, V119 e V122 e em suas fronteiras de leitura.",
+    "V118 deve conferir a autoria distinta da aprovação e provar que parecer aprovado não libera apresentação com impeditivos. V119 deve reconciliar o pacote congelado, documento, versão, hash e protocolo e confirmar idempotência após uma mudança sintética de versão.",
+    "V122 deve reconciliar arquivo aprovado e relatório original, competência e origem temporal. A importação pendente preserva a análise e resultado existentes e requer governança posterior para gerar regra material.",
+    "Conferir entidades e correlações dos eventos ParecerInternoRevisado, ApresentacaoRegistrada e HistoricoImportacaoRegistrada. Exercitar 42501, ausência de dados e alterações cruzadas, e leitura preservada dos dois tenants.",
+    "Produzir 20 provas novas, reexecutar as 256 anteriores no mesmo HEAD e comprovar 138 casos, 120 obrigatórios, 18 condicionais, e 276 provas. Verificar SHA, árvore, Jobs, tentativa e hashes dos ZIPs. Atualizar RCA. CI integral, revisão assistida, merge protegido e readback."
+  ],
+  "constraints": [
+    "Restringir o caminho do teste à #790 na base protegida. Reusar o transporte sintético de F5.5 em leitura. Preservar restrições anteriores e todos os gates obrigatórios.",
+    "Escopo limitado a prova CODE_FIXTURE, inventário, coletor, workflow material e RCA. Backend normativo consultado em leitura. HML, Supabase real e produção ficam fora deste BUILD."
+  ],
+  "certification": "F5_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

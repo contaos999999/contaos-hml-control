@@ -1,0 +1,22 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 823,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Prova final de integração interna V1 CODE com Teste C material.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase7/CERTIFICADO_RECIBO_INTEGRACAO_INTERNA_V1_CODE.md",
+    ".github/workflows/contaos-teste-c-independente.yml"
+  ],
+  "baseline_main": "b3b7f09765d56340f440c8df94cfbd9a692d3023",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_document": "docs/frontend/planos/PLAN_P0_RECIBO_INTEGRACAO_INTERNA_V1_2026-11-26.md",
+  "authorization": "Titular autorizou finalizar o recibo interno da V1 CODE com as três contraprovas LIVE reservadas ao GATE PROD após V5. A eficácia depende da integração protegida deste PLAN.",
+  "acceptance": [
+    "Vincular a matriz F7 e o grafo canônico aos certificados F1–F6 e à certificação global #821.",
+    "Executar Playwright no mesmo HEAD/árvore da prova, confirmar screenshots e seus hashes, CI e revisão assistida antes do merge."
+  ],
+  "constraints": [
+    "Governança CODE apenas. Preservar P0-LOCK-CERT, certificados e blobs protegidos, aplicação, backend e proteções. LIVE NOT_RUN. PROD NO-GO."
+  ]
+}

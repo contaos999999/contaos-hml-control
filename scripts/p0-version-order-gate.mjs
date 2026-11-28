@@ -1,14 +1,21 @@
 import { existsSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { pathToFileURL } from "node:url";
 
 export const P0 = "docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json";
+export const V1_INTEGRATION_RECEIPT =
+  "docs/frontend/governanca/P0_RECIBO_INTEGRACAO_INTERNA_V1_CODE.json";
+export const V2_CODE_PROGRESS = "docs/frontend/governanca/P0_PROGRESSO_V2_CODE.json";
+const V2_RECEIPT_DIR = "docs/frontend/auditorias/certificacao-funcional-v2/fase3/";
 const PLAN = "docs/frontend/planos/PLANO_ATIVO.json";
 const seq = (a, b, digits) =>
   Array.from({ length: b - a + 1 }, (_, i) => String(a + i).padStart(digits, "0"));
 const same = (a, b) =>
   Array.isArray(a) && a.length === b.length && a.every((x, i) => x === b[i]);
 const sha40 = (s) => typeof s === "string" && /^[a-f0-9]{40}$/.test(s);
+const sha256 = (s) => typeof s === "string" && /^[a-f0-9]{64}$/.test(s);
+const v2Regulars = [...seq(44, 49, 2), "76", "77"];
 const expectCerts = ["V1", "V2", "V3", "V4", "V5", "GLOBAL"];
 const safePrefix = (seen, expected) =>
   Array.isArray(seen) &&
@@ -17,12 +24,117 @@ const safePrefix = (seen, expected) =>
 
 const integrationVersions = ["V1", "V2", "V3", "V4", "V5"];
 const reqKeys = ["interna", "cumulativa"];
+
+function readOptional(readFile, path) {
+  try {
+    return readFile(path, "utf8");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+}
+
+// Os dois gates P0 usam os recibos complementares sobre a mesma âncora histórica.
+export function readP0(readFile = readFileSync) {
+  const manifest = JSON.parse(readFile(P0, "utf8"));
+  const record = readOptional(readFile, V1_INTEGRATION_RECEIPT);
+  const progress = readOptional(readFile, V2_CODE_PROGRESS);
+  if (record === undefined) {
+    if (progress !== undefined) throw new Error("Progresso V2 CODE exige o recibo V1/interna.");
+    return manifest;
+  }
+
+  const receipt = JSON.parse(record);
+  const control = manifest.controle;
+  const v1 = control?.integracao_por_versao?.V1;
+  if (
+    receipt?.schema !== "contaos.p0.v1-integration-receipt.v1" ||
+    receipt.versao !== "V1" ||
+    receipt.escopo !== "interna" ||
+    receipt.modalidade !== "CODE" ||
+    receipt.live !== "NOT_RUN" ||
+    receipt.prod !== "NO-GO" ||
+    !same(receipt.ressalvas, ["R-01", "R-02", "R-03"]) ||
+    receipt.recibo?.status !== "PASS" ||
+    control?.certificados_por_versao?.V1?.status !== "PASS" ||
+    v1?.interna?.status !== "PENDENTE" ||
+    v1?.cumulativa !== "BASE_FUNDACIONAL"
+  ) {
+    throw new Error("Recibo P0 V1/interna inválido ou conflitante.");
+  }
+  v1.interna = receipt.recibo;
+  if (progress !== undefined) applyV2CodeProgress(manifest, JSON.parse(progress), readFile);
+  return manifest;
+}
+
 const prReview = (s) =>
   typeof s === "string" &&
   /^https:\/\/github\.com\/contaos999999\/contaos-hml-control\/pull\/\d+#pullrequestreview-\d+$/.test(s);
 const ciRun = (s) =>
   typeof s === "string" &&
   /^https:\/\/github\.com\/contaos999999\/contaos-hml-control\/actions\/runs\/\d+$/.test(s);
+const exactKeys = (value, keys) =>
+  value !== null && typeof value === "object" && !Array.isArray(value) &&
+  Object.keys(value).length === keys.length &&
+  keys.every((key) => Object.hasOwn(value, key));
+
+function validV2CodeReceipt(receipt, id) {
+  const keys = ["schema", "versao", "modalidade", "status", "regular_id", "live", "prod",
+    "pr_merge_sha", "pr_head_sha", "base_sha", "tree_sha", "ci_url",
+    "revisao_independente_url", "rca_sha256", "teste_c"];
+  if (!exactKeys(receipt, keys) ||
+      receipt.schema !== "contaos.p0.v2-regular-code-receipt.v1" ||
+      receipt.versao !== "V2" || receipt.modalidade !== "CODE" ||
+      receipt.status !== "PASS" || receipt.regular_id !== id ||
+      receipt.live !== "NOT_RUN" || receipt.prod !== "NO-GO" ||
+      ![receipt.pr_merge_sha, receipt.pr_head_sha, receipt.base_sha, receipt.tree_sha].every(sha40) ||
+      !prReview(receipt.revisao_independente_url) || !ciRun(receipt.ci_url) ||
+      !sha256(receipt.rca_sha256)) return false;
+
+  const visual = receipt.teste_c;
+  return exactKeys(visual,
+    ["run_url", "tentativa", "job_id", "artefato_id", "artefato_sha256", "checkout_sha"]) &&
+    ciRun(visual.run_url) &&
+    [visual.tentativa, visual.job_id, visual.artefato_id]
+      .every((num) => Number.isSafeInteger(num) && num > 0) &&
+    sha256(visual.artefato_sha256) && sha40(visual.checkout_sha);
+}
+
+function applyV2CodeProgress(manifest, progress, readFile) {
+  const control = manifest.controle;
+  const seen = control.regulares_pendentes_concluidos_com_evidencia;
+  const block = manifest.blocos?.find((entry) => entry.versao === "V2");
+  if (!exactKeys(progress, ["schema", "versao", "modalidade", "recibos"]) ||
+      progress.schema !== "contaos.p0.v2-code-progress.v1" ||
+      progress.versao !== "V2" || progress.modalidade !== "CODE" ||
+      !same(seen, ["43", "75"]) || !same(block?.regular_ids, v2Regulars) ||
+      !Array.isArray(progress.recibos) ||
+      !safePrefix(progress.recibos.map((record) => record?.regular_id), v2Regulars)) {
+    throw new Error("Progresso V2 CODE inválido, fora da sequência ou conflitante.");
+  }
+
+  const receipts = progress.recibos.map((record) => {
+    const id = record.regular_id;
+    if (!exactKeys(record, ["regular_id", "arquivo", "sha256"]) ||
+        record.arquivo !== V2_RECEIPT_DIR + "regular-" + id + ".json" ||
+        !sha256(record.sha256)) throw new Error("Caminho ou digest inválido do regular " + id + ".");
+    const bytes = readFile(record.arquivo);
+    if (createHash("sha256").update(bytes).digest("hex") !== record.sha256)
+      throw new Error("Digest divergente do recibo do regular " + id + ".");
+    const receipt = JSON.parse(bytes.toString());
+    if (!validV2CodeReceipt(receipt, id))
+      throw new Error("Recibo CODE incompatível com o regular " + id + ".");
+    return receipt;
+  });
+
+  control.progresso_v2_code = receipts;
+  control.regulares_pendentes_concluidos_com_evidencia = [
+    ...seen, ...receipts.map((receipt) => receipt.regular_id),
+  ];
+  control.regulares_restantes_total -= receipts.length;
+  control.proximo_regular_a_planejar = v2Regulars[receipts.length] ??
+    manifest.blocos.find((entry) => entry.versao === "V3").regular_ids[0];
+}
+
 const validEvidencePath = (s, ext) =>
   typeof s === "string" &&
   /^docs\/frontend\/auditorias\/[a-zA-Z0-9_./-]+$/.test(s) &&
@@ -145,7 +257,7 @@ export function validateP0(m, plan, changed = [], fileExists = existsSync) {
     err("Ordem canônica V1 → V2 → V3 → V4 → V5 → GLOBAL alterada.");
   const expectedRegular = [
     ["43", "75"],
-    [...seq(44, 49, 2), "76", "77"],
+    v2Regulars,
     [...seq(50, 55, 2), "78", "79"],
     [...seq(56, 59, 2), ...seq(80, 83, 2)],
     [...seq(60, 66, 2), ...seq(84, 89, 2)],
@@ -264,7 +376,7 @@ function changedFiles() {
   }
 }
 function main() {
-  const manifest = JSON.parse(readFileSync(P0, "utf8"));
+  const manifest = readP0();
   const plan = JSON.parse(readFileSync(PLAN, "utf8"));
   const result = validateP0(manifest, plan, changedFiles());
   if (result.errors.length) {
@@ -277,5 +389,4 @@ function main() {
     "; próximo regular elegível: " + result.next +
     "; PLAN atualmente registrado: " + plan.prompt_id + ".");
 }
-if (process.argv[1] && fileURLToPath(import.meta.url) ===
-    fileURLToPath(new URL("file://" + process.argv[1]))) main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

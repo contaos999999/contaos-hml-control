@@ -1,0 +1,33 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 810,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "F6.7 CODE_FIXTURE. Provas transversais de recuperação, sessão e fila em provas complementares.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_JOURNEY_MATRIX.json",
+    "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json",
+    ".github/workflows/contaos-f6-code-material.yml",
+    "src/test/f6-code-transversal-journeys.test.tsx",
+    "src/test/f6-code-journey-fixture.ts",
+    "scripts/hml/f6-code-material-evidence.mjs",
+    "scripts/hml/f6-code-material-evidence.test.mjs",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_CANONICAL_CASES.json"
+  ],
+  "baseline_main": "6d532eda470226d2f654bf259fd527f687db8c5c",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 796,
+  "authorization": "PLAN #796 e matriz do PLAN #797. Execução integral autorizada pelo titular. O escopo se torna eficaz após CI, revisão assistida, merge protegido e readback.",
+  "acceptance": [
+    "Executar quatro jornadas complementares e oito provas no mesmo HEAD dos 138 casos canônicos e 276 provas.",
+    "Comprovar resposta malformada, timeout, retomada, mudança de rota, sessão expirada, bloqueio de requisição antiga, duplo clique, retomada de fila sintética e trilha correlacionada.",
+    "Conferir cache e troca de escopo nas jornadas cumulativas e executar o Teste C de navegador no mesmo HEAD com desktop, tablet e mobile aplicáveis.",
+    "Publicar a cópia exata dos 138 descritores do inventário canônico e preservar o blob da matriz original.",
+    "Conferir identidades, matriz e artefatos originais no mesmo HEAD. Meta de 138 casos e 276 provas cumulativas. CI integral, revisão assistida, merge protegido e readback."
+  ],
+  "constraints": [
+    "Escopo fechado em testes CODE_FIXTURE, matriz, evidência e RCA. Preservar produto, tipos protegidos, backend normativo e as barreiras existentes. LIVE NOT_RUN e PROD NO-GO."
+  ],
+  "certification": "F6_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

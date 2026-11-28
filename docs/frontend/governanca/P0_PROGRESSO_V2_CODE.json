@@ -1,0 +1,42 @@
+{
+  "schema": "contaos.p0.v2-code-progress.v1",
+  "versao": "V2",
+  "modalidade": "CODE",
+  "recibos": [
+    {
+      "regular_id": "44",
+      "arquivo": "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-44.json",
+      "sha256": "64da5545fa68f0f250c2fdc4445e3f03b6504bb1836ac8a4f3b485df52ae7238"
+    },
+    {
+      "regular_id": "45",
+      "arquivo": "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-45.json",
+      "sha256": "fc251fc3461716b509107270dc61245e459b2b1eaa59cbaacf07cfc78df74cd2"
+    },
+    {
+      "regular_id": "46",
+      "arquivo": "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-46.json",
+      "sha256": "9da78a41677c0a3408e91511530452bdd47a8ab377f2ee07501b3678294840dd"
+    },
+    {
+      "regular_id": "47",
+      "arquivo": "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-47.json",
+      "sha256": "bcc06a6dbf4e19eac32435d34c95a70d667cd7db76efe4bc4fdd03dbba1a53a0"
+    },
+    {
+      "regular_id": "48",
+      "arquivo": "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-48.json",
+      "sha256": "0304b7b67b55a1b1d39eb81b99ad9d9c6d6c06a8646033cfb5ce97e9da5f51ca"
+    },
+    {
+      "regular_id": "49",
+      "arquivo": "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-49.json",
+      "sha256": "c31b3219d6632d1b1b588dc2bd9b2f74af13cd43c8832ad94a811d2b06c6660b"
+    },
+    {
+      "regular_id": "76",
+      "arquivo": "docs/frontend/auditorias/certificacao-funcional-v2/fase3/regular-76.json",
+      "sha256": "82ff525be18ae1c337f6b071772d2d74380bc98c31068fcbca52612f154492b6"
+    }
+  ]
+}

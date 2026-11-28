@@ -16,6 +16,28 @@ import {
   pixelContrastDecision,
 } from "./visual-audit.mjs";
 
+test("V2-01 registra a rota Diligencias e a prova visual", async () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/competencias/$id/diligencias"),
+    "FAIL V2-01 registra a rota Diligencias e a prova visual: rota ainda ausente da árvore TanStack",
+  );
+  assert.ok(ROUTES.some((route) => route.id === "V2-01" && route.path.endsWith("/diligencias")));
+  const { diligenciasVisualCases, diligenciasFixtureFiles } =
+    await import("./v2-integracao-visual.mjs");
+  const proof = diligenciasVisualCases(WIDTHS, THEMES);
+  assert.equal(proof.length, 8);
+  assert.equal(new Set(proof.map(({ width, theme }) => width + "/" + theme)).size, 8);
+  const files = diligenciasFixtureFiles("/approved/source", {
+    "client.ts": "export const supabase = {};",
+    "router.tsx": "router",
+    "build.mjs": "build",
+  });
+  assert.ok(files["entry.tsx"].includes("/src/components/competencias/CompetenciaVisaoGeral"));
+  assert.ok(files["entry.tsx"].includes("/src/components/diligencias/DiligenciasCompetencia"));
+  assert.ok(files["client.ts"].includes("ciclos_diligencia"));
+});
+
 test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preservando o drawer", () => {
   const routeDirectory = new URL("../../src/routes/", import.meta.url);
   const normalize = (path) =>
@@ -35,10 +57,13 @@ test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preser
       assert.ok(match, `Rota não reconhecida: ${name}`);
       return normalize(match[1]);
     });
-  assert.equal(pages.length, 28);
+  assert.equal(pages.length, 33);
   assert.equal(new Set(pages).size, pages.length);
   assert.deepEqual([...new Set(ROUTES.map((route) => normalize(route.path)))].sort(), pages.sort());
-  assert.equal(ROUTES.filter((route) => route.requiresDrawer).length, 1);
+  assert.deepEqual(
+    ROUTES.filter((route) => route.requiresDrawer).map((route) => route.id),
+    ["V117", "V2-04", "V2-05"],
+  );
   assert.equal(ROUTES.find((route) => route.id === "V117")?.requiresDrawer, true);
 });
 
@@ -54,12 +79,19 @@ test("P0 V123: Auditoria possui oito casos privados sem PASS autenticado presumi
   );
 });
 
-test("matriz oficial: 29 superfícies (28 rotas e drawer) × 4 larguras × 2 temas", () => {
-  assert.equal(ROUTES.length, 29);
+test("matriz oficial preserva 29 superfícies V1 e inclui lista, ciclo, apontamento, plano e contestação V2", () => {
+  assert.equal(ROUTES.length, 36);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
-  assert.equal(cases().length, 232);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 232);
+  assert.equal(cases().filter((x) => !x.id.startsWith("V2-")).length, 232);
+  assert.equal(cases().filter((x) => x.id === "V2-01").length, 8);
+  assert.equal(cases().filter((x) => x.id === "V2-02").length, 8);
+  assert.equal(cases().filter((x) => x.id === "V2-03").length, 8);
+  assert.equal(cases().filter((x) => x.id === "V2-04").length, 8);
+  assert.equal(cases().filter((x) => x.id === "V2-05").length, 8);
+  assert.equal(cases().filter((x) => x.id === "V2-06").length, 8);
+  assert.equal(cases().filter((x) => x.id === "V2-07").length, 8);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 288);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");
@@ -503,7 +535,7 @@ test("refluxo/texto: 18 casos públicos separados preservam os 232 casos base", 
     extra.filter((x) => x.mode === "TEXT_200" && [390, 1440].includes(x.width)).length,
     12,
   );
-  assert.equal(m.cases().length, 232);
+  assert.equal(m.cases().filter((item) => !item.id.startsWith("V2-")).length, 232);
 });
 
 test("refluxo/texto: escala real e amostra estável são obrigatórias", async () => {
@@ -927,7 +959,7 @@ test("F2 delta: exact sixteen-case visual catalogue preserves original route cat
   assert.equal(rows.length, 16);
   assert.equal(new Set(rows.map((r) => `${r.surface}/${r.width}/${r.theme}`)).size, 16);
   assert.deepEqual([...new Set(rows.map((r) => r.surface))], ["V114", "V120"]);
-  assert.equal(cases().length, 232);
+  assert.equal(cases().filter((item) => !item.id.startsWith("V2-")).length, 232);
 });
 test("F2 delta: missing duplicate unknown false or forged evidence cannot pass", () => {
   assert.equal(typeof delta.phase2DeltaReportValid, "function");
@@ -999,4 +1031,78 @@ test("F2 delta: invalid identity or nonlocal CSS source rejects before any brows
     /PHASE2_INPUT/,
   );
   assert.equal(effects, 0);
+});
+
+test("V2-02 registra a rota Ciclo de diligencia e a prova visual", async () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/diligencias/$cicloId"),
+    "FAIL V2-02 registra a rota Ciclo de diligencia e a prova visual: rota ainda ausente da árvore TanStack",
+  );
+  assert.ok(ROUTES.some((route) => route.id === "V2-02" && route.path.startsWith("/diligencias/")));
+  const { diligenciasFixtureFiles } = await import("./v2-integracao-visual.mjs");
+  const files = diligenciasFixtureFiles("/approved/source", {
+    "client.ts": "export const supabase = {};",
+    "router.tsx": "router",
+    "build.mjs": "build",
+  });
+  assert.ok(files["entry.tsx"].includes("/src/components/diligencias/CicloDiligencia"));
+  assert.ok(files["entry.tsx"].includes("/src/components/competencias/CompetenciaProtocolo"));
+  assert.ok(files["client.ts"].includes("apontamentos_contratante"));
+  assert.ok(files["client.ts"].includes("pareceres_contratante"));
+});
+
+test("V2-03 registra a rota Apontamento de diligencia e a prova visual", async () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/diligencias/$cicloId/apontamentos/$id"),
+    "FAIL V2-03 registra a rota Apontamento de diligencia e a prova visual: falta a rota do item na árvore TanStack",
+  );
+  assert.ok(ROUTES.some((route) => route.id === "V2-03" && route.path.includes("/apontamentos/")));
+  const { diligenciasFixtureFiles } = await import("./v2-integracao-visual.mjs");
+  const files = diligenciasFixtureFiles("/approved/source", {
+    "client.ts": "export const supabase = {};",
+    "router.tsx": "router",
+    "build.mjs": "build",
+  });
+  assert.ok(files["entry.tsx"].includes("/src/components/diligencias/ApontamentoDiligencia"));
+  assert.ok(files["client.ts"].includes("obter_fonte_apontamento_contratante"));
+});
+
+test("V2-04 registra o painel do plano de ação no Teste C", () => {
+  assert.ok(
+    ROUTES.some(
+      (route) =>
+        route.id === "V2-04" && route.path.includes("/apontamentos/") && route.requiresDrawer,
+    ),
+    "FAIL V2-04 registra o painel do plano de ação no Teste C: o apontamento ainda não possui o painel de tarefas",
+  );
+});
+
+test("V2-05 registra o painel de contestação no Teste C", () => {
+  assert.ok(
+    ROUTES.some(
+      (route) =>
+        route.id === "V2-05" && route.path.includes("/apontamentos/") && route.requiresDrawer,
+    ),
+    "FAIL V2-05 registra o painel de contestação no Teste C: ainda falta a entrada de contestação no apontamento",
+  );
+});
+
+test("V2-06 registra a rota de reapresentação e sua prova visual", () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/diligencias/$cicloId/reapresentar") &&
+      ROUTES.some((route) => route.id === "V2-06" && route.path.endsWith("/reapresentar")),
+    "FAIL V2-06 registra a rota de reapresentação e sua prova visual: ainda falta o assistente na rota da rodada",
+  );
+});
+
+test("V2-07 registra a rota de pareceres e sua prova visual", () => {
+  const routeTree = readFileSync(new URL("../../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(
+    routeTree.includes("/competencias/$id/pareceres-contratante") &&
+      ROUTES.some((route) => route.id === "V2-07" && route.path.endsWith("/pareceres-contratante")),
+    "FAIL V2-07 registra a rota de pareceres e sua prova visual: rota do parecer externo ausente",
+  );
 });

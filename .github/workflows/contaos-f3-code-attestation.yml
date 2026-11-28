@@ -1,0 +1,56 @@
+name: ContaOS F3 CODE - atestacao candidata (nao certificador)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/hml/integracao-v1-fase3-code-attestation.mjs"
+      - "scripts/hml/integracao-v1-fase3-code-attestation.test.mjs"
+      - "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_ATTESTATION_SOURCE.json"
+      - ".github/workflows/contaos-f3-code-attestation.yml"
+      - "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_ATTESTATION_CANDIDATE.json"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+jobs:
+  attest:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Bootstrap pinned Bun
+        run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Test negative provenance
+        run: node --test scripts/hml/integracao-v1-fase3-code-attestation.test.mjs
+      - name: Download real evidence from GitHub Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/f3-attest"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/14982269982/zip" > "${RUNNER_TEMP}/f3-attest/evidence.zip"
+          unzip -t "${RUNNER_TEMP}/f3-attest/evidence.zip"
+          unzip -q "${RUNNER_TEMP}/f3-attest/evidence.zip" -d "${RUNNER_TEMP}/f3-attest/input"
+      - name: Verify source and execution provenance against GitHub live
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/hml/integracao-v1-fase3-code-attestation.mjs "${RUNNER_TEMP}/f3-attest/evidence.zip" "${RUNNER_TEMP}/f3-attest/input" "${RUNNER_TEMP}/f3-attest/output"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f3-code-attestation-candidate-${{ github.sha }}
+          path: ${{ runner.temp }}/f3-attest/output
+          if-no-files-found: error
+      - name: Confirm immutable checkout
+        run: git diff --exit-code

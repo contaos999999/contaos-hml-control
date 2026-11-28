@@ -1,0 +1,1050 @@
+{
+  "schema": "contaos.ifv1.f7.code-sources.v1",
+  "repository": "contaos999999/contaos-hml-control",
+  "baseline": "a8587643ae91e544d869454ff5b7d702d65435e9",
+  "backend": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "typesBlob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+  "canonical": {
+    "path": "docs/frontend/planos/INTEGRACAO_V1_7_FASES_MATRIZ_EXECUCAO_PROPOSTA.csv",
+    "sha256": "b8b4980bab5f841adc1db9c642e960f45a6874baad660bd18cd6a60ce87e32d9",
+    "blob": "bb7ce43f9c334f2f03e9aafab405addadfe5e19a"
+  },
+  "masterPlan": {
+    "path": "docs/frontend/planos/PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md",
+    "sha256": "f82f14f37bd3d69334283d9017a39de2a77ca575e470d6cbcd45c8d0c0d813eb",
+    "blob": "147308884fa2e6bef4d86b39317a01d03fe83609"
+  },
+  "navigation": {
+    "frontend": "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+    "deployment": "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
+    "count": 52
+  },
+  "phaseCertificates": [
+    {
+      "phase": 1,
+      "pr": 594,
+      "base": "90ae86432e617b880d603cff379878e623612a73",
+      "head": "14625812dcd5ac7ab40109c5be9c90c951b0bb32",
+      "merge": "538c52d909a5a9929c10740e6f961e38beb8ee11",
+      "tree": "ad433bcb082b4cdd65a65a1142702e288e21f49f",
+      "review": {
+        "mode": "HISTORICAL_DOCUMENTARY",
+        "comment": 6812207699
+      },
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase1/CERTIFICADO.md",
+        "sha256": "15a1d9c8be22dd29f750f5fdf5508cfdc49d3e2d4574d0f7bb4b8393e62c3ee8",
+        "blob": "751c5e6d8cb53d56be4f51be3fee3cb0feb34f03"
+      },
+      "files": [
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase1/inventario.json",
+          "sha256": "81f56088977b9d874c2e2a3678a1df185dcccf0e0f16b99629fb2862f411d302",
+          "blob": "de049eca4b464eabde5381815bb9116c19294606"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase1/CONEXOES.csv",
+          "sha256": "0a2bb80172538656de0b016987da76c69effecfee6ea79e7b4c0642ccbe1a7bc",
+          "blob": "abb07b850f1fe071a8d2d491afc0c3d0588fe01c"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase1/TELAS.csv",
+          "sha256": "e23ef34f5be4a9c1a020f7eac948e52f1b06e7d461519e50811de46eba86d72e",
+          "blob": "9ffe8eae79aef64a402aae38892651c665f83888"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase1/GRAFO.mmd",
+          "sha256": "e16020d742049facc0c71492331858f2c513e2cc51f2b71b3a46c3df46d7d0da",
+          "blob": "b7e6a1535dba3b356871a59c24b694a74a451af0"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase1/REVISAO.md",
+          "sha256": "f894575c9833a972098a2fc19ea9740f20a01551f035b3702f592fc703e8b528",
+          "blob": "74b10d56bc670a07293aa3b8e99ec9e9edd5da4b"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase1/verificar.py",
+          "sha256": "ab327b912d80f9c7f2d1c7b577a650301b2741ed2ca0baf3244a64b9474e8c0d",
+          "blob": "e119a87a90a078094e8d8103697a4df1578b0b31"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase1/test_verificar.py",
+          "sha256": "250f09f4149b88bfa9645ffd63f5bd45da960d1afcece52274612b8de757ef1c",
+          "blob": "95fe49fdf60de2045404324188105fccd3fbfbaf"
+        }
+      ],
+      "runs": [
+        {
+          "id": 43138072894,
+          "head": "14625812dcd5ac7ab40109c5be9c90c951b0bb32",
+          "name": "ContaOS LOCK-TYPES-01 Double Barrier",
+          "path": ".github/workflows/lock-types-double-barrier.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 43138072900,
+          "head": "14625812dcd5ac7ab40109c5be9c90c951b0bb32",
+          "name": "ContaOS Frontend Zero-Drift",
+          "path": ".github/workflows/contaos-frontend-zero-drift.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "pr": 652,
+      "base": "ccf534371cb06f9f1c6fef425345d0e012ac4bb8",
+      "head": "9f8ce7a4259a8d23169c34baca71125827eff206",
+      "merge": "b2feca7f5d8976709ba95a2ce44407f910eabe19",
+      "tree": "a092ed3717be11edfef611c765cf0de02282fc37",
+      "review": {
+        "mode": "HISTORICAL_GITHUB_REVIEW",
+        "id": 5898772537
+      },
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase2/CERTIFICADO_FASE2_NAVEGACAO_2026-11-13.md",
+        "sha256": "62440c7630d34dfe2e51882d807c6b48af0160b2713f2e57c07c7b35cd0857c2",
+        "blob": "e07d66897d39e8d57b9d6507cf97ba03ed01c7f1"
+      },
+      "files": [
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
+          "sha256": "6eeef70b5d194cfe388666096dd3a4b493e89c7b9259248a98b4ef212745afd4",
+          "blob": "79c93a6359655d1c41ecab97726789518497a596"
+        }
+      ],
+      "runs": [
+        {
+          "id": 43512970962,
+          "head": "9f8ce7a4259a8d23169c34baca71125827eff206",
+          "name": "ContaOS LOCK-TYPES-01 Double Barrier",
+          "path": ".github/workflows/lock-types-double-barrier.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 43512971085,
+          "head": "9f8ce7a4259a8d23169c34baca71125827eff206",
+          "name": "ContaOS Frontend Zero-Drift",
+          "path": ".github/workflows/contaos-frontend-zero-drift.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 43512971038,
+          "head": "9f8ce7a4259a8d23169c34baca71125827eff206",
+          "name": "ContaOS Trilha A Fixtures",
+          "path": ".github/workflows/contaos-trilha-a-fixtures.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 43512971240,
+          "head": "9f8ce7a4259a8d23169c34baca71125827eff206",
+          "name": "ContaOS Trilha A Autenticada",
+          "path": ".github/workflows/contaos-trilha-a-authenticated.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "pr": 758,
+      "base": "d0f6b3e5748e1785e27d6c975642897bb6d34676",
+      "head": "3c8eafbc1bc57ec80e8be91959d5844fc418ff6a",
+      "merge": "019a38e4aca6ec7d09a298875627d9c896f72600",
+      "tree": "a5e25b566d57b195f3e2fd44348dbd7ff4af8ca1",
+      "review": {
+        "mode": "TECHNICAL_ASSISTED",
+        "id": 6051192764
+      },
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase3/CERTIFICADO_FASE3_CODE_2026-11-24.md",
+        "sha256": "5d3c306e79410b299a346afb8d8f43f52e3b526e7ccbeb72beca19dfb088ea29",
+        "blob": "51c49cf20b627768d5758f45e282cbf1151b4244"
+      },
+      "files": [
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_ATTESTATION_CANDIDATE.json",
+          "sha256": "de6fdd18468868fc163574fccda016322a2eb7e412bb984a0212fb783c770c06",
+          "blob": "96a516e885a4f3bb596c96d726b9199d635ff7c3"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CODE_PROMOTION_RECEIPT.json",
+          "sha256": "9575814dc8a986c8f033c3fd4966c93a613c7f76331623c3a7cacde6130125fa",
+          "blob": "a0248c234b58469061fbde09aa0d7c1935ec8031"
+        }
+      ],
+      "runs": [
+        {
+          "id": 45536602285,
+          "head": "3c8eafbc1bc57ec80e8be91959d5844fc418ff6a",
+          "name": "ContaOS Frontend Zero-Drift",
+          "path": ".github/workflows/contaos-frontend-zero-drift.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45536602309,
+          "head": "3c8eafbc1bc57ec80e8be91959d5844fc418ff6a",
+          "name": "ContaOS P0-NR-001 Anti-Reincidencia",
+          "path": ".github/workflows/p0-nr001-anti-recurrence.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45536602303,
+          "head": "3c8eafbc1bc57ec80e8be91959d5844fc418ff6a",
+          "name": "ContaOS LOCK-TYPES-01 Double Barrier",
+          "path": ".github/workflows/lock-types-double-barrier.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45536602284,
+          "head": "3c8eafbc1bc57ec80e8be91959d5844fc418ff6a",
+          "name": "ContaOS F3 CODE - 138 case preflight (not certification)",
+          "path": ".github/workflows/contaos-f3-code-138-attempt.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45536602268,
+          "head": "3c8eafbc1bc57ec80e8be91959d5844fc418ff6a",
+          "name": "ContaOS F3 CODE - 138 execucoes funcionais individuais",
+          "path": ".github/workflows/contaos-f3-code-138-functional.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45536602345,
+          "head": "3c8eafbc1bc57ec80e8be91959d5844fc418ff6a",
+          "name": "ContaOS F3 CODE - Coletor offline (nao certificador)",
+          "path": ".github/workflows/contaos-f3-code-collector.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "pr": 776,
+      "base": "b6a5e3808a0202756d4077fcf89315dc94590929",
+      "head": "8d463319662b331b62bba677a20cb791a48ec579",
+      "merge": "e322301e58419e78eb4dfad77a956326b449ecc1",
+      "tree": "abbdba86493c04d6705b3168dc9caf7de2196bb6",
+      "review": {
+        "mode": "TECHNICAL_ASSISTED",
+        "id": 6055575595
+      },
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase4/CERTIFICADO_FASE4_CODE_2026-11-25.md",
+        "sha256": "73bcefd611ee8a89760d9d763bd1f2b9bbdc370c4a77976765394aa810c3d7d3",
+        "blob": "704461c8dac4b8cc3cf600c740b80bbe7a879d0d"
+      },
+      "files": [
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_ATTESTATION_CANDIDATE.json",
+          "sha256": "b896b935a407e04264c33389a574d8137aa84b6afd81719117bfb052c86b676f",
+          "blob": "03137c9d9961e914f6d0687df730a8843c4cc742"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_PROMOTION_RECEIPT.json",
+          "sha256": "e4acf6f889d18aaad19f58d2c92c59808a567810d74e2b24124065bc3001aeab",
+          "blob": "3738da827a90ed231b8dd6713b308697ba5c0736"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_CERTIFICATION.json",
+          "sha256": "9a133a2060451908a6fc082a9f7fdda164c93973440d7a7764eaca5aea11fd10",
+          "blob": "3496b9dffd896a98ecba965038ba57805fa3b4d3"
+        }
+      ],
+      "runs": [
+        {
+          "id": 45591946451,
+          "head": "8d463319662b331b62bba677a20cb791a48ec579",
+          "name": "ContaOS Frontend Zero-Drift",
+          "path": ".github/workflows/contaos-frontend-zero-drift.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45591946367,
+          "head": "8d463319662b331b62bba677a20cb791a48ec579",
+          "name": "ContaOS LOCK-TYPES-01 Double Barrier",
+          "path": ".github/workflows/lock-types-double-barrier.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45591946418,
+          "head": "8d463319662b331b62bba677a20cb791a48ec579",
+          "name": "ContaOS F3 CODE - 138 case preflight (not certification)",
+          "path": ".github/workflows/contaos-f3-code-138-attempt.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45591946458,
+          "head": "8d463319662b331b62bba677a20cb791a48ec579",
+          "name": "ContaOS F3 CODE - Coletor offline (nao certificador)",
+          "path": ".github/workflows/contaos-f3-code-collector.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45591946478,
+          "head": "8d463319662b331b62bba677a20cb791a48ec579",
+          "name": "ContaOS F3 CODE - 138 execucoes funcionais individuais",
+          "path": ".github/workflows/contaos-f3-code-138-functional.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45591946331,
+          "head": "8d463319662b331b62bba677a20cb791a48ec579",
+          "name": "ContaOS P0-NR-001 Anti-Reincidencia",
+          "path": ".github/workflows/p0-nr001-anti-recurrence.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "phase": 5,
+      "pr": 795,
+      "base": "a641e800292e2321c6913dbd332388f91dc3378e",
+      "head": "25cacaef63a208c3538141c7ae82dc0634b3fd88",
+      "merge": "4ea895059dcdac2cb2dc2558a9918f5392ecc8b0",
+      "tree": "89bc263e40ecdc71a219711c2c4299422a6f81db",
+      "review": {
+        "mode": "TECHNICAL_ASSISTED",
+        "id": 6067937617
+      },
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase5/CERTIFICADO_FASE5_CODE_2026-11-25.md",
+        "sha256": "2181cea9479059af4ba1ee1e6e2cb06273161b805173f0a9079107ee9a52dc06",
+        "blob": "621fb5b22569cac928279262a2818b5643c68a66"
+      },
+      "files": [
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_CODE_ATTESTATION_CANDIDATE.json",
+          "sha256": "f4e37ec14b05db5bf1b849cdf4d95ea24169762dc2a380e10b057bbf7d4b6656",
+          "blob": "8caedaea89a706f07d4f19eb7d7fb321f12a6d64"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_CODE_PROMOTION_RECEIPT.json",
+          "sha256": "5811adb824af5b0e7629822effcb60f830671bf6b1ba83d01d3902813b566eed",
+          "blob": "4e23b7e9f91e6e1dd76b75fc0a42e8707c6d4842"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_CODE_CERTIFICATION.json",
+          "sha256": "94eb4cfb8e078a6ad6d128d00a62ae636c848fa6cba8aa3612cc9ebe1c4ff7ea",
+          "blob": "220b0dd0f12d660568df5ee806d88d6346306d57"
+        }
+      ],
+      "runs": [
+        {
+          "id": 45745384628,
+          "head": "25cacaef63a208c3538141c7ae82dc0634b3fd88",
+          "name": "ContaOS LOCK-TYPES-01 Double Barrier",
+          "path": ".github/workflows/lock-types-double-barrier.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45745384602,
+          "head": "25cacaef63a208c3538141c7ae82dc0634b3fd88",
+          "name": "ContaOS P0-NR-001 Anti-Reincidencia",
+          "path": ".github/workflows/p0-nr001-anti-recurrence.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45745385385,
+          "head": "25cacaef63a208c3538141c7ae82dc0634b3fd88",
+          "name": "ContaOS F3 CODE - 138 case preflight (not certification)",
+          "path": ".github/workflows/contaos-f3-code-138-attempt.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45745384616,
+          "head": "25cacaef63a208c3538141c7ae82dc0634b3fd88",
+          "name": "ContaOS F3 CODE - Coletor offline (nao certificador)",
+          "path": ".github/workflows/contaos-f3-code-collector.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45745384595,
+          "head": "25cacaef63a208c3538141c7ae82dc0634b3fd88",
+          "name": "ContaOS F3 CODE - 138 execucoes funcionais individuais",
+          "path": ".github/workflows/contaos-f3-code-138-functional.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45745384585,
+          "head": "25cacaef63a208c3538141c7ae82dc0634b3fd88",
+          "name": "ContaOS Frontend Zero-Drift",
+          "path": ".github/workflows/contaos-frontend-zero-drift.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "phase": 6,
+      "pr": 815,
+      "base": "8414a3125005b04048cdad5cd7c5bd4a33e9cce7",
+      "head": "d963fd2105ca9fbd239e9fc1b386ba34a74d0d4b",
+      "merge": "a8587643ae91e544d869454ff5b7d702d65435e9",
+      "tree": "def27aef218ed73a787fd906ee49df9740f16d0e",
+      "review": {
+        "mode": "TECHNICAL_ASSISTED",
+        "id": 6073743148
+      },
+      "certificate": {
+        "path": "docs/frontend/auditorias/integracao-funcional-v1/fase6/CERTIFICADO_FASE6_CODE.md",
+        "sha256": "daeda32f23c418f0175a0550a3d362841267f6f3953d7c360eace2a66698f39b",
+        "blob": "3b752d3c8da701aff2a7aecfd292e7600371befb"
+      },
+      "files": [
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_CODE_ATTESTATION_CANDIDATE.json",
+          "sha256": "c3a5020fa9ce839dd594b6d72b7120fbce111463b9bd5ee39defc0f5558a95b1",
+          "blob": "2c4c5dff1a6b3d5ffdbaae5e51222ceafd07cb40"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_CODE_PROMOTION_RECEIPT.json",
+          "sha256": "1acaaaf82c59214cbd44e86f34731c257bb47a0fd0600ec23a2773b927ac8c27",
+          "blob": "89c27a28b138938685b08caac19c4196d164cbda"
+        },
+        {
+          "path": "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_CODE_CERTIFICATION.json",
+          "sha256": "2483ff2c6e12b32e1349f96659603d3a138bad8455e9e4e708f9dfadb7075567",
+          "blob": "d99d5b2f3d509c8e652726795e331be9166cfc64"
+        }
+      ],
+      "runs": [
+        {
+          "id": 45814865465,
+          "head": "d963fd2105ca9fbd239e9fc1b386ba34a74d0d4b",
+          "name": "ContaOS LOCK-TYPES-01 Double Barrier",
+          "path": ".github/workflows/lock-types-double-barrier.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45814865389,
+          "head": "d963fd2105ca9fbd239e9fc1b386ba34a74d0d4b",
+          "name": "ContaOS F3 CODE - 138 case preflight (not certification)",
+          "path": ".github/workflows/contaos-f3-code-138-attempt.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45814865395,
+          "head": "d963fd2105ca9fbd239e9fc1b386ba34a74d0d4b",
+          "name": "ContaOS F3 CODE - Coletor offline (nao certificador)",
+          "path": ".github/workflows/contaos-f3-code-collector.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45814865425,
+          "head": "d963fd2105ca9fbd239e9fc1b386ba34a74d0d4b",
+          "name": "ContaOS P0-NR-001 Anti-Reincidencia",
+          "path": ".github/workflows/p0-nr001-anti-recurrence.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45814865428,
+          "head": "d963fd2105ca9fbd239e9fc1b386ba34a74d0d4b",
+          "name": "ContaOS F3 CODE - 138 execucoes funcionais individuais",
+          "path": ".github/workflows/contaos-f3-code-138-functional.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "id": 45814865584,
+          "head": "d963fd2105ca9fbd239e9fc1b386ba34a74d0d4b",
+          "name": "ContaOS Frontend Zero-Drift",
+          "path": ".github/workflows/contaos-frontend-zero-drift.yml",
+          "event": "pull_request",
+          "attempt": 1,
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "materialGroups": [
+    {
+      "phase": 2,
+      "role": "navigation",
+      "run": {
+        "id": 43459877744,
+        "head": "050beb1bbc3ce886227865178b7bdbecef964033",
+        "name": "ContaOS Trilha A Autenticada",
+        "path": ".github/workflows/contaos-trilha-a-authenticated.yml",
+        "event": "workflow_run",
+        "attempt": 1,
+        "conclusion": "failure"
+      },
+      "archives": [
+        {
+          "id": 14059408905,
+          "job": null,
+          "name": "trilha-a-private-43459877744-1",
+          "zipSha256": "5a1b08e2eaa519d3e350488994c8625cd0bc4a60fe9d73e1c19432e717971236",
+          "memberSha256": "a70976206a97571b9613ffb55dfb18491a5a76e4e337afd7c8f7b378d50eb2fc"
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "role": "navigation",
+      "run": {
+        "id": 43509322900,
+        "head": "ccf534371cb06f9f1c6fef425345d0e012ac4bb8",
+        "name": "ContaOS Trilha A Autenticada",
+        "path": ".github/workflows/contaos-trilha-a-authenticated.yml",
+        "event": "workflow_run",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 14076439209,
+          "job": null,
+          "name": "trilha-a-private-43509322900-1",
+          "zipSha256": "596629b98ee9a580e4664e97f0b0062fa2361a6e33d6816c61e2ab4aa8a63cf0",
+          "memberSha256": "0d1e580b7af1646e6c2884683b609c399c278bcb1e77a981b4a6271896b00184"
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "role": "material",
+      "run": {
+        "id": 45528651072,
+        "head": "da715ce7348a1def7a9ac18e1895ae7cd7eae15e",
+        "name": "ContaOS F3 CODE - 138 execucoes funcionais individuais",
+        "path": ".github/workflows/contaos-f3-code-138-functional.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 14982269982,
+          "job": 138918169561,
+          "name": "f3-code-functional-138-ec445264b5e2d901c96cfc5466e8ff23a4106095",
+          "zipSha256": "9b5c4a960d49d4568a810d2c1498628d144ed59c3f4a83b4c7a3364c62869717",
+          "memberSha256": "dc2bb23d0ed5612cc84ead635eb37bc7e79f9070c266a301d275550e6228907f",
+          "reportSha256": "0e44a1783523a67c0e7b6af5de93e5825cc476568fd751f757b25effb41642d2"
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "role": "attestation",
+      "run": {
+        "id": 45530510437,
+        "head": "b26ece8c0b03485aeeb7091aaed548ec284986cd",
+        "name": "ContaOS F3 CODE - atestacao candidata (nao certificador)",
+        "path": ".github/workflows/contaos-f3-code-attestation.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 14985165418,
+          "job": 138924335258,
+          "name": "f3-code-attestation-candidate-05dc3274aa81d80eb0ea5eeb449ca541e0a9be50",
+          "zipSha256": "340a69e7b7d49e98d1ab8074544dd8108103837c18a5d0bd5397ab5904925695",
+          "memberSha256": "de6fdd18468868fc163574fccda016322a2eb7e412bb984a0212fb783c770c06"
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "role": "promotion",
+      "run": {
+        "id": 45536232935,
+        "head": "7ae803d01c5ec6a2210a6175ed3156318f22da45",
+        "name": "ContaOS F3 CODE - verificacao do ledger versionado",
+        "path": ".github/workflows/contaos-f3-code-promotion.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 14987570069,
+          "job": 138943384210,
+          "name": "f3-code-promotion-receipt-b6d9737f8afd14e009a9aff3fe0f6c843eca9d53",
+          "zipSha256": "38adc0c7bc3d47294f227e8c4b2ae60dcaa8f3069b2a797fdc9c589a65be9fb9"
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "role": "material",
+      "run": {
+        "id": 45589213529,
+        "head": "1aa145c87d3584cdd2f18911aea83b91e023fac1",
+        "name": "ContaOS F4 CODE - provas materiais",
+        "path": ".github/workflows/contaos-f4-code-material.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 15010191511,
+          "job": 139118637239,
+          "name": "f4-code-adm01-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "522a5b9955dd889f3d8c25de5d6b752c5d466cd5ce03d2592b607b1aa5682ff2"
+        },
+        {
+          "id": 15009768393,
+          "job": 139118637735,
+          "name": "f4-code-context-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "6f249f765641ac236b8fe7f19f8dbd85811845f97f4851b7f478b255119d1914"
+        },
+        {
+          "id": 15010366505,
+          "job": 139118636832,
+          "name": "f4-code-sys04-competence-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "941cee1d00652b7a0a0d9b538a120302b3b6f979863514c641cec96f3a616ff8"
+        },
+        {
+          "id": 15008834705,
+          "job": 139118637375,
+          "name": "f4-code-sys04-data-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "ca1fcdfba33c8a050cafbebda376fd7a337a4b9ca6513839b3ea03c132cb4fa9"
+        },
+        {
+          "id": 15010980674,
+          "job": 139118637339,
+          "name": "f4-code-sys04-actions-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "13cd30634835357766c97d704b7312acb2728da5e435db9202fa2cacaef75358"
+        },
+        {
+          "id": 15009244295,
+          "job": 139118637272,
+          "name": "f4-code-contracting-party-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "9aa1006238d20935e2717f76e2e70584e601611040915bac64caa20c88cf1af1"
+        },
+        {
+          "id": 15009777619,
+          "job": 139118637154,
+          "name": "f4-code-contracts-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "a3e9e33bba164ddfbc21f0dff29244bc27a5b47c18c89f2d85b78ca8c16ded17"
+        },
+        {
+          "id": 15009209561,
+          "job": 139118637348,
+          "name": "f4-code-material-source-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "ff384c8528b578b0618b8a3866b5efcb87c44869da84cff3f0c42fb59c6708d1"
+        },
+        {
+          "id": 15009673405,
+          "job": 139118637211,
+          "name": "f4-code-documents-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "b8ce8b89c56a979037185c9307a850c9d50467e857c92badd66869ff15da202f"
+        },
+        {
+          "id": 15009728241,
+          "job": 139118637528,
+          "name": "f4-code-competence-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "cc85c2e6aa79534a48ba2829291b3c384cdf28a1d55c9d7e991107710bdba8f6"
+        },
+        {
+          "id": 15009164583,
+          "job": 139118637772,
+          "name": "f4-code-analysis-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "8ecdbb86898c90c6978a6823efc2d2e280899b1d07219ae470e4bdcfb3db352d"
+        },
+        {
+          "id": 15009583614,
+          "job": 139118637035,
+          "name": "f4-code-opinion-presentation-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "eab58053cff6de9315eaedc0f28d9e344965850941f6fb5e4652ed37ea8a9d73"
+        },
+        {
+          "id": 15009124936,
+          "job": 139118637289,
+          "name": "f4-code-history-2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+          "zipSha256": "ed8b111f6a9a7d1577397ad060b1777be73fdbb2c1fdd5bd293173061894e236"
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "role": "attestation",
+      "run": {
+        "id": 45590645550,
+        "head": "edec3d751ab02ec2051dc9ef40415f6f8d9ddaf1",
+        "name": "ContaOS F4 CODE - atestacao de provas",
+        "path": ".github/workflows/contaos-f4-code-attestation.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 15010199452,
+          "job": 139123667258,
+          "name": "f4-code-attestation-candidate-97eed215ed79fc6a50f43a91ff29985c7663f3aa",
+          "zipSha256": "7c55048b173f7dd1f05041ce32ab6d03e4cdfc67e96a0f98cdb85d6891fed250",
+          "memberSha256": "b896b935a407e04264c33389a574d8137aa84b6afd81719117bfb052c86b676f"
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "role": "promotion",
+      "run": {
+        "id": 45591230776,
+        "head": "362d97e649a511bac213ce15b3395c6d0e5520f3",
+        "name": "ContaOS F4 CODE - promocao de ledger",
+        "path": ".github/workflows/contaos-f4-code-promotion.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 15011960052,
+          "job": 139125664621,
+          "name": "f4-code-promotion-receipt-4b460588b911956cbab19f884d26844661885c04",
+          "zipSha256": "07352ddc5ad7d0d9e59d8582fb245967f2200ad32083ce9735646718412f344b",
+          "memberSha256": "e4acf6f889d18aaad19f58d2c92c59808a567810d74e2b24124065bc3001aeab"
+        }
+      ]
+    },
+    {
+      "phase": 5,
+      "role": "material",
+      "run": {
+        "id": 45743224190,
+        "head": "aa5640e52cec265e2b250fce9b1d85452763d0b0",
+        "name": "ContaOS F5 CODE - provas materiais parciais",
+        "path": ".github/workflows/contaos-f5-code-material.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 15081778608,
+          "job": 139653010928,
+          "name": "f5-code-closure-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "5533a3d6726b9d60eca43cf3e150d88ce59e52462e70884a85c7873eb0eb6c93"
+        },
+        {
+          "id": 15081504824,
+          "job": 139653010961,
+          "name": "f5-code-competenceactions-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "119e09cc7e818c0ee130d74685bb7df04a7e723b654e09b06cdc791280cb729d"
+        },
+        {
+          "id": 15081194255,
+          "job": 139653011043,
+          "name": "f5-code-contractdocuments-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "5dca0281cd07d235e7b7db4ff76d24453a8cfc4a65ecb43a53d7ef39aad93396"
+        },
+        {
+          "id": 15080959625,
+          "job": 139653011064,
+          "name": "f5-code-competencedocuments-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "199452a4dbb484db31cdab4e493670ac518173773020bbab6db1718007b65fcd"
+        },
+        {
+          "id": 15082007998,
+          "job": 139653011013,
+          "name": "f5-code-adm01-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "10265af07f81c6ce296e3bd6fa98d6d26e70b2aa1cb60994e13ba6467764aa01"
+        },
+        {
+          "id": 15082390905,
+          "job": 139653011287,
+          "name": "f5-code-context-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "2546c3571eac771b5575bdb0190a9f1b7223689bd5930838628a38b71ed262ad"
+        },
+        {
+          "id": 15082246235,
+          "job": 139653011014,
+          "name": "f5-code-competence-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "cc3212f57c6be01d871cb053b079daf7072e85af83ff4b04c12416d29773e439"
+        },
+        {
+          "id": 15081534531,
+          "job": 139653011059,
+          "name": "f5-code-data-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "260735dcf7c0197248d9fa6d77467ad5bf633afbc74240b1c008da0357aa2ef1"
+        },
+        {
+          "id": 15082320920,
+          "job": 139653010741,
+          "name": "f5-code-actions-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "3069e72646fecfff3f9711680d9f495de94b1c559f1416605162654616d9743a"
+        },
+        {
+          "id": 15081394836,
+          "job": 139653011193,
+          "name": "f5-code-parties-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "f6ab5c25839d9bada390461af37aa31720d3b6100b6244c9a26e01d8da96aee7"
+        },
+        {
+          "id": 15081459083,
+          "job": 139653010935,
+          "name": "f5-code-contracts-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "a5a027b5d7f938976e3fb20e546d0ad4b0ece28afbcf3a6de48b1ab67f133332"
+        },
+        {
+          "id": 15081978300,
+          "job": 139653010991,
+          "name": "f5-code-normatives-aa5640e52cec265e2b250fce9b1d85452763d0b0-r1",
+          "zipSha256": "4a0a1138d512e6a7da75c7d8189d1c8efb29d77cb348a36e727b1d75822860b1"
+        }
+      ]
+    },
+    {
+      "phase": 5,
+      "role": "attestation",
+      "run": {
+        "id": 45744571463,
+        "head": "c0f2e16b1262df686645d50306804df9ee597fea",
+        "name": "ContaOS F5 CODE - atestacao de provas",
+        "path": ".github/workflows/contaos-f5-code-attestation.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 15082816424,
+          "job": 139657390158,
+          "name": "f5-code-attestation-candidate-c0f2e16b1262df686645d50306804df9ee597fea-r1",
+          "zipSha256": "b8efff21a096a8bde1644052b72510413bc88b3c0a531dc00351ddce999f586d",
+          "memberSha256": "f4e37ec14b05db5bf1b849cdf4d95ea24169762dc2a380e10b057bbf7d4b6656"
+        }
+      ]
+    },
+    {
+      "phase": 5,
+      "role": "promotion",
+      "run": {
+        "id": 45744991051,
+        "head": "72764785d24d713b6d5eaa7390dff96d97ff4501",
+        "name": "ContaOS F5 CODE - promocao de ledger",
+        "path": ".github/workflows/contaos-f5-code-promotion.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 15083046331,
+          "job": 139658760332,
+          "name": "f5-code-promotion-receipt-72764785d24d713b6d5eaa7390dff96d97ff4501-r1",
+          "zipSha256": "b0eff863bafe40c8107926822fc1b5553cc0e552dcb7ed4a58326dd15b66ad7a",
+          "memberSha256": "5811adb824af5b0e7629822effcb60f830671bf6b1ba83d01d3902813b566eed"
+        }
+      ]
+    },
+    {
+      "phase": 6,
+      "role": "material",
+      "run": {
+        "id": 45780848238,
+        "head": "4e18a39c12e55f7816a1a7501685a683d126d9d9",
+        "name": "ContaOS F6 CODE - jornadas e provas CODE",
+        "path": ".github/workflows/contaos-f6-code-material.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 15097674625,
+          "job": 139775645359,
+          "name": "f6-code-adm01-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "ca49d2049112bb4ea796ee5cd1a2fff4c066b8c62f8f45324e90dfd84707a5e7"
+        },
+        {
+          "id": 15098012938,
+          "job": 139775645503,
+          "name": "f6-code-context-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "fadc180a724d29445ece9b9d66fccdfd9875707b4eab93a9835be74c3cec87aa"
+        },
+        {
+          "id": 15098022842,
+          "job": 139775645340,
+          "name": "f6-code-sys04-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "7f9ead0da8d4fd30573981776b92b976f4251e24a11849564c12ab39e4e06a0c"
+        },
+        {
+          "id": 15098585735,
+          "job": 139775644983,
+          "name": "f6-code-parties-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "64fada23aa712ab7b7087a07ec3289c30f224e112d40ea10d921d14d3e8c0347"
+        },
+        {
+          "id": 15097558451,
+          "job": 139775645395,
+          "name": "f6-code-contracts-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "ee42628bb9dbab31f19ecdf25801016bca21b154f0c71e940c19440fb63a34ba"
+        },
+        {
+          "id": 15098700450,
+          "job": 139775645504,
+          "name": "f6-code-normatives-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "34115438850b902e5e95f4843d049bac41aa2900d7a7d96c0354e52e6685f8f9"
+        },
+        {
+          "id": 15098710420,
+          "job": 139775645250,
+          "name": "f6-code-contractdocs-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "97b303c8531aaf0df3b24e05c8975da39b86b9d5a949b390c200479a608b34d7"
+        },
+        {
+          "id": 15097733117,
+          "job": 139775645404,
+          "name": "f6-code-competencedocs-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "ff83f003bab7d0456f9887ec89e97ffa4c774328765247c0b5d7a3bc337444b2"
+        },
+        {
+          "id": 15097783697,
+          "job": 139775645224,
+          "name": "f6-code-competenceoperations-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "4384f79d69bea5bd6677014f9b15fa33a663e9fd567ac6ca13bee54c55d1d10c"
+        },
+        {
+          "id": 15097529646,
+          "job": 139775645392,
+          "name": "f6-code-closing-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "0dd80da34c8245c8c695897d2ad0bf80d0ba3f4325e8f300b2b05c4344ae6a11"
+        },
+        {
+          "id": 15097508656,
+          "job": 139775645349,
+          "name": "f6-code-transversal-4e18a39c12e55f7816a1a7501685a683d126d9d9-r1",
+          "zipSha256": "84d3417c74972d00bb99a5f0b6f45b6c745193e9a84ca7e79a5b2140120b22c9"
+        }
+      ]
+    },
+    {
+      "phase": 6,
+      "role": "attestation",
+      "run": {
+        "id": 45813773150,
+        "head": "30f88c572d2d3b7c28b2bf0871e52a82d77f2380",
+        "name": "ContaOS F6 CODE - atestacao de provas",
+        "path": ".github/workflows/contaos-f6-code-attestation.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 15114378138,
+          "job": 139888089630,
+          "name": "f6-code-attestation-candidate-30f88c572d2d3b7c28b2bf0871e52a82d77f2380-r1",
+          "zipSha256": "15b6ff5aab735a016a15415e26ab8352115e52d0c155039857ab6afcc3136784",
+          "memberSha256": "c3a5020fa9ce839dd594b6d72b7120fbce111463b9bd5ee39defc0f5558a95b1"
+        }
+      ]
+    },
+    {
+      "phase": 6,
+      "role": "promotion",
+      "run": {
+        "id": 45814318556,
+        "head": "5b7a36c10d0d6380f7223c0a4471875eb28f983c",
+        "name": "ContaOS F6 CODE - promocao de ledger",
+        "path": ".github/workflows/contaos-f6-code-promotion.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 15114646189,
+          "job": 139889967158,
+          "name": "f6-code-promotion-receipt-5b7a36c10d0d6380f7223c0a4471875eb28f983c-r1",
+          "zipSha256": "99775dfc4597741beb5805bf8ccb6c6f75600d0fdc893b7045ac1dc623713d9e",
+          "memberSha256": "1acaaaf82c59214cbd44e86f34731c257bb47a0fd0600ec23a2773b927ac8c27"
+        }
+      ]
+    },
+    {
+      "phase": 6,
+      "role": "test-c",
+      "run": {
+        "id": 45780848318,
+        "head": "4e18a39c12e55f7816a1a7501685a683d126d9d9",
+        "name": "ContaOS Frontend Zero-Drift",
+        "path": ".github/workflows/contaos-frontend-zero-drift.yml",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      "archives": [
+        {
+          "id": 15098857579,
+          "job": 139775645872,
+          "name": "contaos-teste-c-45780848318-1",
+          "zipSha256": "af4d269e0797d303da04e27a7f7f7631249b4a999a9fea5a9b01f9bfd42d3bcc"
+        }
+      ]
+    }
+  ],
+  "limits": {
+    "live": "NOT_RUN",
+    "production": "NO-GO",
+    "accepted": [
+      "R-01",
+      "R-02",
+      "R-03"
+    ]
+  }
+}

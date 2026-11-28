@@ -1,0 +1,35 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 798,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "F6.1 CODE_FIXTURE. Provar a jornada completa dos 54 casos de perfil, autenticação, sessão e contexto, com 108 provas novas.",
+  "files": [
+    "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_JOURNEY_MATRIX.json",
+    "src/test/f6-code-journey-fixture.ts",
+    "src/test/f6-code-context-journeys.test.tsx",
+    "src/test/f6-code-adm01-journeys.test.tsx",
+    "src/test/f6-code-sys04-journeys.test.ts",
+    "scripts/hml/f6-code-material-evidence.mjs",
+    "scripts/hml/f6-code-material-evidence.test.mjs",
+    ".github/workflows/contaos-f6-code-material.yml"
+  ],
+  "baseline_main": "2720384f1c281cd2e87282884053ba90307bed12",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 797,
+  "authorization": "A F6.1 segue as PRs #796 e #797 e a execução integral autorizada pelo titular. Eficácia após CI, revisão assistida, merge protegido e readback.",
+  "acceptance": [
+    "Reconciliar os 138 IDs do blob bb7ce43f9c334f2f03e9aafab405addadfe5e19a. Executar 54 casos da F6.1 nos três lotes de ADM01, entrada de sessão e SYS04.",
+    "Exercitar os adaptadores e componentes reais. Conferir a sequência de vínculo ou contexto, leitura antes e depois, persistência, proteção, rejeição de autorização, recuperação após interrupção e cleanup.",
+    "Publicar uma observação positiva e uma negativa para cada caso no mesmo HEAD. O coletor deve rejeitar troca de caso, falta de dupla, divergência de identidade e erro de transporte apresentado como autorização.",
+    "Executar RCA, regressões, CI integral, revisão assistida no mesmo HEAD, merge protegido e readback. O recibo é parcial e a F6 permanece NOT_CERTIFIED."
+  ],
+  "constraints": [
+    "O utilitário partilhado de teste grava observações e confere transporte sintético para os consumidores dos três arquivos propostos na #797.",
+    "Alterações limitadas a testes, workflow de evidência, matriz, coletor e RCA. Preservar regras, produto, tipos, backend normativo e os gates existentes.",
+    "LIVE NOT_RUN e PROD NO-GO."
+  ],
+  "certification": "F6_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

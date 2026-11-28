@@ -1,0 +1,24 @@
+{
+  "schema": "contaos.p0.v2-regular-code-receipt.v1",
+  "versao": "V2",
+  "modalidade": "CODE",
+  "status": "PASS",
+  "regular_id": "45",
+  "live": "NOT_RUN",
+  "prod": "NO-GO",
+  "pr_merge_sha": "423869bf317fcae4e98acb659ca818c372cbaf8d",
+  "pr_head_sha": "02767b055f6487eb18f213cf52f17240944ad66a",
+  "base_sha": "fce19729ebdb1f4b01267d68def983233d59d776",
+  "tree_sha": "5c2317cb7efb3b128044e66c556853224e58a380",
+  "ci_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45869787335",
+  "revisao_independente_url": "https://github.com/contaos999999/contaos-hml-control/pull/832#pullrequestreview-6078585220",
+  "rca_sha256": "04d686dc238f82183ef2cb6186e23a703b97119d998af5139e39d6083ffa4b6d",
+  "teste_c": {
+    "run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/45869787335",
+    "tentativa": 1,
+    "job_id": 140081905962,
+    "artefato_id": 15142891128,
+    "artefato_sha256": "58ea61410b0d0487fea25db6ff32f82c5c58475bd72748d8d051e8a0e51b909a",
+    "checkout_sha": "177af06ac81bab876c76167e2e510a152b1d1184"
+  }
+}

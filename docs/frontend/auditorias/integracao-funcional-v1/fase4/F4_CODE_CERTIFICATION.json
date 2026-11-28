@@ -1,0 +1,61 @@
+{
+  "schema": "contaos.ifv1.f4.code-certification.v1",
+  "phase": "IFV1_F4_CODE",
+  "result": "PASS",
+  "effectiveCondition": "ONLY_ON_PROTECTED_MAIN_AFTER_CERT_PR_CI_REVIEW_MERGE_READBACK",
+  "scope": "CODE_FIXTURE",
+  "date": "2026-11-25",
+  "counts": {
+    "cases": 138,
+    "mandatory": 120,
+    "conditional": 18,
+    "positive": 138,
+    "negative": 138,
+    "proofs": 276,
+    "failed": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "notRun": 0,
+    "notApplicable": 0
+  },
+  "material": {
+    "pr": 771,
+    "head": "1aa145c87d3584cdd2f18911aea83b91e023fac1",
+    "merge": "d96dfa794b4b0da01088931ef45a77c25a3c807c",
+    "testedSha": "2a3afa7d4a983111bce75f62b5693fe8dd41daf2",
+    "tree": "ec3dde8625025ea4c03df1d2c4a6da54f40642ca",
+    "run": 45589213529,
+    "attempt": 1,
+    "artifacts": 13,
+    "ci": "7/7 SUCCESS"
+  },
+  "attestation": {
+    "pr": 774,
+    "merge": "32807481056f51b8bb20b716a379016258bd87fe",
+    "run": 45590645550,
+    "job": 139123667258,
+    "artifact": 15010199452
+  },
+  "promotion": {
+    "pr": 775,
+    "merge": "b6a5e3808a0202756d4077fcf89315dc94590929",
+    "run": 45591230776,
+    "job": 139125664621,
+    "artifact": 15011960052
+  },
+  "ledger": {
+    "path": "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_ATTESTATION_CANDIDATE.json",
+    "blob": "03137c9d9961e914f6d0687df730a8843c4cc742",
+    "sha256": "b896b935a407e04264c33389a574d8137aa84b6afd81719117bfb052c86b676f"
+  },
+  "receipt": {
+    "path": "docs/frontend/auditorias/integracao-funcional-v1/fase4/F4_CODE_PROMOTION_RECEIPT.json",
+    "sha256": "e4acf6f889d18aaad19f58d2c92c59808a567810d74e2b24124065bc3001aeab"
+  },
+  "certificate": "docs/frontend/auditorias/integracao-funcional-v1/fase4/CERTIFICADO_FASE4_CODE_2026-11-25.md",
+  "reviewMode": "ASSISTED_NOT_INDEPENDENT_PER_PLAN_759",
+  "backendNormativeSha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "live": "NOT_RUN",
+  "production": "NO-GO",
+  "next": "F5_CODE_ONLY_AFTER_EFFECTIVE_CERTIFICATION_AND_OWN_PLAN"
+}

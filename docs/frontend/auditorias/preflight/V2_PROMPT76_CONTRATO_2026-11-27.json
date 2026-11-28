@@ -1,0 +1,219 @@
+{
+  "schema": "contaos.v2.preflight.regular.v1",
+  "regular": "76",
+  "status": "VERIFICADO",
+  "backend": {
+    "plan_pr": 245,
+    "build_pr": 246,
+    "build_head": "83defd73275d1d7820d7e1b24ceab55c320cf3ae",
+    "build_merge": "f5a54e7b578f1508b059f9718b0c3fa6bb8956ba",
+    "review": 6093460263,
+    "receipt_pr": 247,
+    "receipt_main": "471da904421768743edf2a9114611af3a0f03439",
+    "receipt_review": 6093512522
+  },
+  "contrato": [
+    "registrar_parecer_contratante",
+    "obter_processamento_parecer_v2",
+    "pareceres_contratante",
+    "apresentacoes_contratante",
+    "ciclos_diligencia",
+    "apontamentos_contratante",
+    "arquivos",
+    "confirmar_upload_arquivo",
+    "storage-sign-upload",
+    "obter_fonte_apontamento_contratante"
+  ],
+  "rbac_rls": {
+    "escopo": [
+      "organizacao",
+      "contrato",
+      "competencia",
+      "apresentacao",
+      "arquivo",
+      "ator"
+    ],
+    "grants_autenticado": [
+      {
+        "relname": "apresentacoes_contratante",
+        "relrowsecurity": true,
+        "s": true,
+        "i": false,
+        "u": false,
+        "d": false,
+        "policies": [
+          [
+            "apresentacoes_contratante_select",
+            "r"
+          ],
+          [
+            "rbac_v1_select",
+            "r"
+          ]
+        ],
+        "constraints": [
+          "FOREIGN KEY (apresentado_por) REFERENCES auth.users(id) ON DELETE SET NULL",
+          "FOREIGN KEY (id_competencia) REFERENCES competencias(id) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_comprovante_arquivo) REFERENCES arquivos(id) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_contrato) REFERENCES contratos(id) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_organizacao) REFERENCES organizacoes(id) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_pacote) REFERENCES pacotes_competencia(id) ON DELETE RESTRICT",
+          "PRIMARY KEY (id)",
+          "CHECK ((tipo = ANY (ARRAY['apresentacao'::text, 'reapresentacao'::text])))",
+          "UNIQUE (id_organizacao, idempotency_key)",
+          "FOREIGN KEY (id_contrato, id_organizacao) REFERENCES contratos(id, id_organizacao) ON DELETE RESTRICT"
+        ],
+        "indexes": [
+          "apresentacoes_comp_idx",
+          "apresentacoes_contratante_pkey",
+          "apresentacoes_idempotency_uk",
+          "apresentacoes_protocolo_uidx",
+          "fk_apresentacoes_contratante_181d0cd63e_idx",
+          "fk_apresentacoes_contratante_6e0b75ca9b_idx",
+          "fk_apresentacoes_contratante_9e59306802_idx"
+        ]
+      },
+      {
+        "relname": "arquivos",
+        "relrowsecurity": true,
+        "s": true,
+        "i": false,
+        "u": false,
+        "d": false,
+        "policies": [
+          [
+            "arquivos_insert",
+            "a"
+          ],
+          [
+            "arquivos_select",
+            "r"
+          ],
+          [
+            "rbac_v1_insert",
+            "a"
+          ],
+          [
+            "rbac_v1_select",
+            "r"
+          ]
+        ],
+        "constraints": [
+          "UNIQUE (bucket, path)",
+          "FOREIGN KEY (criado_por) REFERENCES auth.users(id) ON DELETE SET NULL",
+          "FOREIGN KEY (id_contrato) REFERENCES contratos(id) ON DELETE RESTRICT",
+          "UNIQUE (id, id_organizacao, id_contrato)",
+          "FOREIGN KEY (id_organizacao) REFERENCES organizacoes(id) ON DELETE RESTRICT",
+          "UNIQUE (id, id_organizacao)",
+          "PRIMARY KEY (id)",
+          "CHECK ((status_seguranca = ANY (ARRAY['pendente'::text, 'aprovado'::text, 'quarentena'::text, 'bloqueado'::text])))",
+          "CHECK ((tamanho >= 0))",
+          "FOREIGN KEY (id_contrato, id_organizacao) REFERENCES contratos(id, id_organizacao) ON DELETE RESTRICT"
+        ],
+        "indexes": [
+          "arquivos_bucket_path_uk",
+          "arquivos_contrato_idx",
+          "arquivos_id_organizacao_contrato_uk",
+          "arquivos_id_organizacao_uk",
+          "arquivos_org_sha_idx",
+          "arquivos_pkey",
+          "fk_arquivos_abd17bd430_idx"
+        ]
+      },
+      {
+        "relname": "pareceres_contratante",
+        "relrowsecurity": true,
+        "s": true,
+        "i": false,
+        "u": false,
+        "d": false,
+        "policies": [
+          [
+            "pareceres_contratante_select",
+            "r"
+          ]
+        ],
+        "constraints": [
+          "FOREIGN KEY (id_contrato, id_organizacao) REFERENCES contratos(id, id_organizacao) ON DELETE RESTRICT",
+          "UNIQUE (id, id_arquivo, id_ciclo, id_competencia, id_contrato, id_organizacao)",
+          "FOREIGN KEY (id_arquivo, id_organizacao, id_contrato) REFERENCES arquivos(id, id_organizacao, id_contrato) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_arquivo, id_organizacao) REFERENCES arquivos(id, id_organizacao) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_apresentacao) REFERENCES apresentacoes_contratante(id) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_arquivo) REFERENCES arquivos(id) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_ciclo) REFERENCES ciclos_diligencia(id) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_competencia) REFERENCES competencias(id) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_contrato) REFERENCES contratos(id) ON DELETE RESTRICT",
+          "FOREIGN KEY (id_organizacao) REFERENCES organizacoes(id) ON DELETE RESTRICT",
+          "PRIMARY KEY (id)",
+          "FOREIGN KEY (registrado_por) REFERENCES auth.users(id) ON DELETE SET NULL",
+          "CHECK ((((extracao_apontamentos_concluida_em IS NULL) AND (extracao_apontamentos_sha256 IS NULL)) OR ((extracao_apontamentos_concluida_em IS NOT NULL) AND (extracao_apontamentos_sha256 IS NOT NULL) AND (extracao_apontamentos_sha256 ~ '^[0-9a-f]{64}$'::text))))"
+        ],
+        "indexes": [
+          "fk_pareceres_contratante_2680d4c16e_idx",
+          "fk_pareceres_contratante_5834190383_idx",
+          "fk_pareceres_contratante_76d8c6a26d_idx",
+          "fk_pareceres_contratante_ba29b7f370_idx",
+          "fk_pareceres_contratante_ee5f9eda16_idx",
+          "fk_pareceres_contratante_eeb284a050_idx",
+          "pareceres_apontamento_origem_uk",
+          "pareceres_contratante_comp_idx",
+          "pareceres_contratante_pkey"
+        ]
+      }
+    ],
+    "decisao": "backend"
+  },
+  "prova": {
+    "run": 46069678194,
+    "tentativa": 1,
+    "job": 140743344659,
+    "artefato": 15232037701,
+    "sha256": "7c3b8e15fc96357bc022ae68e4406415fd0bffb2ecfc703bb8b958cff4bab0dc",
+    "restore": 46069678192
+  },
+  "hml": {
+    "run": 46070800452,
+    "tentativa": 1,
+    "job": 140747008021,
+    "migration": "20261127211427",
+    "migration_sha256": "33d1bc9258203cc2d59394becfc314979ebe323415313c3ba607b0e2dde7d0a4",
+    "versions": 143,
+    "catalogo_exato": true,
+    "security_advisors": {
+      "info": 1,
+      "warn": 2,
+      "critical": 0
+    }
+  },
+  "frontend": {
+    "recibo_predecessor": 847,
+    "testes_exigidos": [
+      "contrato",
+      "RBAC_RLS",
+      "arquivo_privado",
+      "classificacao_prazo",
+      "idempotencia",
+      "auditoria",
+      "fila",
+      "Teste C"
+    ]
+  },
+  "live": "NOT_RUN",
+  "prod": "NO-GO",
+  "prazo_externo": {
+    "backend_plan_pr": 248,
+    "backend_build_pr": 249,
+    "backend_build_merge": "c900bbcbca4a0826b83a3fd0c4bdb4120d80778e",
+    "backend_receipt_pr": 250,
+    "backend_receipt_main": "b45532dc6397b2c34763ff20ced56f3d0f604d8e",
+    "backend_receipt_review": 6093710473,
+    "hml_run": 46073226704,
+    "attempt": 1,
+    "job": 140754855876,
+    "migration": "20261127213828",
+    "sha256": "2909774d5be1e0fbd55883291c89ca877a4ed6312577d2346dfe822ef8238284",
+    "private_body_md5": "1cb26ba5b7b5950a0e8f53164df33d77",
+    "versions": 144,
+    "catalogo_exato": true
+  }
+}

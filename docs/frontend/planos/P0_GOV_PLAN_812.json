@@ -1,0 +1,27 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 812,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "Atestar os 138 casos canônicos e quatro jornadas complementares no mesmo HEAD material integrado.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase6/F6_CODE_ATTESTATION_SOURCE.json",
+    "scripts/hml/integracao-v1-fase6-code-attestation.mjs",
+    "scripts/hml/integracao-v1-fase6-code-attestation.test.mjs",
+    ".github/workflows/contaos-f6-code-attestation.yml"
+  ],
+  "acceptance": [
+    "Confirmar revisão assistida no HEAD, pais do merge, árvore, blob de tipos protegido, workflows, Teste C e tentativa do material.",
+    "Vincular os 11 arquivos nativos da execução aos jobs, hashes coletados, casos e provedores canônicos.",
+    "Reproduzir o candidato, demonstrar recusa de adulteração e preservar o artefato com SHA256SUMS."
+  ],
+  "baseline_main": "66d3238a17134d02d25285826a7c78820e9724d7",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 796,
+  "authorization": "Execução integral indicada pelo titular e itens F6.8 e F6.9 do PLAN #796. Base material protegida #810. O escopo torna-se eficaz após CI, revisão assistida, merge protegido e readback deste PLAN.",
+  "constraints": [
+    "Sem alterações no produto, backend normativo ou controles existentes. Preservar Fases 1 a 5 e seus certificados. Atestação e promoção são PRs distintas anteriores ao CERT documental."
+  ],
+  "certification": "F6_NOT_CERTIFIED",
+  "production": "NO-GO"
+}

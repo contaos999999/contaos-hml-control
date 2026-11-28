@@ -1,0 +1,35 @@
+{
+  "schema": "contaos.p0.governance-plan.v1",
+  "pr_number": 788,
+  "approved": true,
+  "status": "AUTORIZACAO_PROSPECTIVA_CONDICIONADA_MERGE",
+  "purpose": "F5.5 CODE_FIXTURE. Competências, análise e revisão humana em 19 casos e 38 provas materiais.",
+  "files": [
+    "docs/frontend/auditorias/integracao-funcional-v1/fase5/F5_5_CASE_CONTRACTS_PROPOSAL.json",
+    "src/test/f5-code-competence-actions-scope-isolation.test.tsx",
+    "src/test/f5-code-competence-fixture.ts",
+    ".github/workflows/contaos-f5-code-material.yml",
+    "scripts/hml/f5-code-material-evidence.mjs",
+    "scripts/hml/f5-code-material-evidence.test.mjs",
+    "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json"
+  ],
+  "baseline_main": "3ca3baa58b655d8f5f1b31b39526b87ea60b70e9",
+  "backend_normative_sha": "a1516de1d8949e505d83b5e000eb1cc558b217a7",
+  "plan_pr": 777,
+  "authorization": "F5.5 prevista no PLAN #777 e solicitada pelo titular após integração da F5.4 na #786. A #788 fixa o inventário. O escopo prospectivo entra em vigor após CI, revisão assistida conforme a #781, merge protegido e readback.",
+  "acceptance": [
+    "Reconciliar os 19 IDs do PLAN #777 à matriz de blob bb7ce43f9c334f2f03e9aafab405addadfe5e19a, incluindo 16 casos obrigatórios e três condições de auditoria. Exercitar V113, V116 e V117 com os adaptadores frontend reais e respectivos consumidores.",
+    "Depois de criar a competência, verificar contrato, organização, competência, agregados e prazos do painel, filtros e respostas das leituras dependentes. Reconciliar execução enfileirada, resultado corrente, hash, requisitos, versões e invalidação da aprovação anterior conforme cada conexão.",
+    "Capturar revisão com execução, resultado e hash esperados, justificativa, versão, página, trecho e idempotência quando prevista. Distinguir autorização do conflito de contexto e das falhas de transporte.",
+    "Usar duas identidades e dois tenants sintéticos. Exercitar recusa da leitura e da mutação de A por B, ausência de propagação e leitura íntegra do próprio escopo e de A após a tentativa.",
+    "Reconciliar CompetenciaCriada, AnaliseSolicitada e RevisaoRequisitoRegistrada às entidades, ao tenant, ao ator e ao identificador de correlação ou de solicitação conforme a fonte.",
+    "Gerar 38 provas próprias e reexecutar 109 casos anteriores no mesmo HEAD, totalizando 128 casos e 256 provas. Reproduzir coletor sobre artefatos originais, conferir SHA, árvore, jobs, tentativa e hashes e atualizar RCA com GREEN e regressão. Exigir CI integral, revisão assistida, merge protegido e readback."
+  ],
+  "constraints": [
+    "A restrição por PR dos dois caminhos src deve existir na base protegida. Preservar as restrições anteriores e os controles Zero-Drift, LOCK-TYPES, Anti-Reincidência e Teste C.",
+    "Escopo fechado a testes CODE_FIXTURE, inventário, coletor, workflow material e ficha causal. Alterações de produto e tipos gerados requerem autorização própria.",
+    "Backend normativo consultado em leitura. HML, Supabase real e produção ficam fora do escopo."
+  ],
+  "certification": "F5_NOT_CERTIFIED",
+  "production": "NO-GO"
+}
