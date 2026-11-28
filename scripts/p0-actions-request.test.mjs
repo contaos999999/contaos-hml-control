@@ -292,3 +292,34 @@ test('collector reconstructs a fully paginated fixture without granting executio
   assert.equal(stale.status,'BLOCKED');
   assert.equal(before.requestCommit,req);
 });
+
+ // RCA operational selectors: no imports of other test suites. Original tests
+ // in p0-rca-impact-gate.test.mjs remain unchanged and run in Zero-Drift.
+ test('F1 isolated contract without execution authority', async () => {
+   const m = await api();
+   const q = request(), c = catalog();
+   assert.deepEqual(m.parseRequest(raw(q), repo), q);
+   assert.deepEqual(m.validateCatalog(raw(c), repo), c);
+   const verdict = m.authorizeRequest(q,c,{});
+   assert.equal(verdict.status,'BLOCKED');
+   assert.equal(verdict.executionAllowed,false);
+   assert.throws(()=>m.parseRequest(raw({...q,environment:'PROD'}),repo));
+ });
+ test('F1 isolated RCA missing report blocks V2 build', async () => {
+   const {validateRcaImpact} = await import('./p0-rca-impact-gate.mjs');
+   const result = validateRcaImpact({planId:'76',changed:['scripts/p0-actions-request.mjs'],report:null,reportExists:false});
+   assert.equal(result.applicable,true);
+   assert.equal(result.version,'V2');
+   assert.match(result.errors.join(' '),/sem ficha RCA/);
+ });
+ test('F1 isolated RCA divergent plan scope blocks build', async () => {
+   const {validateRcaImpact} = await import('./p0-rca-impact-gate.mjs');
+   const code='scripts/p0-actions-request.mjs', reportPath='docs/frontend/rca/P0_RCA_ATIVO.json';
+   const report={schema:'contaos.p0.rca-report.v2',versao:'V2',prompt_id:'76',
+     baseline:{frontend_sha:sha('a'),backend_sha:sha('b')},
+     escopo:[{arquivo:code,versao:'V3',justificativa:'scope mismatch'}],itens:[]};
+   const result=validateRcaImpact({planId:'76',changed:[code,reportPath],report,reportExists:true});
+   assert.equal(result.applicable,true);
+   assert.equal(result.version,'V2');
+   assert.match(result.errors.join(' '),/sem classificação/);
+ });
