@@ -1,3 +1,11 @@
+## P0-AUD-UNIVERSAL-001 — revalidação normativa #781 · 28/11/2026
+
+RED 46126187737 (job 140921191059): 265/276 PASS e 11 falhas com a mesma causa, versão de orquestração posterior não revalidada. Regressão MANDATED_FULL_DIFF PASS; Teste C PASS. Auditoria 46126187745 reprovada pela mesma fonte. PLAN #862 integrado em d9cfb6b03be8011b5ee1472c16cbe2ba350fca7b, review assistida 6096821375 e seis checks PASS. Correção limitada à origem Git exata #781 e PLAN de revalidação, rejeita rollback/delta não aprovado, registra modalidade assistida sem alterar corpus original ou conferir PASS semântico. Testes cumulativos preservados, novos positivos/negativos com Git isolado; pin RCA ca7bdd23f5e8e9c51c2359af0404e9059b28f9ad. Manifesto 14/14 permanece imutável, CSDI #693 proposta não vigente, certificação/ativação pendentes; HML/PROD NO-GO. GREEN e revisão do novo candidato ainda requeridos.
+
+## P0-AUD-UNIVERSAL-001 — reconciliação do BUILD #690 · 28/11/2026
+
+Candidato anterior `079c70d6be769ce8aaa6334583f46f07604aa443`: 22 caminhos contra os 14 do manifesto protegido. RED autenticado no Zero-Drift 45517192343 e FULL_PROTOCOL 45517192296 (MANDATED_FULL_DIFF). O manifesto protegido permanece byte a byte imutável. A reconciliação preserva a main e os testes cumulativos, não inclui os oito caminhos alheios do F3, não muda as regras de escopo, nem autoriza ativação. A única mudança na pinagem do fiscal é vincular a suíte de testes RCA reconciliada, sujeita a revisão e CI. O candidato ainda depende de CI, recibo V2 e parecer/revisão elegível; NO-GO de ativação, App privilegiado, fila real, HML e PROD. Os marcos a seguir são históricos; não substituem o estado atual nem os checkpoints do regular 77A.
+
 ## Situação atual · V2 CODE, próximo regular 46 · 26/11/2026
 
 Os regulares 44 e 45 e seus recibos estão integrados. [BUILD 45 #832](https://github.com/contaos999999/contaos-hml-control/pull/832), merge `423869bf317fcae4e98acb659ca818c372cbaf8d`, revisão 6078585220 no HEAD exato e Teste C 45869787335 com oito casos do ciclo e regressão V2-01. [Recibo #833](https://github.com/contaos999999/contaos-hml-control/pull/833), merge `b372f481c67156d429cbe9fb738990493a924cc7`, revisão 6078619814 e leitura na main.
@@ -16,6 +24,72 @@ O controle foi integrado pela [PR #829](https://github.com/contaos999999/contaos
 O próximo recorte é o PLAN P0 45 e sua BUILD protegida de Ciclo de diligência. A entrega depende do rito do PLAN, RED, GREEN, Teste C e do recibo do regular. Depois seguem 46, 47, 48, 49, 76 e 77 e as três certificações CODE da V2. Backend normativo `a1516de1d8949e505d83b5e000eb1cc558b217a7`, blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` de types.ts verificado, LIVE NOT_RUN e PROD NO-GO.
 
 Os registros abaixo documentam marcos históricos.
+
+## P0-AUD-UNIVERSAL-001 — PLAN integrado, 20/11/2026
+
+A PR #689 integrou o PLAN documental na main no merge 3ee94171f2fc4cbec2e2d2b6f9efad88fc8ec9ff, HEAD e2ad6157613b98f1f92144e970507c8987dc3907. Revisão 5999759560 de Edivan5002 aprovada por decisão expressa do titular, com o parecer técnico CHANGES_REQUESTED preservado. O BUILD requer primeiro o manifesto de governança específico integrado em main. A ativação requer prova de proteção contra revogação da revisão durante a fila. A PR de BUILD começa em rascunho documental para reservar o número usado pelo manifesto. Certificação e liberação da PR #679 pendentes.
+
+### Recibo de integração documental da PR #689
+
+- O readback de `main` confirmou o blob `9d037a37df8ae177f7f02123932e0ca60e7e3f81` do PLAN, idêntico ao HEAD aprovado. [Merge protegido](https://github.com/contaos999999/contaos-hml-control/commit/3ee94171f2fc4cbec2e2d2b6f9efad88fc8ec9ff) · [Revisão formal](https://github.com/contaos999999/contaos-hml-control/pull/689#pullrequestreview-5999759560)
+- Pós-merge no SHA confirmado, os checks obrigatórios concluíram com sucesso e o LOCK também passou. Teste C fez a triagem documental, com Playwright dispensado. A execução adicional de Fixtures da Trilha A falhou no bootstrap e o preparo HML foi pulado. A execução de Fixtures fica fora do recibo documental. [Zero-Drift e Teste C](https://github.com/contaos999999/contaos-hml-control/actions/runs/44822331086) · [P0-NR](https://github.com/contaos999999/contaos-hml-control/actions/runs/44822331033) · [LOCK](https://github.com/contaos999999/contaos-hml-control/actions/runs/44822330985) · [Fixtures](https://github.com/contaos999999/contaos-hml-control/actions/runs/44822560022)
+- O parecer técnico independente de 3.1.4 permanece `CHANGES_REQUESTED`, RunId `20261120T212820314Z-e2ad6157613b-9024ef95a37f4a42a0aa78216d7ea4f4`, SHA-256 `AE825B2DA941370C35B4DD51C75DEAD71368D6B16E9DC59D149CC1A7D565E8BA`. O recibo comprova a integração documental autorizada. O certificado da instalação depende do BUILD, dos negativos operacionais e do novo check obrigatório. [PR de BUILD #690](https://github.com/contaos999999/contaos-hml-control/pull/690) · [Ruleset 26495643](https://github.com/contaos999999/contaos-hml-control/rules/26495643)
+
+
+## P0-ABS #690 — Novo gate obrigatório de pré-auditoria do assistente (21/11/2026)
+
+**Autorização do titular nesta conversa:** acrescentar uma camada prévia, executada pelo assistente e com parecer explícito `PASS` ou `CHANGES_REQUESTED`, impedindo a **liberação da pré-certificação interna** enquanto não houver `PASS` registrado sobre o HEAD/base exatos. Com `CHANGES_REQUESTED`, o implementador precisa corrigir causa, executar negativos/regressão e repetir a verificação; ausência de prova mantém `BLOCKED_EXTERNAL`. O parecer interno não equivale à auditoria independente Codex 3.1.4.
+
+**Base de implementação:** PR #690, branch `build/p0-abs-fiscal-universal`, último HEAD comprovado anteriormente `53bdc4fd67d2b20a86f89b6dd65630e6392b6541`, base `main@e007c4bad8f2c66c489c55e4752b71bb19c5ced0`; diffs limitados a 14 arquivos do manifesto protegido, `ativacao_autorizada=false`. O CI desse HEAD tinha 5/5 checks verdes, mas tal evidência NÃO representa o resultado de pré-auditoria obrigatória da nova regra.
+
+**Entrega deste pacote:** regras escritas em `docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md` §5.3, validador fail-closed em `scripts/p0-rca-impact-gate.mjs`, testes positivos/negativos em `scripts/p0-rca-impact-gate.test.mjs`, job separado no `contaos-auditoria-controller.yml`. O job lê comentários e CI reais em GitHub e não aprova PR, não publica status privilegiado, não executa merge, não cria conta ou política, nem dispensa auditoria independente.
+
+**Última etapa comprovada:** novo bloqueio especificado, ainda sem execução de CI ou parecer `PASS` do novo HEAD. **Próxima tarefa:** publicar commit na branch, rodar CI, executar pré-auditoria efetiva dos oito critérios, registrar parecer completo/hashes/artefato no GitHub; se `CHANGES_REQUESTED`, corrigir e repetir com novos SHAs; somente se houver `PASS` íntegro verificar gate no GitHub e registrar pré-certificação interna liberada. CHECKPOINT EM BRANCH, NÃO INTEGRADO À MAIN. A PR #679, HML real, N17(c), App e ativação seguem pendentes/NO-GO.
+
+## P0-ABS #690 — NOVO CHANGES_REQUESTED HEAD 502710a — RCA dos quatro achados, CI ainda não comprovado
+
+**Estado comprovado de origem:** PR #690 OPEN, HEAD 502710a3089aab3964cb516f26ba9773d9c23a09, base main e007c4bad8f2c66c489c55e4752b71bb19c5ced0. 14 arquivos da allowlist #691. O auditor independente apresentou CHANGES_REQUESTED, quatro achados: manifesto #690 só bloqueado após merge; checkout não ligado à ref viva da fila; check do App errado ainda aceito como prontidão; PR closed/merged mal interpretada. Checks CI anteriores 5/5 pertencem ao HEAD reprovado e NÃO certificam a correção.
+
+**Implementação causal preparada na mesma branch:** (1) proteger o manifesto integral no RCA puro e no guard de eventos pull_request, merge_group e push, antes de qualquer N/A; (2) comparar checkout real HEAD/árvore, env, ref temporária REST viva, GitHub GraphQL, base viva e reconsultar estado até o fim; (3) exigir App GitHub Actions integration_id=15368 para os três contexts obrigatórios, confirmado no ruleset 26495643; (4) conservar estado open/closed, merged/merged_at/merge_commit_sha, distinguir PR fechada sem merge da integrada que exige readback. Testes negativos e positivos das três suítes atualizados. Documento de governança recebe matriz de prevenção 5.2.
+
+**Fechamento do ensaio de fila:** a revalidação da ref/entrada GraphQL é repetida como última etapa executável dos jobs Zero-Drift, Teste C e P0-NR em `merge_group`, para detectar cancelamento/deriva enquanto as suítes longas executam. Teste estrutural confirma a posição dessas três barreiras. Isso não é certificação real de merge queue, pois ativação permanece NO-GO.
+
+**Limitações imutáveis:** ativacao_autorizada=false. Nenhum check de App privilegiado, merge queue real, N17(c), runner autogerenciado/identidade local, revisão formal, backend, Supabase, produção, conteúdo do produto ou PR #679 são autorizados neste BUILD. Não alterar o protocolo para contornar parecer independente. Os testes de fila simulados não constituem prova operacional da fila.
+
+**Última etapa comprovada:** diagnóstico de causa com base no parecer e arquivos exatos; testes e CI do novo HEAD AINDA PENDENTES deste checkpoint documental. **Próxima:** publicar commit exato somente nos 14 arquivos, verificar CI completo e regressões (incluindo fila Git real), registrar SHA e links, congelar HEAD para auditoria independente; APPROVED/merge protegidos só se houver PASS genuíno e autorização específica. Checkpoint nesta branch NÃO integrado à main.
+## P0-ABS #690 — RCA independente do HEAD 09bf546, correção consolidada PENDENTE de CI
+
+**Parecer anterior:** `CHANGES_REQUESTED` do auditor independente para HEAD `09bf546432e811c6bebac7a77593fc1c1db541c3` contra `main@e007c4bad8f2c66c489c55e4752b71bb19c5ced0`. Achados: (1) NR-005 falsamente exigia o rito de integração #690 de toda manutenção futura dos arquivos históricos da allowlist; (2) watchdog ignorava checks obrigatórios ausentes e aceitava recibos CERTIFIED/CANCELLED autodeclarados na ação recomendada; (3) NR-005 não comparava modo anterior/novo do Git nem validava schema v1 do manifesto.
+
+**Correção em andamento:** separação de identidade PR autenticada versus caminho histórico; testes de squash documental do checkpoint e alterações futuras de workflows/contrato, negativos de PR incorreta e manifesto imutável; comparação dos modos old/new `git diff --raw -z` com bloqueio de chmod, symlink/gitlink e renomeações que alteram modo; `schema=contaos.p0.gov-plan.v1` obrigatório. Watchdog passa a checar presença, unicidade, SHA, id do run e id da App dos três checks por PR; revalida HEAD da PR e main ao terminar coleta; contratos com estado terminal sem prova externa tornam-se `BLOCKED_EXTERNAL`, com próxima ação correspondente. Os dados em memória não declaram `source_verified`; apenas o processo conectado ao GitHub com resposta íntegra pode atestar origem de leitura. Permissão somente `checks:read` adicionada ao workflow. Novos testes de regressão de cada falha no mesmo escopo de 14 caminhos.
+
+**Regras invariantes:** BUILD desativado, nenhum App/check/status privilegiado, `merge_queue` real, política de runner autogerenciado ou ativação de N17(c) comprovados/autorizados. Nada de alterações em `src/`, `public/`, backend, PROD, `types.ts`, ruleset, #679 ou PR fora da #690.
+
+**Última etapa comprovada:** falhas específicas identificadas no HEAD acima e correção preparada; estes apontamentos NÃO certificam código antes da execução no HEAD novo. **Próxima tarefa:** publicar alteração atômica, executar matriz Python/Node + CI obrigatório + Playwright, registrar logs, tratar falhas causais, congelar HEAD e enviar ao auditor Codex 3.1.4 independente. Revisão formal e merge somente após PASS e autorização aplicáveis; readback do checkpoint na main ainda pendente.
+
+## P0-ABS-PRÉ-CERTIFICAÇÃO #690 — CORREÇÕES DO PARECER INDEPENDENTE 21/11/2026 (HEAD EM BRANCH, NÃO INTEGRADO)
+
+**Parecer de origem:** auditor independente CHANGES_REQUESTED, BUILD #690 no HEAD 0e179e03427b5ff0fd037ae6c9fae12df92bc48c, base main e007c4bad8f2c66c489c55e4752b71bb19c5ced0. Três achados: NR-005 na integração push/PR com falsa rejeição de squash documental e base avançada; falta de prova externa de isolamento do runner Windows; watchdog autorizado sem entrada de dados real.
+
+**Ação consolidada preparada nesta branch, ainda dependente de CI:** (1) separar SHA da base do evento e merge-base de diff, fazer o contrato estrito de dois pais valer só para integração #690 vinculada à allowlist, preservar push documental comum e exigir proveniência autenticada para o BUILD; (2) fixar runner Node24 com TAP explícito e matriz de integração com PR comum, push #690 legítimo e falsas provas; (3) remover job autogerenciado com credenciais locais do workflow público enquanto a política externa de runner/host/usuário gh não estiver comprovada; (4) conectar watchdog de leitura GitHub ao contrato, à main e às PRs #679/#690, cobrindo CI parado, falha, ausência de checks, estagnação e deriva de HEAD, sem status/APPROVE/merge; (5) matriz de pré-certificação com critérios de congelamento em docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md.
+
+**Regras imutáveis:** 14 arquivos exatos da allowlist já integrada pela #691, sem alterações de produto/backend/Supabase/PROD/types/ruleset; ativacao_autorizada=false; N17(c) e App/status/fila reais permanecem NO-GO para ativação; não usar P0-EFIC-001 para contornar exigência de PASS independente do BUILD.
+
+**Evidência na publicação:** só os commits/HEADs que o GitHub confirmar e CI realmente concluído poderão atualizar os resultados. Nenhum PASS novo, certificado ou readback na main é declarado por este registro. **Próxima tarefa:** executar RCA integrado/negativos/regressões no novo HEAD, corrigir falhas causais, obter cinco checks verdes e congelar o HEAD; submeter auditoria independente do código em sessão separada, review formal e merge protegido apenas após autorização aplicável. O acesso privilegiado ao runner seguirá bloqueado enquanto não houver prova administrativa externa.
+
+## P0-ABS-001/002 — BUILD #690 em execução, 21/11/2026 (checkpoint em branch, NÃO integrado)
+
+**Fonte protegida:** PR #691 MERGED com HEAD main `e007c4bad8f2c66c489c55e4752b71bb19c5ced0`; manifesto `P0_GOV_PLAN_690.json` blob `83b9f9491339ad90888f82017543c8cd158f01ad`, 14 caminhos, `full_diff=true`, `ativacao_autorizada=false`. A emenda N17(c) e o protocolo P0-EFIC-001 v1.1 constam na main e foram relidos. O BUILD #690 iniciou somente após merge/readback, sem bypass. Sincronização protegida na branch: commit `8d878b1150cf1d5fc9bc25c05059df297bd391aa`, com pais branch prévia e main, preservando checkpoint anterior.
+
+**Trabalho publicado nesta branch (ainda sem certificação):** contrato de missão `MISSAO_ATIVA_4_1.json` (state ACTIVE, alvo PR679, dependência PR690); norma fiscal universal; supervisor Python somente diagnóstico, sem publicação nem autoridade de merge; testes negativos N01–N17; controlador CI ampliado; workflow manual para Codex 3.1.4 no runner Windows `contaos-auditoria` condicionado ao checkout de `main`; contexto Node para `merge_group` autenticado por API/GraphQL e teste de PR única; adaptações dos três workflows exigidos; guard RCA full-diff com leitura do manifesto da base anterior, vinculação de PR por evento/API e verificação de documentos e renomeações, com testes negativos. Nenhum arquivo fora dos 14 foi alterado, nem src/, public/, Supabase, develop, PROD, secrets, App, ruleset ou status obrigatório novo.
+
+**Evidência causal real:** o RED do supervisor na execução [44867968376](https://github.com/contaos999999/contaos-hml-control/actions/runs/44867968376) identificou em 38 testes uma entrada de check nula ignorada (37 PASS, 1 FAIL) e motivou correção fail-closed, depois ampliada a 42 casos. O job controlador [44868357070](https://github.com/contaos999999/contaos-hml-control/actions/runs/44868357070) foi observado em `success` na versão anterior do HEAD (42 testes); não é prova do HEAD corrente. A matriz Node de fila (20 casos), testes negativos do RCA/NR-005 e controles de escopo/ordem também passaram nos steps iniciais do run [44868357058](https://github.com/contaos999999/contaos-hml-control/actions/runs/44868357058), mas os jobs longos foram cancelados por commits subsequentes. O último delta reforçou N01: mesmo recibos JSON estruturalmente perfeitos **não certificam** sem evidência confiável do GitHub.
+
+**Status a confirmar no HEAD final:** workflow Zero-Drift, Teste C visual disparado por alteração do próprio workflow, P0-NR-001, protect-types e controlador Windows, além de prova de integração dos testes da fila e RCA. Os checks das versões anteriores NÃO substituem os do HEAD final. Auditoria independente de código, review formal elegível e merge/readback desta PR ainda NÃO realizados. NÃO declarar `CERTIFIED`.
+
+**Bloqueio de ativação:** falta App autorizado com `integration_id` fixo, credenciais e publicador protegidos, rule set/check de missão efetivo, fila isolada e testes reais com `merge_group`, revogação após status verde e N17(c) com terceira autoria previamente autorizada e duas reviews elegíveis. Até prova e autorização administrativa, `ativacao_autorizada=false`; a PR #679 permanece pendente, não é liberada por este BUILD em andamento.
+
+**Última etapa comprovada:** main #691 integrada/readback, branch #690 sincronizada, 14 caminhos de BUILD publicados. **Próxima tarefa:** obter e registrar CI do HEAD final; revisar falhas por RCA sem patches especulativos; concluir auditoria independente e revisão formal do BUILD; integrar PR #690 sob proteção. Separar posterior ativação operativa e certificado global antes de retomar #679.
 
 ## Situação atual — código679 consolidado, verificação integrada antes de publicar, 15/11/2026
 
@@ -2982,3 +3056,110 @@ Ensaio adicional do orquestrador: merge LOCAL389330abdd4708541bf1d4da18fc3c07da0
 ## PR679 — NR003 R2 runtime pré-setup, 15/11/2026
 
 Fonte locala0968b90f6643d1c77ac22fb40c70d509c174f40, remoto observadoe00c8522cd7ecc189367bd47a6e5a235028e7204, base155ef9b594260e39fcd68f8083c42d8943c3210b. CI43751659639 revelou alias CLI indisponível no Node22.23.5 padrão anterior ao setup24; binário oficial com SHA validado confirmou exit9. Alias único --experimental-test-isolation=none comprovado22/24/26, sem fallback e sem wrapper. RCA57PASSem22+57PASSem24,3focaisPASSem26,3mutantesKILLED; recibos/hashes na emendaRCA. NR003REINCIDENCIA/tentativa3: inventariar consumidores×eventos×runtimes antesBUILD. CI/TesteC/auditoria/review/merge/readback e HML pendentes; F1/F2 certificadas preservadas; integração globalV1pendente. Nenhuma suiteapp/REQUEST/backend/PROD repetida. Próximo: CI e revisão independente do novoHEAD, sem presumir integração.
+
+
+## CHECKPOINT NÃO INTEGRADO — AUDITORIA SEMÂNTICA INTEGRAL DO PLAN P0-AUD-UNIVERSAL-001 (21/11/2026)
+
+**Natureza:** inventário em branch da PR #690; NÃO é checkpoint integrado à `main` nem certificado semântico. PLAN protegido: `docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md`, blob Git `9d037a37df8ae177f7f02123932e0ca60e7e3f81`. Norma §5.6 do BUILD mantém exigência simultânea de sete eixos por cláusula: **A** ator/autoridade; **P** precondição/estado; **E** consequência positiva e negativa; **I** interação/prevalência; **F** fonte da verdade/prova LIVE; **R** revogação/nova tentativa; **B** fronteira BUILD/independente/merge/ativação.
+
+**Análise de origem de 71 unidades:** versões comentadas integralmente na PR, [parte 1](https://github.com/contaos999999/contaos-hml-control/pull/690#issuecomment-7066368327) e [parte 2](https://github.com/contaos999999/contaos-hml-control/pull/690#issuecomment-7066368917). Para cada uma consta cláusula textual da fonte, A/P/E/I/F/R/B, fonte requerida e o limite da evidência. O inventário abaixo está vinculado às linhas do PLAN pela origem protegida; **não equivale a demonstração independente de que todas as interpretações foram resolvidas**.
+
+| Unidade | Linha PLAN | Trecho normativo | Estado dos sete eixos |
+|---|---:|---|---|
+| `PLAN-S3-01` | 23 | **Contrato imutável por revisão protegida:** `mission_id`, repositório, alvo, objetivo, escopo, critérios de aceite, che | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-02` | 24 | **P0-ABS-001:** antes de retomar implementação funcional da missão atual, comprovar gate contra bypass no GitHub. Condiç | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-03` | 25 | **P0-ABS-002:** missão em estado `ACTIVE`, `BLOCKED_EXTERNAL`, `CANCELLED_BY_OWNER` ou `CERTIFIED`. Não confundir interr | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-04` | 26 | **Mission Lock:** comparar PR/repo/objetivo com contrato na base protegida; bloquear transição para missão incompatível  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-05` | 27 | **Auditoria read-only:** reutilizar `auditar-pr.ps1` e perfil `auditor`; nenhuma escrita em código de app. Se o auditor  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-06` | 28 | **Certificação em duas provas:** (a) código, contrato, testes, CI, Teste C e parecer independente no SHA; (b) revisão fo | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-07` | 29 | **Watchdog:** usar automação existente ou workflow mínimo read-only para identificar missão não certificada, ausência de | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-08` | 30 | **Antiestagnação:** após duas tentativas sem delta causal, proibir repetir o mesmo retry e exigir RCA ampliada. Não usar | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-09` | 31 | **Independência:** o auditor é autoridade de parecer técnico, não substituto de aprovação humana específica, nem adminis | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S3-10` | 32 | **Transparência:** status `BLOCKED_EXTERNAL` só com impeditivo verificável; preservar próxima ação, HEAD, checkpoints e  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-01` | 36 | O contexto `ContaOS P0-ABS Mission Lock` será vinculado no ruleset `26495643` ao `integration_id` de um GitHub App autor | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-02` | 37 | A regra obrigatória `merge_queue` do ruleset é a barreira de frescor. Configurar `ALLGREEN` e um elemento por grupo, com | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-03` | 38 | O App usa exclusivamente a API de **commit statuses** para esse contexto. Estados possíveis são `pending`, `failure`, `e | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-04` | 40 | **Admissão da PR, antes da fila.** Alterações autenticadas da PR, das revisões e da base protegida disparam a reavaliaçã | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-05` | 41 | **Autorização de merge pelo grupo.** Só um novo `success` no SHA temporário do grupo ativo, após a reavaliação integral  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-06` | 42 | Para cada `merge_group/checks_requested`, autenticar o evento e consultar o grupo ativo no GitHub. Vincular repositório, | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-07` | 44 | O contrato protegido define quando a revisão formal é obrigatória. Em ambos os pontos de publicação, consultar a review  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-08` | 45 | Ensaiar em fila isolada a equivalência com a proteção pretendida. Antes de ativar em `main`, comprovar que todos os requ | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S31-09` | 46 | Integrar o BUILD revisado e as adaptações necessárias sob a proteção vigente, provar o produtor no ambiente de validação | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-01` | 50 | **Fase PLAN (esta PR):** apenas este documento. Não mudar `AGENTS.md`, executáveis, workflows, checks, configuração de p | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-02` | 52 | **Allowlist candidata para futura PR de BUILD, sujeita à validação após a integração deste PLAN:** | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-03` | 53 | `AGENTS.md` (referência curta, sem duplicar instruções); | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-04` | 54 | `docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md`; | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-05` | 55 | `docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md` (nova norma); | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-06` | 56 | `docs/frontend/governanca/MISSAO_ATIVA_4_1.json` (contrato protegido; missão inicial PR679); | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-07` | 57 | `scripts/auditoria/auditar-pr.ps1` e `scripts/auditoria/test-controller.ps1` somente quando testes demonstraram necessid | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-08` | 58 | `scripts/auditoria/mission-supervisor.py` e `scripts/auditoria/test_mission_supervisor.py` (novo módulo interno, **não** | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-09` | 59 | `.github/workflows/contaos-auditoria-controller.yml` e eventual novo `.github/workflows/contaos-missao-auditoria.yml` (c | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-10` | 60 | `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md` (checkpoint apensado, nunca sobrescrever histórico); | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-11` | 61 | `docs/frontend/governanca/P0_NR_001_LEDGER.json` **somente** com ocorrência real causalmente comprovada; | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-12` | 62 | `docs/frontend/planos/PLANO_ATIVO.json` somente conforme validação do rito ADR-DEV-002, antes de qualquer BUILD. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-13` | 64 | A adaptação à fila exige emenda integrada antes de alterar gates atuais. O inventário inicial confirma que `contaos-fron | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S4-14` | 66 | **Não autorizados:** `src/`, `public/`, dependências/lockfiles, tipos congelados, layout, rotas, backend `develop`, Supa | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-01` | 71 | N01: relatório DONE sem merge/checkpoint deve continuar ACTIVE. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-02` | 72 | N02: PR divergente do contrato ativo deve FAIL, exceto sub-PR autorizada na base protegida. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-03` | 73 | N03: contrato adulterado na PR não pode alterar decisão do gate. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-04` | 74 | N04: check com SHA anterior, zero seleção, simulação, Check Run `skipped`/`neutral` ou status do App diferente de `succe | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-05` | 75 | N05: mudança de HEAD/base viva invalida parecer e recibo. Em prova com HEAD da PR intacto, avançar a base primeiro a com | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-06` | 76 | N06: auditor que edita mecanismo sob avaliação não pode autocertificar. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-07` | 77 | N07: interrupção de sessão/runner preserva estado e não gera PASS. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-08` | 78 | N08: duas tentativas sem delta exigem investigação causal ampliada, sem loop. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-09` | 79 | N09: dupla execução concorrente não grava estados conflitantes. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-10` | 80 | N10: CANCELLED exige autoridade explícita e mantém histórico. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-11` | 81 | N11: ferramenta sem acesso, erro HTTP ou JSON malformado resulta NO-GO, não PASS. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-12` | 82 | N12: troca de branch/commit após revisão invalida evidência afetada. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-13` | 83 | N13: contexto ausente, resultado homônimo de outra origem, status no HEAD sem resultado no grupo e outra PR ou alvo comp | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-14` | 84 | N14: PR de governança não abre exceção ampla a novas PRs incompatíveis. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-15` | 85 | N15: com o publicador indisponível, grupo sem status válido fica bloqueado. Ensaiar recuperação autorizada, exigir execu | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-16` | 86 | N16: sem o status obrigatório emitido no SHA que o GitHub usa para a PR, inclusive se publicado em SHA alternativo ou po | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-17` | 87 | N17: com checks técnicos verdes, a PR ou o grupo permanecem bloqueados quando a revisão formal aplicável estiver ausente | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S5-18` | 89 | GREEN: testes existentes do auditor, 17 negativos ou mais, status CI real da PR, Zero-Drift, P0-NR, LOCK, Teste C aplicá | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-01` | 93 | Impacto planejado restrito à orquestração e governança. As regras de app, identidade visual BRAND-01, HML, RBAC/RLS, con | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-02` | 97 | Antes da ativação, registrar um responsável administrativo, o snapshot autenticado do ruleset, a última revisão confiáve | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-03` | 99 | Com o publicador indisponível, deixar a fila bloquear e registrar `BLOCKED_EXTERNAL` com grupo, PR, HEAD, ref viva, erro | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-04` | 100 | Se a instalação do App estiver utilizável, a pessoa autorizada reexecuta a versão confiável do publicador por ambiente p | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-05` | 101 | Se o App não puder publicar, a fila continua bloqueada. A única troca admitida é substituição administrativa expressamen | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S6-06` | 102 | Recolocar PR elegível na fila conforme o rito e exigir o novo status no SHA do novo grupo. Registrar autorização, ator,  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S7-01` | 106 | **Auditor:** diagnosticar a missão e emitir parecer. **Orquestrador:** conduzir implementação, sub-PRs e correções. **Gi | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S7-02` | 108 | A próxima entrega é a **PR de BUILD**, iniciada somente após este PLAN integrar a main. Depois, comprovar o check e a ef | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S7-03` | 110 | **Não declarar a P0-AUD-001 instalada, o Mission Lock efetivo, o watchdog persistente ou a PR #679 certificada por causa | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-01` | 119 | / Tratar base gravada ou sucesso anterior como prova de contexto atual, CONHECIDO NR-009. Origem indefinida no PLAN, NOV | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-02` | 120 | / Ausência do bloco obrigatório no próprio documento, CONHECIDO pelo precedente do PLAN 42. / Comparar o bloco abaixo co | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-03` | 121 | / Redação de implantação misturava retomada local persistente com watchdog somente leitura, NOVO. / Conferir as seções 3 | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-04` | 124 | Marca: ContaOS Brand v1.0 / BRAND-01; ler 19_IDENTIDADE_VISUAL_OFICIAL_BRAND_1_0.md e 20_PROMPT_000_BRAND_01.md para qua | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-05` | 125 | Economia Lovable: checar turno/estado/commit antes de enviar; usar GitHub e Supabase diretamente quando possível; consol | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-06` | 126 | Entregar evidências e classificar: IDENTIDADE VISUAL PASS/FAIL/NÃO VERIFICADO/N/A; ECONOMIA LOVABLE CONFORME/NÃO CONFORM | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S8-07` | 128 | `impacto_visual: N/A`. O PLAN é documental e a allowlist candidata se limita à governança, auditoria e workflows. Baseli | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S9-01` | 135 | **NR-009 · frescor.** A primeira correção conferia a ref viva, mas deixava o status de admissão sujeito à identidade do  | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S9-02` | 136 | **Recuperação · NOVO.** A reversão por PR dependia do check quebrado. A seção 6.1 exige ensaio prévio da recuperação pro | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S10-01` | 143 | **Admissão · NOVO.** A redação anterior deixava opcional a publicação que precede a fila, criando dependência circular d | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+| `PLAN-S10-02` | 144 | **Revisão formal · NOVO.** O texto tratava a revisão na certificação, mas deixava implícita sua validação no publicador. | A/P/E/I/F/R/B descritos, **suficiência INCONCLUSIVE** |
+
+**Grafo de interações obrigatórias:** (i) §3/contrato protegido ↔ N03/NR-005, (ii) estado da missão ↔ N01/N10/certificação em duas provas, (iii) conflito de lease ↔ N09/fila, (iv) auditor read-only ↔ N06/App privilegiado, (v) retry causal ↔ N08, (vi) watchdog ↔ WDG-01 a WDG-07, (vii) admissão PR ↔ N16/check no SHA efetivo, (viii) grupo ↔ N05/N13/NR-009/status próprio, (ix) revisão/autorização ↔ N17/N17(c)/revogação, (x) recuperação do publicador ↔ N15/ruleset/NO-GO, (xi) allowlist ↔ emenda integrada #691/full_diff, (xii) identidade visual N/A ↔ diff e Teste C público sem confundir com HML/RLS. Cada cruzamento necessita prova positiva/negativa por estado e fonte; vínculo nominal não demonstra equivalência.
+
+**Conclusão técnica:** o escopo material identificado do PLAN foi inventariado nas 71 unidades acima, mas os períodos compostos ainda podem requerer desdobramentos adicionais, sobretudo §3.1, recuperação e aprovação. Evidência de BUILDs sintéticos não comprova implantação de App/fila/PROD. Sem contraditório independente, adjudicação de fonte LIVE e demonstração de que todas as cláusulas e interações estão cobertas, o veredito normativo é `SEMANTIC_COMPLETENESS=INCONCLUSIVE`. O verificador de sete eixos permanece `release=NO_GO` mesmo que todos os campos narrativos sejam preenchidos pelo implementador, até auditoria confiável separada. Não publicar PASS semântico com base neste apêndice.
+
+**Próxima tarefa:** fechar decomposição atômica e matriz de contraprovas por relação, congelar HEAD/base, validar GitHub CI completo/ZIP, revalidar parecer V2 LIVE do HEAD atual, executar revisão independente de semântica e solucionar formalmente divergências antes de qualquer certificação. **Proibidos:** autoaprovação, merge, App, alteração ruleset, fila real, HML/RLS autenticado, backend e PROD sem autorização/provas próprias.
+
+## PR #690 | Sincronização com main e revalidação do BUILD | 24/11/2026
+
+A sincronização preserva os pais `1d3091b269ca4a8bfbf00c41d74c59f29e1390e3` (branch) e `5b39e247ed756c6e8586284debe50658818e2eea` (main). A referência GitHub `backup/pr-690-before-main-sync-1d3091b` conserva o HEAD anterior. O diff contra main coincide com os 14 caminhos do manifesto protegido e mantém o blob de `types.ts`.
+
+O snapshot integrado vincula develop/main a `a1516de1d8949e505d83b5e000eb1cc558b217a7`. A árvore Git confirmou os 25 blobs, o catálogo `e54e49e626e65a9c94c81709180fd192a1f0c079`, 100 prompts regulares, 97 atômicos e 100 relações. A norma P0-CERT-LIVE-001 trata da exigibilidade por versão do produto. A #690 continua sujeita ao rito próprio de BUILD do Fiscal Universal. O `PLANO_ATIVO.json` geral foi conferido contra main e conserva a referência histórica `1504af465b45afc846458d00e5cb63513fa298ed`. O escopo desta PR é regido pelo PLAN P0-AUD-UNIVERSAL-001 e pelo manifesto da #691.
+
+O merge protegido #693 acrescentou ao PLAN e ao protocolo duas notas de proposta CSDI com vigência condicionada à implementação. A #692 segue aberta. A leitura verifica o manifesto original, a ancestralidade da aprovação e do merge #693, os bytes dos textos aprovados e os blobs exatos dos dois adendos. Qualquer outro delta exige revalidação. A emenda #691 e o bloqueio de ativação continuam vigentes. A reconciliação preserva a identificação autenticada dos eventos e o mapa de caminhos restritos da main, além da correção do runner Node para impedir comprovação por wrapper de arquivo.
+
+Evidência local até este checkpoint de código: 452 testes Node e 90 Python aprovados. A confirmação operacional depende dos jobs da PR no HEAD publicado e da pré-auditoria vinculada aos recibos desse HEAD. O resultado e os links serão registrados na conversa da PR após conferência do CI. Auditoria independente, merge e ativação seguem condicionados ao rito próprio.
+
+
+## 28/11/2026 — PLAN #863 integrado, reancoragem e RED causal
+
+PLAN #863 aprovado por revisão assistida Edivan5002 ID 6097312484 e integrado em 18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e. Reancoragem #690 6108b2d92b96072f6f3583ab1f455b31e345ea83, 14/14 caminhos. RED e7f2c02b027562d249df2434920a27635c3bf9be: Python 90/92, job 140954756309/run 46137113494, N06 falso bloqueio pré-PROD e aceitação de estágio desconhecido; Node 273/280, job 140954825411/run 46137113477, dois REDs causais e cinco falhas esperadas de pins. BUILD corretivo aplica a modalidade por estágio, autentica emenda protegida, mantém matriz histórica e contraprovas, sem ativação. GREEN e CI, pré-auditoria V2, provas semânticas materiais, revisão, merge/readback e certificação ainda pendentes. PROD NO-GO. Não confundir este registro com certificado.
+
+
+## 28/11/2026 — RED adicional de integridade do corpus fiscal
+
+RCA do comentário #690/7238814619. RED 2304cfe9dc53e1802c30f7bbdd29df903ae5314b, run 46141783363 job 140969089190: 277/284; dois falsos PASS comprovados (corpus vazio e subconjunto), cinco pins de integridade esperados. BUILD reconstrói os quatro objetos do corpus dos blobs protegidos, confronta conteúdo e cardinalidade integral, preserva os 14 caminhos, 137/118/381/9316, testemunhas e revisão por estágio. Reancoragem para PLAN #865 d7b0adeb6a418ad53f9dc6e3723309180c3deb5e; prova GREEN e gates materiais pendentes. #866 separada para regressão de produto, sem autorizar PROD/HML.

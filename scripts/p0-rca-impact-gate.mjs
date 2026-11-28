@@ -1,8 +1,10 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { resolve } from "node:path";
+import { join as joinPath, resolve as resolvePath, sep as pathSep } from "node:path";
+import { resolveEventContext } from "./ci/merge-group-context.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const PLAN = "docs/frontend/planos/PLANO_ATIVO.json";
@@ -57,12 +59,43 @@ export function validateRcaImpact({
   v1Scope = null,
   v1ScopeChanged = false,
   addedLines = {},
+  fullDiffPaths = null,
   readBytes = (path) => readFileSync(path),
 }) {
   const errors = [];
   const err = (msg) => errors.push("P0 RCA: " + msg);
+  // Fail before any documentary N/A, even without a PLAN for this PR.
+  try {
+    assertImmutableP0Governance(
+      [...changed, ...(Array.isArray(fullDiffPaths) ? fullDiffPaths : [])],
+      "validation");
+  } catch (error) { err(error.message); }
   const id = String(planId || "").padStart(2, "0");
   let version = Object.keys(RANGES).find((v) => RANGES[v].includes(id));
+  // NR-005: valida o diff INTEIRO antes de filtrar codigo ou documentos.
+  if (prNumber === 690 || governancePlan?.full_diff === true) {
+    const approved = governancePlan?.schema === "contaos.p0.gov-plan.v1" &&
+      governancePlan?.approved === true &&
+      governancePlan.pr_number === prNumber &&
+      governancePlan.full_diff === true &&
+      Array.isArray(governancePlan.files) &&
+      governancePlan.files.length === new Set(governancePlan.files).size &&
+      governancePlan.files.every((p) => hasText(p) && !p.includes(".."));
+    if (!approved) err("manifesto full_diff protegido ausente/divergente para PR " + prNumber);
+    if (prNumber === 690 && governancePlan?.files?.length !== 14)
+      err("manifesto #690 deve conter os 14 caminhos exatos.");
+    if (!Array.isArray(fullDiffPaths) || !fullDiffPaths.length ||
+        fullDiffPaths.some((p) => !hasText(p)))
+      err("full_diff de arquivos e renomeações não comprovado.");
+    else if (approved) {
+      const allow = new Set(governancePlan.files);
+      const denied = fullDiffPaths.filter((p) => !allow.has(p));
+      if (denied.length) err("caminho fora da allowlist full_diff: " + denied.join(", "));
+      const incomplete = changed.filter((p) => !fullDiffPaths.includes(p));
+      if (incomplete.length) err("full_diff incompleto: " + incomplete.join(", "));
+    }
+    return { errors, applicable: false, version: "P0_GOV_FULL_DIFF" };
+  }
   let paths = changed.filter(codeFile);
   if (!paths.length) return { errors, applicable: false, version };
   // O mapa vem do PLAN protegido anterior, nunca da allowlist mutável do HEAD.
@@ -394,7 +427,7 @@ export function runCase(entry) {
     // e ok 1. Esse nome é o wrapper do runner, nunca um caso de teste declarado.
     // Rejeitar aliases equivalentes sem confundir com um caso legítimo de título
     // "real.test.mjs" quando o arquivo informado é "/tmp/.../real.test.mjs".
-    if (typeof entry.arquivo === "string" && resolve(entry.caso) === resolve(entry.arquivo))
+    if (typeof entry.arquivo === "string" && resolvePath(entry.caso) === resolvePath(entry.arquivo))
       return false;
     // O subprocesso já isola cada prova. Só um subteste efetivamente declarado,
     // não o invólucro do arquivo, pode preencher o recibo PASS.
@@ -423,12 +456,2468 @@ export function runCase(entry) {
 function git(...args) {
   return execFileSync("git", args, { encoding: "utf8" }).trim();
 }
+
+// Retorna os DOIS lados de renomeações por tokens NUL: não perder caminho
+// anterior nem aceitar tabs/newlines como delimitadores ambíguos.
+export function parseFullDiffNameStatus(raw) {
+  if (typeof raw !== "string" || (!raw.endsWith("\0") && raw !== ""))
+    throw new Error("diff --name-status -z malformado");
+  const fields = raw === "" ? [] : raw.slice(0, -1).split("\0");
+  const paths = [];
+  for (let i = 0; i < fields.length;) {
+    const status = fields[i++];
+    const renamed = /^[RC]\d{1,3}$/.test(status);
+    if (!renamed && !/^[ACMDT]$/.test(status))
+      throw new Error("tipo de diff não reconhecido: " + status);
+    const size = renamed ? 2 : 1;
+    if (i + size > fields.length)
+      throw new Error("diff truncado");
+    for (let j = 0; j < size; j++) {
+      const path = fields[i++];
+      if (!path || path.startsWith("/") || path.split("/").includes("..") ||
+          path.includes("\n") || path.includes("\r"))
+        throw new Error("caminho suspeito no diff");
+      paths.push(path);
+    }
+  }
+  return [...new Set(paths)];
+}
+export function uniquePrAssociation(list) {
+  if (!Array.isArray(list) || list.length !== 1 ||
+      !Number.isSafeInteger(list[0]?.number) || list[0].number < 1)
+    throw new Error("push sem PR autenticada unica, inclusive diff documental");
+  return list[0].number;
+}
+export function verifyRawFullDiffModes(raw, expectedPaths) {
+  if (typeof raw !== "string" || (!raw.endsWith("\0") && raw !== "") ||
+      !Array.isArray(expectedPaths))
+    throw new Error("NR-005 diff --raw -z malformado");
+  const fields = raw ? raw.slice(0, -1).split("\0") : [];
+  const found = [];
+  for (let i = 0; i < fields.length;) {
+    const meta = /^:(\d{6}) (\d{6}) ([0-9a-f]{7,64}) ([0-9a-f]{7,64}) ([ACDMRT]|[RC]\d{1,3})$/.exec(fields[i++]);
+    if (!meta) throw new Error("NR-005 header do modo nao comprovado");
+    const [, oldMode, newMode, , , state] = meta;
+    const safe = new Set(["000000", "100644", "100755"]);
+    if (!safe.has(oldMode) || !safe.has(newMode) ||
+        (oldMode !== "000000" && newMode !== "000000" && oldMode !== newMode))
+      throw new Error("NR-005 modo Git alterado/inseguro " + oldMode + " -> " + newMode);
+    const count = /^[RC]\d{1,3}$/.test(state) ? 2 : 1;
+    if (i + count > fields.length) throw new Error("NR-005 raw truncado");
+    for (let j = 0; j < count; j++) {
+      const path = fields[i++];
+      if (!path || path.startsWith("/") || path.includes("\n") ||
+          path.includes("\r") || path.split("/").includes(".."))
+        throw new Error("NR-005 caminho raw suspeito");
+      found.push(path);
+    }
+  }
+  const actual = [...new Set(found)];
+  if (actual.length !== expectedPaths.length || actual.some(p => !expectedPaths.includes(p)))
+    throw new Error("NR-005 modo raw difere de full_diff");
+  return true;
+}
+export const IMMUTABLE_P0_690_MANIFEST =
+  "docs/frontend/planos/P0_GOV_PLAN_690.json";
+export function assertImmutableP0Governance(paths, event) {
+  if (!Array.isArray(paths) || paths.some(p => typeof p !== "string"))
+    throw new Error("NR-005 full diff de manifesto protegido ausente");
+  if (paths.includes(IMMUTABLE_P0_690_MANIFEST))
+    throw new Error("NR-005 manifesto protegido #690 imutável em " +
+      String(event || "evento não informado") + " antes de integrar");
+  return true; // Does not alter documentary N/A for unrelated documents.
+}
+export function classifyProtectedPush(number, changed, manifestPresent) {
+  if (!Array.isArray(changed)) throw new Error("NR-005 diff invalido");
+  if (number === 690) return "BUILD_690";
+  if (changed.includes("docs/frontend/planos/P0_GOV_PLAN_690.json"))
+    throw new Error("NR-005 manifesto #690 imutavel em PR posterior");
+  const cores = [
+    "docs/frontend/governanca/MISSAO_ATIVA_4_1.json",
+    "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md",
+  ];
+  if (!manifestPresent && changed.some(p => cores.includes(p)))
+    throw new Error("NR-005 documento central sem manifesto protegido na base");
+  return "REGULAR_PR";
+}
+export function safeTreeEntry(raw, path) {
+  if (raw === "") return true; // Deleted path still checked against allowlist.
+  if (typeof raw !== "string") return false;
+  const m = /^(100644|100755) blob [0-9a-f]{40}\t([^\0]+)\0$/.exec(raw);
+  return Boolean(m && m[2] === path);
+}
+function fullDiffPaths(base, head) {
+  const raw = execFileSync("git",
+    ["diff", "--name-status", "-z", "--find-renames", "--diff-filter=ACMRTD", base, head],
+    { encoding: "utf8", timeout: 20000 });
+  return parseFullDiffNameStatus(raw);
+}
+async function githubPrFiles(number, token) {
+  const paths = new Set();
+  for (let page = 1; page <= 10; page++) {
+    const chunk = await http("/repos/" + REPO + "/pulls/" + number +
+      "/files?per_page=100&page=" + page, token);
+    if (!Array.isArray(chunk)) throw new Error("lista de arquivos PR inválida");
+    for (const item of chunk) {
+      if (!hasText(item.filename)) throw new Error("nome de arquivo PR ausente");
+      paths.add(item.filename);
+      if (item.status === "renamed") {
+        if (!hasText(item.previous_filename)) throw new Error("origem da renomeação ausente");
+        paths.add(item.previous_filename);
+      }
+    }
+    if (chunk.length < 100) return [...paths];
+  }
+  throw new Error("PR com lista de arquivos não exaustiva (>1000)");
+}
+const setEqual = (a, b) =>
+  a.length === b.length && a.every((p) => b.includes(p));
+export async function resolvePrContext(event, base, head, changed, token, eventBase = base, options = {}) {
+  const path = process.env.GITHUB_EVENT_PATH;
+  if (!options.payload && !path) throw new Error("payload GitHub ausente");
+  const payload = options.payload ?? JSON.parse(readFileSync(path, "utf8"));
+  const gitFn = options.gitFn ?? git;
+  const apiGet = options.apiGet ?? http;
+  if (payload?.repository?.full_name !== REPO)
+    throw new Error("repo GitHub do evento não corresponde");
+  if (event === "pull_request") {
+    const pr = payload.pull_request;
+    const number = pr?.number;
+    const currentHead = gitFn("rev-parse", head);
+    // The event base can legitimately be newer than the merge-base of
+    // the feature branch. Bind the live event base, not an ancestor.
+    if (!Number.isInteger(number) || number < 1 ||
+        pr?.base?.ref !== "main" || pr?.head?.sha !== currentHead ||
+        !validSha(pr?.base?.sha) ||
+        gitFn("rev-parse", eventBase) !== pr.base.sha ||
+        gitFn("merge-base", eventBase, head) !== gitFn("rev-parse", base))
+      throw new Error("PR/base/head do evento não comprovados");
+    return { number, manifestBase: eventBase };
+  }
+  if (event === "merge_group") {
+    const group = await resolveEventContext();
+    if (group.base_sha !== gitFn("rev-parse", base) ||
+        group.head_sha !== gitFn("rev-parse", "HEAD"))
+      throw new Error("grupo autenticado não corresponde ao diff");
+    return { number: group.pr, manifestBase: group.base_sha };
+  }
+  if (event === "push") {
+    if (payload.ref !== "refs/heads/main" ||
+        payload.before !== gitFn("rev-parse", base) ||
+        payload.after !== gitFn("rev-parse", "HEAD"))
+      throw new Error("push/HEAD/base não comprovados");
+    const list = await apiGet("/repos/" + REPO + "/commits/" + payload.after + "/pulls", token);
+    if (!Array.isArray(list)) throw new Error("associação autenticada de PR indisponível");
+    // Classify *before* applying the #690 MERGE-only contract. In particular,
+    // ordinary docs with no protected BUILD overlap may be integrated via
+    // squash (one parent) or by a regular merge. No implicit BUILD exemption.
+    let manifest690 = null;
+    try {
+      manifest690 = JSON.parse(gitFn("show", payload.before +
+        ":docs/frontend/planos/P0_GOV_PLAN_690.json"));
+    } catch { /* A missing protected manifest cannot authorize a BUILD. */ }
+    // A historical allowlist is not the identity of a future integration.
+    // Only the authenticated merged PR number triggers BUILD #690 rules.
+    const sensitive = changed.some(codeFile) ||
+      changed.some(p => [
+        "docs/frontend/planos/P0_GOV_PLAN_690.json",
+        "docs/frontend/governanca/MISSAO_ATIVA_4_1.json",
+        "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md",
+      ].includes(p));
+    if (!list.length) {
+      if (sensitive)
+        throw new Error("push de BUILD/código sem PR autenticada");
+      return { number: null, manifestBase: payload.before, ordinaryDocument: true };
+    }
+    if (list.length !== 1) {
+      if (sensitive)
+        throw new Error("push de BUILD/código com PR ambígua");
+      return { number: null, manifestBase: payload.before, ordinaryDocument: true };
+    }
+    const associated = uniquePrAssociation(list);
+    if (changed.some(appFile) && gitFn("rev-parse", "HEAD^") !== payload.before)
+      throw new Error("push de aplicação não corresponde ao primeiro pai protegido");
+    const pr = await apiGet("/repos/" + REPO + "/pulls/" + associated, token);
+    if (pr?.merged_at == null || pr.base?.ref !== "main" ||
+        pr.merge_commit_sha !== payload.after || pr.number !== associated)
+      throw new Error("associação PR/commit de integração não comprovada");
+    const classified = classifyProtectedPush(associated, changed,
+      manifest690?.schema === "contaos.p0.gov-plan.v1");
+    if (classified === "BUILD_690") {
+      // Only authenticated integration #690 requires two-parent MERGE.
+      // Later authorized PRs retain their own governance and merge rite.
+      const parents = gitFn("rev-list", "--parents", "-n", "1", "HEAD").split(/\s+/);
+      if (parents.length !== 3 || parents[0] !== payload.after ||
+          parents[1] !== payload.before || parents[2] !== pr.head?.sha)
+        throw new Error("merge da #690 não comprovado por pais/HEAD protegidos");
+      // Same names/modes are not sufficient: each merged blob must equal
+      // the exact audited PR HEAD blob, including renames and deletions.
+      for (const path of changed) {
+        const gitBlob = (rev) => {
+          try { return gitFn("rev-parse", rev + ":" + path); }
+          catch { return null; }
+        };
+        if (gitBlob(payload.after) !== gitBlob(pr.head.sha))
+          throw new Error("NR-005 conteúdo da árvore integrada difere do HEAD da PR: " + path);
+      }
+    }
+    return { number: pr.number, manifestBase: payload.before, ordinaryDocument: classified === "REGULAR_PR" && !changed.some(codeFile) };
+  }
+  throw new Error("evento GitHub sem proveniência validada");
+}
+
+// A manual assistant pre-audit is a prerequisite for PRE-CERTIFICATION only.
+// It is NOT an independent Codex PASS, a Github review, a mission certificate,
+// or authorization to merge. Its evidence is a Github-authenticated PR comment
+// tied to one exact HEAD and base and separately cross-checked against CI.
+export const ASSISTANT_PREAUDIT_MARKER = "CONTAOS_ASSISTANT_PREAUDIT_V2";
+export const ASSISTANT_PREAUDIT_CRITERIA = Object.freeze([
+  "scope_and_manifest", "root_causes", "event_provenance",
+  "negative_tests", "regression_integration", "security_boundaries",
+  "check_and_artifact_provenance", "limitations_and_next_gates",
+  "legitimate_state_transitions", "relational_provenance",
+  "post_decision_revocation", "blind_diff_and_meta_audit",
+]);
+export const ADVERSARIAL_V2_LENSES = Object.freeze([
+  "security", "provenance", "concurrency", "lifecycle", "state_machine",
+  "integration", "resilience", "governance", "supply_chain",
+  "legitimate_regression", "observability", "operational_environment",
+]);
+export const ADVERSARIAL_V2_STEP_NAMES = Object.freeze([
+  ...Array.from({length:10},(_,i)=>"P0 V2 LAYER "+String(i+1).padStart(2,"0")),
+  ...ADVERSARIAL_V2_LENSES.map(x=>"P0 V2 LENS "+x),
+]);
+export const ADVERSARIAL_V2_CHECK_NAME = "P0-ABS Adversarial V2 executavel";
+export const ADVERSARIAL_V2_CAUSAL_CASES = Object.freeze([
+  Object.freeze({case_id:"watchdog_postmerge",
+    vulnerable_sha:"54b596f4ae3cce085e79967c4ea8cc4446685d5d",
+    vulnerable_blob:"7f80dd25661a4cd5aebaa9aab40cf47a001623cc",
+    observed:"N05_EXCEPTION_BEFORE_DIAGNOSIS",
+    green:"BLOCKED_EXTERNAL_VERIFY_POST_MERGE_READBACK"}),
+  Object.freeze({case_id:"artifact_attempt",
+    vulnerable_sha:"7e34fe416c30ae38d384aef3084165b2f2e1ffee",
+    vulnerable_blob:"38072d1d3a940d2f722f3e42d1475ab9cb5a04c5",
+    observed:"STALE_ATTEMPT_FALSE_PASS",
+    green:"NO_GO_STALE_ATTEMPT"}),
+  Object.freeze({case_id:"review_comment",
+    vulnerable_sha:"caa351c68a197fec3c7e6a95b8a7de4cfcc9845e",
+    vulnerable_blob:"a85931fbe7215712b2df6d95366f41cc63b7cd29",
+    observed:"COMMENTED_ERASED_CHANGES_REQUESTED",
+    green:"NO_GO_NATIVE_VETO"}),
+]);
+export const PRECERT_REQUIRED_CHECKS = Object.freeze([
+  "ContaOS Frontend Zero-Drift",
+  "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+  "ContaOS P0-NR-001 Integridade e Provas",
+  "protect-types", "Controlador offline Windows",
+]);
+export const PRECERT_ISSUER = 15368; // Github Actions, active ruleset #26495643.
+const preauditHash = (text) => createHash("sha256").update(text, "utf8").digest("hex");
+const exactSet = (a, b) => Array.isArray(a) && Array.isArray(b) &&
+  a.length === b.length && new Set(a).size === a.length &&
+  new Set(b).size === b.length && a.every(x => b.includes(x));
+// GitHub returns ALL checks on a commit, not just the newest workflow run.
+// A native pull_request_review legitimately creates another run on the SAME
+// commit. Select its newest authenticated job by monotonic GitHub Actions job
+// ID, not API ordering, and reject foreign/ambiguous evidence; never reuse an
+// older PASS while a newer run is pending or failed.
+export function latestPrecertCheck(checkRuns, name, expectedHead) {
+  if (!Array.isArray(checkRuns) || !validSha(expectedHead)) return null;
+  const found=checkRuns.filter(x=>x?.name===name);
+  if (!found.length || new Set(found.map(x=>x?.id)).size!==found.length) return null;
+  if (!found.every(x=>Number.isSafeInteger(x?.id) && x.id>0 &&
+      x.head_sha===expectedHead && x?.app?.id===PRECERT_ISSUER &&
+      typeof x.details_url==="string" &&
+      new RegExp("^https://github[.]com/"+REPO.replaceAll("/","\\/")+
+        "/actions/runs/[1-9][0-9]*/job/"+x.id+"$").test(x.details_url) &&
+      ["queued","in_progress","completed","waiting","pending","requested"].includes(x.status)))
+    return null;
+  return found.reduce((latest,x)=>!latest || x.id>latest.id?x:latest,null);
+}
+const v2AttestedJob=(check, job, head)=>
+  !!check && !!job && job.id===check.id &&
+  check.head_sha===head && check.app?.id===PRECERT_ISSUER &&
+  check.status==="completed" && check.conclusion==="success" &&
+  job.head_sha===head && job.status==="completed" && job.conclusion==="success" &&
+  Number.isSafeInteger(job.run_id) && job.run_id>0 &&
+  check.details_url==="https://github.com/"+REPO+"/actions/runs/"+
+    job.run_id+"/job/"+job.id &&
+  Array.isArray(job.steps) &&
+  ["P0 FULL_PROTOCOL matriz integral e testemunhas executaveis",
+    ...ADVERSARIAL_V2_STEP_NAMES,
+    ...ADVERSARIAL_V2_CAUSAL_CASES.map(x=>"P0 V2 CAUSAL_RED "+x.case_id)]
+    .every(name=>job.steps.filter(step=>step?.name===name &&
+      step.status==="completed" && step.conclusion==="success").length===1);
+
+
+
+// A prior Actions attempt can disappear from the CURRENT commit check-run
+// enumeration after a rerun. Authenticate its actual job/run/attempt through
+// the GitHub Actions API, rather than accepting an arbitrary job id or
+// downgrading the requirement that the LATEST V2 check is GREEN.
+export function verifyHistoricalV2JobProvenance({
+  job,run,attemptJobs,attempt,head,base,
+}={}) {
+  const stepNames=["P0 FULL_PROTOCOL matriz integral e testemunhas executaveis",
+    ...ADVERSARIAL_V2_STEP_NAMES,
+    ...ADVERSARIAL_V2_CAUSAL_CASES.map(x=>"P0 V2 CAUSAL_RED "+x.case_id)];
+  return !!job && Number.isSafeInteger(job.id) && job.id>0 &&
+    job.head_sha===head && job.name===ADVERSARIAL_V2_CHECK_NAME &&
+    job.status==="completed" && job.conclusion==="success" &&
+    Number.isSafeInteger(job.run_id) && job.run_id>0 &&
+    Array.isArray(job.steps) && stepNames.every(name=>
+      job.steps.filter(x=>x?.name===name &&
+        x.status==="completed" && x.conclusion==="success").length===1) &&
+    !!run && run.id===job.run_id && run.head_sha===head &&
+    run.head_branch==="build/p0-abs-fiscal-universal" &&
+    run.path===".github/workflows/contaos-auditoria-controller.yml" &&
+    run.repository?.full_name===REPO &&
+    ["pull_request","pull_request_review","workflow_dispatch"].includes(run.event) &&
+    ["completed","in_progress"].includes(run.status) &&
+    Number.isSafeInteger(run.run_attempt) &&
+    Number.isSafeInteger(attempt) && attempt>0 &&
+    attempt<=run.run_attempt &&
+    (run.event==="workflow_dispatch" ||
+      run.pull_requests?.some(x=>x.number===690 &&
+        x.head?.sha===head && x.base?.sha===base)) &&
+    Array.isArray(attemptJobs?.jobs) &&
+    attemptJobs.total_count===attemptJobs.jobs.length &&
+    attemptJobs.jobs.filter(x=>x?.id===job.id &&
+      x.run_id===run.id && x.name===ADVERSARIAL_V2_CHECK_NAME &&
+      x.head_sha===head && x.status==="completed" &&
+      x.conclusion==="success").length===1;
+}
+
+const PRECERT_WORKFLOW_ORIGINS=Object.freeze({
+  "Controlador offline Windows": ".github/workflows/contaos-auditoria-controller.yml",
+  "P0-ABS Adversarial V2 executavel": ".github/workflows/contaos-auditoria-controller.yml",
+  "ContaOS Frontend Zero-Drift": ".github/workflows/contaos-frontend-zero-drift.yml",
+  "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente": ".github/workflows/contaos-frontend-zero-drift.yml",
+  "ContaOS P0-NR-001 Integridade e Provas": ".github/workflows/p0-nr001-anti-recurrence.yml",
+  "protect-types": ".github/workflows/lock-types-double-barrier.yml",
+});
+// Real GitHub Actions job->run->attempt chain. No arbitrary workflow may
+// impersonate a required check simply by selecting the same job NAME.
+export function verifyPrecertRunOrigin({check,job,run,attemptJobs,head,base,workflow}={}) {
+  const m=typeof check?.details_url==="string"?
+    /^https:\/\/github[.]com\/contaos999999\/contaos-hml-control\/actions\/runs\/([1-9][0-9]*)\/job\/([1-9][0-9]*)$/.exec(check.details_url):null;
+  return !!m && check.name && PRECERT_WORKFLOW_ORIGINS[check.name]===workflow &&
+    check.head_sha===head && check.app?.id===PRECERT_ISSUER &&
+    Number(m[1])===run?.id && Number(m[2])===check.id &&
+    job?.id===check.id && job?.run_id===run.id && job?.head_sha===head &&
+    job?.name===check.name && job?.status==="completed" && job?.conclusion==="success" &&
+    run.head_sha===head && run.head_branch==="build/p0-abs-fiscal-universal" &&
+    run.path===workflow && ["pull_request","pull_request_review","workflow_dispatch"].includes(run.event) &&
+    (run.status==="completed" && run.conclusion==="success" ||
+      run.status==="in_progress" && run.conclusion===null) &&
+    Number.isSafeInteger(run.run_attempt) && run.run_attempt>0 &&
+    (run.event==="workflow_dispatch" ||
+      run.pull_requests?.some(x=>x.number===690 && x.head?.sha===head &&
+        x.base?.sha===base)) &&
+    Array.isArray(attemptJobs?.jobs) &&
+    attemptJobs.total_count===attemptJobs.jobs.length &&
+    attemptJobs.jobs.some(x=>x.id===job.id && x.run_id===run.id &&
+      x.name===check.name && x.head_sha===head &&
+      x.status==="completed" && x.conclusion==="success");
+}
+export function classifyPrecertReadiness(checkRuns,name,head){
+  // GitHub may queue a workflow without creating its check_run yet.
+  // Absent is pending, but an ambiguous/forged published check is terminal.
+  if(!Array.isArray(checkRuns))
+    return {state:"TERMINAL",name,reason:"API checks indisponivel"};
+  const matching=checkRuns.filter(x=>x?.name===name);
+  if(matching.length===0)
+    return {state:"PENDING",name,reason:"check ausente na consulta; disparo/enfileiramento do workflow nao comprovado"};
+  const selected=latestPrecertCheck(checkRuns,name,head);
+  if(!selected)return {state:"TERMINAL",name,reason:"origem/check publicado ambiguo"};
+  if(["queued","waiting","pending","requested","in_progress"].includes(selected.status))
+    return {state:"PENDING",name,reason:"check ainda em execucao"};
+  if(selected.status==="completed" && selected.conclusion==="success")
+    return {state:"READY",name,check:selected};
+  return {state:"TERMINAL",name,reason:"check terminal "+selected.status+"/"+selected.conclusion};
+}
+export async function downloadPrecertArtifactDigest(id,token){
+  if(!Number.isSafeInteger(id)||id<=0||!token)
+    throw Error("ZIP: artifact ID/token invalidos");
+  // GitHub REST redirects to signed storage. Never log signed URL or token.
+  const url="https://api.github.com/repos/"+REPO+"/actions/artifacts/"+id+"/zip";
+  const res=await fetch(url,{headers:{
+    Authorization:"Bearer "+token,Accept:"application/vnd.github+json",
+    "X-GitHub-Api-Version":"2022-11-28","User-Agent":"ContaOS-P0-FullAudit",
+  },signal:AbortSignal.timeout(90000)});
+  if(!res.ok||!res.body)throw Error("ZIP: download indisponivel HTTP "+res.status);
+  const hasher=createHash("sha256");let total=0;
+  for await(const chunk of res.body){
+    total+=chunk.length;
+    if(total>100*1024*1024)throw Error("ZIP: limite seguro de bytes excedido");
+    hasher.update(chunk);
+  }
+  if(total<100)throw Error("ZIP: bytes insuficientes");
+  return {digest:"sha256:"+hasher.digest("hex"),bytes:total};
+}
+
+
+const PROTOCOL_FULL_AUDIT_FILES=Object.freeze({
+  python:"scripts/auditoria/test_mission_supervisor.py",
+  rca:"scripts/p0-rca-impact-gate.test.mjs",
+  queue:"scripts/ci/merge-group-context.test.mjs",
+});
+const FULL_PROTOCOL_CASES=[
+  ...Array.from({length:17},(_,i)=>({id:"N"+String(i+1).padStart(2,"0"),
+    file:"python",pattern:"test_N"+String(i+1).padStart(2,"0")+"_"})),
+  {id:"NR-005-IDENTITY",file:"rca",pattern:"NR-005 manifesto"},
+  {id:"NR-005-RENAME",file:"rca",pattern:"NR-005 renomeação"},
+  {id:"NR-005-MODE",file:"rca",pattern:"NR-005 chmod"},
+  {id:"NR-005-SCHEMA",file:"rca",pattern:"NR-005 schema"},
+  {id:"NR-006-VETO",file:"rca",pattern:"P0 V2 RED NR-006: COMMENTED"},
+  {id:"NR-006-RETRY",file:"rca",pattern:"P0 NR-006 RED: most recent failed"},
+  {id:"NR-006-ARTIFACT",file:"rca",pattern:"P0 NR-006: visual ZIP"},
+  {id:"NR-009-BASE",file:"python",pattern:"test_NR009_live_older_target_base"},
+  {id:"WDG-01-ORIGIN",file:"python",pattern:"test_N03_changed_contract_source"},
+  {id:"WDG-02-PROGRESS",file:"python",pattern:"test_watchdog_stalled_ci_blocks"},
+  {id:"WDG-03-TERMINAL",file:"python",pattern:"test_N10_unverified_json_receipt"},
+  {id:"WDG-04-CHECKS",file:"python",pattern:"test_N04_duplicate_name"},
+  {id:"WDG-05-PROVENANCE",file:"python",pattern:"test_N13_wrong_check_integration"},
+  {id:"WDG-06-READBACK",file:"python",pattern:"test_watchdog_rejects_merge_state_changed"},
+  {id:"WDG-07-REST",file:"rca",pattern:"P0 V2 API rate 403"},
+  {id:"QUEUE-N13-REAL-GIT",file:"queue",pattern:"N13 prova git real"},
+  {id:"QUEUE-N13-LIVE",file:"queue",pattern:"N13 real resolver rejects removed queue ref"},
+  {id:"QUEUE-N05-BASE",file:"queue",pattern:"N05 base avançada"},
+  {id:"QUEUE-N17-REVOCATION",file:"python",pattern:"test_N17_revoked_specific_authorization"},
+  {id:"PR-CHECK-VETO",file:"rca",pattern:"P0 V2 formal independent review veto"},
+  {id:"PR-CHECK-READBACK",file:"rca",pattern:"P0 V2 RED NR-006: draft flipping"},
+  {id:"PR-CHECK-ARTIFACT",file:"rca",pattern:"P0 V2 RED: stale ZIP"},
+  {id:"PR-CHECK-RED-CAUSAL",file:"rca",pattern:"P0 V2 CAUSAL_RED artifact_attempt"},
+  ...Array.from({length:10},(_,i)=>({id:"V2-LAYER-"+String(i+1).padStart(2,"0"),
+    file:"rca",pattern:"P0 V2 LAYER "+String(i+1).padStart(2,"0")+":"})),
+  ...["security","provenance","concurrency","lifecycle","state_machine",
+    "integration","resilience","governance","supply_chain",
+    "legitimate_regression","observability","operational_environment"]
+    .map(n=>({id:"V2-LENS-"+n,file:"rca",pattern:"P0 V2 LENS "+n+":"})),
+];
+// Every authorization invariant must have an EXECUTED test witness, not
+// a source-code string or merely a test declaration.
+const FULL_PROTOCOL_CRITICAL_TESTS=[
+  {id:"AUTH-CHECK-WORKFLOW-RUN-ATTEMPT",file:"rca",pattern:"P0 FULL_PROTOCOL origin:"},
+  {id:"AUTH-ZIP-BYTES",file:"rca",pattern:"P0 FULL_PROTOCOL ZIP mismatch"},
+  {id:"AUTH-FAILURE-TERMINAL",file:"rca",pattern:"P0 FULL_PROTOCOL terminal checks"},
+  {id:"AUTH-FINAL-POST-ZIP-READBACK",file:"rca",pattern:"P0 FULL_PROTOCOL late veto after ZIP"},
+  {id:"AUTH-MANIFEST-IMMUTABLE",file:"rca",pattern:"NR-005 manifesto imutável"},
+  {id:"AUTH-NATIVE-VETO",file:"rca",pattern:"P0 V2 formal independent review veto"},
+  {id:"AUTH-PR-IDENTITY",file:"rca",pattern:"P0 PRE-AUDIT #690 sem associação autenticada"},
+  {id:"AUTH-NO-ACTIVATION",file:"rca",pattern:"P0 FULL_PROTOCOL matrix is fail-closed"},
+  {id:"AUTH-FULL-DIFF-MODE",file:"rca",pattern:"NR-005 chmod"},
+  {id:"AUTH-READONLY-PERMISSIONS",file:"rca",pattern:"P0 FULL_PROTOCOL controller read-only permissions"},
+  {id:"AUTH-NO-SELF-CERTIFY",file:"python",pattern:"test_N06_code_without_independent_audit"},
+  {id:"AUTH-ZIP-TOCTOU",file:"rca",pattern:"P0 FULL_PROTOCOL late veto after ZIP"},
+  {id:"AUTH-ORIGIN-FOREIGN-WORKFLOW",file:"rca",pattern:"P0 FULL_PROTOCOL origin:"},
+  {id:"AUTH-CI-PENDING-TERMINAL",file:"rca",pattern:"P0 FULL_PROTOCOL terminal checks"},
+];
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_CRITICAL_TESTS);
+
+// The protected PLAN #689 is normative, not merely a hash of arbitrary bytes.
+// Its ten numbered mission rules each require their own executed BUILD witness.
+// Rules concerning actual privileged enforcement remain future external NO-GO.
+const FULL_PROTOCOL_PLAN_CORE_RULES=Object.freeze([
+  ["01","python","test_N03_changed_contract_source_rejected"],
+  ["02","rca","P0 FULL_PROTOCOL matrix is fail-closed for absent N17"],
+  ["03","python","test_N01_active_cannot_certify_from_reports"],
+  ["04","python","test_N09_simultaneous_lease_conflict_rejected"],
+  ["05","rca","P0 META_PROTOCOL auditor-only hosted runner and no visual source drift"],
+  ["06","python","test_N01_certified_without_real_receipts_is_rejected"],
+  ["07","python","test_watchdog_stalled_ci_blocks"],
+  ["08","python","test_N08_retry_without_delta_rejected"],
+  ["09","python","test_N06_author_cannot_review_own_work"],
+  ["10","python","test_N11_missing_tool_blocked"],
+]);
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_PLAN_CORE_RULES.map(([number,file,pattern])=>({
+  id:"PLAN-S3-RULE-"+number,file,pattern
+})));
+// Section 3.1 of the protected PLAN is about future privileged activation.
+// These tests show rejection in the unprivileged BUILD. They MUST NOT be
+// reported as evidence that any GitHub App, queue or owner authorization ran.
+const FULL_PROTOCOL_PLAN_ACTIVATION_NEGATIVES=Object.freeze([
+  ["PLAN-S3.1-APP-IDENTITY","python","test_N13_wrong_check_integration_rejected"],
+  ["PLAN-S3.1-QUEUE","queue","N13 entrada QUEUED nao prova grupo ativo"],
+  ["PLAN-S3.1-STATUS-API","python","test_N13_foreign_status_publisher_rejected"],
+  ["PLAN-S3.1-GROUP-AUTH","queue","N13 real resolver rejects removed queue ref"],
+  ["PLAN-S3.1-OWNER-REVIEW","python","test_N17_approved_review_does_not_replace_authorization"],
+  ["PLAN-S3.1-LIVE-TRIAL","python","test_N16_no_real_group_status_rejected"],
+  ["PLAN-S3.1-ADMIN-AUTH","python","test_activation_cannot_be_enabled_by_candidate"],
+]);
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_PLAN_ACTIVATION_NEGATIVES.map(([id,file,pattern])=>({
+  id,file,pattern
+})));
+const FULL_PROTOCOL_51_GATES=[
+  ["NR-005 / documentos comuns","rca","NR-005 checkpoint documental em PR posterior"],
+  ["NR-005 / BUILD válido","rca","P0 PRE-AUDIT PR head/base avançada"],
+  ["NR-005 / falsificações","rca","NR-005 manifesto de outra PR"],
+  ["NR-009 / base avançada","python","test_NR009_live_older_target_base"],
+  ["Node 24 / testes","rca","P0 RCA runner executa caso exato"],
+  ["Segurança runner / N06","rca","P0 META_PROTOCOL every active workflow excludes self-hosted auditor execution"],
+  ["Segurança Actions","rca","P0 FULL_PROTOCOL watchdog read-only permissions"],
+  ["WDG-01 / origem","python","test_watchdog_readonly_collects_target_and_dependency"],
+  ["WDG-02 / progresso","python","test_watchdog_stalled_ci_blocks"],
+  ["WDG-03 / fail-closed","python","test_cli_blocked_diagnostic_never_signals_ci_pass"],
+  ["N01-N17","python","test_N01_to_N17_all_negative_states_keep_mission_uncertified"],
+  ["N13 / fila","queue","N13 prova git real"],
+  ["Regressão global","rca","P0 FULL_PROTOCOL global checks bound to exact HEAD"],
+  ["Evidências","rca","P0 FULL_PROTOCOL ZIP mismatch and missing ZIP cannot certify"],
+  ["Revisão independente","python","test_N06_author_cannot_review_own_work"],
+  ["NR-005 / manutenção posterior","rca","NR-005 manutenção autorizada de workflow"],
+  ["NR-005 / modos Git","rca","NR-005 chmod"],
+  ["NR-005 / schema","rca","NR-005 schema"],
+  ["WDG-04 / checks obrigatórios","python","test_watchdog_only_protect_types_cannot_claim_ready"],
+  ["WDG-05 / proveniência","python","test_watchdog_partial_pagination_even_below_100"],
+  ["WDG-06 / estados terminais","python","test_watchdog_forged_certified_contract"],
+  ["WDG-07 / permissão REST","rca","P0 FULL_PROTOCOL watchdog read-only permissions"],
+];
+// A composite normative row does not imply seven negatives merely because
+// one test is green. Map each anti-bypass scenario to a distinct executed case.
+const FULL_PROTOCOL_51_FALSIFICATION_SUBCASES=[
+  ["PR_ERRADA","NR-005 manifesto de outra PR nao pode autorizar #690"],
+  ["ASSOCIACAO_AUSENTE","P0 PRE-AUDIT #690 sem associação autenticada: FAIL"],
+  ["SQUASH","P0 PRE-AUDIT #690 via squash de um pai: FAIL"],
+  ["DOCUMENTO_EXTRA","NR-005 documento extra com codigo permitido nao pode passar"],
+  ["SCRIPT_EXTRA","NR-005 script adicional fora dos 14 caminhos sempre falha"],
+  ["RENOMEACAO","NR-005 caminho de origem de renomeacao tambem exige allowlist"],
+  ["MODO_GIT","NR-005 chmod 100644 para 100755 é FAIL"],
+];
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_51_FALSIFICATION_SUBCASES.map(([id,pattern])=>({
+  id:"S5.1:NR-005-FALSIFICACAO:"+id,file:"rca",pattern
+})));
+// Explicit constituent proofs for WDG-02. The stall and inactivity
+// thresholds are evaluated on both sides of 7200 s / 86400 s, not by title.
+const FULL_PROTOCOL_WDG02_SUBCASES=[
+  ["FALHA_CI","test_watchdog_failure_ci_blocks"],
+  ["CHECKS_AUSENTES","test_watchdog_missing_checks_not_pass"],
+  ["STALL_EXATO_2H","test_watchdog_stall_exact_two_hour_boundary"],
+  ["INATIVIDADE_EXATA_24H","test_watchdog_inactivity_exact_24_hour_boundary"],
+  ["DIAGNOSTICO_SEM_AUTORIDADE","test_watchdog_valid_diagnosis_never_certifies"],
+];
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_WDG02_SUBCASES.map(([id,pattern])=>({
+  id:"S5.1:WDG02-PROGRESSO:"+id,file:"python",pattern
+})));
+const FULL_PROTOCOL_52_RULES=[
+  ["Pré-integração NR-005","rca","NR-005 pull_request bloqueia manifesto"],
+  ["Fila NR-009/N13","queue","N13 removed merge queue entry during readback"],
+  ["Origem N04/N13","python","test_watchdog_all_three_same_name_wrong_app"],
+  ["Ciclo de vida","python","test_watchdog_closed_without_merge_never_prompts_review"],
+  ["Revalidação no encerramento do job","queue","N13 protected workflows recheck group"],
+  ["Regressão obrigatória","rca","P0 FULL_PROTOCOL suite output cannot be accepted"],
+];
+FULL_PROTOCOL_CASES.push(
+  ...FULL_PROTOCOL_51_GATES.map(([name,file,pattern])=>({
+    id:"S5.1:"+name,file,pattern})),
+  ...FULL_PROTOCOL_52_RULES.map(([name,file,pattern])=>({
+    id:"S5.2:"+name,file,pattern})),
+);
+
+
+const FULL_PROTOCOL_53_RULES=[
+  ["Ordem obrigatória","rca","P0 adversarial GitHub live verified snapshot"],
+  ["Matriz do parecer","rca","P0 PA incomplete criteria"],
+  ["Parecer formal e vínculo","rca","P0 PA altered report cannot pass SHA256"],
+  ["Gate executável de liberação","rca","P0 adversarial new CHANGES_REQUESTED"],
+  ["Ciclo de correção","rca","P0 V2 NR-006: case-specific RED"],
+  ["Critério de congelamento","rca","P0 V2 probe evidence is authenticated"],
+  ["Fronteira administrativa","python","test_N17_revoked_specific_authorization"],
+];
+const FULL_PROTOCOL_54_STEPS=[
+  ["Inventário inicial","rca","P0 V2 LAYER 01:"],
+  ["RED reproduzível","rca","P0 V2 LAYER 05:"],
+  ["Correção causal","rca","P0 V2 LAYER 06:"],
+  ["GREEN e negativos adversariais","rca","P0 V2 LAYER 06:"],
+  ["Segunda leitura do diff 14/14","rca","P0 V2 LAYER 08:"],
+  ["Repetição","rca","P0 V2 probe evidence is authenticated"],
+  ["Liberação","rca","P0 adversarial GitHub live verified snapshot"],
+];
+const FULL_PROTOCOL_54_RULES=[
+  ["Prova RED adicional após o parecer externo de 21/11","python","test_v2_causal_watchdog_historical_red_then_green"],
+  ["Limitações não dispensáveis","rca","P0 V2 LENS operational_environment:"],
+];
+const FULL_PROTOCOL_56_RULES=[
+  ["Regra de interpretação","rca","P0 META_PROTOCOL exhaustive cross-clause seven-dimensional authorization model"],
+  ["V1 versus V2 do recibo","rca","P0 PA positive: recorded assistant PASS"],
+  ["Cinco checks versus sete contextos de CI","rca","P0 META_PROTOCOL six predecessor checks plus own gate no cycle"],
+  ["Checks duplicados e reexecuções legítimas","rca","P0 NR-006 RED: COMMENTED starts second"],
+  ["Estado operacional, certificação e ativação","python","test_activation_cannot_be_enabled_by_candidate"],
+  ["Prova semântica por cláusula","rca","P0 META_PROTOCOL root obligations must reject"],
+  ["Estados de transporte versus veredito normativo","rca","P0 META_PROTOCOL audit verdict transport separation"],
+  ["Precedência","rca","P0 META_PROTOCOL exhaustive cross-clause seven-dimensional authorization model"],
+];
+const FULL_PROTOCOL_55_RULES=[
+  ["Autoridade e limites","python","test_N06_code_without_independent_audit"],
+  ["Dez camadas, sempre na ordem","rca","P0 V2 LAYER 10:"],
+  ["Doze perspectivas obrigatórias","rca","P0 V2 LENS operational_environment:"],
+  ["Casos RED obrigatórios do parecer de 21/11","rca","P0 V2 CAUSAL_RED artifact_attempt"],
+  ["NR-006, repetição legítima dos checks no mesmo HEAD","rca","P0 NR-006 RED: COMMENTED starts second"],
+  ["NR-006, RED causal por cenário (obrigatório)","rca","P0 V2 NR-006: case-specific RED"],
+  ["NR-006/NR-009, decisões e revalidação","rca","P0 V2 RED NR-006: COMMENTED"],
+  ["Vigência e consumo","rca","P0 V2 live consumer dispatch"],
+  ["Classes de ataques não cobertas apenas por testes existentes","rca","P0 NR-006 fail-closed: duplicate"],
+  ["Quatro resultados somente","rca","P0 V2 negative: no auto PASS"],
+  ["Não habilitar","python","test_activation_cannot_be_enabled_by_candidate"],
+];
+FULL_PROTOCOL_CASES.push(...[
+  ["S5.3:",FULL_PROTOCOL_53_RULES],
+  ["S5.4-STEP:",FULL_PROTOCOL_54_STEPS],
+  ["S5.4-RULE:",FULL_PROTOCOL_54_RULES],
+  ["S5.5:",FULL_PROTOCOL_55_RULES],
+  ["S5.6:",FULL_PROTOCOL_56_RULES],
+].flatMap(([prefix,list])=>list.map(([name,file,pattern])=>({
+  id:prefix+name,file,pattern}))));
+
+
+
+// §5.10–5.12 added material dossier is review evidence, not semantic approval.
+// Require all ten executable BUILD witnesses, not only source-file existence.
+FULL_PROTOCOL_CASES.push(...[
+  ["S5.10-RULES","P0 MATERIAL TRIAGE:"],
+  ["S5.10-SENTENCES-PAIRS","P0 SEMANTIC DOSSIER:"],
+  ["S5.10-PRIORITY","P0 TEN MATERIAL DISPUTES:"],
+  ["S5.11-MODEL","P0 TEN CAUSAL MODELS:"],
+  ["S5.11-REVERSE","P0 REVERSE 18 MATERIAL:"],
+  ["S5.11-NEGATIVE-MUTANTS","P0 MUTATION FULL CORPUS:"],
+  ["S5.11-INTERPRETATIONS","P0 TEN REASONED INTERPRETATIONS:"],
+  ["S5.11-SHA256","P0 CRYPTO SNAPSHOT:"],
+  ["S5.12-DISPATCH","P0 FULL_PROTOCOL manual workflow_dispatch"],
+  ["S5.12-PR-MERGE","P0 FULL_PROTOCOL PR merge checkout"],
+].map(([id,pattern])=>({id,file:"rca",pattern})));
+
+// Blind protocol paragraph audit, complementary to §5.1–§5.5 heading/row
+// inventory. A new or changed rule invalidates the frozen Git blob below,
+// even when all existing names and tests remain green.
+// Candidate protocol snapshot §5.10–5.12: append-only material evidence,
+// still NO-GO. Binding is reviewed in PR #690, not independently approved.
+const FULL_PROTOCOL_GIT_BLOB="857d73a44bce5917d64aad6fca6df987ab823321";
+const FULL_PROTOCOL_REVIEWED_SUITE_BLOBS=Object.freeze({
+  python:"33462488ae65e51db73aef5d14c72cec7e6fa894",
+  rca:"d0bea54b09eb379cd32d1391cf34c9d100d1731e",
+  queue:"534cb078de0abf63b8c5235724332333bbda56bd",
+});
+// A passing name without its reviewed test body does not establish semantic
+// equivalence. Updates to any source must be reviewed and deliberately
+// rebound in the same candidate PR before the build gate can certify it.
+
+const FULL_PROTOCOL_ROOT_INVARIANTS=[["S1-AUDITOR-ONLY","## 1.","o único perfil de auditoria","rca","P0 META_PROTOCOL auditor-only hosted runner and no visual source drift"],["S1-SUPERVISOR-READONLY","## 1.","não aprova PR, não publica status e não executa merge","rca","P0 META_PROTOCOL auditor-only hosted runner and no visual source drift"],["S1-OWNER-AUTH","## 1.","O titular concede decisões específicas","python","test_N17_revoked_specific_authorization"],["S1-AUTHORIZED-BRANCH","## 1.","O implementador altera apenas a branch autorizada","rca","P0 PRE-AUDIT #690 sem associação autenticada"],["S1-REVIEW-SEGREGATION","## 1.","conta revisora elegível, diferente da autora","python","test_N06_author_cannot_review_own_work"],["S1-NO-APP-SETUP","## 1.","Nenhum componente deste BUILD habilita","python","test_activation_cannot_be_enabled_by_candidate"],["S2-CONTRACT-SOURCE","## 2.","A versão integrada na `main` protegida é a autoridade","python","test_N03_changed_contract_source_rejected"],["S2-NO-CANDIDATE","## 2.","É proibido aceitar versão modificada no candidato","python","test_N03_different_contract_blob_rejected"],["S2-ACTIVE","## 2.","`ACTIVE`: missão não certificada","python","test_N01_active_cannot_certify_from_reports"],["S2-BLOCKED-EXTERNAL","## 2.","`BLOCKED_EXTERNAL`: dependência verificável","python","test_N11_missing_tool_blocked"],["S2-CANCEL-OWNER","## 2.","`CANCELLED_BY_OWNER`: somente decisão identificável do titular","python","test_N10_cancel_without_owner_not_success"],["S2-CERTIFIED-TWO-STAGE","## 2.","`CERTIFIED`: exige provas técnicas e administrativas","python","test_N01_certified_without_real_receipts_is_rejected"],["S2-ACTIVATION-NOGO","## 2.","`NO-GO` de ativação: independente do estado operacional","python","test_activation_cannot_be_enabled_by_candidate"],["S2-PROTECTED-BLOB","## 2.","vincula o blob protegido do PLAN #689","python","test_watchdog_source_is_not_trusted_when_only_offline_json_was_used"],["S2-OFFLINE-EXIT-2","## 2.","sempre retorna exit code `2`","python","test_cli_blocked_diagnostic_never_signals_ci_pass"],["S2-WATCHDOG-READONLY","## 2.","sem publicar status de autorização","python","test_watchdog_valid_diagnosis_never_certifies"],["S3-N17C-THIRD-AUTHOR","## 3.","autoria terceira autorizada","python","test_N17_second_approval_not_proxy_for_revoked_auth"],["S3-N17C-TWO-APPROVALS","## 3.","as duas contas `contaos9999` e `Edivan5002`","python","test_N17_approved_review_does_not_replace_authorization"],["S3-N17C-EXTERNAL","## 3.","`N17(c)=BLOCKED_EXTERNAL`","python","test_N17_revoked_specific_authorization_cannot_pass"],["S4-APP-ONLY","## 4.","somente** por App dedicado","python","test_N13_wrong_check_integration_rejected"],["S4-ENTRY-SHA-BASE","## 4.","A avaliação de entrada da PR requer SHA efetivo","queue","N13 positive: PR única autenticada"],["S4-GROUP-REVALIDATE","## 4.","Um novo sucesso separado no SHA do `merge_group`","queue","N13 real resolver rejects removed queue ref"],["S4-NO-APP-ACTIVATION","## 4.","não cria nem ativa** esse App","python","test_activation_cannot_be_enabled_by_candidate"],["S4-NO-FAKE-STATUS","## 4.","jamais checks válidos para alterar proteção","python","test_N16_no_real_group_status_rejected"],["S5-EVENT-MATRIX","## 5.","`pull_request`, `push` e `merge_group`","rca","NR-005 pull_request bloqueia manifesto"],["S5-FULL-DIFF","## 5.","regra `full_diff`","rca","NR-005 full_diff do BUILD"],["S5-PUSH-IDENTITY","## 5.","verificação de auth da PR no push","rca","P0 PRE-AUDIT push da #690"],["S5-PREVIOUS-BASE","## 5.","base anterior ao diff","rca","P0 PRE-AUDIT manifesto ausente no base"],["S5-QUEUE-SINGLE-PR","## 5.","entrada única da fila","queue","N13 positive: PR única autenticada"],["S5-REVOCATION","## 5.","revogação de autorização mesmo após `success`","python","test_N17_revoked_specific_authorization_cannot_pass"],["S5-NO-WEAK-PROVIDER","## 5.","não suportar prova atômica suficientemente segura","python","test_N17_approved_review_does_not_replace_authorization"],["S5-ADMIN-AUTH","## 5.","autorização separada do titular","python","test_activation_cannot_be_enabled_by_candidate"],["S5-RULESET-READBACK","## 5.","readback de enforcement em main","python","test_watchdog_main_authenticated_get_readback_never_certifies"],["S6-IMPLEMENTATION-DIAG-ONLY","## 6.","código de diagnóstico, testes offline","python","test_watchdog_valid_diagnosis_never_certifies"],["S6-NO-APP-SOURCE","## 6.","não editar `src/`, `public/`, backend","rca","NR-005 full_diff do BUILD"],["S6-ALLOWLIST-EMEND","## 6.","solicitar emenda de allowlist","rca","NR-005 documento extra"],["S6-QUEUE-FAIL-NOGO","## 6.","check privilegiado desabilitado","python","test_N16_no_real_group_status_rejected"],["S6-CHECKPOINT-POST-MERGE","## 6.","Após merge protegido e readback","python","test_watchdog_merged_pr_requires_readback_not_new_review"],["S6-ZERODRIFT-NO-VISUAL","## 6.","identidade visual N/A","rca","P0 META_PROTOCOL auditor-only hosted runner and no visual source drift"]];
+FULL_PROTOCOL_CASES.push(...FULL_PROTOCOL_ROOT_INVARIANTS.map(([id,, ,file,pattern])=>({id,file,pattern})));
+function gitBlobId(content){
+  const bytes=Buffer.from(content,"utf8");
+  const header=Buffer.from("blob "+bytes.length+"\0","utf8");
+  return createHash("sha1").update(header).update(bytes).digest("hex");
+}
+
+
+/**
+ * Fast, read-only, fail-closed preflight of all reviewed sources.
+ * A candidate pin update is not an independent sign-off, and never opens PROD.
+ */
+export function verifyFullProtocolSourcePins({protocol,tests}={}){
+  const sources={protocol,python:tests?.python,rca:tests?.rca,queue:tests?.queue};
+  const expected={protocol:FULL_PROTOCOL_GIT_BLOB,...FULL_PROTOCOL_REVIEWED_SUITE_BLOBS};
+  const pins=Object.fromEntries(Object.entries(expected).map(([name,sha])=>{
+    const actual=typeof sources[name]==="string"?gitBlobId(sources[name]):null;
+    return [name,{expected:sha,actual,matches:actual===sha}];
+  }));
+  const issues=Object.entries(pins).filter(([,p])=>!p.matches)
+    .map(([name,p])=>"PIN_DRIFT "+name+" expected="+p.expected+" actual="+p.actual);
+  return {schema:"contaos.p0.full-protocol-source-pins.v1",
+    verdict:issues.length?"PIN_DRIFT":"PIN_MATCH",pins,issues,release:"NO_GO"};
+}
+
+// Normative BUILD tests prove NO-GO behavior for future activation, not
+// that a dedicated App, live merge queue or third-party N17(c) ran.
+const AUDIT_MODALITY_BY_STAGE=Object.freeze({PRE_PROD:"ASSISTED_PRE_PROD",PROD:"INDEPENDENT"});
+const STAGE_REVIEW_IDS=new Set(["S5.1:Revisão independente",
+  "PLAN-S3-RULE-05","PLAN-S3-RULE-06"]);
+// Preserve all 228 historical requirements; extend rather than replace the matrix.
+FULL_PROTOCOL_CASES.push(
+  {id:"MODALITY-863-SUPERVISOR",file:"python",pattern:"test_863_pre_prod_assisted_must_not_be_rejected_for_no_independence"},
+  {id:"MODALITY-863-SUPERVISOR-STAGE",file:"python",pattern:"test_863_unknown_stage_must_not_inherit_independent_audit"},
+  {id:"MODALITY-863-SUPERVISOR-AUTHORITY",file:"python",pattern:"test_863_protected_policy_and_independent_prod_cannot_be_substituted"},
+  {id:"MODALITY-863-SEMANTIC",file:"rca",pattern:"P0 #863 RED: full assisted semantic fixture"},
+  {id:"MODALITY-863-SEMANTIC-STAGE",file:"rca",pattern:"P0 #863 RED: missing or unknown release stage"},
+  {id:"MODALITY-863-AUTHORITY",file:"rca",pattern:"P0 #863 protected modality authority"},
+  {id:"MODALITY-863-PRIORITY",file:"rca",pattern:"P0 #863 review stage priority models"},
+  {id:"SEMANTIC-CORPUS-EMPTY",file:"rca",pattern:"P0 #863 RED: verified flags cannot replace protected corpus"},
+  {id:"SEMANTIC-CORPUS-SUBSET",file:"rca",pattern:"P0 #863 RED: source-bound subset cannot masquerade"},
+  {id:"SEMANTIC-CORPUS-CONTENT",file:"rca",pattern:"P0 #863 corpus integrity: same cardinality"}
+);
+const ACTIVATION_ONLY_PROTOCOL_IDS=new Set([
+  "S3-N17C-THIRD-AUTHOR","S3-N17C-TWO-APPROVALS","S3-N17C-EXTERNAL",
+  "S4-APP-ONLY","S4-ENTRY-SHA-BASE","S4-GROUP-REVALIDATE",
+  "S5-QUEUE-SINGLE-PR","S5-REVOCATION","S5-NO-WEAK-PROVIDER",
+  "S5-ADMIN-AUTH","S5-RULESET-READBACK",
+  "PLAN-S3-RULE-02","PLAN-S3-RULE-04","PLAN-S3-RULE-09",
+  ...FULL_PROTOCOL_PLAN_ACTIVATION_NEGATIVES.map(([id])=>id),
+]);
+
+const FULL_PROTOCOL_EXTERNAL=[
+  "N17(c): autoria terceira e duas aprovacoes elegiveis em fila real",
+  "HML: sessao autenticada e isolamento RLS/tenant",
+  "App dedicado: identidade privilegiada, autorizacao e revogacao",
+  "PROD: autorizacao titular, ruleset e readback integrado",
+];
+export function auditFullProtocolCoverage({protocol,tests,mission,workflow,
+    source,manifest,paths}={}){
+  const issues=[];
+  const rows=[];
+  for(const [suite,expectedBlob] of Object.entries(FULL_PROTOCOL_REVIEWED_SUITE_BLOBS)){
+    if(typeof tests?.[suite]!=="string" || gitBlobId(tests[suite])!==expectedBlob)
+      issues.push("SEMANTIC_SOURCE_BLOB: reviewed assertions changed or missing: "+suite);
+  }
+  if(typeof protocol!=="string" || gitBlobId(protocol)!==FULL_PROTOCOL_GIT_BLOB)
+    issues.push("META_PROTOCOL: hash do protocolo integral divergente; nova obrigacao exige remapeamento cego");
+  for(const [id,from,clause] of FULL_PROTOCOL_ROOT_INVARIANTS){
+    const tail=protocol?.split(from)[1]||"";
+    const body=tail.split(/\n## [0-9]/)[0];
+    if(!body.includes(clause))
+      issues.push("META_PROTOCOL: obrigacao raiz ausente/divergente "+id);
+  }
+  const expectedSections=["## 1.","## 2.","## 3.","## 4.","## 5.",
+    "## 5.1.","## 5.2.","## 5.3.","## 5.4.","## 5.5.","## 5.6.",
+    "## 5.7.","## 5.8.","## 5.9.","## 5.10.","## 5.11.","## 5.12.","## 5.13.","## 6."];
+  // Fail closed when the protected protocol grows without a corresponding
+  // executable authorization requirement. A summary checkbox is insufficient.
+  const section51=typeof protocol==="string"?
+    protocol.split("## 5.1.")[1]?.split("## 5.2.")[0]:"";
+  const gates=[...section51.matchAll(/^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$/gm)]
+    .map(m=>m[1].trim()).filter(x=>x!=="Gate" && x!=="---");
+  const declaredGates=FULL_PROTOCOL_51_GATES.map(x=>x[0]);
+  if(gates.length!==declaredGates.length ||
+      new Set(gates).size!==gates.length ||
+      gates.some(x=>!declaredGates.includes(x)) ||
+      declaredGates.some(x=>!gates.includes(x)))
+    issues.push("Secao 5.1 tem requisito sem testemunha executavel ou gate retirado");
+  const section52=typeof protocol==="string"?
+    protocol.split("## 5.2.")[1]?.split("## 5.3.")[0]:"";
+  const rules=[...section52.matchAll(/^\*\*([^*]+?):\*\*/gm)]
+    .map(m=>m[1].trim());
+  const declaredRules=FULL_PROTOCOL_52_RULES.map(x=>x[0]);
+  if(rules.length!==declaredRules.length ||
+      rules.some(x=>!declaredRules.includes(x)) ||
+      declaredRules.some(x=>!rules.includes(x)))
+    issues.push("Secao 5.2 tem regra sem testemunha executavel ou regra retirada");
+
+  const sectionRules=[
+    ["## 5.3.","## 5.4.",FULL_PROTOCOL_53_RULES,/^\*\*([^*]+?):\*\*/gm],
+    ["## 5.4.","## 5.5.",FULL_PROTOCOL_54_STEPS,/^\d+\. \*\*([^*]+?):\*\*/gm],
+    ["## 5.4.","## 5.5.",FULL_PROTOCOL_54_RULES,/^\*\*([^*]+?):\*\*/gm],
+    ["## 5.5.","## 5.6.",FULL_PROTOCOL_55_RULES,/^\*\*([^*]+?):\*\*/gm],
+    ["## 5.6.","## 5.7.",FULL_PROTOCOL_56_RULES,/^\*\*([^*]+?):\*\*/gm],
+  ];
+  for(const [from,to,inventory,re] of sectionRules){
+    const part=typeof protocol==="string"?protocol.split(from)[1]?.split(to)[0]:"";
+    const observed=[...part.matchAll(re)].map(m=>m[1].trim());
+    const declared=inventory.map(x=>x[0]);
+    if(observed.length!==declared.length ||
+        new Set(observed).size!==observed.length ||
+        observed.some(x=>!declared.includes(x)) ||
+        declared.some(x=>!observed.includes(x)))
+      issues.push("Requisito sem testemunha em "+from+" / "+inventory.length+" declarados");
+  }
+  for(const section of expectedSections)
+    if(!protocol?.includes(section))issues.push("Secao do protocolo ausente: "+section);
+  for(const item of FULL_PROTOCOL_CASES){
+    const code=tests?.[item.file];
+    // Search only declared test names, never arbitrary mentions in comments.
+    const names=typeof code==="string"?
+      [...code.matchAll(/(?:test\(["']([^"'\n]+)|def (test_[A-Za-z0-9_]+)\()/g)]
+        .map(m=>m[1]||m[2]):[];
+    const ok=names.some(name=>name.includes(item.pattern));
+    rows.push({id:item.id,status:ok?"TEST_DECLARED_NOT_EXECUTED":"MISSING_TEST",
+      scope:ACTIVATION_ONLY_PROTOCOL_IDS.has(item.id)?
+        "BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL":
+        STAGE_REVIEW_IDS.has(item.id)?
+          "BUILD_NEGATIVE_PROOF_STAGE_REVIEW_PENDING":"BUILD",
+      ...(STAGE_REVIEW_IDS.has(item.id)?{required_review_by_stage:AUDIT_MODALITY_BY_STAGE}:{}),
+      source:PROTOCOL_FULL_AUDIT_FILES[item.file],witness:item.pattern});
+    if(!ok)issues.push("Protocolo sem caso executavel: "+item.id+" / "+item.pattern);
+  }
+  if(new Set(FULL_PROTOCOL_CASES.map(x=>x.id)).size!==FULL_PROTOCOL_CASES.length)
+    issues.push("IDs de matriz repetidos");
+  const critical=[
+    ["CHECK_WORKFLOW_RUN_ATTEMPT",source?.includes("verifyPrecertRunOrigin")],
+    ["ZIP_REAL_BYTES",source?.includes("downloadPrecertArtifactDigest")],
+    ["FAILURE_TERMINAL",source?.includes("classifyPrecertReadiness")],
+    ["FINAL_LIVE_READBACK",source?.includes("latestChecks")&&
+      source?.includes("latestReviews")&&source?.includes("latestArtifact")],
+    ["IMMUTABLE_MANIFEST",source?.includes("assertImmutableP0Governance")],
+    ["REVIEW_VETO",source?.includes("CHANGES_REQUESTED")],
+    ["PR_ORIGIN_AUTH",source?.includes("resolvePrContext")],
+    ["ACTIVATION_DISABLED",mission?.activation_authorized===false &&
+      manifest?.ativacao_autorizada===false],
+    ["MANDATED_FULL_DIFF",manifest?.full_diff===true &&
+      Array.isArray(paths)&&paths.length===14 &&
+      new Set(paths).size===14 &&
+      manifest.files?.length===14&&
+      paths.every(x=>manifest.files.includes(x))],
+    ["CONTROLLER_READ_ONLY",workflow?.includes("pull-requests: read") &&
+      workflow?.includes("actions: read") && !/pull-requests:\s*write/.test(workflow)],
+    ["NO_SELF_CERTIFICATION",protocol?.includes("não substitui") &&
+      protocol?.includes("pré-certificação interna")],
+  ];
+  for(const [id,ok] of critical){
+    rows.push({id,status:ok?"STRUCTURAL_WITNESS":"MISSING_WITNESS"});
+    if(!ok)issues.push("Controle critico sem testemunha: "+id);
+  }
+  if(!protocol?.includes("BLOCKED_EXTERNAL")||
+      !protocol.includes("N17(c)"))
+    issues.push("Fronteiras externas e N17(c) ausentes do protocolo");
+  return {schema:"contaos.full-protocol-preaudit.v1",
+    verdict:issues.length?"CHANGES_REQUESTED":"COVERAGE_MAPPED_NOT_EXECUTED",
+    requirements:rows.length,covered:rows.filter(x=>!x.status.startsWith("MISSING")).length,
+    rows,external:FULL_PROTOCOL_EXTERNAL.map(x=>({requirement:x,status:"BLOCKED_EXTERNAL_FOR_ACTIVATION"})),
+    issues};
+}
+// Full execution happens in an isolated subprocess with credentials removed.
+// A matching title in source is NEVER an authorization proof.
+
+const FULL_PROTOCOL_STRUCTURAL_TO_EXECUTED=Object.freeze({
+  CHECK_WORKFLOW_RUN_ATTEMPT:"AUTH-CHECK-WORKFLOW-RUN-ATTEMPT",
+  ZIP_REAL_BYTES:"AUTH-ZIP-BYTES",
+  FAILURE_TERMINAL:"AUTH-FAILURE-TERMINAL",
+  FINAL_LIVE_READBACK:"AUTH-FINAL-POST-ZIP-READBACK",
+  IMMUTABLE_MANIFEST:"AUTH-MANIFEST-IMMUTABLE",
+  REVIEW_VETO:"AUTH-NATIVE-VETO",
+  PR_ORIGIN_AUTH:"AUTH-PR-IDENTITY",
+  ACTIVATION_DISABLED:"AUTH-NO-ACTIVATION",
+  MANDATED_FULL_DIFF:"AUTH-FULL-DIFF-MODE",
+  CONTROLLER_READ_ONLY:"AUTH-READONLY-PERMISSIONS",
+  NO_SELF_CERTIFICATION:"AUTH-NO-SELF-CERTIFY",
+});
+
+// Compound clauses must be proven by EVERY constituent, not by one
+// executable witness whose title happens to match the final element.
+const FULL_PROTOCOL_COMPOUND_WITNESSES=Object.freeze({
+  "S5.5:Dez camadas, sempre na ordem":
+    Array.from({length:10},(_,i)=>["rca","P0 V2 LAYER "+String(i+1).padStart(2,"0")+":"]),
+  "S5.5:Doze perspectivas obrigatórias":
+    ADVERSARIAL_V2_LENSES.map(name=>["rca","P0 V2 LENS "+name+":"]),
+  "S5-EVENT-MATRIX":[
+    ["rca","NR-005 pull_request bloqueia manifesto"],
+    ["rca","P0 PRE-AUDIT push da #690"],
+    ["queue","N13 protected workflows recheck group"],
+  ],
+  "S5.1:NR-005 / falsificações":
+    FULL_PROTOCOL_51_FALSIFICATION_SUBCASES.map(([,pattern])=>["rca",pattern]),
+  "S5.1:WDG-02 / progresso":
+    FULL_PROTOCOL_WDG02_SUBCASES.map(([,pattern])=>["python",pattern]),
+});
+function executedConstituents(suites,requirements){
+  if(!requirements) return {complete:true,names:[]};
+  const names=[];
+  for(const [key,prefix] of requirements){
+    const suite=suites?.[key];
+    if(suite?.passed!==true || suite?.exitCode!==0 ||
+       !Array.isArray(suite.successfulNames))return {complete:false,names};
+    const matched=suite.successfulNames.filter(name=>name.startsWith(prefix));
+    if(matched.length!==1)return {complete:false,names};
+    names.push(key+":"+matched[0]);
+  }
+  return {complete:true,names};
+}
+// Separate normative semantic assurance from executable BUILD coverage.
+// A seven-field narrative does not establish that any asserted relationship
+// is true: independent contradictory review and authenticated provenance are
+// separate decisions. Fail closed even when all seven fields are populated.
+const SEMANTIC_AXES=Object.freeze([
+  "authority","antecedent","outcomes","interactions","live","revocation","boundary"
+]);
+function nonEmptySemanticValue(value){
+  if(typeof value==="string")return value.trim().length>0;
+  if(Array.isArray(value))return value.length>0&&value.every(nonEmptySemanticValue);
+  if(value&&typeof value==="object"){
+    const values=Object.values(value);
+    return values.length>0&&values.every(nonEmptySemanticValue);
+  }
+  return false;
+}
+// §5.6 positive and negative consequences, source, revocation and
+// counterexamples are mandatory subpredicates of their respective axes.
+function semanticAxisStructurallyComplete(evidence,axis){
+  const value=evidence?.[axis];
+  if(!nonEmptySemanticValue(value)||!value||typeof value!=="object"||
+      Array.isArray(value))return false;
+  const string=x=>typeof x==="string"&&x.trim().length>0;
+  switch(axis){
+    case "authority":return string(value.actor)&&string(value.source);
+    case "antecedent":return string(value.event)&&string(value.source);
+    case "outcomes":return ["positive","negative"].every(key=>
+      value[key]&&typeof value[key]==="object"&&
+      string(value[key].decision)&&string(value[key].source));
+    case "interactions":return Array.isArray(value.clauses)&&
+      value.clauses.length>0&&value.clauses.every(string)&&
+      string(value.counterexample);
+    case "live":return string(value.source)&&string(value.url)&&
+      /^https:\/\/github[.]com\/contaos999999\/contaos-hml-control\//.test(value.url)&&
+      validSha(value.head);
+    case "revocation":return string(value.trigger)&&string(value.source);
+    case "boundary":return string(value.phase)&&string(value.external);
+    default:return false;
+  }
+}
+const CLOSED_PLAN_SEMANTIC_UNITS=Object.freeze([
+  ...[
+    ["S3",10],["S31",9],["S4",14],["S5",18],["S6",6],
+    ["S7",3],["S8",7],["S9",2],["S10",2],
+  ].flatMap(([section,count])=>Array.from({length:count},(_,i)=>
+    "PLAN-"+section+"-"+String(i+1).padStart(2,"0"))),
+  ...Array.from({length:29},(_,i)=>"EMENDA-"+String(i+1).padStart(2,"0")),
+  ...Array.from({length:24},(_,i)=>"PLAN-S31-ATOM-A"+String(i+1).padStart(2,"0")),
+  ...Array.from({length:7},(_,i)=>"PLAN-S6-RECOVERY-R"+String(i+1).padStart(2,"0")),
+  ...["A","B","C","D","E","F"].map(letter=>"EMENDA-N17-"+letter),
+]);
+if(CLOSED_PLAN_SEMANTIC_UNITS.length!==137 ||
+   new Set(CLOSED_PLAN_SEMANTIC_UNITS).size!==137)
+  throw Error("SEMANTIC: protected source inventory not unique/complete");
+
+/**
+ * Semantic source inventory is a provenance check, NOT an interpretation or PASS.
+ * Every meaningful source line is kept, rather than assuming that the 137
+ * previously enumerated identifiers exhaust the protected normative texts.
+ */
+export const PROTECTED_SEMANTIC_SOURCES=Object.freeze({
+  "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md":
+    "9d037a37df8ae177f7f02123932e0ca60e7e3f81",
+  "docs/frontend/planos/EMENDA_P0_ABS_FILA_REVISAO_690_2026-11-20.md":
+    "cba58ceb1f88fa6774ccf1ce1661ac9f5a942c1b",
+});
+const ORCHESTRATION_PATH =
+  "docs/frontend/governanca/PROTOCOLO_ORQUESTRACAO_AUDITORIA_AUTOMATIZADA_4_1.md";
+const P0_690_PROTECTED_BASE = "e007c4bad8f2c66c489c55e4752b71bb19c5ced0";
+const CSDI_PROPOSAL_MERGE = "ee88b81a18882d4810702a1fab0f06f132b5e7c3";
+const CSDI_PROPOSAL_BLOBS = Object.freeze({
+  "docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md":
+    "21c31ff831f1d1a2a4d9fec78d7dfacd019247c3",
+  [ORCHESTRATION_PATH]: "6c8253c23a1b0d224ea4d5ac76dbdb1f79864f7e",
+});
+
+
+// #781 is a separately protected amendment of review modality only.
+// Its exact parent/head/merge, blobs and revalidation PLAN are closed;
+// the historical semantic corpus and original certification gates remain intact.
+const REVIEW_781 = Object.freeze({
+  pr:781,
+  parent:"e0823b6f4b398c13cca430cb0130f4f5dd95f521",
+  head:"cd731d27b7024c9f47bf2dce0ae01e6cac932a12",
+  merge:"cb39a0b59addadceaacf75ed5bc4dc04534dcb57",
+  blob:"eee5aac26c7be294f2237b32999481dc30d569a2",
+  plan:"d9cfb6b03be8011b5ee1472c16cbe2ba350fca7b",
+  planPath:"docs/frontend/planos/EMENDA_REVALIDACAO_FISCAL_690_PR781_2026-11-28.md",
+  planBlob:"53403369b84f667bf536f5ed60e8a5947445f9b0"
+});
+function sourceAncestor(ancestor,base) {
+  try {
+    execFileSync("git",["merge-base","--is-ancestor",ancestor,base],
+      {stdio:"pipe",timeout:15000});
+    return true;
+  } catch(error) {
+    if(error.status===1)return false;
+    throw error;
+  }
+}
+function verifyReview781(base,content,live,read) {
+  const fail=()=>{throw Error("alteração normativa posterior exige revalidação: "+ORCHESTRATION_PATH);};
+  if(!sourceAncestor(REVIEW_781.merge,base)||
+     !sourceAncestor(REVIEW_781.plan,base)||
+     !sourceAncestor(CSDI_PROPOSAL_MERGE,REVIEW_781.parent)||
+     !sourceAncestor(REVIEW_781.merge,REVIEW_781.plan))fail();
+  const parents=git("rev-list","--parents","-n","1",REVIEW_781.merge).split(/\s+/);
+  if(parents.join(" ")!==[REVIEW_781.merge,REVIEW_781.parent,REVIEW_781.head].join(" "))fail();
+  const prior=read(CSDI_PROPOSAL_MERGE,ORCHESTRATION_PATH);
+  if(gitBlobId(prior)!==CSDI_PROPOSAL_BLOBS[ORCHESTRATION_PATH]||
+     !prior.startsWith(content)||
+     read(REVIEW_781.parent,ORCHESTRATION_PATH)!==prior||
+     gitBlobId(live)!==REVIEW_781.blob||
+     read(REVIEW_781.merge,ORCHESTRATION_PATH)!==live||
+     read(REVIEW_781.head,ORCHESTRATION_PATH)!==live||
+     !live.includes("**PROPOSTA NÃO VIGENTE.**")||
+     !live.includes("revisão assistida pré-PROD")||
+     !live.includes("Permanecem exigíveis as validações técnicas"))fail();
+  const changed=git("diff","--name-only",REVIEW_781.parent,REVIEW_781.merge).split("\n");
+  if(changed.length!==2||!changed.includes("AGENTS.md")||!changed.includes(ORCHESTRATION_PATH))fail();
+  if(gitBlobId(read(REVIEW_781.plan,REVIEW_781.planPath))!==REVIEW_781.planBlob||
+     gitBlobId(read(base,REVIEW_781.planPath))!==REVIEW_781.planBlob)fail();
+  return {pr:REVIEW_781.pr,merge:REVIEW_781.merge,blob:REVIEW_781.blob,
+    revalidation_plan:REVIEW_781.plan,modality:"ASSISTED_PRE_PROD",
+    semantic_certification:"NOT_CERTIFIED",activation_authorized:false};
+}
+
+
+// The owner's specific stage amendment is effective only through its exact
+// protected merge. A byte-identical unmerged PLAN, rollback or changed blob
+// cannot authorize assisted PRE_PROD review.
+const REVIEW_863=Object.freeze({
+  pr:863,parent:"d9cfb6b03be8011b5ee1472c16cbe2ba350fca7b",
+  head:"ec96b4708db8ea8075ef9c7b49b20ba09ef9e7e1",
+  merge:"18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e",blob:"4e4473aef5335a6891e78e2d248be50718ea591e",
+  path:"docs/frontend/planos/EMENDA_P0_690_MODALIDADE_AUDITORIA_PRE_PROD_2026-11-28.md",decision_id:7237068104
+});
+function verifyReview863(base,read){
+  const fail=()=>{throw Error("modalidade #863: alteração normativa posterior exige revalidação");};
+  const liveEntry=git("ls-tree",base,"--",REVIEW_863.path);
+  if(!sourceAncestor(REVIEW_863.merge,base)){
+    if(liveEntry)fail();
+    return null; // historical sources retain their original authority
+  }
+  if(!sourceAncestor(REVIEW_781.merge,REVIEW_863.parent)||
+     !sourceAncestor(REVIEW_781.plan,REVIEW_863.parent)||
+     git("rev-list","--parents","-n","1",REVIEW_863.merge)!==
+       [REVIEW_863.merge,REVIEW_863.parent,REVIEW_863.head].join(" ")||
+     git("diff","--name-only",REVIEW_863.parent,REVIEW_863.merge)!==REVIEW_863.path||
+     git("ls-tree",REVIEW_863.parent,"--",REVIEW_863.path)||
+     !liveEntry.startsWith("100644 blob "+REVIEW_863.blob+"\t"))fail();
+  const live=read(base,REVIEW_863.path);
+  if(gitBlobId(live)!==REVIEW_863.blob||
+     read(REVIEW_863.merge,REVIEW_863.path)!==live||
+     read(REVIEW_863.head,REVIEW_863.path)!==live||
+     !live.includes("7237068104")||
+     !live.includes("auditoria independente é exclusiva do GATE PROD")||
+     !live.includes("Não tratar a proposta CSDI #693 como vigente"))fail();
+  return {pr:REVIEW_863.pr,merge:REVIEW_863.merge,blob:REVIEW_863.blob,
+    decision_id:REVIEW_863.decision_id,required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+    activation_authorized:false,semantic_certification:"NOT_CERTIFIED"};
+}
+
+export function readP0690ProtectedSources(base) {
+  const path = IMMUTABLE_P0_690_MANIFEST;
+  if (!validSha(base) || git("rev-parse", base + ":" + path) !==
+      git("rev-parse", P0_690_PROTECTED_BASE + ":" + path))
+    throw Error("manifesto #690 diverge da aprovação protegida");
+  execFileSync("git", ["merge-base", "--is-ancestor", P0_690_PROTECTED_BASE, base]);
+  const manifest = JSON.parse(git("show", base + ":" + path));
+  const expected = { ...PROTECTED_SEMANTIC_SOURCES,
+    [ORCHESTRATION_PATH]: "8a9d5824a83d43150589b97ad8cbd95d6b49cfdd" };
+  const read = (ref, file) => execFileSync("git", ["show", ref + ":" + file],
+    {encoding: "utf8", timeout: 15000});
+  let reviewAmendment=null;
+  const modalityAmendment=verifyReview863(base,read);
+  const review781Integrated=sourceAncestor(REVIEW_781.merge,base);
+  const sources = Object.fromEntries(Object.entries(expected).map(([file, blob]) => {
+    const content = read(P0_690_PROTECTED_BASE, file);
+    const live = read(base, file);
+    if (gitBlobId(content) !== blob)
+      throw Error("fonte #690 divergente no checkpoint protegido: " + file);
+    if (file===ORCHESTRATION_PATH && review781Integrated) {
+      // The exact accepted amendment cannot be silently rolled back.
+      reviewAmendment=verifyReview781(base,content,live,read);
+    } else if (live !== content) {
+      // PR #693 appended a proposal with expressly deferred effect. Keep the
+      // approved text byte-for-byte; any subsequent delta requires new review.
+      if (gitBlobId(live) !== CSDI_PROPOSAL_BLOBS[file] ||
+          !live.startsWith(content) || read(CSDI_PROPOSAL_MERGE, file) !== live)
+        throw Error("alteração normativa posterior exige revalidação: " + file);
+      execFileSync("git", ["merge-base", "--is-ancestor", CSDI_PROPOSAL_MERGE, base]);
+    }
+    return [file, {content, blob}];
+  }));
+  const normative = attestProtectedNormativeSources({ manifest,
+    plan: sources[manifest.plan_documento]?.content,
+    amendment: sources[manifest.emenda_fila]?.content,
+    canonical: sources[ORCHESTRATION_PATH].content });
+  if (normative.verdict !== "PASS") throw Error(normative.issues.join("; "));
+  return { manifest, normative:{...normative,
+    ...(reviewAmendment?{review_amendment:reviewAmendment}:{}),
+    ...(modalityAmendment?{modality_amendment:modalityAmendment}:{})},
+    semanticSources: Object.fromEntries(
+    Object.keys(PROTECTED_SEMANTIC_SOURCES).map(file => [file, sources[file]])) };
+}
+
+export function inventoryProtectedSemanticLines(sources){
+  const issues=[];const rows=[];
+  const paths=Object.keys(PROTECTED_SEMANTIC_SOURCES);
+  for(const path of paths){
+    const data=sources?.[path];
+    if(!data||typeof data.content!=="string"){
+      issues.push("SEMANTIC_SOURCE_MISSING: "+path);continue;
+    }
+    const bytes=Buffer.from(data.content,"utf8");
+    const actualBlob=createHash("sha1").update(
+      Buffer.concat([Buffer.from("blob "+bytes.length+"\0"),bytes])).digest("hex");
+    if(actualBlob!==PROTECTED_SEMANTIC_SOURCES[path]||
+       (data.blob&&data.blob!==actualBlob)){
+      issues.push("SEMANTIC_SOURCE_TAMPERED: "+path);continue;
+    }
+    const lines=data.content.split(/\r?\n/);
+    for(let n=0;n<lines.length;n++){
+      const value=lines[n].trim();
+      if(!value||/^#{1,6}\s/.test(value)||/^[-|: ]+$/.test(value)||
+          /^\`{3}/.test(value))continue;
+      // Keep descriptive and table rows too: never silently discard a rule
+      // merely because it was expressed in prose rather than 'deve'.
+      rows.push({id:"SRC-"+createHash("sha256").update(path+"\0"+(n+1)+
+          "\0"+lines[n]).digest("hex").slice(0,20),
+        path,blob:actualBlob,line:n+1,
+        text_sha256:createHash("sha256").update(lines[n]).digest("hex"),
+        text:lines[n]});
+    }
+  }
+  if(Object.keys(sources||{}).some(path=>!paths.includes(path)))
+    issues.push("SEMANTIC_SOURCE_UNKNOWN");
+  return {schema:"contaos.semantic-source-inventory.v1",
+    source_blobs:PROTECTED_SEMANTIC_SOURCES,
+    lines:rows,source_count:paths.length,issues,
+    inventory_verified:issues.length===0,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+/** Rejects fabricated, reused, outdated and non-source-bound interpretations. */
+export function verifySemanticSourceClaims(inventory,claims,{release_stage}={}){
+  const issues=[...(inventory?.issues||[])];
+  const rows=inventory?.lines||[];
+  const byId=new Map(rows.map(row=>[row.id,row]));
+  const seen=new Set();
+  if(!inventory?.inventory_verified)issues.push("SEMANTIC_INVENTORY_NOT_VERIFIED");
+  if(release_stage!=="PRE_PROD"&&release_stage!=="PROD")issues.push("SEMANTIC_RELEASE_STAGE_UNKNOWN");
+  for(const claim of claims||[]){
+    const row=byId.get(claim?.source_id);
+    if(!row){issues.push("SEMANTIC_CLAIM_UNKNOWN_SOURCE");continue;}
+    if(seen.has(row.id)){issues.push("SEMANTIC_CLAIM_DUPLICATE: "+row.id);continue;}
+    seen.add(row.id);
+    if(claim.path!==row.path||claim.blob!==row.blob||
+       claim.line!==row.line||claim.text_sha256!==row.text_sha256)
+      issues.push("SEMANTIC_CLAIM_WRONG_ANCHOR: "+row.id);
+    // This checks explicit source binding, not the truth of seven axes.
+    if(!claim.axes||SEMANTIC_AXES.some(axis=>!semanticAxisStructurallyComplete(
+        {[axis]:claim.axes[axis]},axis)))
+      issues.push("SEMANTIC_CLAIM_UNPROVEN_AXES: "+row.id);
+    if(!Array.isArray(claim.negative_witnesses)||
+       !claim.negative_witnesses.length||
+       claim.negative_witnesses.some(w=>typeof w!=="object"||
+         !w.case_id||!w.run_url||!w.head||!validSha(w.head)))
+      issues.push("SEMANTIC_CLAIM_NO_EXECUTED_COUNTERPROOF: "+row.id);
+    if(release_stage==="PRE_PROD" && (claim.assisted_review?.verdict!=="APPROVED"||
+       claim.assisted_review?.modality!=="ASSISTED_PRE_PROD"||!claim.assisted_review?.review_id||claim.independent_review!=null))
+      issues.push("SEMANTIC_CLAIM_NO_ASSISTED_REVIEW: "+row.id);
+    if(release_stage==="PROD" && (claim.independent_review?.verdict!=="APPROVED"||
+       claim.independent_review?.authorship_independent!==true||!claim.independent_review?.review_id||claim.assisted_review!=null))
+      issues.push("SEMANTIC_CLAIM_NO_INDEPENDENT_REVIEW: "+row.id);
+  }
+  return {schema:"contaos.semantic-source-claims.v1",
+    anchored_count:seen.size,source_lines:rows.length,
+    unmapped:rows.filter(row=>!seen.has(row.id)).map(row=>row.id),
+    issues,verdict:"INCONCLUSIVE",release:"NO_GO",
+    release_stage:release_stage??null,required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+    note:"Even a structurally complete self-report needs authenticated LIVE counterproof and stage-specific material contradiction."};
+}
+
+
+/** Exhaustive seven-axis REVIEW WORKLIST over authenticated source spans.
+ * A populated placeholder is never construed as an interpreted rule or proof.
+ */
+
+/**
+ * Lossless candidate sentence partition: every byte of every protected
+ * source span appears exactly once. This is NOT normative atomization:
+ * sentences can still contain multiple duties/conditions and require review.
+ */
+export function inventorySemanticSentenceCandidates(inventory){
+  const candidates=[];const issues=[...(inventory?.issues||[])];
+  if(!inventory?.inventory_verified)issues.push("SEMANTIC_ATOMS_SOURCE_NOT_VERIFIED");
+  for(const row of inventory?.lines||[]){
+    const text=row.text;
+    if(typeof text!=="string"||!text.length){issues.push("SEMANTIC_ATOM_EMPTY_SOURCE");continue;}
+    const boundaries=[];const re=/[.!?]\s+(?=[A-ZÀ-Ú0-9])/g;
+    for(const match of text.matchAll(re)){
+      if(match.index<4&&/^\s*\d+[.]\s/.test(text))continue;
+      boundaries.push(match.index+match[0].length);
+    }
+    const ends=[...boundaries,text.length];let start=0;const pieces=[];
+    for(const end of ends){
+      const segment=text.slice(start,end);
+      if(!segment){issues.push("SEMANTIC_ATOM_EMPTY_SEGMENT");continue;}
+      const id="ATOM-"+createHash("sha256")
+        .update(row.id+"\0"+start+"\0"+segment).digest("hex").slice(0,24);
+      pieces.push(segment);
+      candidates.push({id,source_id:row.id,path:row.path,line:row.line,
+        blob:row.blob,start,end,
+        text_sha256:createHash("sha256").update(segment).digest("hex"),
+        status:"UNREVIEWED",axes_unproven:SEMANTIC_AXES.length});
+      start=end;
+    }
+    if(pieces.join("")!==text||start!==text.length)
+      issues.push("SEMANTIC_ATOM_LOSSY_SPLIT: "+row.id);
+  }
+  const summaryDigest=createHash("sha256")
+    .update(candidates.map(x=>x.id+"|"+x.text_sha256).join("\n"))
+    .digest("hex");
+  if(new Set(candidates.map(x=>x.id)).size!==candidates.length)
+    issues.push("SEMANTIC_ATOM_DUPLICATE_ID");
+  return {schema:"contaos.semantic-sentence-candidates.v1",
+    candidate_count:candidates.length,unreviewed:candidates.length,
+    source_span_count:inventory?.lines?.length||0,
+    candidates,inventory_sha256:summaryDigest,issues,
+    partition_verified:issues.length===0,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+
+export function buildSevenAxisSemanticBacklog(inventory){
+  const slots=(inventory?.lines||[]).map(row=>({
+    source_id:row.id,path:row.path,blob:row.blob,line:row.line,
+    text_sha256:row.text_sha256,
+    axes:Object.fromEntries(SEMANTIC_AXES.map(axis=>[axis,{
+      status:"UNPROVEN",proof:null,negative_witness:null,
+      independent_contradiction:null}])),
+    mentioned_rules:[...new Set((row.text.match(/\b(?:N(?:0[1-9]|1[0-7])(?:\([a-f]\))?|NR-00[569]|P0-ABS-00[12])\b/gi)||[]))],
+    semantic_status:"INCONCLUSIVE"
+  }));
+  const pairs=[];
+  for(const row of slots){
+    for(let i=0;i<row.mentioned_rules.length;i++)
+      for(let j=i+1;j<row.mentioned_rules.length;j++)
+        pairs.push({source_id:row.source_id,a:row.mentioned_rules[i],
+          b:row.mentioned_rules[j],status:"INTERACTION_UNPROVEN"});
+  }
+  const firstTen=CLOSED_PLAN_SEMANTIC_UNITS.filter(id=>/^PLAN-S3-\d{2}$/.test(id));
+  const planPath="docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md";
+  const normative_rules=CLOSED_PLAN_SEMANTIC_UNITS.map(id=>{
+    const n=firstTen.indexOf(id);
+    const anchor=n<0?null:(inventory?.lines||[]).find(row=>
+      row.path===planPath&&row.line===23+n&&
+      row.text.trim().startsWith((n+1)+". **"));
+    return {rule_id:id,source_links:anchor?[anchor.id]:[],
+      axes:Object.fromEntries(SEMANTIC_AXES.map(axis=>[axis,"UNPROVEN"])),
+      rule_verdict:"INCONCLUSIVE"};
+  });
+
+  // These are provisional review locations, not assertions that a numbered
+  // paragraph covers all atomic consequences. A candidate link cannot count
+  // as source-verified or as evidence of any semantic axis.
+  const planSectionLines=Object.freeze({
+    S31:[36,37,38,40,41,42,44,45,46],
+    S4:[50,52,53,54,55,56,57,58,59,60,61,62,64,66],
+    S5:[70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87],
+    S6:[93,97,99,100,101,102],
+    S7:[106,108,110],
+    S8:[115,119,120,121,124,125,126],
+    S9:[135,136],S10:[143,144],
+  });
+  const amendmentPath="docs/frontend/planos/EMENDA_P0_ABS_FILA_REVISAO_690_2026-11-20.md";
+  const amendmentLines=[3,9,10,12,16,17,18,22,23,24,25,29,31,33,35,
+    37,41,45,47,49,51,53,55,57,61,64,65,66,68];
+  const atomLines=[36,37,38,40,41,42,44,45,46];
+  const recoveryLines=[97,99,100,101,102];
+  for(const record of normative_rules){
+    if(record.source_links.length){record.source_link_level="DIRECT_NUMBERED";continue;}
+    const id=record.rule_id;
+    let path=planPath,lines=null;
+    const section=/^PLAN-(S31|S4|S5|S6|S7|S8|S9|S10)-(\d{2})$/.exec(id);
+    const amend=/^EMENDA-(\d{2})$/.exec(id);
+    const atom=/^PLAN-S31-ATOM-A(\d{2})$/.exec(id);
+    const recover=/^PLAN-S6-RECOVERY-R(\d{2})$/.exec(id);
+    const n17=/^EMENDA-N17-([A-F])$/.exec(id);
+    if(section)lines=[planSectionLines[section[1]]?.[Number(section[2])-1]];
+    else if(amend){path=amendmentPath;lines=[amendmentLines[Number(amend[1])-1]];}
+    else if(atom)lines=[atomLines[(Number(atom[1])-1)%atomLines.length]];
+    else if(recover)lines=[recoveryLines[(Number(recover[1])-1)%recoveryLines.length]];
+    else if(n17){path=amendmentPath;lines=[51];}
+    const matches=(inventory?.lines||[]).filter(row=>
+      row.path===path&&lines?.includes(row.line));
+    const positional=!!section||!!amend;
+    record.candidate_source_links=matches.map(row=>row.id);
+    if(positional&&matches.length===1){
+      record.source_links=[matches[0].id];
+      record.source_link_level="POSITIONAL_SOURCE_VERIFIED";
+      record.source_location={path:matches[0].path,line:matches[0].line,
+        blob:matches[0].blob,text_sha256:matches[0].text_sha256};
+    } else {
+      record.source_link_level=matches.length===1?"PROVISIONAL_ONLY":"UNMAPPED";
+    }
+    if(n17)record.source_clause_marker="("+n17[1].toLowerCase()+")";
+    // Verification is ONLY of physical position against the protected blob.
+    // It cannot establish atomic meaning, entailment, or semantic PASS.
+  }
+
+  const semanticSentences=inventorySemanticSentenceCandidates(inventory);
+  const atomOrdinalTargets=[
+    [36,1],[36,3],[36,4],[36,5],[36,6],[37,2],[37,4],[37,6],
+    [38,1],[38,3],[38,4],[40,2],[40,3],[40,5],[40,6],
+    [41,1],[41,2],[42,2],[42,5],[42,6],[44,2],[44,6],[45,2],[46,4]
+  ];
+  const recoveryOrdinalTargets=[
+    [97,1],[97,2],[99,1],[99,2],[100,1],[101,2],[102,1]
+  ];
+  const atomize=(row,source,selection)=>{
+    if(!source||!selection)return false;
+    const [line,ordinal]=selection;
+    const segments=(semanticSentences.candidates||[])
+      .filter(x=>x.path===source.path&&x.line===line);
+    const item=segments[ordinal-1];
+    if(!item||item.source_id!==source.id)return false;
+    row.source_links=[source.id];
+    row.source_link_level="TEXT_SEGMENT_VERIFIED";
+    row.source_atom={id:item.id,start:item.start,end:item.end,
+      text_sha256:item.text_sha256,line,blob:source.blob,path:source.path};
+    return true;
+  };
+  for(const row of normative_rules.filter(x=>x.source_link_level==="PROVISIONAL_ONLY")){
+    const atom=/^PLAN-S31-ATOM-A(\d{2})$/.exec(row.rule_id);
+    const recovery=/^PLAN-S6-RECOVERY-R(\d{2})$/.exec(row.rule_id);
+    const n17=/^EMENDA-N17-([A-F])$/.exec(row.rule_id);
+    if(atom||recovery){
+      const target=atom?atomOrdinalTargets[Number(atom[1])-1]:
+        recoveryOrdinalTargets[Number(recovery[1])-1];
+      const source=(inventory?.lines||[]).find(x=>x.path===planPath&&x.line===target?.[0]);
+      atomize(row,source,target);
+    }else if(n17){
+      const source=(inventory?.lines||[]).find(x=>x.path===amendmentPath&&x.line===51);
+      const found=source?[...source.text.matchAll(/\(([a-f])\)/g)]:[];
+      const idx="ABCDEF".indexOf(n17[1]);
+      const mark=found[idx];
+      if(mark&&mark[1]===n17[1].toLowerCase()){
+        const end=found[idx+1]?.index??source.text.length;
+        const phrase=source.text.slice(mark.index,end);
+        row.source_links=[source.id];
+        row.source_link_level="TEXT_SEGMENT_VERIFIED";
+        row.source_atom={id:"N17-"+n17[1],start:mark.index,end,
+          text_sha256:createHash("sha256").update(phrase).digest("hex"),
+          line:51,blob:source.blob,path:source.path};
+      }
+    }
+  }
+  const atomicVerified=normative_rules.filter(row=>
+    row.source_link_level==="TEXT_SEGMENT_VERIFIED").length;
+
+  const provisional_count=normative_rules.filter(row=>
+    row.source_link_level==="PROVISIONAL_ONLY").length;
+  const positional_count=normative_rules.filter(row=>
+    row.source_link_level==="POSITIONAL_SOURCE_VERIFIED").length;
+
+  const normativeIds=normative_rules.map(row=>row.rule_id);
+  const pairCount=normativeIds.length*(normativeIds.length-1)/2;
+  const pairHash=createHash("sha256");
+  for(let i=0;i<normativeIds.length;i++)
+    for(let j=i+1;j<normativeIds.length;j++)
+      pairHash.update(normativeIds[i]+"|"+normativeIds[j]+"\\n");
+  const pairDigest=pairHash.digest("hex");
+  const linked_count=normative_rules.filter(row=>row.source_links.length).length;
+  const issues=[...(inventory?.issues||[])];
+  if(!inventory?.inventory_verified)issues.push("SEMANTIC_SOURCE_NOT_VERIFIED");
+  if(normative_rules.length!==137||linked_count!==137||provisional_count!==0||positional_count!==90||atomicVerified!==37)issues.push("SEMANTIC_NORMATIVE_RULE_LINKAGE_INCOMPLETE");
+  if(slots.length!==inventory?.lines?.length||
+     slots.some(row=>SEMANTIC_AXES.some(a=>row.axes[a]?.status!=="UNPROVEN")))
+    issues.push("SEMANTIC_SEVEN_AXIS_WORKLIST_INCOMPLETE");
+  return {schema:"contaos.semantic-seven-axis-backlog.v1",
+    normative_rules,normative_rule_count:normative_rules.length,
+    normative_axis_slots:normative_rules.length*SEMANTIC_AXES.length,
+    anchored_normative_rules:linked_count,unlinked_normative_rules:normative_rules.length-linked_count,
+    provisionally_located_rules:provisional_count,
+    positionally_verified_rules:positional_count,segment_located_rules:atomicVerified,
+    all_possible_rule_pairs:pairCount,untriaged_rule_pairs:pairCount,
+    pair_inventory_sha256:pairDigest,
+    source_lines:slots.length,axes_per_source:SEMANTIC_AXES.length,
+    axis_slots:slots.length*SEMANTIC_AXES.length,rows:slots,
+    co_mentioned_interactions:pairs,issues,
+    worklist_verified:issues.length===0,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+export function validateSevenAxisSemanticBacklog(inventory,backlog){
+  const issues=[...(backlog?.issues||[])];
+  const expected=new Map((inventory?.lines||[]).map(row=>[row.id,row]));
+  const observed=new Set();
+  if(!inventory?.inventory_verified||!backlog?.worklist_verified)
+    issues.push("SEMANTIC_WORKLIST_SOURCE_UNVERIFIED");
+  for(const row of backlog?.rows||[]){
+    const src=expected.get(row.source_id);
+    if(!src||observed.has(row.source_id)||
+       row.path!==src.path||row.blob!==src.blob||
+       row.line!==src.line||row.text_sha256!==src.text_sha256)
+      issues.push("SEMANTIC_WORKLIST_INVALID_SOURCE: "+row.source_id);
+    observed.add(row.source_id);
+    if(SEMANTIC_AXES.some(axis=>!Object.prototype.hasOwnProperty.call(
+        row.axes||{},axis)))
+      issues.push("SEMANTIC_WORKLIST_MISSING_AXIS: "+row.source_id);
+  }
+  if(observed.size!==expected.size||backlog?.axis_slots!==expected.size*7)
+    issues.push("SEMANTIC_WORKLIST_MISSING_SOURCE_OR_SLOT");
+  const actualRules=backlog?.normative_rules||[];
+  if(actualRules.length!==137||backlog?.normative_axis_slots!==959||
+     new Set(actualRules.map(x=>x.rule_id)).size!==137||
+     CLOSED_PLAN_SEMANTIC_UNITS.some(id=>!actualRules.some(x=>x.rule_id===id))||
+     actualRules.some(x=>SEMANTIC_AXES.some(axis=>!Object.prototype.hasOwnProperty.call(
+       x.axes||{},axis))))
+    issues.push("SEMANTIC_NORMATIVE_RULE_MATRIX_INCOMPLETE");
+  const positionalRows=actualRules.filter(row=>row.source_link_level==="POSITIONAL_SOURCE_VERIFIED");
+  if(positionalRows.length!==90||backlog?.positionally_verified_rules!==90||
+     backlog?.anchored_normative_rules!==137||
+     backlog?.provisionally_located_rules!==0||
+     backlog?.unlinked_normative_rules!==0||
+     backlog?.segment_located_rules!==37)
+    issues.push("SEMANTIC_POSITIONAL_SOURCE_TOTAL_INVALID");
+  for(const row of positionalRows){
+    const src=(inventory?.lines||[]).find(x=>x.id===row.source_links?.[0]);
+    if(row.source_links?.length!==1||!src||
+       src.path!==row.source_location?.path||
+       src.line!==row.source_location?.line||
+       src.blob!==row.source_location?.blob||
+       src.text_sha256!==row.source_location?.text_sha256)
+      issues.push("SEMANTIC_POSITIONAL_SOURCE_INVALID: "+row.rule_id);
+  }
+  const segmentRows=actualRules.filter(row=>row.source_link_level==="TEXT_SEGMENT_VERIFIED");
+  if(segmentRows.length!==37)issues.push("SEMANTIC_SEGMENT_TOTAL_INVALID");
+  const sentenceInventory=inventorySemanticSentenceCandidates(inventory);
+  for(const row of segmentRows){
+    const src=(inventory?.lines||[]).find(x=>x.id===row.source_links?.[0]);
+    const atom=row.source_atom;
+    const phrase=src?.text?.slice(atom?.start,atom?.end);
+    const valid=src&&row.source_links.length===1&&atom&&
+      atom.path===src.path&&atom.blob===src.blob&&atom.line===src.line&&
+      Number.isSafeInteger(atom.start)&&Number.isSafeInteger(atom.end)&&
+      atom.start>=0&&atom.end>atom.start&&atom.end<=src.text.length&&
+      createHash("sha256").update(phrase).digest("hex")===atom.text_sha256;
+    if(!valid){issues.push("SEMANTIC_SEGMENT_SOURCE_INVALID: "+row.rule_id);continue;}
+    const n17=/^EMENDA-N17-([A-F])$/.exec(row.rule_id);
+    if(n17){
+      if(atom.id!=="N17-"+n17[1]||
+         !phrase.startsWith("("+n17[1].toLowerCase()+")"))
+        issues.push("SEMANTIC_N17_CASE_SOURCE_INVALID: "+row.rule_id);
+    }else if(!sentenceInventory.candidates.some(x=>
+      x.id===atom.id&&x.source_id===src.id&&
+      x.start===atom.start&&x.end===atom.end))
+      issues.push("SEMANTIC_SENTENCE_SOURCE_INVALID: "+row.rule_id);
+  }
+  for(let i=0;i<10;i++){
+    const id="PLAN-S3-"+String(i+1).padStart(2,"0");
+    const expectedAnchor=(inventory?.lines||[]).find(x=>
+      x.path==="docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md"&&x.line===23+i);
+    if(!expectedAnchor||!actualRules.some(x=>x.rule_id===id&&
+        x.source_links?.length===1&&x.source_links[0]===expectedAnchor.id))
+      issues.push("SEMANTIC_NORMATIVE_S3_SOURCE_MISMATCH: "+id);
+  }
+  return {worklist_complete:issues.length===0,
+    missing_sources:[...expected.keys()].filter(id=>!observed.has(id)),
+    issues,semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+
+
+/**
+ * Reverse source-to-rule audit. A mapping from a numbered rule to one text
+ * location cannot prove that every source span was interpreted.
+ * Deliberately reports a non-releasable gap, including gaps not recognized
+ * by the 137-item forward inventory.
+ */
+
+const SEMANTIC_GAP_REVIEW_CATEGORIES=Object.freeze({
+  PLAN:Object.freeze({
+    3:"SCOPE_AND_STAGE",7:"LIVE_BASE_FRESHNESS",8:"INITIAL_MISSION_CONTEXT",
+    9:"AUDITOR_PROFILE_AND_METHOD",10:"WORKFLOW_BASELINE",
+    11:"PROTECTION_AND_REVIEW_AUTHORITY",12:"NORMATIVE_REFERENCE_DEPENDENCIES",
+    13:"FORBIDDEN_SCOPE",17:"UNCERTIFIED_BASELINE_GAP",
+    19:"AUDITOR_ROLE_AND_INDEPENDENCE",89:"RED_GREEN_SECURITY_GATES",
+    117:"AUDIT_TABLE_HEADER",123:"ZERO_DRIFT_HEADER",
+    128:"VISUAL_SCOPE_AND_TEST_C",133:"HISTORICAL_AUDIT_RECORD",
+    141:"HISTORICAL_AUDIT_RECORD"
+  }),
+  EMENDA:Object.freeze({7:"AMENDMENT_TABLE_HEADER",63:"ZERO_DRIFT_HEADER"})
+});
+export function auditSemanticReverseCoverage(inventory,worklist){
+  const issues=[...(inventory?.issues||[]),...(worklist?.issues||[])];
+  const byId=new Map((inventory?.lines||[]).map(row=>[row.id,row]));
+  const references=new Map([...byId.keys()].map(id=>[id,[]]));
+  const invalid=[];
+  for(const rule of worklist?.normative_rules||[]){
+    for(const sourceId of rule.source_links||[]){
+      if(!byId.has(sourceId)){
+        invalid.push({rule_id:rule.rule_id,source_id:sourceId});
+        issues.push("SEMANTIC_REVERSE_INVALID_SOURCE_LINK: "+rule.rule_id);
+      } else references.get(sourceId).push({
+        rule_id:rule.rule_id,kind:rule.source_link_level||"UNKNOWN"
+      });
+    }
+  }
+  const uncovered=(inventory?.lines||[]).filter(row=>
+    !references.get(row.id)?.length).map(row=>({
+      source_id:row.id,path:row.path,blob:row.blob,
+      line:row.line,text_sha256:row.text_sha256
+    }));
+  const triaged=uncovered.map(row=>{
+    const collection=row.path.includes("/EMENDA_")?"EMENDA":"PLAN";
+    const category=SEMANTIC_GAP_REVIEW_CATEGORIES[collection][row.line]||null;
+    return {...row,category,
+      assessment:"REQUIRES_STAGE_SEMANTIC_REVIEW",
+      semantic_evidence:null,negative_witness:null};
+  });
+  if(triaged.some(row=>!row.category))
+    issues.push("SEMANTIC_REVERSE_UNCLASSIFIED_SOURCE_GAP");
+  // Classification is triage only. Never convert a content obligation into
+  // N/A or reduce the uncovered count without a source-bound review.
+  const covered=[...references.entries()].filter(([,links])=>links.length).length;
+  const extraUnproved=(worklist?.normative_rules||[]).filter(rule=>
+    rule.rule_verdict!=="PASS"||Object.values(rule.axes||{})
+      .some(value=>value==="UNPROVEN")).length;
+  if(uncovered.length)issues.push(
+    "SEMANTIC_REVERSE_UNCOVERED_SOURCE_SPANS: "+uncovered.length);
+  if(extraUnproved)issues.push(
+    "SEMANTIC_REVERSE_UNPROVEN_NORMATIVE_RULES: "+extraUnproved);
+  if(!inventory?.inventory_verified||!worklist?.worklist_verified)
+    issues.push("SEMANTIC_REVERSE_SOURCE_OR_WORKLIST_UNVERIFIED");
+  // A reverse mapping is evidence of traceability, not interpretation.
+  // Never infer semantic PASS from a lack of uncovered lines.
+  return {schema:"contaos.semantic-reverse-coverage.v1",
+    source_count:byId.size,covered_source_count:covered,
+    uncovered_source_count:uncovered.length,uncovered:triaged,
+    rule_count:worklist?.normative_rules?.length||0,
+    unproven_rule_count:extraUnproved,invalid,issues,
+    traceability_complete:uncovered.length===0&&invalid.length===0,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+
+
+/**
+ * Exhaustive evidence gate, not an evidence generator. All rules,
+ * sentence candidates, source lines and unordered interactions must be
+ * adjudicated. Trusted read-only evidence providers are required.
+ */
+async function assessSemanticGate({
+  inventory,worklist,sentenceInventory,reverseCoverage,
+  rules=[],sentences=[],sources=[],interactions=[],
+  independent=null,assisted=null,head=null,base=null,stage="FINAL",release_stage=null,
+  authenticateWitness=null,authenticateIndependent=null,authenticateAssisted=null,
+}={}){
+  const issues=[];
+  const fail=x=>issues.push(x);
+  const preaudit=stage==="PREAUDIT";
+  const preProd=release_stage==="PRE_PROD",prod=release_stage==="PROD";
+  const modality=preProd?AUDIT_MODALITY_BY_STAGE.PRE_PROD:prod?AUDIT_MODALITY_BY_STAGE.PROD:null;
+  if(!["FINAL","PREAUDIT"].includes(stage))fail("SEMANTIC_STAGE_UNKNOWN");
+  if(!modality)fail("SEMANTIC_RELEASE_STAGE_UNKNOWN");
+  if(!validSha(base))fail("SEMANTIC_BASE_UNPROVEN");
+  let policy=null,canonical=null;
+  if(validSha(base)&&modality){
+    try{
+      const protectedSources=readP0690ProtectedSources(base);
+      policy=protectedSources.normative.modality_amendment;
+      if(!policy||policy.activation_authorized!==false||
+         policy.required_review_by_stage?.[release_stage]!==modality)
+        fail("SEMANTIC_STAGE_POLICY_UNPROVEN");
+      // Never trust inventory flags or counts supplied by the candidate.
+      // Rebuild each collection from the authenticated, immutable source blobs.
+      const protectedInventory=inventoryProtectedSemanticLines(protectedSources.semanticSources);
+      const protectedWorklist=buildSevenAxisSemanticBacklog(protectedInventory);
+      const protectedSentences=inventorySemanticSentenceCandidates(protectedInventory);
+      const protectedReverse=auditSemanticReverseCoverage(protectedInventory,protectedWorklist);
+      if(!protectedInventory.inventory_verified||!protectedWorklist.worklist_verified||
+         !protectedSentences.partition_verified||protectedInventory.lines.length!==118||
+         protectedWorklist.normative_rules.length!==137||protectedSentences.candidates.length!==381||
+         protectedWorklist.all_possible_rule_pairs!==9316||
+         protectedReverse.source_count!==118||protectedReverse.unproven_rule_count!==137||
+         protectedReverse.invalid.length!==0)
+        fail("SEMANTIC_CANONICAL_CORPUS_UNPROVEN");
+      else{
+        canonical={inventory:protectedInventory,worklist:protectedWorklist,
+          sentenceInventory:protectedSentences,reverseCoverage:protectedReverse};
+        if(!isDeepStrictEqual(inventory,protectedInventory)||
+           !isDeepStrictEqual(worklist,protectedWorklist)||
+           !isDeepStrictEqual(sentenceInventory,protectedSentences)||
+           !isDeepStrictEqual(reverseCoverage,protectedReverse))
+          fail("SEMANTIC_PROTECTED_CORPUS_MISMATCH");
+      }
+    }catch{fail("SEMANTIC_STAGE_POLICY_OR_CORPUS_UNPROVEN");}
+  }
+  if(!canonical)fail("SEMANTIC_PROTECTED_CORPUS_MISMATCH");
+  if(preaudit&&independent!==null)fail("SEMANTIC_PREAUDIT_INDEPENDENT_STAGE_CONFUSION");
+  if(preaudit&&assisted!==null)fail("SEMANTIC_PREAUDIT_ASSISTED_STAGE_CONFUSION");
+  if(!preaudit&&((preProd&&independent!==null)||(prod&&assisted!==null)))
+    fail("SEMANTIC_MIXED_REVIEW_MODALITY");
+  // All denominators and origin lookups come from the rebuilt protected corpus.
+  const expectedRules=canonical?.worklist.normative_rules||[];
+  const expectedSentences=canonical?.sentenceInventory.candidates||[];
+  const expectedSources=canonical?.inventory.lines||[];
+  const goodSha=typeof head==="string"&&/^[0-9a-f]{40}$/.test(head);
+  if(!inventory?.inventory_verified||!worklist?.worklist_verified||
+     !sentenceInventory?.partition_verified||!goodSha)
+    fail("SEMANTIC_UNVERIFIED_SOURCE_OR_HEAD");
+  if(!reverseCoverage||reverseCoverage.source_count!==expectedSources.length||
+     reverseCoverage.unproven_rule_count!==expectedRules.length)
+    fail("SEMANTIC_REVERSE_BASELINE_MISMATCH");
+  const validateSet=(label,expected,actual,key)=>{
+    const ids=new Set(expected.map(key));
+    const got=new Set(actual.map(key));
+    if(got.size!==actual.length||got.size!==ids.size||
+       [...ids].some(id=>!got.has(id)))fail("SEMANTIC_"+label+"_COVERAGE_INCOMPLETE");
+  };
+  validateSet("RULES",expectedRules,rules,x=>x?.rule_id);
+  validateSet("SENTENCES",expectedSentences,sentences,x=>x?.id);
+  validateSet("SOURCES",expectedSources,sources,x=>x?.source_id??x?.id);
+  const pairs=[];
+  for(let i=0;i<expectedRules.length;i++)
+    for(let j=i+1;j<expectedRules.length;j++)
+      pairs.push(expectedRules[i].rule_id+"|"+expectedRules[j].rule_id);
+  const pairSet=new Set(pairs),normalized=new Set();
+  for(const p of interactions){
+    if(!p||!pairSet.has(p.pair_id)||normalized.has(p.pair_id)){
+      fail("SEMANTIC_PAIR_UNKNOWN_OR_DUPLICATE");break;
+    }
+    normalized.add(p.pair_id);
+  }
+  if(interactions.length!==pairs.length||normalized.size!==pairs.length)
+    fail("SEMANTIC_9316_PAIRS_UNADJUDICATED");
+  // An identical narrative reused for distinct normative obligations is not
+  // clause-by-clause adjudication. Reject boilerplate before LIVE auth.
+  const allClaims=[...rules,...sentences,...sources,...interactions];
+  for(const field of ["interpretation","counterexample"]){
+    const owners=new Map();
+    for(const claim of allClaims){
+      const value=typeof claim?.[field]==="string"?
+        claim[field].trim().replace(/\\s+/g," ").toLowerCase():null;
+      if(!value)continue;
+      const previous=owners.get(value);
+      if(previous&&previous!==claim.id){
+        fail("SEMANTIC_REUSED_"+field.toUpperCase()+": "+previous+" / "+claim.id);
+        break;
+      }
+      owners.set(value,claim.id);
+    }
+  }
+  const proofOk=(p,id)=>!!p&&p.head===head&&p.base===base&&
+    typeof p.interpretation==="string"&&p.interpretation.trim().length>=35&&
+    typeof p.counterexample==="string"&&p.counterexample.trim().length>=25&&
+    typeof p.witness==="object"&&p.witness!==null&&
+    !!p.witness.run_url&&p.witness.head===head&&p.witness.base===base&&
+    typeof p.negative_witness==="object"&&p.negative_witness!==null&&
+    !!p.negative_witness.run_url&&p.negative_witness.head===head&&p.negative_witness.base===base&&
+    p.negative_witness.run_url!==p.witness.run_url&&
+    (preaudit?p.independent_review_id==null&&p.assisted_review_id==null:
+      preProd?p.assisted_review_id===assisted?.review_id&&p.independent_review_id==null:
+      prod?p.independent_review_id===independent?.review_id&&p.assisted_review_id==null:false)&&
+    p.id===id;
+  for(const record of rules){
+    const origin=expectedRules.find(x=>x.rule_id===record?.rule_id);
+    if(!origin||!origin.source_links?.length||
+       !proofOk(record,record.rule_id)||
+       SEMANTIC_AXES.some(axis=>!semanticAxisStructurallyComplete(record.axes,axis))){
+      fail("SEMANTIC_RULE_UNPROVEN: "+record?.rule_id);break;
+    }
+  }
+  for(const record of sentences){
+    const origin=expectedSentences.find(x=>x.id===record?.id);
+    if(!origin||record.source_id!==origin.source_id||
+       record.text_sha256!==origin.text_sha256||
+       !["NORMATIVE","CONTEXTUAL"].includes(record.classification)||
+       !proofOk(record,record.id)||
+       (record.classification==="NORMATIVE"&&
+          SEMANTIC_AXES.some(axis=>!semanticAxisStructurallyComplete(record.axes,axis)))){
+      fail("SEMANTIC_SENTENCE_UNPROVEN: "+record?.id);break;
+    }
+  }
+  for(const record of sources){
+    const origin=expectedSources.find(x=>x.id===record?.source_id);
+    if(!origin||record.text_sha256!==origin.text_sha256||
+       record.blob!==origin.blob||!proofOk(record,record.source_id)){
+      fail("SEMANTIC_SOURCE_UNPROVEN: "+record?.source_id);break;
+    }
+  }
+  for(const pair of interactions){
+    const [left,right]=(pair?.pair_id||"").split("|");
+    const rationale=pair?.pair_rationale;
+    const pairSpecific=typeof rationale==="string" &&
+      rationale.trim().length>=60 &&
+      rationale.includes(left||"___") && rationale.includes(right||"___") &&
+      pair?.left_rule_id===left && pair?.right_rule_id===right &&
+      expectedRules.some(x=>x.rule_id===left) &&
+      expectedRules.some(x=>x.rule_id===right);
+    const applicability=pair?.decision==="NONINTERACTING"?
+      typeof pair?.separation_basis==="string" &&
+        pair.separation_basis.trim().length>=35:
+      Array.isArray(pair?.conflict_conditions) &&
+        pair.conflict_conditions.length>0 &&
+        pair.conflict_conditions.every(x=>typeof x==="string"&&x.trim().length>=15);
+    if(!["INTERACTS","NONINTERACTING","CONFLICT"].includes(pair?.decision)||
+       !pairSpecific||!applicability||!proofOk(pair,pair.pair_id)){
+      fail("SEMANTIC_PAIR_UNPROVEN: "+pair?.pair_id);break;
+    }
+  }
+  const login=x=>typeof x==="string"?x.trim().toLowerCase():"";
+  const validReview=r=>!!r&&r.head===head&&r.base===base&&
+    Number.isSafeInteger(r.review_id)&&r.review_id>0&&
+    !!login(r.author)&&!!login(r.reviewer)&&login(r.author)!==login(r.reviewer)&&
+    r.state==="APPROVED"&&r.scope==="FULL_SEMANTIC_CORPUS"&&r.modality===modality&&
+    r.contradiction_completed===true&&typeof r.report==="string"&&r.report.trim().length>=400&&
+    r.report_sha256===createHash("sha256").update(r.report).digest("hex");
+  if(!preaudit&&preProd&&(!validReview(assisted)||login(assisted.author)!=="contaos9999"||
+      login(assisted.reviewer)!=="edivan5002"||assisted.authorship_independent===true))
+    fail("SEMANTIC_ASSISTED_REVIEW_UNPROVEN");
+  if(!preaudit&&prod&&(!validReview(independent)||independent.authorship_independent!==true))
+    fail("SEMANTIC_INDEPENDENCE_UNPROVEN");
+  if(typeof authenticateWitness!=="function"||
+     (!preaudit&&((preProd&&typeof authenticateAssisted!=="function")||
+       (prod&&typeof authenticateIndependent!=="function"))))
+    fail("SEMANTIC_AUTHENTICATED_CONTRADICTION_MISSING");
+  // Authenticate only once all the local evidence is complete. Do not
+  // perform thousands of calls for an incomplete or fabricated ledger.
+  if(issues.length===0){
+    try {
+      // The external read-only authenticator must verify the exact review,
+      // report digest, current base and authority; unit callbacks are fixtures.
+      const context={base,release_stage,modality,policy};
+      if(!preaudit&&preProd&&await authenticateAssisted(assisted,head,context)!==true)
+        fail("SEMANTIC_ASSISTED_REVIEW_NOT_AUTHENTICATED");
+      if(!preaudit&&prod&&await authenticateIndependent(independent,head,context)!==true)
+        fail("SEMANTIC_INDEPENDENT_REVIEW_NOT_AUTHENTICATED");
+      const all=[...rules,...sentences,...sources,...interactions];
+      if(issues.length===0)
+        for(const row of all){
+          if(await authenticateWitness(row.witness,head,row.id,"POSITIVE",context)!==true){
+            fail("SEMANTIC_POSITIVE_WITNESS_NOT_AUTHENTICATED: "+row.id);break;
+          }
+          if(await authenticateWitness(row.negative_witness,head,row.id,"NEGATIVE",context)!==true){
+            fail("SEMANTIC_NEGATIVE_WITNESS_NOT_AUTHENTICATED: "+row.id);break;
+          }
+        }
+    } catch(e){fail("SEMANTIC_EXTERNAL_AUTHENTICATION_UNAVAILABLE");}
+  }
+  return {schema:preaudit?"contaos.semantic-preaudit-gate.v1":
+      "contaos.semantic-completeness-gate.v1",
+    stage,head,base,release_stage,review_modality:modality,required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+    rule_count:expectedRules.length,sentence_count:expectedSentences.length,
+    source_count:expectedSources.length,pair_count:pairs.length,
+    supplied:{rules:rules.length,sentences:sentences.length,
+      sources:sources.length,pairs:interactions.length},
+    ...(preaudit?{
+      semantic_preaudit:issues.length?"INCONCLUSIVE":"PASS",
+      semantic_completeness:"INCONCLUSIVE",
+      release:issues.length?"NO_GO":preProd?"ASSISTED_REVIEW_ELIGIBLE_ONLY":"INDEPENDENT_REVIEW_ELIGIBLE_ONLY",
+      independent_review_id:null,assisted_review_id:null,
+    }:{
+      semantic_completeness:issues.length?"INCONCLUSIVE":"PASS",
+      release:issues.length?"NO_GO":"SEMANTIC_REVIEW_CERTIFIED_ONLY",
+      independent_review_id:issues.length||!prod?null:independent.review_id,
+      assisted_review_id:issues.length||!preProd?null:assisted.review_id,
+    }),issues};
+}
+
+// Pre-audit and final certification use the identical substantive inventory,
+// seven-axis checks, positive/negative witnesses and read-only authentication.
+// Only the final stage consumes an authenticated, stage-specific review.
+export async function assessSemanticPreauditGate(input={}){
+  return assessSemanticGate({...input,stage:"PREAUDIT"});
+}
+export async function assessSemanticCompletenessGate(input={}){
+  return assessSemanticGate({...input,stage:"FINAL"});
+}
+
+export function auditNormativeSemanticCompleteness(matrix,claims={}){
+  const rows=Array.isArray(matrix?.rows)?matrix.rows:[];
+  const issues=[];
+  if(matrix?.verdict!=="EXECUTED_PASS_FOR_BUILD_ONLY"||!rows.length)
+    issues.push("SEMANTIC: executable BUILD evidence not complete");
+  if(!claims||typeof claims!=="object"||Array.isArray(claims))
+    claims={};
+  if(new Set(rows.map(row=>row.id)).size!==rows.length)
+    issues.push("SEMANTIC: duplicated obligation ID");
+  // This set is separate from the 218 executable BUILD matrix.
+  // A self-selected subset cannot create a zero-unproven semantic certificate.
+  const presentIds=new Set(rows.map(row=>row.id));
+  const sourceUnmapped=CLOSED_PLAN_SEMANTIC_UNITS.filter(id=>!presentIds.has(id));
+  if(sourceUnmapped.length)
+    issues.push("SEMANTIC: protected PLAN/emend source not wholly mapped: "+
+      sourceUnmapped.length+" obligations missing");
+
+  const findings=rows.map(row=>{
+    const evidence=Object.prototype.hasOwnProperty.call(claims,row.id)?claims[row.id]:null;
+    const missing=SEMANTIC_AXES.filter(axis=>!semanticAxisStructurallyComplete(evidence,axis));
+    if(missing.length)issues.push("SEMANTIC: "+row.id+" missing "+missing.join(","));
+    return {id:row.id,execution:row.execution,axes:SEMANTIC_AXES.length-missing.length,
+      missing,semanticVerdict:missing.length?"INCONCLUSIVE":"REVIEW_REQUIRED"};
+  });
+  const unknown=Object.keys(claims).filter(id=>!rows.some(row=>row.id===id));
+  if(unknown.length)issues.push("SEMANTIC: unrecognized claims "+unknown.join(","));
+  return {schema:"contaos.protocol-semantic-audit.v1",
+    verdict:"INCONCLUSIVE",release:"NO_GO",reviewRequired:true,
+    total:rows.length,unproven:findings.filter(x=>x.missing.length).length,
+    sourceExpected:CLOSED_PLAN_SEMANTIC_UNITS.length,
+    sourceUnmapped,sourceComplete:sourceUnmapped.length===0,
+    findings,issues,
+    required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+    reason:"Seven narrative axes need source-backed verification and stage-specific adversarial contradiction; neither self-assertion nor BUILD PASS is a semantic certificate"};
+}
+export function attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha}={}){
+  const issues=[...(coverage?.issues||[])];
+  const rows=[];
+  if(!validSha(head)||!validSha(base)||!validSha(checkoutSha))
+    issues.push("EXECUTION: SHA/base/checkout invalidos");
+  if(coverage?.verdict!=="COVERAGE_MAPPED_NOT_EXECUTED")
+    issues.push("EXECUTION: contrato incompleto ou nao mapeado");
+  const suiteKeys=["python","rca","queue"];
+  for(const key of suiteKeys){
+    const suite=suites?.[key];
+    if(!suite || suite.exitCode!==0 || !suite.passed ||
+        !Number.isSafeInteger(suite.executed)||suite.executed<1 ||
+        !(suite.outputSha256||"").match(/^[a-f0-9]{64}$/) ||
+        !Array.isArray(suite.successfulNames) ||
+        suite.successfulNames.length!==suite.executed ||
+        new Set(suite.successfulNames).size!==suite.successfulNames.length)
+      issues.push("EXECUTION: suite nao comprovada integralmente: "+key);
+  }
+  for(const row of coverage?.rows||[]){
+    if(!row.source){
+      const witnessId=FULL_PROTOCOL_STRUCTURAL_TO_EXECUTED[row.id];
+      const witness=FULL_PROTOCOL_CASES.find(x=>x.id===witnessId);
+      const suite=witness&&suites?.[witness.file];
+      const matches=witness&&Array.isArray(suite?.successfulNames)?
+        suite.successfulNames.filter(x=>x.startsWith(witness.pattern)):[];
+      const valid=row.status==="STRUCTURAL_WITNESS" && !!witnessId &&
+        suite?.passed===true && suite.exitCode===0 && matches.length>0;
+      rows.push({...row,execution:valid?"EXECUTED_PASS":"UNPROVEN",
+        executableWitness:witnessId||null,matchedTests:matches,
+        outputSha256:suite?.outputSha256||null});
+      if(!valid)issues.push("EXECUTION: controle estrutural sem teste real PASS: "+row.id);
+      continue;
+    }
+    const item=FULL_PROTOCOL_CASES.find(x=>x.id===row.id);
+    const suite=item&&suites?.[item.file];
+    const matches=Array.isArray(suite?.successfulNames)?
+      suite.successfulNames.filter(x=>x.startsWith(item.pattern)):[];
+    const compound=executedConstituents(suites,FULL_PROTOCOL_COMPOUND_WITNESSES[row.id]);
+    const good=suite?.passed===true && suite?.exitCode===0 &&
+      row.status==="TEST_DECLARED_NOT_EXECUTED" && matches.length>=1 &&
+      compound.complete;
+    rows.push({...row,compoundTests:compound.names,execution:good?
+      (row.scope==="BUILD_NEGATIVE_PROOF_ACTIVATION_EXTERNAL"?
+        "BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED":
+       row.scope==="BUILD_NEGATIVE_PROOF_STAGE_REVIEW_PENDING"?
+        "BUILD_NEGATIVE_PASS_STAGE_REVIEW_PENDING":"EXECUTED_PASS"):"UNPROVEN",
+      suite:item?.file||null,matchedTests:matches,
+      outputSha256:suite?.outputSha256||null});
+    if(!good)issues.push("EXECUTION: requisito sem teste executado PASS: "+row.id);
+  }
+  return {schema:"contaos.full-protocol-executed.v2",
+    verdict:issues.length?"CHANGES_REQUESTED":"EXECUTED_PASS_FOR_BUILD_ONLY",
+    head,base,checkoutSha,requirements:rows.length,
+    executed:rows.filter(x=>x.execution==="EXECUTED_PASS").length,
+    activationBlocked:rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED").length,
+    stageReviewPending:rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_STAGE_REVIEW_PENDING").length,
+    // Legacy count retained but explicitly classified as PROD, never a PRE_PROD prerequisite.
+    independentAuditPending:rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_STAGE_REVIEW_PENDING").length,
+    independentAuditPendingStage:"PROD",
+    required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+    structural:rows.filter(x=>x.execution==="STRUCTURAL_CHECK_ONLY").length,
+    rows,external:[...(coverage?.external||[]),
+      ...rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_ACTIVATION_BLOCKED")
+        .map(x=>({requirement:x.id,status:"BLOCKED_EXTERNAL_FOR_ACTIVATION",
+          negativeBuildTest:x.matchedTests?.[0]||null})),
+      ...rows.filter(x=>x.execution==="BUILD_NEGATIVE_PASS_STAGE_REVIEW_PENDING")
+        .map(x=>({requirement:x.id,status:"BLOCKED_EXTERNAL_FOR_STAGE_REVIEW",
+          required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+          negativeBuildTest:x.matchedTests?.[0]||null}))],issues,
+    suites:Object.fromEntries(suiteKeys.map(k=>[k,suites?.[k]?{
+      exitCode:suites[k].exitCode,executed:suites[k].executed,
+      outputSha256:suites[k].outputSha256,passed:suites[k].passed,diagnostic:suites[k].passed?null:suites[k].diagnostic
+    }:null]))};
+}
+export function parseFullProtocolSuiteResult(key,result){
+  const output=(result?.stdout||"")+"\n"+(result?.stderr||"");
+  const outputSha256=createHash("sha256").update(output).digest("hex");
+  let successfulNames=[],executed=0,passed=false;
+  if(key==="python"){
+    successfulNames=[...output.matchAll(/^\s*(test_[A-Za-z0-9_]+) \(/gm)].map(x=>x[1]);
+    const n=/Ran (\d+) tests? in /m.exec(output);
+    executed=n?Number(n[1]):0;
+    passed=result?.status===0 && executed>0 &&
+      successfulNames.length===executed && /(?:^|\n)OK\s*(?:\n|$)/.test(output) &&
+      !/\b(?:FAILED|ERROR|FAIL) \(/.test(output);
+  }else{
+    successfulNames=[...output.matchAll(/^ok \d+ - (.+)$/gm)].map(x=>x[1].trim().replaceAll("\\#","#"));
+    const n=/# tests (\d+)/.exec(output);
+    const passCount=/# pass (\d+)/.exec(output);
+    executed=n?Number(n[1]):0;
+    passed=result?.status===0 && executed>0 &&
+      successfulNames.length===executed &&
+      Number(passCount?.[1])===executed &&
+      /^# fail 0$/m.test(output) && /^# skipped 0$/m.test(output) &&
+      /^# cancelled 0$/m.test(output) && !/^not ok /m.test(output);
+  }
+  return {exitCode:result?.status??null,passed,executed,
+    successfulNames,outputSha256,
+    diagnostic:passed?null:(output.includes("\nnot ok ")?output.slice(output.indexOf("\nnot ok ")+1,output.indexOf("\nnot ok ")+2600):output.slice(-1800))};
+}
+function runFullProtocolSuites(){
+  const definitions=[
+    ["python","python",["-B","scripts/auditoria/test_mission_supervisor.py"]],
+    ["rca",process.execPath,["--test","--test-reporter=tap",
+      "scripts/p0-rca-impact-gate.test.mjs"]],
+    ["queue",process.execPath,["--test","--test-reporter=tap",
+      "scripts/ci/merge-group-context.test.mjs"]],
+  ];
+  const safeEnv={...process.env};
+  for(const key of ["GITHUB_TOKEN","CONTAOS_CANONICAL_READ_TOKEN","GH_TOKEN","GITHUB_PAT"])
+    delete safeEnv[key];
+  return Object.fromEntries(definitions.map(([key,bin,args])=>{
+    const result=spawnSync(bin,args,{encoding:"utf8",env:safeEnv,
+      timeout:180000,maxBuffer:12*1024*1024});
+    const parsed=parseFullProtocolSuiteResult(key,result);
+    if(result.error)parsed.diagnostic=String(result.error.message).slice(0,180);
+    return [key,parsed];
+  }));
+}
+// The PLAN #689 and queue amendment #691 are protected normative inputs.
+// A green test matrix cannot replace or invent their source or soften their
+// BUILD-vs-activation boundary.
+export function attestProtectedNormativeSources({manifest,plan,amendment,canonical}={}){
+  const issues=[];
+  if(manifest?.schema!=="contaos.p0.gov-plan.v1" ||
+    manifest?.approved!==true || manifest?.pr_number!==690 ||
+    manifest?.ativacao_autorizada!==false ||
+    manifest?.plan_documento!=="docs/frontend/planos/PLAN_P0_AUDITOR_FISCAL_UNIVERSAL_2026-11-20.md" ||
+    manifest?.emenda_fila!=="docs/frontend/planos/EMENDA_P0_ABS_FILA_REVISAO_690_2026-11-20.md")
+    issues.push("NORMATIVE: manifesto protegido nao autentica PLAN/emenda/ativacao");
+  if(typeof plan!=="string" || gitBlobId(plan)!=="9d037a37df8ae177f7f02123932e0ca60e7e3f81" ||
+    manifest?.plan_blob!=="9d037a37df8ae177f7f02123932e0ca60e7e3f81")
+    issues.push("NORMATIVE: PLAN #689 sem blob imutavel de origem");
+  if(typeof amendment!=="string" || gitBlobId(amendment)!=="cba58ceb1f88fa6774ccf1ce1661ac9f5a942c1b")
+    issues.push("NORMATIVE: emenda #691 sem blob imutavel de origem");
+  const CANONICAL_ORCHESTRATION_BLOB="8a9d5824a83d43150589b97ad8cbd95d6b49cfdd";
+  if(typeof canonical!=="string" || gitBlobId(canonical)!==CANONICAL_ORCHESTRATION_BLOB)
+    issues.push("NORMATIVE: protocolo persistente de orquestracao sem blob protegido");
+  for(const phrase of [
+    "Antes de enviar `APPROVE`",
+    "exceção documental",
+    "Para BUILD/código",
+    "Não leia tokens",
+  ])if(typeof canonical!=="string" || !canonical.includes(phrase))
+    issues.push("NORMATIVE: regra de revisão ou exceção documental ausente: "+phrase);
+  for(const [id,source,words] of [
+    ["BUILD-SEPARATE-ACTIVATION",amendment,"ativacao_autorizada: false"],
+    ["BUILD-MANIFEST-ALLOWLIST",amendment,"manifesto"],
+    ["N17C-THIRD-PARTY",amendment,"autoria terceira"],
+    ["N17C-REVIEWERS",amendment,"contaos9999"],
+    ["MISSION-LOCK-DEDICATED-APP",plan,"GitHub App"],
+    ["TWO-STAGE-REVIEW",plan,"Certificação em duas provas"],
+    ["NO-UNTRUSTED-PUBLISHING",plan,"sem checkout ou execução de código não confiável"],
+  ])if(typeof source!=="string" || !source.includes(words))
+    issues.push("NORMATIVE: regra incorporada ausente "+id);
+  return {schema:"contaos.protected-normative-sources.v1",
+    verdict:issues.length?"CHANGES_REQUESTED":"PASS",
+    planBlob:typeof plan==="string"?gitBlobId(plan):null,
+    amendmentBlob:typeof amendment==="string"?gitBlobId(amendment):null,
+    canonicalBlob:typeof canonical==="string"?gitBlobId(canonical):null,
+    activationAuthorized:false,issues};
+}
+
+/**
+ * Check the GitHub event provenance before interpreting FULL_PROTOCOL evidence.
+ * Manual dispatch checks out a branch commit (no HEAD^2); PR jobs normally
+ * check out a merge commit. Never make a missing merge parent a PASS.
+ */
+export function resolveFullProtocolAuditHead({
+  event, ref, githubSha, checkoutSha, declaredHead, mergeSecondParent,
+} = {}) {
+  if (!validSha(checkoutSha))
+    throw Error("full protocol: checkout SHA invalid");
+  if (event === "workflow_dispatch") {
+    if (ref !== "refs/heads/build/p0-abs-fiscal-universal" ||
+        !validSha(githubSha) || githubSha !== checkoutSha)
+      throw Error("full protocol: manual dispatch ref/SHA mismatch");
+    if (declaredHead &&
+        (!validSha(declaredHead) || declaredHead !== checkoutSha))
+      throw Error("full protocol: manual declared head mismatch");
+    return checkoutSha;
+  }
+  if (!["pull_request", "pull_request_review"].includes(event))
+    throw Error("full protocol: unsupported GitHub event");
+  const head = declaredHead || mergeSecondParent;
+  if (!validSha(head) ||
+      (checkoutSha !== head && mergeSecondParent !== head))
+    throw Error("full protocol: checkout/PR head mismatch");
+  return head;
+}
+
+function fullProtocolAuditFromCheckout(){
+  const protocol=readFileSync("docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
+  const mission=JSON.parse(readFileSync("docs/frontend/governanca/MISSAO_ATIVA_4_1.json","utf8"));
+  const workflow=readFileSync(".github/workflows/contaos-auditoria-controller.yml","utf8");
+  const source=readFileSync("scripts/p0-rca-impact-gate.mjs","utf8");
+  const tests=Object.fromEntries(Object.entries(PROTOCOL_FULL_AUDIT_FILES)
+    .map(([key,path])=>[key,readFileSync(path,"utf8")]));
+  // Read the signed-off manifesto from protected base, never from PR worktree.
+  const base=String(process.env.INPUT_PREAUDIT_BASE||"e007c4bad8f2c66c489c55e4752b71bb19c5ced0");
+  if(!validSha(base))throw Error("full protocol: invalid protected base");
+  const { manifest, normative } = readP0690ProtectedSources(base);
+  const paths=execFileSync("git",["diff","--name-only",base,"HEAD"],
+    {encoding:"utf8",timeout:15000}).trim().split("\n").filter(Boolean);
+  const coverage=auditFullProtocolCoverage({protocol,tests,mission,workflow,source,manifest,paths});
+  const checkoutSha=execFileSync("git",["rev-parse","HEAD"],
+    {encoding:"utf8",timeout:15000}).trim();
+  const event=String(process.env.GITHUB_EVENT_NAME||"");
+  const declaredHead=process.env.INPUT_PREAUDIT_HEAD||null;
+  // A direct workflow_dispatch checkout has no second parent. In a PR
+  // merge checkout, retain the second-parent provenance check unchanged.
+  const mergeSecondParent=event==="workflow_dispatch" ||
+      (declaredHead===checkoutSha) ? null :
+    execFileSync("git",["rev-parse","HEAD^2"],
+      {encoding:"utf8",timeout:15000}).trim();
+  const head=resolveFullProtocolAuditHead({
+    event,ref:process.env.GITHUB_REF,githubSha:process.env.GITHUB_SHA,
+    checkoutSha,declaredHead,mergeSecondParent,
+  });
+  const suites=runFullProtocolSuites();
+  return {...attestFullProtocolExecutions(coverage,suites,{head,base,checkoutSha}),
+    normative_sources:normative};
+}
+
+export function parseAssistantPreaudit(body) {
+  if (typeof body !== "string") return null;
+  const re = new RegExp("<!-- " + ASSISTANT_PREAUDIT_MARKER + "\\s*\\n([\\s\\S]*?)\\n-->", "g");
+  const items = [...body.matchAll(re)];
+  if (items.length !== 1) return null;
+  try { return JSON.parse(items[0][1]); }
+  catch { return null; }
+}
+export function validateAssistantPrecertRelease({
+  pr, currentMain, manifest, paths, comments, reviews = [], checkRuns, artifact,
+  testCJob, testCRun, testCAttemptJobs, v2Job, receiptV2Job=v2Job,
+  redProvenance=[], historicalV2Run=null,
+  historicalV2AttemptJobs=null,historicalV2Attempt=null,
+  expectedHead, expectedBase,
+} = {}) {
+  const issues = [];
+  const add = (reason) => issues.push(reason);
+  if (!validSha(expectedHead) || !validSha(expectedBase) ||
+      !pr || pr.number !== 690 || pr.state !== "open" ||
+      pr.merged !== false || pr.draft !== false ||
+      pr.head?.sha !== expectedHead ||
+      pr.base?.sha !== expectedBase || pr.base?.ref !== "main" ||
+      pr.base?.repo?.full_name !== REPO || currentMain !== expectedBase)
+    add("PR/HEAD/base/main não vinculados ao mesmo snapshot vivo");
+  if (!manifest || manifest.schema !== "contaos.p0.gov-plan.v1" ||
+      manifest.approved !== true || manifest.pr_number !== 690 ||
+      manifest.full_diff !== true || manifest.ativacao_autorizada !== false ||
+      !Array.isArray(manifest.files) || manifest.files.length !== 14 ||
+      !exactSet(paths, manifest.files) ||
+      paths?.includes("docs/frontend/planos/P0_GOV_PLAN_690.json"))
+    add("manifesto protegido e full_diff 14/14 não comprovados");
+  if (!Array.isArray(checkRuns)) add("check runs ausentes");
+  // The latest *native* review per reviewer on this exact HEAD is authoritative.
+  // An independent CHANGES_REQUESTED is never overridden by our own PASS.
+  if (!Array.isArray(reviews)) add("revisoes nativas do GitHub incompletas");
+  else {
+    const lastByReviewer = new Map();
+    for (const review of [...reviews].sort((a,b) =>
+      (a.submitted_at || "").localeCompare(b.submitted_at || "") ||
+      (a.id || 0) - (b.id || 0))) {
+      if (review?.commit_id === expectedHead && review?.user?.login &&
+          ["CHANGES_REQUESTED", "APPROVED", "DISMISSED"].includes(review.state))
+        lastByReviewer.set(review.user.login, review);
+    }
+    for (const review of lastByReviewer.values()) {
+      if (review.state === "CHANGES_REQUESTED")
+        add("revisao formal CHANGES_REQUESTED ainda vigente no HEAD");
+    }
+  }
+  for (const name of PRECERT_REQUIRED_CHECKS) {
+    const latest=latestPrecertCheck(checkRuns,name,expectedHead);
+    if (!latest || latest.status!=="completed" || latest.conclusion!=="success")
+      add("check exigido sem latest SUCCESS autenticado, pending/failure ou origem: "+name);
+  }
+  // The current LIVE V2 job must be green; the earlier receipt still proves
+  // the original historical RED on this exact commit, independently verified
+  // through its own authenticated Actions job. No check is trusted by name
+  // alone; duplicate names with a foreign issuer or ID remain NO-GO.
+  const v2Checks=Array.isArray(checkRuns)?
+    checkRuns.filter(x=>x?.name===ADVERSARIAL_V2_CHECK_NAME):[];
+  const latestV2=latestPrecertCheck(checkRuns,ADVERSARIAL_V2_CHECK_NAME,expectedHead);
+  const receiptCheck=v2Checks.find(x=>x?.id===receiptV2Job?.id);
+  const historicalReceipt= !receiptCheck &&
+    verifyHistoricalV2JobProvenance({
+      job:receiptV2Job,run:historicalV2Run,
+      attemptJobs:historicalV2AttemptJobs,
+      attempt:historicalV2Attempt,head:expectedHead,base:expectedBase,
+    });
+  if (!latestV2 || !v2AttestedJob(latestV2,v2Job,expectedHead) ||
+      !(receiptCheck ?
+        v2AttestedJob(receiptCheck,receiptV2Job,expectedHead) :
+        historicalReceipt))
+    add("25 provas executaveis P0-ABS V2 sem autenticacao de latest/receipt JOB/HEAD 10+12+3 causal");
+  const history = Array.isArray(comments) ? comments
+    .filter(x => x?.user?.login === "contaos9999" &&
+      typeof x.body === "string" && x.body.includes(ASSISTANT_PREAUDIT_MARKER))
+    .sort((a,b) => a.id - b.id) : [];
+  const last = history.at(-1);
+  const record = parseAssistantPreaudit(last?.body);
+  if (!last || !record) add("parecer do assistente ausente/inválido na PR");
+  else {
+    if (record.schema !== "contaos.assistant-preaudit.v2" ||
+        record.kind !== "ASSISTANT_PREAUDIT_NOT_INDEPENDENT" ||
+        record.verdict !== "PASS" || record.pr !== 690 ||
+        record.head !== expectedHead || record.base !== expectedBase ||
+        !/^PA-690-[A-Za-z0-9.-]+$/.test(record.run_id || "") ||
+        typeof record.report !== "string" || record.report.length < 400 ||
+        !/^[0-9a-f]{64}$/.test(record.report_sha256 || "") ||
+        record.report_sha256 !== preauditHash(record.report) ||
+        !ASSISTANT_PREAUDIT_CRITERIA.every(x => record.criteria?.[x] === "PASS") ||
+        record.adversarial_v2?.head !== expectedHead ||
+        record.adversarial_v2?.base !== expectedBase ||
+        record.adversarial_v2?.second_pass !== "PASS" ||
+        record.adversarial_v2?.meta_audit !== "PASS" ||
+        record.adversarial_v2?.red_green !== "PASS" ||
+        !ADVERSARIAL_V2_LENSES.every(x => record.adversarial_v2?.lenses?.[x] === "PASS") ||
+        !Array.isArray(record.adversarial_v2?.red_runs) ||
+        record.adversarial_v2.red_runs.length < 1 ||
+        !record.adversarial_v2.red_runs.every(x => Number.isSafeInteger(x) && x > 0))
+      add("último parecer V2 não comprova matriz adversarial, RED/GREEN e segunda leitura no HEAD/base");
+    // NR-006: Every separate causal RED must be independently replayed from a
+    // pinned vulnerable commit/blob and contrasted against current GREEN.
+    // A generic failed job or two runs of one case cannot count three times.
+    const causal=record.adversarial_v2?.red_cases;
+    if (!Array.isArray(causal) ||
+        causal.length !== ADVERSARIAL_V2_CAUSAL_CASES.length ||
+        new Set(causal.map(x=>x?.case_id)).size !== causal.length ||
+        !ADVERSARIAL_V2_CAUSAL_CASES.every(expected=>{
+          const observed=causal.find(x=>x?.case_id===expected.case_id);
+          const stepName="P0 V2 CAUSAL_RED "+expected.case_id;
+          return observed && observed.vulnerable_sha===expected.vulnerable_sha &&
+            observed.vulnerable_blob===expected.vulnerable_blob &&
+            observed.observed===expected.observed &&
+            observed.green===expected.green &&
+            observed.green_head===expectedHead &&
+            observed.run_id===receiptV2Job?.run_id &&
+            observed.job_id===receiptV2Job?.id &&
+            receiptV2Job?.steps?.filter(x=>x?.name===stepName &&
+              x.status==="completed" && x.conclusion==="success").length===1;
+        }))
+      add("NR-006: RED causal nao demonstrado por caso/SHA/blob/resultado e GREEN no mesmo job");
+    // RED receipts are checked against real failed executions of the
+    // supervisor test step, not merely numeric workflow IDs in a comment.
+    if (!Array.isArray(record.adversarial_v2?.red_runs) ||
+        record.adversarial_v2.red_runs.length < 1 ||
+        !Array.isArray(redProvenance) ||
+        redProvenance.length !== record.adversarial_v2.red_runs.length ||
+        redProvenance.some(({run,jobs},i)=>
+          run?.id !== record.adversarial_v2.red_runs[i] ||
+          run?.head_sha === expectedHead ||
+          !validSha(run?.head_sha) ||
+          run?.event !== "pull_request" ||
+          run?.head_branch !== "build/p0-abs-fiscal-universal" ||
+          !Array.isArray(run?.pull_requests) ||
+          !run.pull_requests.some(pr=>pr?.number===690) ||
+          run?.path !== ".github/workflows/contaos-auditoria-controller.yml" ||
+          run?.status !== "completed" || run?.conclusion !== "failure" ||
+          !Array.isArray(jobs?.jobs) ||
+          jobs.total_count !== jobs.jobs.length ||
+          !jobs.jobs.some(job=>
+            job?.name === "Controlador offline Windows" &&
+            job?.conclusion === "failure" &&
+            job?.steps?.some(step =>
+              step.name === "P0-ABS supervisor universal N01-N17 (RED/GREEN)" &&
+              step.conclusion === "failure"))))
+      add("RED nao vinculado a workflow anterior autenticado e falha real do supervisor");
+    if (!record.artifact || !Number.isSafeInteger(record.artifact.id) ||
+        record.artifact.id <= 0 || !/^sha256:[0-9a-f]{64}$/.test(record.artifact.digest || ""))
+      add("parecer sem recibo de artefato visual");
+    else {
+      const testC=latestPrecertCheck(checkRuns,
+        "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        expectedHead);
+      const runId = record.artifact.run_id;
+      const attempt = record.artifact.run_attempt;
+      const jobId = record.artifact.job_id;
+      if (record.artifact.id !== artifact?.id ||
+          record.artifact.digest !== artifact?.digest ||
+          artifact?.expired !== false ||
+          artifact?.workflow_run?.head_sha !== expectedHead ||
+          !Number.isSafeInteger(runId) || runId <= 0 ||
+          !Number.isSafeInteger(attempt) || attempt <= 0 ||
+          !Number.isSafeInteger(jobId) || jobId <= 0 ||
+          artifact?.workflow_run?.id !== runId ||
+          // GitHub artifacts expose the *run*, but not the attempt.
+          // The upload action binds both IDs to its canonical artifact name.
+          artifact?.name !== "contaos-teste-c-" + runId + "-" + attempt ||
+          artifact?.name !== "contaos-teste-c-" + testCRun?.id + "-" + testCRun?.run_attempt ||
+          testCJob?.id !== jobId ||
+          testCJob?.run_id !== runId ||
+          testCRun?.id !== runId ||
+          testCRun?.run_attempt !== attempt ||
+          testCRun?.head_sha !== expectedHead ||
+          testCRun?.event !== "pull_request" ||
+          testCRun?.status !== "completed" ||
+          testCRun?.conclusion !== "success" ||
+          testCRun?.path !== ".github/workflows/contaos-frontend-zero-drift.yml" ||
+          !testCRun?.pull_requests?.some(x => x?.number === 690 &&
+            x?.head?.sha === expectedHead && x?.base?.sha === expectedBase) ||
+          !Array.isArray(testCAttemptJobs?.jobs) ||
+          testCAttemptJobs?.total_count !== testCAttemptJobs.jobs.length ||
+          !testCAttemptJobs.jobs.some(x => x?.id === jobId &&
+            x?.run_id === runId && x?.conclusion === "success") ||
+          testCJob?.head_sha !== expectedHead ||
+          testCJob?.status !== "completed" ||
+          testCJob?.conclusion !== "success" ||
+          !Array.isArray(testCJob?.steps) ||
+          !testCJob.steps.some(x => x?.conclusion === "success" &&
+            x?.name === "Teste C Playwright — 24 telas, 4 larguras, 2 temas") ||
+          testC?.id !== jobId ||
+          testC?.details_url !==
+            "https://github.com/" + REPO + "/actions/runs/" + runId + "/job/" + jobId)
+        add("artefato sem vínculo autenticado ao run/attempt/job Playwright do check Teste C");
+    }
+  }
+  return {pass: issues.length === 0, verdict: issues.length ? "BLOCKED" : "PASS",
+    release: issues.length === 0 ? "PRE_CERTIFICATION_ONLY" : "NO_GO",
+    issues, comment_id: last?.id ?? null, head: expectedHead, base: expectedBase};
+}
+async function fetchAllPrecert(path, token) {
+  const all = [];
+  for (let page = 1; page <= 10; page++) {
+    const part = await http(path + (path.includes("?") ? "&" : "?") +
+      "per_page=100&page=" + page, token);
+    if (!Array.isArray(part)) throw Error("API paginada retornou tipo inválido");
+    all.push(...part);
+    if (part.length < 100) return all;
+  }
+  throw Error("paginação excedeu limite auditável");
+}
+export async function verifyAssistantPrecertInGithub({
+  token = process.env.GITHUB_TOKEN,
+  env = process.env,
+  api = (p) => http(p, token),
+  list = (p) => fetchAllPrecert(p, token),
+  zipDigest = (id) => downloadPrecertArtifactDigest(id,token),
+  originVerify = null,
+  baseManifest = (base) => JSON.parse(execFileSync("git", [
+    "show", base + ":docs/frontend/planos/P0_GOV_PLAN_690.json",
+  ], {encoding: "utf8", timeout: 15000})),
+} = {}) {
+  const manual = env.GITHUB_EVENT_NAME === "workflow_dispatch";
+  if (!["pull_request", "pull_request_review", "workflow_dispatch"].includes(env.GITHUB_EVENT_NAME) ||
+      (manual && (env.GITHUB_REF !== "refs/heads/build/p0-abs-fiscal-universal" ||
+        !validSha(env.GITHUB_SHA))) ||
+      env.GITHUB_REPOSITORY !== REPO ||
+      env.INPUT_PREAUDIT_PR !== "690" ||
+      !validSha(env.INPUT_PREAUDIT_HEAD) ||
+      (!manual && !validSha(env.INPUT_PREAUDIT_BASE)) || !token)
+    throw Error("precert exige PR #690 ou despacho autenticado no HEAD da branch, token read-only");
+  const number = 690, head = env.INPUT_PREAUDIT_HEAD;
+  if (manual && head !== env.GITHUB_SHA)
+    throw Error("despacho nao coincide com checkout HEAD da branch");
+  const [pr, main, files, comments, reviews, checks] = await Promise.all([
+    api("/repos/" + REPO + "/pulls/" + number),
+    api("/repos/" + REPO + "/git/ref/heads/main"),
+    list("/repos/" + REPO + "/pulls/" + number + "/files"),
+    list("/repos/" + REPO + "/issues/" + number + "/comments"),
+    list("/repos/" + REPO + "/pulls/" + number + "/reviews"),
+    api("/repos/" + REPO + "/commits/" + head + "/check-runs?per_page=100"),
+  ]);
+  const base = manual ? pr?.base?.sha : env.INPUT_PREAUDIT_BASE;
+  if (!validSha(base)) throw Error("base PR nao autenticada no despacho");
+  if (!Array.isArray(files) || !Array.isArray(comments) || !Array.isArray(reviews) ||
+      !Array.isArray(checks?.check_runs) || checks.total_count !== checks.check_runs.length)
+    throw Error("API de diff/parecer/checks incompleta");
+  const latest = comments.filter(x => x?.user?.login === "contaos9999" &&
+    typeof x.body === "string" && x.body.includes(ASSISTANT_PREAUDIT_MARKER))
+    .sort((a,b) => a.id - b.id).at(-1);
+  const record = parseAssistantPreaudit(latest?.body);
+  // Do not hammer Actions/Jobs/Artifacts while Teste C or the current
+  // structured receipt is not ready. This early result NEVER releases.
+  const requiredNow=[...PRECERT_REQUIRED_CHECKS,ADVERSARIAL_V2_CHECK_NAME];
+  const readiness=requiredNow.map(name=>classifyPrecertReadiness(checks.check_runs,name,head));
+  const terminal=readiness.filter(x=>x.state==="TERMINAL");
+  const pending=readiness.filter(x=>x.state==="PENDING");
+  if(terminal.length||pending.length||record?.head!==head||record?.base!==base||
+      record?.verdict!=="PASS"){
+    const missingRecord=!record||record.head!==head||record.base!==base;
+    const rejectedRecord=!missingRecord&&record.verdict!=="PASS";
+    return {pass:false,verdict:"BLOCKED",release:"NO_GO",head,base,
+      waitable:terminal.length===0&&!rejectedRecord&&(pending.length>0||missingRecord),
+      issues:[
+        ...terminal.map(x=>"FALHA_TERMINAL: "+x.name+": "+x.reason),
+        ...pending.map(x=>"PENDENTE: "+x.name+": "+x.reason),
+        ...(record?.head!==head||record?.base!==base||record?.verdict!=="PASS"?
+          ["parecer estruturado V2 no HEAD/base atual ainda nao disponivel"]:[]),
+      ]};
+  }
+  const redIds = Array.isArray(record?.adversarial_v2?.red_runs) &&
+    record.adversarial_v2.red_runs.length <= 10 &&
+    record.adversarial_v2.red_runs.every(x=>Number.isSafeInteger(x)&&x>0)
+    ? record.adversarial_v2.red_runs : [];
+  const redProvenance = await Promise.all(redIds.map(async id=>{
+    const [run,jobs] = await Promise.all([
+      api("/repos/" + REPO + "/actions/runs/" + id),
+      api("/repos/" + REPO + "/actions/runs/" + id + "/jobs?per_page=100"),
+    ]);
+    return {run,jobs};
+  }));
+  const v2Check=latestPrecertCheck(checks.check_runs,ADVERSARIAL_V2_CHECK_NAME,head);
+  const v2Job=v2Check?
+    await api("/repos/" + REPO + "/actions/jobs/" + v2Check.id):null;
+  const receiptJobId=record?.adversarial_v2?.red_cases?.[0]?.job_id;
+  const receiptV2Job=Number.isSafeInteger(receiptJobId) && receiptJobId>0 ?
+    (receiptJobId===v2Check?.id?v2Job:
+      await api("/repos/" + REPO + "/actions/jobs/" + receiptJobId)):null;
+  // Rerun replaces a historic check-run in the commit listing. Locate the
+  // old authenticated job in its real Actions attempt, never by its title.
+  let historicalV2Run=null,historicalV2AttemptJobs=null,historicalV2Attempt=null;
+  if(receiptV2Job && !checks.check_runs.some(x=>x.id===receiptV2Job.id)){
+    historicalV2Run=await api("/repos/"+REPO+"/actions/runs/"+receiptV2Job.run_id);
+    const count=historicalV2Run?.run_attempt;
+    if(!Number.isSafeInteger(count)||count<1||count>20)
+      throw Error("historical V2 run attempts outside auditable limit");
+    for(let i=1;i<=count;i++){
+      const candidate=await api("/repos/"+REPO+"/actions/runs/"+
+        receiptV2Job.run_id+"/attempts/"+i+"/jobs?per_page=100");
+      if(!Array.isArray(candidate?.jobs) ||
+          candidate.total_count!==candidate.jobs.length)
+        throw Error("historical V2 attempts incomplete");
+      if(candidate.jobs.some(x=>x.id===receiptV2Job.id)){
+        if(historicalV2Attempt!==null)
+          throw Error("historical V2 job exists in multiple attempts");
+        historicalV2Attempt=i;
+        historicalV2AttemptJobs=candidate;
+      }
+    }
+  }
+  const artifact = Number.isSafeInteger(record?.artifact?.id) &&
+    record.artifact.id > 0 ?
+    await api("/repos/" + REPO + "/actions/artifacts/" + record.artifact.id) : null;
+  const runId = record?.artifact?.run_id;
+  const jobId = record?.artifact?.job_id;
+  const testCJob = Number.isSafeInteger(runId) && runId > 0 &&
+    Number.isSafeInteger(jobId) && jobId > 0 ?
+    await api("/repos/" + REPO + "/actions/jobs/" + jobId) : null;
+  const attempt = record?.artifact?.run_attempt;
+  const [testCRun, testCAttemptJobs] = Number.isSafeInteger(runId) && runId > 0 &&
+    Number.isSafeInteger(attempt) && attempt > 0 ?
+    await Promise.all([
+      api("/repos/" + REPO + "/actions/runs/" + runId),
+      api("/repos/" + REPO + "/actions/runs/" + runId + "/attempts/" + attempt + "/jobs?per_page=100"),
+    ]) : [null, null];
+  const manifest = baseManifest(base);
+  // Original and destination paths of renamed files must both be authorized.
+  const paths = files.flatMap(x => x?.status === "renamed" ?
+    [x.previous_filename, x.filename] : [x?.filename]);
+  const result = validateAssistantPrecertRelease({
+    pr, currentMain: main?.object?.sha, manifest, paths,
+    comments, reviews, checkRuns: checks.check_runs, artifact, testCJob, testCRun,
+    testCAttemptJobs, v2Job, receiptV2Job, redProvenance,
+    historicalV2Run,historicalV2AttemptJobs,historicalV2Attempt,
+    expectedHead: head, expectedBase: base,
+  });
+  // Fail closed if the PR advances between check collection and decision.
+  const [latestPr, latestMain, latestComments, latestReviews, latestChecks,
+    latestArtifact] = await Promise.all([
+    api("/repos/" + REPO + "/pulls/" + number),
+    api("/repos/" + REPO + "/git/ref/heads/main"),
+    list("/repos/" + REPO + "/issues/" + number + "/comments"),
+    list("/repos/" + REPO + "/pulls/" + number + "/reviews"),
+    api("/repos/" + REPO + "/commits/" + head + "/check-runs?per_page=100"),
+    Number.isSafeInteger(artifact?.id) && artifact.id > 0
+      ? api("/repos/" + REPO + "/actions/artifacts/" + artifact.id) : Promise.resolve(null),
+  ]);
+  if (latestPr?.head?.sha !== head || latestPr?.base?.sha !== base ||
+      latestPr?.state !== pr?.state ||
+      latestPr?.draft !== pr?.draft || latestPr?.draft !== false ||
+      latestPr?.merged !== pr?.merged ||
+      latestMain?.object?.sha !== base ||
+      !latestArtifact || latestArtifact.id !== artifact?.id ||
+      latestArtifact.expired !== false ||
+      latestArtifact.digest !== artifact?.digest ||
+      latestArtifact.name !== artifact?.name ||
+      latestArtifact.workflow_run?.id !== artifact?.workflow_run?.id ||
+      latestArtifact.workflow_run?.head_sha !== head ||
+      JSON.stringify(latestComments) !== JSON.stringify(comments) ||
+      JSON.stringify(latestReviews) !== JSON.stringify(reviews) ||
+      latestChecks?.total_count !== latestChecks?.check_runs?.length ||
+      JSON.stringify(latestChecks?.check_runs) !== JSON.stringify(checks.check_runs))
+    result.issues.push("HEAD/base/parecer/checks changed during pre-cert readback");
+
+  // Authenticate producer workflow, event and exact attempt for EVERY required
+  // check, including Windows (previously authenticated only by its name).
+  if(result.issues.length===0){
+    const selectedChecks=[...new Set([...PRECERT_REQUIRED_CHECKS,
+      ADVERSARIAL_V2_CHECK_NAME,"Controlador offline Windows"])]
+      .map(name=>latestPrecertCheck(checks.check_runs,name,head));
+    const oldV2Check=checks.check_runs.find(x=>x.id===receiptV2Job?.id &&
+      x.name===ADVERSARIAL_V2_CHECK_NAME);
+    if(!oldV2Check && !verifyHistoricalV2JobProvenance({
+      job:receiptV2Job,run:historicalV2Run,
+      attemptJobs:historicalV2AttemptJobs,
+      attempt:historicalV2Attempt,head,base,
+    }))result.issues.push("ORIGIN: recibo V2 historico sem run/attempt autenticado");
+    const originPairs=[
+      ...selectedChecks.map(check=>({check,job:
+        check?.id===v2Job?.id?v2Job:
+        check?.id===testCJob?.id?testCJob:null})),
+      ...(oldV2Check?[{check:oldV2Check,job:receiptV2Job}]:[]),
+    ];
+    for(const entry of originPairs){
+      if(!entry.check){result.issues.push("ORIGIN: check selecionado ausente");continue;}
+      try{
+        const match=/\/actions\/runs\/([1-9][0-9]*)\/job\//.exec(entry.check.details_url||"");
+        if(!match)throw Error("URL nao vinculada ao GitHub Actions");
+        const runId=Number(match[1]);
+        let valid=false;
+        if(originVerify){
+          // Fixture-only dependency injection. Production never supplies this.
+          valid=await originVerify({check:entry.check,head,base,
+            workflow:PRECERT_WORKFLOW_ORIGINS[entry.check.name]});
+        }else{
+          const job=entry.job??await api("/repos/"+REPO+"/actions/jobs/"+entry.check.id);
+          const run=await api("/repos/"+REPO+"/actions/runs/"+runId);
+          const aj=await api("/repos/"+REPO+"/actions/runs/"+runId+
+            "/attempts/"+run?.run_attempt+"/jobs?per_page=100");
+          valid=verifyPrecertRunOrigin({check:entry.check,job,run,
+            attemptJobs:aj,head,base,workflow:PRECERT_WORKFLOW_ORIGINS[entry.check.name]});
+        }
+        if(!valid)
+          result.issues.push("ORIGIN: job/run/attempt/workflow/event/HEAD invalido: "+entry.check.name);
+      }catch(e){result.issues.push("ORIGIN: prova indisponivel para "+
+        entry.check.name+": "+e.message);}
+    }
+  }
+  // The final check is about the actual BYTES, not GitHub artifact metadata.
+  // Execute only after all other conditions and final readback are satisfied.
+  if(result.issues.length===0){
+    try{
+      const zip=await zipDigest(artifact.id);
+      if(zip?.digest!==artifact.digest || !Number.isSafeInteger(zip.bytes) || zip.bytes<100)
+        result.issues.push("ZIP: bytes/digest nao coincidem com artefato do GitHub");
+    }catch(e){result.issues.push("ZIP: download/readback falhou: "+e.message);}
+  }
+
+  // ZIP download can outlast the preceding readback. Revoke on any change
+  // occurring WHILE bytes are read or producer-run provenance is collected.
+  // This is the actual last read of the authorization surface.
+  if(result.issues.length===0){
+    try{
+      const [endPr,endMain,endComments,endReviews,endChecks,endArtifact]=await Promise.all([
+        api("/repos/"+REPO+"/pulls/"+number),
+        api("/repos/"+REPO+"/git/ref/heads/main"),
+        list("/repos/"+REPO+"/issues/"+number+"/comments"),
+        list("/repos/"+REPO+"/pulls/"+number+"/reviews"),
+        api("/repos/"+REPO+"/commits/"+head+"/check-runs?per_page=100"),
+        api("/repos/"+REPO+"/actions/artifacts/"+artifact.id),
+      ]);
+      if(endPr?.head?.sha!==head || endPr?.base?.sha!==base ||
+          endPr.state!==pr.state || endPr.draft!==false ||
+          endPr.merged!==false || endMain?.object?.sha!==base ||
+          JSON.stringify(endComments)!==JSON.stringify(comments) ||
+          JSON.stringify(endReviews)!==JSON.stringify(reviews) ||
+          endChecks?.total_count!==endChecks?.check_runs?.length ||
+          JSON.stringify(endChecks?.check_runs)!==JSON.stringify(checks.check_runs) ||
+          endArtifact?.id!==artifact.id || endArtifact?.expired!==false ||
+          endArtifact?.digest!==artifact.digest ||
+          endArtifact?.name!==artifact.name ||
+          endArtifact?.workflow_run?.id!==artifact.workflow_run?.id ||
+          endArtifact?.workflow_run?.head_sha!==head)
+        result.issues.push("POST_ZIP_READBACK: autorizacao/revisoes/checks/artefato mudaram durante prova");
+    }catch(e){
+      result.issues.push("POST_ZIP_READBACK: prova GitHub indisponivel: "+e.message);
+    }
+  }
+
+  result.pass = result.issues.length === 0;
+  result.waitable = false; // all post-preflight failures are terminal
+  result.verdict = result.pass ? "PASS" : "BLOCKED";
+  result.release = result.pass ? "PRE_CERTIFICATION_ONLY" : "NO_GO";
+  return result;
+}
+
 function changes() {
   const prior = String(process.env.FRONTEND_DIFF_BASE || "").trim();
   const event = String(process.env.GITHUB_EVENT_NAME || "");
   if (event === "workflow_dispatch" && !prior)
     throw new Error("workflow manual sem base de diff verificável.");
   let base = prior && !/^0+$/.test(prior) ? prior : git("rev-parse", "HEAD^");
+  const eventBase = base;
   let head = "HEAD";
   if (event === "pull_request") {
     try {
@@ -438,12 +2927,20 @@ function changes() {
     }
     base = git("merge-base", base, head);
   }
+  return { base, eventBase, head, changed: git("diff", "--name-only", "--diff-filter=ACMRTD", base, head).split("\n").filter(Boolean) };
+}
+export function classifyGithubReadError(status, headers, path) {
+  const get=(name)=>headers?.get?.(name) ?? null;
+  const remaining=get("x-ratelimit-remaining") ?? "unknown";
+  const reset=get("x-ratelimit-reset") ?? "none";
+  const retry=get("retry-after") ?? "none";
+  const requestId=get("x-github-request-id") ?? "unknown";
+  const rateLimited=(status===403 || status===429) && remaining==="0" &&
+    /^\d{10}$/.test(String(reset));
   return {
-    base,
-    head,
-    changed: git("diff", "--name-only", "--diff-filter=ACMRD", base, head)
-      .split("\n")
-      .filter(Boolean),
+    rateLimited, status, remaining, reset_at:reset,
+    message:"GitHub HTTP "+status+" on "+path+" remaining="+remaining+
+      " reset-at="+reset+" retry-after="+retry+" request-id="+requestId,
   };
 }
 async function http(path, token, raw = false) {
@@ -457,18 +2954,18 @@ async function http(path, token, raw = false) {
     },
     signal: AbortSignal.timeout(20000),
   });
-  if (!res.ok) throw new Error("GitHub HTTP " + res.status);
+  if (!res.ok) {
+    // Authenticated API denial is never a PASS. Report only fixed endpoint
+    // and standard rate-limit headers; never expose bearer token or body.
+    const diagnosis=classifyGithubReadError(res.status,res.headers,path);
+    throw new Error(diagnosis.message);
+  }
   return raw ? res.text() : res.json();
 }
 async function main() {
-  let base,
-    head,
-    changed,
-    plan,
-    previous,
-    report = null;
+  let base, eventBase, head, changed, plan, previous, report = null;
   try {
-    ({ base, head, changed } = changes());
+    ({ base, eventBase, head, changed } = changes());
     plan = JSON.parse(readFileSync(PLAN, "utf8"));
     previous = JSON.parse(git("show", base + ":" + PLAN));
     if (existsSync(REPORT)) report = JSON.parse(readFileSync(REPORT, "utf8"));
@@ -495,37 +2992,28 @@ async function main() {
       return;
     }
   }
-  // PLAN técnico prévio e protegido deve pertencer à PR atual. O bootstrap
-  // #661 usa a emenda PLAN #662, já integrada na main, com allowlist explícita.
+  // NR-005: resolver PR autenticada, manifesto na base pré-diff e diff completo.
+  // Nunca usar texto do commit ou origin/main já avançada como autoridade.
   let prNumber = null;
   let governancePlan = null;
+  let fullPaths = null;
   const event = String(process.env.GITHUB_EVENT_NAME || "");
   try {
-    if (event === "pull_request") {
-      const payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
-      prNumber = payload?.pull_request?.number;
-    } else if (event === "push") {
-      const parents = git("rev-list", "--parents", "-n", "1", head).split(/\s+/).slice(1);
-      const match = /^Merge pull request #([1-9]\d*) from [^\r\n]+(?:\r?\n|$)/.exec(
-        git("log", "-1", "--format=%B", head),
-      );
-      if (
-        process.env.FRONTEND_DIFF_BASE?.trim() &&
-        !/^0+$/.test(process.env.FRONTEND_DIFF_BASE.trim()) &&
-        parents.length === 2 &&
-        parents[0] === git("rev-parse", base) &&
-        match
-      )
-        prNumber = Number(match[1]);
-    }
-    if (Number.isSafeInteger(prNumber) && prNumber > 0) {
+    // The immutable protected PLAN manifest must be guarded at the earliest
+    // pre-merge event, before PR resolution or a potential documentary N/A.
+    fullPaths = fullDiffPaths(base, head);
+    assertImmutableP0Governance(fullPaths, event);
+    const resolved = await resolvePrContext(event, base, head, changed, githubToken, eventBase);
+    prNumber = resolved.number;
+    if (prNumber) {
       const planPath = "docs/frontend/planos/P0_GOV_PLAN_" + prNumber + ".json";
       let approved = null;
       try {
-        approved = JSON.parse(git("show", "origin/main:" + planPath));
+        approved = JSON.parse(git("show", resolved.manifestBase + ":" + planPath));
       } catch {
         if (prNumber === 661) {
-          const original = git("show", "origin/main:" + BOOTSTRAP_PLAN);
+          // Fallback legado explicitamente limitado à PR 661 previamente autorizada.
+          const original = git("show", resolved.manifestBase + ":" + BOOTSTRAP_PLAN);
           const mark = String.fromCharCode(96);
           const pattern = new RegExp(
             mark + "((?:scripts/|\\.github/workflows/)[^" + mark + "]+)" + mark,
@@ -542,9 +3030,35 @@ async function main() {
         Array.isArray(approved.files)
       )
         governancePlan = approved;
+      if (prNumber === 690) {
+        if (!governancePlan || governancePlan.full_diff !== true)
+          throw Error("manifesto #690 não é íntegro na base protegida anterior");
+        const { manifest } = readP0690ProtectedSources(resolved.manifestBase);
+        if (!validSha(manifest.plan_base_sha)) throw Error("PLAN base SHA ausente");
+        execFileSync("git", ["merge-base", "--is-ancestor",
+          manifest.plan_base_sha, resolved.manifestBase]);
+      }
+      if (governancePlan?.full_diff === true) {
+        const raw = execFileSync("git",
+          ["diff", "--raw", "-z", "--find-renames", "--diff-filter=ACMRTD", base, head],
+          {encoding: "utf8", timeout: 20000});
+        verifyRawFullDiffModes(raw, fullPaths);
+        for (const path of fullPaths) {
+          const mode = execFileSync("git", ["ls-tree", "-z", head, "--", path],
+            {encoding:"utf8", timeout:20000});
+          if (!safeTreeEntry(mode, path))
+            throw new Error("full_diff inclui symlink/gitlink ou modo inseguro: "+path);
+        }
+        const remotePaths = await githubPrFiles(prNumber, githubToken);
+        if (!setEqual(fullPaths, remotePaths))
+          throw new Error("full_diff local difere da lista paginada GitHub PR " + prNumber);
+      }
+    } else if (changed.some((p) => /mission-supervisor|merge-group-context|MISSAO_ATIVA_4_1/.test(p))) {
+      throw new Error("BUILD sem PR autenticada, N/A documental proibido");
     }
   } catch (e) {
-    console.error("P0 RCA: PLAN de governança não verificável: " + e.message);
+    console.error("P0 RCA FAIL: identidade de PR/manifesto/full_diff: " + e.message);
+    process.exitCode = 1; return;
   }
   let v1Scope = null;
   if (existsSync(V1_SCOPE)) {
@@ -572,14 +3086,10 @@ async function main() {
     report,
     reportExists: existsSync(REPORT),
     legacyAllowlist: previous.arquivos_permitidos,
+    expectedFrontendSha: base, expectedBackendSha: backendSha,
+    prNumber, governancePlan, v1Scope, fullDiffPaths: fullPaths,
+    v1ScopeChanged: changed.includes(V1_SCOPE), addedLines,
     protectedAppRestrictions: previous.arquivos_restritos_por_pr,
-    expectedFrontendSha: base,
-    expectedBackendSha: backendSha,
-    prNumber,
-    governancePlan,
-    v1Scope,
-    v1ScopeChanged: changed.includes(V1_SCOPE),
-    addedLines,
   });
   if (result.errors.length) {
     result.errors.forEach((msg) => console.error(msg));
@@ -587,7 +3097,7 @@ async function main() {
     return;
   }
   if (!result.applicable) {
-    console.log("P0 RCA N/A: governança com PLAN protegido ou diff documental.");
+    console.log(result.version === "P0_GOV_FULL_DIFF" ? "P0 RCA FULL_DIFF PASS: manifesto protegido, 14 caminhos, PR GitHub e renomeações verificados." : "P0 RCA N/A: governança com PLAN protegido ou diff documental comum.");
     return;
   }
   const activeReport = result.version === "V1" ? v1Scope : report;
@@ -617,8 +3127,902 @@ async function main() {
       " casos GREEN/NEG/REG executados no HEAD.",
   );
 }
-if (
-  process.argv[1] &&
-  fileURLToPath(import.meta.url) === fileURLToPath(new URL("file://" + process.argv[1]))
-)
-  main();
+if (process.argv[1] && fileURLToPath(import.meta.url) ===
+  fileURLToPath(new URL("file://" + process.argv[1]))) {
+  if (process.argv.includes("--verify-full-protocol-pins")) {
+    const protocol=readFileSync(
+      "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md","utf8");
+    const tests=Object.fromEntries(Object.entries(PROTOCOL_FULL_AUDIT_FILES)
+      .map(([name,path])=>[name,readFileSync(path,"utf8")]));
+    const audit=verifyFullProtocolSourcePins({protocol,tests});
+    console.log(JSON.stringify(audit));
+    if(audit.verdict!=="PIN_MATCH")process.exitCode=1;
+  } else if (process.argv.includes("--export-semantic-dossier")) {
+    try{
+      const dest=process.argv.find(x=>x.startsWith("--dossier-dir="))?.slice(14);
+      if(!dest)throw Error("missing --dossier-dir=<out-of-tree-path>");
+      const base=process.env.INPUT_PREAUDIT_BASE||git("rev-parse","origin/main");
+      if(!validSha(base))throw Error("invalid protected base");
+      const { semanticSources: sources } = readP0690ProtectedSources(base);
+      const inventory=inventoryProtectedSemanticLines(sources);
+      const worklist=buildSevenAxisSemanticBacklog(inventory);
+      const sentences=inventorySemanticSentenceCandidates(inventory);
+      const reverse=auditSemanticReverseCoverage(inventory,worklist);
+      const triage=analyzeSemanticCorpusForReview({
+        inventory,worklist,sentenceInventory:sentences,reverseCoverage:reverse});
+      const dossier=assembleSemanticContradictionDossier(triage);
+      const manifest=writeSemanticDossierJsonl(dossier,dest,{
+        head:(()=>{const checkout=git("rev-parse","HEAD");const declared=process.env.INPUT_PREAUDIT_HEAD;if(!declared)return checkout;if(!validSha(declared))throw Error("SEMANTIC_DOSSIER_DECLARED_HEAD_INVALID");if(checkout!==declared){const parents=git("rev-list","--parents","-n","1",checkout).split(/\s+/);if(parents.length!==3||parents[2]!==declared)throw Error("SEMANTIC_DOSSIER_HEAD_CHECKOUT_MISMATCH");}return declared;})(),base});
+      console.log(JSON.stringify(manifest));
+      // Export succeeded as worklist, NOT semantic certification.
+    }catch(e){console.error("SEMANTIC_DOSSIER_EXPORT_FAIL: "+e.message);
+      process.exitCode=1;}
+  } else if (process.argv.includes("--audit-semantic-inventory")) {
+    try{
+      const base=process.env.INPUT_PREAUDIT_BASE||git("rev-parse","origin/main");
+      if(!validSha(base))throw Error("invalid protected base SHA");
+      const { semanticSources: sources } = readP0690ProtectedSources(base);
+      const inventory=inventoryProtectedSemanticLines(sources);
+      const result={schema:inventory.schema,head:git("rev-parse","HEAD"),
+        protected_base:base,source_count:inventory.source_count,
+        anchored_lines:inventory.lines.length,
+        anchors:inventory.lines.map(({id,path,blob,line,text_sha256})=>
+          ({id,path,blob,line,text_sha256})),
+        issues:inventory.issues,source_verified:inventory.inventory_verified,
+        axis_backlog:buildSevenAxisSemanticBacklog(inventory),
+        sentence_candidates:inventorySemanticSentenceCandidates(inventory),
+        reverse_coverage:auditSemanticReverseCoverage(inventory,buildSevenAxisSemanticBacklog(inventory)),
+        semantic_preaudit_gate:await assessSemanticPreauditGate({inventory,
+          worklist:buildSevenAxisSemanticBacklog(inventory),
+          sentenceInventory:inventorySemanticSentenceCandidates(inventory),
+          reverseCoverage:auditSemanticReverseCoverage(inventory,buildSevenAxisSemanticBacklog(inventory)),
+          head:git("rev-parse","HEAD"),base,release_stage:"PRE_PROD"}),
+        semantic_release_gate:await assessSemanticCompletenessGate({inventory,
+          worklist:buildSevenAxisSemanticBacklog(inventory),
+          sentenceInventory:inventorySemanticSentenceCandidates(inventory),
+          reverseCoverage:auditSemanticReverseCoverage(inventory,buildSevenAxisSemanticBacklog(inventory)),
+          head:git("rev-parse","HEAD"),base,release_stage:"PRE_PROD"}),
+        semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+      console.log(JSON.stringify(result));
+      if(!result.source_verified)process.exitCode=1;
+    }catch(e){console.error("SEMANTIC_SOURCE_INVENTORY FAIL: "+e.message);
+      process.exitCode=1;}
+  } else if (process.argv.includes("--audit-full-protocol")) {
+    try{
+      const audit=fullProtocolAuditFromCheckout();
+      console.log(JSON.stringify(audit));
+      if(audit.verdict!=="EXECUTED_PASS_FOR_BUILD_ONLY")process.exitCode=1;
+    }catch(e){console.error("P0 FULL_PROTOCOL BLOCKED: "+e.message);process.exitCode=1;}
+  } else if (process.argv.includes("--verify-assistant-preaudit")) {
+    verifyAssistantPrecertInGithub().then(result => {
+      console.log(JSON.stringify(result));
+      if (!result.pass) process.exitCode = 1;
+    }).catch(error => {
+      console.error("P0 ASSISTANT PREAUDIT BLOCKED: " + error.message);
+      process.exitCode = 1;
+    });
+  } else main();
+}
+
+
+/**
+ * Revisão MATERIAL PRELIMINAR, não certificação: lê efetivamente os 137 textos
+ * vinculados, os 381 segmentos e TODOS os 9.316 pares. Não confunde a detecção
+ * automática de dependências com uma decisão de aplicabilidade, muito menos
+ * com contraprovas LIVE. Cada registro conserva âncora e texto discriminantes.
+ * A decisão de compatibilidade de um par requer auditor humano e evidências
+ * positivas/negativas distintas por HEAD. Nenhum campo abaixo é um PASS.
+ */
+export function analyzeSemanticCorpusForReview({
+  inventory,worklist,sentenceInventory,reverseCoverage
+}={}){
+  const issues=[];
+  if(!inventory?.inventory_verified||!worklist?.worklist_verified||
+     !sentenceInventory?.partition_verified||
+     !reverseCoverage||reverseCoverage.source_count!==inventory.lines.length)
+    issues.push("SEMANTIC_TRIAGE_SOURCE_UNVERIFIED");
+  const lookup=new Map((inventory?.lines||[]).map(row=>[row.id,row]));
+  const axes=["E1_authority","E2_antecedent","E3_outcomes","E4_interactions",
+    "E5_live","E6_revocation","E7_boundary"];
+  const roles=/\b(?:titular|auditor(?:ia)?|revisor(?:a)?|implementador|orquestrador|executor|app|github|watchdog|publicador|administrador|usu[aá]rio|ci|ruleset|controlador|agente|plataforma|protocolo)\b/gi;
+  const phases=/\b(?:BUILD|PLAN|CI|PR|HEAD|merge_group|merge|fila|revis[aã]o|ativa[çc][aã]o|PROD|HML|RLS|certifica[çc][aã]o|recupera[çc][aã]o|rollback|readback)\b/gi;
+  const predicates=/\b(?:se|quando|caso|antes|ap[oó]s|depois|sem|com|at[eé]|enquanto|exige|somente|nunca|obrigat[oó]ri[oa]|revogad[oa])\b/gi;
+  const rules=(worklist?.normative_rules||[]).map(rule=>{
+    const src=lookup.get(rule.source_links?.[0]);
+    let exact=src?.text||"";
+    const atom=rule.source_atom;
+    if(atom)exact=exact.slice(atom.start,atom.end);
+    const actors=[...new Set((exact.match(roles)||[]).map(x=>x.toLowerCase()))];
+    const stages=[...new Set((exact.match(phases)||[]).map(x=>x.toLowerCase()))];
+    const conditions=[...new Set((exact.match(predicates)||[]).map(x=>x.toLowerCase()))];
+    const directRefs=[...new Set((exact.match(/\b(?:N(?:0[1-9]|1[0-7])(?:\([a-f]\))?|NR-00[569]|P0-ABS-00[12])\b/gi)||[]))];
+    const anchor=src?{source_id:src.id,path:src.path,line:src.line,
+      blob:src.blob,text_sha256:src.text_sha256,
+      atom_id:atom?.id??null,atom_sha256:atom?.text_sha256??null}:null;
+    const snippet=exact.trim();
+    if(!anchor||!snippet)issues.push("SEMANTIC_TRIAGE_UNLINKED_RULE: "+rule.rule_id);
+    const axisEvidence={
+      E1_authority:{observed_actors:actors,source_anchor:anchor,
+        unresolved:actors.length===0?"AUTHOR_NOT_EXPLICIT":"ACTOR_AUTHORITY_NOT_INDEPENDENTLY_VERIFIED"},
+      E2_antecedent:{conditional_markers:conditions,source_anchor:anchor,
+        unresolved:"EVENT_AND_STATE_PREDICATES_REQUIRE_REVIEW"},
+      E3_outcomes:{positive_text:snippet,negative_restrictions:
+        [...new Set((snippet.match(/\b(?:n[aã]o|nunca|vedad[oa]|proibid[oa]|bloquea(?:r|do)|sem|somente)\b/gi)||[]))],
+        unresolved:"POSITIVE_AND_NEGATIVE_BEHAVIOURS_NOT_EXECUTED"},
+      E4_interactions:{direct_rule_references:directRefs,phases:stages,
+        unresolved:"DEPENDENCY_AND_PRECEDENCE_NOT_AUTHENTICATED"},
+      E5_live:{head:null,run_id:null,job_id:null,positive_witness:null,
+        negative_witness:null,unresolved:"NO_LIVE_PROOF_FOR_THIS_RULE"},
+      E6_revocation:{triggers:conditions.filter(x=>/revog|ap[oó]s|depois|recuper|quando|antes/.test(x)),
+        unresolved:"REVOCATION_AND_REPLAY_UNDECIDED"},
+      E7_boundary:{mentioned_stages:stages,
+        unresolved:"BUILD_REVIEW_MERGE_ACTIVATION_BOUNDARY_NOT_CERTIFIED"},
+    };
+    return {rule_id:rule.rule_id,anchor,exact_text:snippet,actors,stages,conditions,
+      direct_rule_references:directRefs,
+      axes:axisEvidence,axis_count:axes.length,
+      source_interpretation:"PRELIMINARY_SOURCE_READ",
+      individually_adjudicated:false,independent_contradiction:null,
+      verdict:"INCONCLUSIVE"};
+  });
+  const ruleById=new Map(rules.map(x=>[x.rule_id,x]));
+  const sentences=(sentenceInventory?.candidates||[]).map(item=>{
+    const src=lookup.get(item.source_id);
+    const fragment=src?.text.slice(item.start,item.end)??"";
+    const modalWords=(fragment.match(/\b(?:deve|exige|obriga|impede|pro[ií]be|vedad|nunca|n[aã]o|somente|autoriza|precisa|requer|necess[aá]ri[oa]|permit[ea])\b/gi)||[]);
+    const nested=fragment.split(/[;:]/).length-1;
+    const classification=modalWords.length||nested>1?
+      "NORMATIVE_CANDIDATE":"CONTEXTUAL_CANDIDATE";
+    const risk=modalWords.length>1||nested>2?"COMPOSITE_CLAUSE_REVIEW":
+      "SINGLE_OR_CONTEXTUAL_REVIEW";
+    if(!src||!fragment||!item.text_sha256)
+      issues.push("SEMANTIC_TRIAGE_INVALID_SENTENCE: "+item.id);
+    return {id:item.id,source_id:item.source_id,path:item.path,line:item.line,
+      text_sha256:item.text_sha256,fragment,classification,risk,
+      modal_count:modalWords.length,subclause_separators:nested,
+      source_anchored:true,adjudication:"PENDING_HUMAN_INTERPRETATION",
+      counterexample:null,positive_witness:null,negative_witness:null};
+  });
+  const pairs=[];const breakdown={};
+  const same=(a,b)=>a.filter(x=>b.includes(x));
+  for(let i=0;i<rules.length;i++)for(let j=i+1;j<rules.length;j++){
+    const a=rules[i],b=rules[j];
+    const sharedActors=same(a.actors,b.actors);
+    const sharedStages=same(a.stages,b.stages);
+    const sameSource=a.anchor?.source_id===b.anchor?.source_id;
+    const sameFamily=a.rule_id.split("-").slice(0,2).join("-")===
+      b.rule_id.split("-").slice(0,2).join("-");
+    const kind=sameSource?"SAME_SOURCE":sharedActors.length&&sharedStages.length?
+      "SHARED_ACTOR_AND_STAGE":sameFamily?"SAME_SECTION":
+      sharedStages.length?"SHARED_STAGE":sharedActors.length?
+      "SHARED_ACTOR":"CROSS_NORMATIVE_DOMAIN";
+    breakdown[kind]=(breakdown[kind]||0)+1;
+    const needsPriority=kind==="SAME_SOURCE"||
+      (sharedStages.some(x=>["merge","merge_group","fila","ativa\u00e7\u00e3o","certifica\u00e7\u00e3o"].includes(x)) &&
+       (sharedActors.length>0||sameFamily));
+    pairs.push({pair_id:a.rule_id+"|"+b.rule_id,
+      left_rule_id:a.rule_id,right_rule_id:b.rule_id,
+      left_source_id:a.anchor?.source_id??null,
+      right_source_id:b.anchor?.source_id??null,
+      left_atom:a.anchor?.atom_id??null,right_atom:b.anchor?.atom_id??null,
+      shared_actors:sharedActors,shared_stages:sharedStages,
+      provisional_relationship:kind,
+      priority:needsPriority?"HIGH_REVIEW":"REVIEW_REQUIRED",
+      hypothesis:"Compare "+a.rule_id+" ("+a.anchor?.path+":"+a.anchor?.line+
+        ") with "+b.rule_id+" ("+b.anchor?.path+":"+b.anchor?.line+
+        "); shared stages="+sharedStages.join(",")+"; shared actors="+sharedActors.join(","),
+      adjudication:"PENDING_SUBSTANTIVE_REVIEW",
+      decision:null,conflict_conditions:null,separation_basis:null,
+      positive_witness:null,negative_witness:null,independent_contradiction:null});
+  }
+  if(rules.length!==137||sentences.length!==381||pairs.length!==9316)
+    issues.push("SEMANTIC_TRIAGE_COUNT_DRIFT");
+  if(new Set(pairs.map(x=>x.pair_id)).size!==pairs.length)
+    issues.push("SEMANTIC_TRIAGE_PAIR_DUPLICATION");
+  // Not a simulation of LIVE evidence. No row may acquire a verdict by triage.
+  const high=pairs.filter(x=>x.priority==="HIGH_REVIEW").length;
+  const digest=rows=>createHash("sha256").update(rows.map(x=>JSON.stringify(x)).join("\n")).digest("hex");
+  const source_digests={
+    rules_sha256:digest(rules),sentences_sha256:digest(sentences),
+    interactions_sha256:digest(pairs),
+    rule_pair_inventory_sha256:worklist?.pair_inventory_sha256??null,
+    sentence_inventory_sha256:sentenceInventory?.inventory_sha256??null,
+  };
+  return {schema:"contaos.semantic-material-triage.v1",source_digests,
+    counts:{rules:rules.length,axes:rules.length*7,sentences:sentences.length,
+      interactions:pairs.length,high_priority_pairs:high},
+    breakdown,rules,sentences,interactions:pairs,issues,
+    source_anchored:issues.length===0,
+    executed_operations:["source-reading","sentence-predicate-scan","all-pairs-metadata-comparison"],
+    substantive_justification:"Preliminary hypothesis extraction, not clause adjudication or witnessed certification",
+    reviewed_rules:0,reviewed_sentences:0,adjudicated_interactions:0,
+    authenticated_positive_witnesses:0,authenticated_negative_witnesses:0,
+    semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
+    merge:"NO_GO",activation:"NO_GO"};
+}
+
+
+/**
+ * Contraditório substantivo inicial para dez relações prioritárias, ancorado
+ * em IDs atômicos (e não apenas nos parágrafos temáticos da governança).
+ * E1..E7 explicitam o objeto a provar; LIVE e parecer externo NÃO existem.
+ */
+export const P0_SEMANTIC_PRIORITY_DISPUTES=Object.freeze([
+  {
+    rules:["PLAN-S31-05","PLAN-S31-07"],case:"AUTHORIZATION_OUTLIVES_REVIEW",
+    E1:"Titular autoriza; revisor elegível aprova; App publica somente se ambos vigentes.",
+    E2:"A revisão do HEAD está APPROVED, porém a autorização vinculada foi revogada antes da decisão do grupo.",
+    E3:"Novo success só com revisão e autorização vigentes; a revisão isolada não pode habilitar merge.",
+    E4:"Contraprova exige revisão APPROVED mantida, autorização revogada e grupo impedido nativamente.",
+    E5:"GitHub API LIVE: reviews atuais, decisão titular assinada, status do grupo, timeline e bloqueio nativo.",
+    E6:"A revogação invalida recibos/geração e qualquer status anterior, sem retry automático.",
+    E7:"BUILD de lógica não é prova da revogação na fila real; ativação permanece NO-GO."
+  },
+  {
+    rules:["EMENDA-21","EMENDA-23"],case:"N17_TWO_REVIEWS_AUTHORIZATION_ONLY",
+    E1:"Titular revoga autorização individual; duas revisoras elegíveis permanecem aprovadas; autor é terceira identidade.",
+    E2:"Uma autorização específica é revogada sem retirar as duas reviews; ruleset nativo ainda vê aprovações suficientes.",
+    E3:"App e GitHub devem impedir merge apesar da segunda aprovação, sem confundir revogação com dismiss de review.",
+    E4:"Teste adversarial real com terceira autoria, duas APPROVED intactas e revogação exclusiva.",
+    E5:"Logs e readback autenticados do ruleset/grupo antes de eventual merge; ainda indisponível.",
+    E6:"O novo ciclo exige autorização renovada e novo SHA do grupo; sem reuso do status antigo.",
+    E7:"N17(c) é obrigação separada de ativação, não requisito que o BUILD possa simular como PASS."
+  },
+  {
+    rules:["PLAN-S31-04","PLAN-S31-06"],case:"ADMISSION_VERSUS_MERGE_GROUP",
+    E1:"App avalia admissão e GitHub aplica proteção ao SHA efêmero do grupo.",
+    E2:"Um status de admissão antigo está verde quando a base avança e nasce novo merge_group.",
+    E3:"Só novo success no SHA correto do grupo permite merge; status da PR não o substitui.",
+    E4:"Negativo cruza base avançada ancestral, SHA de grupo distinto e admissão ainda verde.",
+    E5:"PR/grupo/ref/pais/head/base e statuses autenticados pelo GitHub em teste isolado.",
+    E6:"Base e grupo alterados revogam a decisão anterior; produzir avaliação nova.",
+    E7:"Teste offline da composição é BUILD, enforcement da fila é ativação separada."
+  },
+  {
+    rules:["PLAN-S3-03","PLAN-S3-06"],case:"ACTIVE_VERSUS_CERTIFIED",
+    E1:"Supervisor registra estado, auditor emite parecer e GitHub integra checkpoints.",
+    E2:"PR filha tem tests DONE e relatório final sem merge nem checkpoint na main.",
+    E3:"Missão continua ACTIVE; somente duas provas aplicáveis autorizam CERTIFIED.",
+    E4:"Forçar relatório DONE no SHA sem readback de main deve falhar a certificação.",
+    E5:"Contrato, PRs, CI, auditor independente, commit e checkpoint autenticados LIVE.",
+    E6:"Deriva de HEAD ou cancelamento sem titular invalida encerramento automático.",
+    E7:"Precertificação BUILD não substitui integração protegida nem ativa serviços."
+  },
+  {
+    rules:["PLAN-S31-01","PLAN-S31-03"],case:"APP_IDENTITY_VERSUS_CHECK_NAME",
+    E1:"GitHub App dedicado tem autoridade limitada de publicar commit statuses.",
+    E2:"Um Check Run homônimo ficou verde, mas foi emitido por Actions/integration_id diferente.",
+    E3:"Status não-autorizado não satisfaz o gate de missão, mesmo com nome idêntico.",
+    E4:"Injetar resultado homônimo e exigir falha com regra de origem ainda vigente.",
+    E5:"Integration ID do App e associação ao SHA/ruleset LIVE, ainda não comprovados.",
+    E6:"Troca de identidade exige autorização e invalida publicações pregressas.",
+    E7:"A identidade privilegiada não é instalada nem ativada pelo BUILD da #690."
+  },
+  {
+    rules:["EMENDA-04","EMENDA-11"],case:"FULL_DIFF_NO_DOCUMENTAL_ESCAPE",
+    E1:"Guard RCA obedece ao manifesto protegido da base anterior, não à PR avaliada.",
+    E2:"Diff inclui caminho extra não autorizado, apesar de a PR alegar mudança documental.",
+    E3:"full_diff=true impõe recusa antes da saída N/A visual, mesmo se os checks existentes estiverem verdes.",
+    E4:"Adicionar décimo quinto caminho e manifesto falsificado no próprio HEAD deve FAIL.",
+    E5:"Diff paginado e manifesto da base pré-integração, identidades/SHAs LIVE.",
+    E6:"Novo diff/HEAD requer reavaliação integral, não pode reutilizar avaliação anterior.",
+    E7:"BUILD limitado à allowlist de 14; emenda prévia indispensável a expansão."
+  },
+  {
+    rules:["PLAN-S3-07","PLAN-S3-08"],case:"WATCHDOG_VERSUS_ANTISTAGNATION",
+    E1:"Watchdog observa e controlador executa apenas retomada autorizada.",
+    E2:"Duas tentativas repetidas sem delta causal e um heartbeat relatado artificialmente.",
+    E3:"Watchdog gera diagnóstico e RCA ampliada, jamais CERTIFIED.",
+    E4:"Dois retries sem mudança + API instável não podem gerar novo PASS.",
+    E5:"Runs agendados, causais e contratos recuperados, todos vinculados ao HEAD.",
+    E6:"Retomada somente de checkpoint confiável e decisão autorizada.",
+    E7:"Automação de observação não substitui sessão executora nem controle PROD."
+  },
+  {
+    rules:["PLAN-S31-05","EMENDA-19"],case:"REVOCATION_AFTER_GREEN_STATUS",
+    E1:"Titular revoga; App avalia e GitHub deve aplicar veto nativo antes do merge.",
+    E2:"Status do grupo foi publicado success; revogação chega enquanto entrada está ativa.",
+    E3:"A barreira nativa deve preservar não mesclável mesmo com webhook tardio.",
+    E4:"Reordenar evento de revogação e status antigo; comprovar impedimento antes do merge.",
+    E5:"Timeline real do merge_group e regra aplicada com timestamps e origem autenticados.",
+    E6:"Revogação exige invalidar tentativa corrente e emitir decisão nova após autorização.",
+    E7:"Sem prova de atomicidade da barreira, ativação permanece NO-GO."
+  },
+  {
+    rules:["PLAN-S4-14","EMENDA-29"],case:"VISUAL_NA_WITH_REAL_APP_DIFF",
+    E1:"Guard e Teste C verificam o diff, não apenas o rótulo do autor.",
+    E2:"Governança declara impacto_visual N/A mas diff inclui mudança de UI não prevista.",
+    E3:"Escopo extra e classificação visual falsa devem falhar independentemente de CI verde.",
+    E4:"Diff de componente de produto com justificativa documental N/A.",
+    E5:"Comparação de arquivos e triagem visual Teste C do HEAD exato, com ZIP hash.",
+    E6:"Novo arquivo/HEAD reabre a verificação de escopo e impacto.",
+    E7:"A aprovação documental não autoriza alterar frontend nem PRODUCTION."
+  },
+  {
+    rules:["PLAN-S3-06","PLAN-S3-10"],case:"CERTIFICATION_VERSUS_RECOVERY",
+    E1:"Auditor apresenta prova técnica, titular autoriza e GitHub consolida checkpoint.",
+    E2:"CI e pré-auditoria da PR passam, porém não existe readback pós-merge.",
+    E3:"ACTIVE ou BLOCKED_EXTERNAL permanece; CERTIFIED não pode ser emitido.",
+    E4:"Sucesso no BUILD sem certificado integrado deve continuar NO-GO.",
+    E5:"Própria PR, review independente, main integrada e histórico verificável.",
+    E6:"Alteração de HEAD, ref ou autorização exige evidência nova e preserva último checkpoint.",
+    E7:"Recuperação não é certificação nem dispensa fila/HML/PROD."
+  },
+]);
+// Material linkage: terms must actually exist in BOTH protected source clauses.
+// It is insufficient for a rule ID to resolve to an arbitrary, unrelated line.
+const P0_PRIORITY_SOURCE_TERMS=Object.freeze({
+  AUTHORIZATION_OUTLIVES_REVIEW:[["grupo","success"],["revisão","autorização"]],
+  N17_TWO_REVIEWS_AUTHORIZATION_ONLY:[["outra aprovação","revogar"],["autorização","review"]],
+  ADMISSION_VERSUS_MERGE_GROUP:[["Admissão","HEAD"],["merge_group","base"]],
+  ACTIVE_VERSUS_CERTIFIED:[["ACTIVE","CERTIFIED"],["CERTIFIED","readback"]],
+  APP_IDENTITY_VERSUS_CHECK_NAME:[["GitHub App","integration_id"],["commit statuses","Check Run"]],
+  FULL_DIFF_NO_DOCUMENTAL_ESCAPE:[["full_diff","manifesto"],["full_diff","documental"]],
+  WATCHDOG_VERSUS_ANTISTAGNATION:[["Watchdog","heartbeat"],["Antiestagnação","retry"]],
+  REVOCATION_AFTER_GREEN_STATUS:[["success","grupo"],["revogação","status"]],
+  VISUAL_NA_WITH_REAL_APP_DIFF:[["src/","Não autorizados"],["impacto_visual","Teste C"]],
+  CERTIFICATION_VERSUS_RECOVERY:[["Certificação","readback"],["BLOCKED_EXTERNAL","HEAD"]]
+});
+export function validatePrioritySemanticDisputes(triage){
+  const issues=[];const selected=new Set();
+  const byId=new Map((triage?.rules||[]).map(x=>[x.rule_id,x]));
+  const byPair=new Map((triage?.interactions||[]).map(x=>[x.pair_id,x]));
+  for(const d of P0_SEMANTIC_PRIORITY_DISPUTES){
+    const [left,right]=d.rules;
+    const a=byId.get(left),b=byId.get(right);
+    const ordered=(triage?.rules||[]).filter(x=>d.rules.includes(x.rule_id)).map(x=>x.rule_id);
+    const pair=byPair.get(ordered.join("|"));
+    if(!a?.anchor||!b?.anchor||!pair||selected.has(pair.pair_id))
+      issues.push("SEMANTIC_PRIORITY_ANCHOR_INVALID: "+d.case);
+    const expected=P0_PRIORITY_SOURCE_TERMS[d.case];
+    if(!expected||!a||!b||!expected.every((terms,index)=>
+      terms.every(word=>(index===0?a.exact_text:b.exact_text)
+        .toLocaleLowerCase("pt-BR").includes(word.toLocaleLowerCase("pt-BR")))))
+      issues.push("SEMANTIC_PRIORITY_TEXT_MISMATCH: "+d.case);
+    if(Object.keys(d).filter(x=>/^E[1-7]$/.test(x)).length!==7||
+       ["E1","E2","E3","E4","E5","E6","E7"].some(k=>
+         typeof d[k]!=="string"||d[k].length<55))
+      issues.push("SEMANTIC_PRIORITY_SEVEN_AXES_INCOMPLETE: "+d.case);
+    if(pair)selected.add(pair.pair_id);
+  }
+  return {cases:P0_SEMANTIC_PRIORITY_DISPUTES.length,
+    anchors_valid:issues.length===0,issues,
+    // These are substantive hypotheses, NOT the adjudication of 9316 or proof.
+    source_bound_hypotheses:selected.size,live_verified:0,
+    independent_contradictions:0,verdict:"INCONCLUSIVE",release:"NO_GO"};
+}
+
+
+/**
+ * Dossiê de materialidade: 137 regras × 7 eixos, 381 frases e 9.316 pares.
+ * Examina o conteúdo exato do blob protegido, sem transformar indícios
+ * lexicais em prova LIVE ou julgamento humano de compatibilidade.
+ */
+export function assembleSemanticContradictionDossier(triage) {
+  const issues=[...(triage?.issues||[])];
+  const rules=triage?.rules||[];
+  const known=new Map(rules.map(x=>[x.rule_id,x]));
+  const themes=[
+    ["AUTHORIZATION",/autoriza|titular|aprova|revis[aã]o|review/iu],
+    ["QUEUE",/merge_group|fila|grupo|admiss[aã]o|merge/iu],
+    ["PROVENANCE",/HEAD|hash|blob|base protegida|manifesto|diff|SHA/iu],
+    ["AUDITOR",/auditor|parecer|independ[eê]ncia|segrega/iu],
+    ["CERTIFICATION",/certific|CERTIFIED|ACTIVE|BLOCKED_EXTERNAL|status/iu],
+    ["TEST",/teste|contraprova|RED|GREEN|checks?|CI|runner/iu],
+    ["REVOCATION",/revoga|invalida|cancel|retira|recupera|retry|reexecu/iu],
+    ["ACTIVATION",/PROD|HML|ativa[çc][aã]o|credencial|App|ruleset/iu],
+    ["SCOPE",/escopo|allowlist|14 caminhos|frontend|backend|N\/A/iu],
+    ["WATCHDOG",/watchdog|heartbeat|antiestagna|monitor|schedule/iu]
+  ];
+  const concepts=text=>themes.filter(([,pattern])=>pattern.test(text||"")).map(([name])=>name);
+  const capture=(text,re)=>[...new Set(((text||"").match(re)||[]).map(t=>t.toLowerCase()))];
+  const dossiers=rules.map(r=>{
+    const text=r.exact_text||"",anchor=r.anchor;
+    const qualifiers=capture(text,/\b(?:exceto|salvo|somente|apenas|se|quando|caso|antes|ap[oó]s)\b/giu);
+    const negative=capture(text,/\b(?:n[aã]o|nunca|vedad[oa]|proibid[oa]|sem|somente|NO.GO)\b/giu);
+    const positive=capture(text,/\b(?:deve|exige|obrigat[oó]ri[oa]|necess[aá]ri[oa]|ser[aá]|permitid[oa]|autoriza)\b/giu);
+    const axes={
+      E1:{source:anchor,observed_actors:r.actors,authority_decision:null},
+      E2:{source_clause:text,conditions:r.conditions,qualifiers,state_transition:null},
+      E3:{positive_indicators:positive,negative_indicators:negative,
+        legitimate_effect:null,forbidden_effect:null},
+      E4:{rule_references:r.direct_rule_references,concepts:concepts(text),
+        conflict_or_precedence_decision:null},
+      E5:{head:null,run_id:null,job_id:null,log_sha256:null,
+        positive_witness:null,negative_witness:null},
+      E6:{temporal_qualifiers:qualifiers,
+        revocation_mentioned:/revoga|invalida|cancel|retira|recupera|reexecut/iu.test(text),
+        native_revocation_verified:false},
+      E7:{source_stages:r.stages,topics:concepts(text),
+        boundary_verified:false}
+    };
+    if(!anchor||!text||Object.keys(axes).length!==7)
+      issues.push("SEMANTIC_RULE_SOURCE_INVALID: "+r.rule_id);
+    return {rule_id:r.rule_id,source_anchor:anchor,exact_text:text,axes,
+      interpretation:"SOURCE_READ_BUT_NOT_INDEPENDENTLY_ADJUDICATED",
+      tested_in_live_environment:false,decision:"INCONCLUSIVE"};
+  });
+  const sentences=(triage?.sentences||[]).map(s=>{
+    const text=s.fragment||"";
+    const modality=capture(text,/\b(?:deve|exige|obriga|impede|pro[ií]be|nunca|n[aã]o|somente|autoriza|precisa|requer|necess[aá]ri[oa])\b/giu);
+    const conditions=capture(text,/\b(?:quando|se|caso|antes|ap[oó]s|desde que|exceto|salvo|somente)\b/giu);
+    const actors=capture(text,/\b(?:titular|auditor|revisor|implementador|GitHub|App|controlador|watchdog)\b/giu);
+    const issuesSentence=[];
+    if(s.risk==="COMPOSITE_CLAUSE_REVIEW")issuesSentence.push("COMPOSITE_CLAUSE_MAY_NEED_SPLITTING");
+    if(actors.length===0)issuesSentence.push("AUTHORITY_MAY_BE_IMPLICIT");
+    if(conditions.length===0)issuesSentence.push("ANTECEDENT_MAY_BE_CROSS_SENTENCE");
+    if(modality.length===0)issuesSentence.push("CONTEXTUALITY_NEEDS_CONFIRMATION");
+    // Semicolons expose additional candidates while retaining every byte.
+    // These are subordinate hypotheses, not extra certified rules.
+    const delimiters=[...text.matchAll(/;\s*/g)];
+    const candidateEnds=delimiters.map(m=>m.index+m[0].length);
+    let start=0;
+    const subordinate_clauses=[...candidateEnds,text.length].map(end=>{
+      const original=text.slice(start,end);
+      const entry={start,end,text:original,
+        text_sha256:createHash("sha256").update(original).digest("hex"),
+        reviewed:false,negative_witness:null};
+      start=end;return entry;
+    });
+    if(subordinate_clauses.map(x=>x.text).join("")!==text)
+      issues.push("SEMANTIC_SUBCLAUSE_LOSS: "+s.id);
+    return {sentence_id:s.id,source_id:s.source_id,path:s.path,line:s.line,
+      text_sha256:s.text_sha256,exact_text:text,modality,conditions,actors,
+      topics:concepts(text),issues:issuesSentence,subordinate_clauses,
+      classification:s.classification,human_classification:null,
+      contrary_case_question:"Qual antecedente ou exceção altera a consequência do trecho: "+text.slice(0,240),
+      positive_witness:null,negative_witness:null,verdict:"INCONCLUSIVE"};
+  });
+  const interactions=(triage?.interactions||[]).map(p=>{
+    const a=known.get(p.left_rule_id),b=known.get(p.right_rule_id);
+    const aTopics=concepts(a?.exact_text),bTopics=concepts(b?.exact_text);
+    const common=aTopics.filter(x=>bTopics.includes(x));
+    const polarity={
+      a:/\b(?:n[aã]o|nunca|sem|vedad[oa]|proibid[oa])\b/iu.test(a?.exact_text||""),
+      b:/\b(?:n[aã]o|nunca|sem|vedad[oa]|proibid[oa])\b/iu.test(b?.exact_text||"")
+    };
+    const relationship=!a||!b?"INVALID_PAIR":
+      p.provisional_relationship==="SAME_SOURCE"?"SHARED_NORMATIVE_SOURCE":
+      common.includes("AUTHORIZATION")&&common.includes("REVOCATION")?
+        "AUTHORIZATION_REVOCATION_BOUNDARY":
+      common.includes("QUEUE")&&common.includes("PROVENANCE")?"QUEUE_SOURCE_FRESHNESS":
+      common.includes("AUDITOR")&&common.includes("CERTIFICATION")?
+        "CERTIFICATION_INDEPENDENCE":
+      p.shared_actors.length&&p.shared_stages.length?"SHARED_ACTOR_STAGE":
+      common.length?"COMMON_NORMATIVE_THEME":"NO_OBVIOUS_LEXICAL_LINK";
+    if(!a||!b||!p.left_source_id||!p.right_source_id||
+       p.pair_id!==a.rule_id+"|"+b.rule_id)
+      issues.push("SEMANTIC_PAIR_SOURCE_INVALID: "+p.pair_id);
+    // Specific, reviewable comparison for EVERY pair. This is a causal
+    // hypothesis and a requested proof, not an automatic compatibility verdict.
+    const antecedent_a=(a?.conditions||[]).slice(0,6);
+    const antecedent_b=(b?.conditions||[]).slice(0,6);
+    const stageOverlap=(p.shared_stages||[]).slice(0,6);
+    const actorOverlap=(p.shared_actors||[]).slice(0,6);
+    const discriminator=relationship==="SHARED_NORMATIVE_SOURCE"
+      ?"Distinguish both atomic clauses within one protected source span."
+      :relationship==="AUTHORIZATION_REVOCATION_BOUNDARY"
+        ?"Revoke the authority after approval, preserving the review, then verify native eligibility."
+      :relationship==="QUEUE_SOURCE_FRESHNESS"
+        ?"Change HEAD/base/group without changing prior status, then verify a new group decision."
+      :relationship==="CERTIFICATION_INDEPENDENCE"
+        ?"Withhold the required stage-specific material review while leaving BUILD green; ensure certification remains blocked."
+      :relationship==="SHARED_ACTOR_STAGE"
+        ?"Hold the shared actor and stage fixed while alternating the predicates of the two rules."
+      :relationship==="COMMON_NORMATIVE_THEME"
+        ?"Exercise both named concepts with one antecedent false, then both true."
+        :"Prove resource/actor/state disjointness by authenticated execution, not by lexical distance.";
+    const applicability_hypothesis=p.left_rule_id+
+      " ["+antecedent_a.join(",")+"] WITH "+p.right_rule_id+
+      " ["+antecedent_b.join(",")+"] in stages ["+stageOverlap.join(",")+
+      "] and actors ["+actorOverlap.join(",")+"]";
+    const discriminating_probes={
+      positive:"Test a real workflow where "+p.left_rule_id+" and "+p.right_rule_id+
+        " both apply. "+discriminator,
+      negative:"Test a real workflow where only "+p.left_rule_id+
+        " applies, keeping the remaining actor, phase and HEAD unchanged.",
+      review_priority:relationship==="SHARED_NORMATIVE_SOURCE"||
+        relationship==="AUTHORIZATION_REVOCATION_BOUNDARY"||
+        relationship==="QUEUE_SOURCE_FRESHNESS"?"HIGH":"OPEN",
+      missing:["LIVE_POSITIVE","LIVE_NEGATIVE","STAGE_BOUND_PAIR_ADJUDICATION"]
+    };
+    return {pair_id:p.pair_id,source_a:a?.anchor??null,source_b:b?.anchor??null,
+      rule_a:a?.rule_id??null,rule_b:b?.rule_id??null,
+      rule_a_text:a?.exact_text??null,rule_b_text:b?.exact_text??null,
+      common_actors:p.shared_actors,common_stages:p.shared_stages,
+      common_concepts:common,polarity,relationship,priority:p.priority,
+      antecedents:{left:antecedent_a,right:antecedent_b},
+      applicability_hypothesis,discriminating_probes,
+      counterfactual_question:"Em qual estado ambas as cláusulas se aplicam, qual prevalece e qual contraprova discrimina a hipótese?",
+      judgement:"UNADJUDICATED",positive_witness:null,negative_witness:null,
+      independent_review_id:null,assisted_review_id:null,required_review_by_stage:AUDIT_MODALITY_BY_STAGE};
+  });
+  const counts={rules:dossiers.length,axes:dossiers.length*7,
+    sentences:sentences.length,pairs:interactions.length,
+    unique_pairs:new Set(interactions.map(x=>x.pair_id)).size,
+    relationship_counts:Object.fromEntries([...new Set(interactions.map(x=>x.relationship))]
+      .map(kind=>[kind,interactions.filter(x=>x.relationship===kind).length]))};
+  if(counts.rules!==137||counts.axes!==959||counts.sentences!==381||
+     counts.pairs!==9316||counts.unique_pairs!==9316)
+    issues.push("SEMANTIC_DOSSIER_INCOMPLETE");
+  if(interactions.some(x=>x.judgement!=="UNADJUDICATED")||
+     dossiers.some(x=>x.axes.E5.positive_witness!==null))
+    issues.push("SEMANTIC_FALSE_CERTIFICATION");
+  return {schema:"contaos.semantic-contradiction-dossier.v1",
+    counts,issues,rules:dossiers,sentences,interactions,
+    source_read_verified:issues.length===0,
+    required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+    rules_certified:0,sentences_certified:0,interactions_certified:0,
+    semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
+    release:"NO_GO",activation:"NO_GO"};
+}
+
+/**
+ * Writes a reproducible, source-bound audit worklist OUTSIDE the repository.
+ * It is impossible to produce a PASS witness from this exporter: all
+ * LIVE/independence fields remain null. Files are SHA-256 bound in manifest.
+ */
+export function writeSemanticDossierJsonl(dossier,outputDirectory,{head,base}={}){
+  if(!outputDirectory||typeof outputDirectory!=="string"||
+     !dossier||dossier.issues?.length||
+     dossier.counts?.rules!==137||dossier.counts?.axes!==959||
+     dossier.counts?.sentences!==381||dossier.counts?.pairs!==9316||
+     dossier.counts?.unique_pairs!==9316||
+     dossier.release!=="NO_GO"||dossier.semantic_completeness!=="INCONCLUSIVE")
+    throw Error("SEMANTIC_DOSSIER_UNVERIFIED");
+  // Counts alone do not establish content validity. Refuse forged, duplicated
+  // or pre-approved rows even if caller supplies an empty issues array.
+  const ruleIds=new Set(dossier.rules.map(x=>x.rule_id));
+  const ruleById=new Map(dossier.rules.map(x=>[x.rule_id,x]));
+  const sentenceIds=new Set(dossier.sentences.map(x=>x.sentence_id));
+  const pairIds=new Set(dossier.interactions.map(x=>x.pair_id));
+  if(ruleIds.size!==137||sentenceIds.size!==381||pairIds.size!==9316||
+     dossier.rules.some(x=>!x.source_anchor?.blob||!x.exact_text||
+       x.source_anchor.blob!==PROTECTED_SEMANTIC_SOURCES[x.source_anchor.path]||
+       !["E1","E2","E3","E4","E5","E6","E7"].every(axis=>
+         Object.prototype.hasOwnProperty.call(x.axes||{},axis))||
+       Object.keys(x.axes||{}).length!==7||x.axes.E5?.positive_witness!==null||
+       x.axes.E5?.negative_witness!==null||x.decision!=="INCONCLUSIVE")||
+     dossier.sentences.some(x=>!x.source_id||!x.text_sha256||
+       x.subordinate_clauses?.map(p=>p.text).join("")!==x.exact_text||
+       x.subordinate_clauses.some(p=>
+         p.text_sha256!==createHash("sha256").update(p.text).digest("hex")||
+         p.reviewed!==false||p.negative_witness!==null)||
+       x.positive_witness!==null||x.verdict!=="INCONCLUSIVE")||
+     dossier.interactions.some(x=>!x.source_a?.blob||!x.source_b?.blob||
+       !ruleIds.has(x.rule_a)||!ruleIds.has(x.rule_b)||
+       x.rule_a_text!==ruleById.get(x.rule_a)?.exact_text||
+       x.rule_b_text!==ruleById.get(x.rule_b)?.exact_text||
+       x.pair_id!==x.rule_a+"|"+x.rule_b||
+       !x.applicability_hypothesis?.includes(x.rule_a)||
+       !x.applicability_hypothesis?.includes(x.rule_b)||
+       !x.discriminating_probes?.positive?.includes(x.rule_a)||
+       !x.discriminating_probes?.positive?.includes(x.rule_b)||
+       !x.discriminating_probes?.negative?.includes(x.rule_a)||
+       x.discriminating_probes.missing?.length!==3||
+       x.judgement!=="UNADJUDICATED"||x.positive_witness!==null||
+       x.negative_witness!==null||x.independent_review_id!==null||x.assisted_review_id!==null))
+    throw Error("SEMANTIC_DOSSIER_CONTENT_INVALID");
+  const resolved=resolvePath(outputDirectory),root=resolvePath(process.cwd());
+  if(resolved===root||resolved.startsWith(root+pathSep))
+    throw Error("SEMANTIC_DOSSIER_OUT_OF_TREE_REQUIRED");
+  if(head!==undefined&&!validSha(head))throw Error("SEMANTIC_DOSSIER_HEAD_INVALID");
+  if(base!==undefined&&!validSha(base))throw Error("SEMANTIC_DOSSIER_BASE_INVALID");
+  mkdirSync(resolved,{recursive:true});
+  const files={};
+  for(const [name,rows] of [
+    ["137-e1-e7-regras.jsonl",dossier.rules],
+    ["381-sentencas.jsonl",dossier.sentences],
+    ["9316-interacoes.jsonl",dossier.interactions]
+  ]){
+    const bytes=rows.map(row=>JSON.stringify(row)).join("\n")+"\n";
+    writeFileSync(joinPath(resolved,name),bytes,{encoding:"utf8",flag:"w"});
+    files[name]={rows:rows.length,bytes:Buffer.byteLength(bytes,"utf8"),
+      sha256:createHash("sha256").update(bytes).digest("hex")};
+  }
+  const manifest={schema:"contaos.semantic-audit-export.v1",
+    head:head??null,protected_base:base??null,files,counts:dossier.counts,
+    semantic_preaudit:"INCONCLUSIVE",semantic_completeness:"INCONCLUSIVE",
+    reviewed_by_independent_auditor:false,reviewed_assisted_pre_prod:false,
+    required_review_by_stage:AUDIT_MODALITY_BY_STAGE,release:"NO_GO"};
+  writeFileSync(joinPath(resolved,"manifest.json"),
+    JSON.stringify(manifest,null,2)+"\n",{encoding:"utf8",flag:"w"});
+  return manifest;
+}
+
+
+/**
+ * Executable *normative model*, not a GitHub native/production proof.
+ * Each counterexample is run against a closed predicate taken from the
+ * protected PLAN/EMENDA. These computations cannot change LIVE fields.
+ */
+const stageReviewOk=f=>f.release_stage==="PRE_PROD"?f.assistedReview===true&&f.independentReview===false:
+  f.release_stage==="PROD"?f.independentReview===true&&f.assistedReview===false:false;
+export const P0_PRIORITY_CAUSAL_MODELS=Object.freeze({
+  AUTHORIZATION_OUTLIVES_REVIEW: f=>
+    f.reviewApproved===true&&f.authorizationCurrent===true&&
+    f.headCurrent===true&&f.groupFresh===true&&f.gatesPass===true,
+  N17_TWO_REVIEWS_AUTHORIZATION_ONLY: f=>
+    f.authorDistinct===true&&f.approvals===2&&
+    f.authorizationCurrent===true&&f.nativeEligibilityCurrent===true,
+  ADMISSION_VERSUS_MERGE_GROUP: f=>
+    f.admissionApproved===true&&f.groupShaFresh===true&&
+    f.parentsMatch===true&&f.groupCheckSuccess===true,
+  ACTIVE_VERSUS_CERTIFIED: f=>
+    f.buildPass===true&&stageReviewOk(f)&&f.merged===true&&
+    f.mainReadback===true&&f.checkpointIntegrated===true,
+  APP_IDENTITY_VERSUS_CHECK_NAME: f=>
+    f.expectedIntegrationId!==null&&f.expectedIntegrationId!==undefined&&
+    f.emitterIntegrationId===f.expectedIntegrationId&&
+    f.isCommitStatus===true&&f.statusSuccess===true,
+  FULL_DIFF_NO_DOCUMENTAL_ESCAPE: f=>
+    f.manifestFromProtectedBase===true&&f.fullDiffIncluded===true&&
+    f.everyChangedPathAllowlisted===true,
+  WATCHDOG_VERSUS_ANTISTAGNATION: f=>
+    f.missionActive===true&&f.ownerCancelled===false&&
+    (f.retryCount<2||f.newCausalDelta===true),
+  REVOCATION_AFTER_GREEN_STATUS: f=>
+    f.statusSuccess===true&&f.authorizationCurrent===true&&
+    f.groupCurrent===true&&f.nativeEligibilityCurrent===true,
+  VISUAL_NA_WITH_REAL_APP_DIFF: f=>
+    f.scopeAllowlisted===true&&
+    (f.productDiff===false||f.visualGateExecuted===true),
+  CERTIFICATION_VERSUS_RECOVERY: f=>
+    f.buildPass===true&&stageReviewOk(f)&&
+    f.mainReadback===true&&f.checkpointIntegrated===true
+});
+export const P0_PRIORITY_CAUSAL_PROBES=Object.freeze([
+  ["AUTHORIZATION_OUTLIVES_REVIEW",
+    {reviewApproved:true,authorizationCurrent:true,headCurrent:true,
+      groupFresh:true,gatesPass:true},"authorizationCurrent"],
+  ["N17_TWO_REVIEWS_AUTHORIZATION_ONLY",
+    {authorDistinct:true,approvals:2,authorizationCurrent:true,
+      nativeEligibilityCurrent:true},"authorizationCurrent"],
+  ["ADMISSION_VERSUS_MERGE_GROUP",
+    {admissionApproved:true,groupShaFresh:true,parentsMatch:true,
+      groupCheckSuccess:true},"groupShaFresh"],
+  ["ACTIVE_VERSUS_CERTIFIED",
+    {buildPass:true,release_stage:"PRE_PROD",assistedReview:true,independentReview:false,merged:true,mainReadback:true,
+      checkpointIntegrated:true},"mainReadback"],
+  ["APP_IDENTITY_VERSUS_CHECK_NAME",
+    {expectedIntegrationId:101,emitterIntegrationId:101,
+      isCommitStatus:true,statusSuccess:true},"isCommitStatus"],
+  ["FULL_DIFF_NO_DOCUMENTAL_ESCAPE",
+    {manifestFromProtectedBase:true,fullDiffIncluded:true,
+      everyChangedPathAllowlisted:true},"everyChangedPathAllowlisted"],
+  ["WATCHDOG_VERSUS_ANTISTAGNATION",
+    {missionActive:true,ownerCancelled:false,retryCount:2,
+      newCausalDelta:true},"newCausalDelta"],
+  ["REVOCATION_AFTER_GREEN_STATUS",
+    {statusSuccess:true,authorizationCurrent:true,groupCurrent:true,
+      nativeEligibilityCurrent:true},"authorizationCurrent"],
+  ["VISUAL_NA_WITH_REAL_APP_DIFF",
+    {scopeAllowlisted:true,productDiff:true,
+      visualGateExecuted:true},"visualGateExecuted"],
+  ["CERTIFICATION_VERSUS_RECOVERY",
+    {buildPass:true,release_stage:"PRE_PROD",assistedReview:true,independentReview:false,
+      mainReadback:true,checkpointIntegrated:true},"checkpointIntegrated"]
+].map(([caseId,positive,discriminator])=>
+  Object.freeze({caseId,positive:Object.freeze(positive),discriminator})));
+export function executePriorityCausalCounterproofs(triage){
+  const validation=validatePrioritySemanticDisputes(triage);
+  const issues=[...validation.issues];
+  const outputs=[];
+  for(const probe of P0_PRIORITY_CAUSAL_PROBES){
+    const f=P0_PRIORITY_CAUSAL_MODELS[probe.caseId];
+    if(typeof f!=="function"){
+      issues.push("SEMANTIC_MODEL_MISSING: "+probe.caseId);continue;
+    }
+    const positive=Object.fromEntries(Object.entries(probe.positive));
+    const negative={...positive,[probe.discriminator]:false};
+    const positiveDecision=f(positive),negativeDecision=f(negative);
+    if(positiveDecision!==true||negativeDecision!==false)
+      issues.push("SEMANTIC_MODEL_COUNTEREXAMPLE_FAILED: "+probe.caseId);
+    outputs.push({
+      case_id:probe.caseId,
+      positive:{facts:positive,model_allows:positiveDecision},
+      negative:{facts:negative,model_allows:negativeDecision},
+      source_bound:validation.anchors_valid,
+      native_github_run:null,real_positive_witness:null,real_negative_witness:null,
+      live_enforcement_verified:false,
+      proof_scope:"OFFLINE_LOGICAL_MODEL_ONLY",
+      verdict:"LIVE_CONTRAPROOF_REQUIRED"
+    });
+  }
+  if(outputs.length!==10||new Set(outputs.map(x=>x.case_id)).size!==10||
+     outputs.some(x=>!P0_SEMANTIC_PRIORITY_DISPUTES.some(y=>y.case===x.case_id)))
+    issues.push("SEMANTIC_MODEL_COVERAGE_DRIFT");
+  return {schema:"contaos.semantic-priority-causal-probes.v1",
+    cases:outputs.length,offlined_models_tested:outputs.length*2,
+    positive_models:outputs.filter(x=>x.positive.model_allows===true).length,
+    negative_models:outputs.filter(x=>x.negative.model_allows===false).length,
+    github_authenticated_live_proofs:0,
+    issues,probes:outputs,
+    semantic_completeness:"INCONCLUSIVE",activation:"NO_GO"};
+}
+
+/** Author's material interpretations of all 18 reverse source gaps; NEVER proof of independent review. */
+export const P0_REVERSE_GAP_REVIEWS=Object.freeze([["PLAN",3,"NORMATIVE_STATUS_BOUNDARY","Sem BUILD","PLAN-S3-06","A situação proposta e a vedação de efeito retroativo impedem tratar um PLAN como instalação ou certificação."],["PLAN",7,"NORMATIVE_FRESHNESS","Reconsultar a ref viva","PLAN-S31-06","O SHA histórico é apenas baseline inicial: a origem viva tem de ser consultada de novo antes do BUILD."],["PLAN",8,"HISTORICAL_NON_CERTIFICATION","certifica sozinha","PLAN-S3-06","O estado anterior de uma PR não atesta por si a conclusão funcional nem o certificado exigível."],["PLAN",9,"ARCHITECTURE_PRESERVATION","Preservar seus métodos","PLAN-S3-03","Inventário de arquitetura com proibição efetiva de substituir métodos, recibos, perfis e histórico existentes."],["PLAN",10,"HISTORICAL_WORKFLOW_LIST","Workflows existentes",null,"Enumeração factual de workflows observados, que não significa execução, requerimento ou aprovação atual."],["PLAN",11,"RULESET_OBSERVED_ONLY","Não afirmar que já há check","PLAN-S31-01","Configuração do ruleset relatada como observação temporal; não permite afirmar gate de missão instalado."],["PLAN",12,"MANDATORY_SOURCES_AND_SCOPE","Fontes obrigatórias","PLAN-S4-14","Exige consulta às fontes canônicas antes da execução e limita a inspeção de backend no presente escopo."],["PLAN",13,"NO_FALSE_INSTALLATION","proíbe declarar","PLAN-S4-14","Veda converter documentação ou testes locais em instalação e limita explicitamente artefatos protegidos."],["PLAN",17,"EXPLICIT_PROBLEM_STATEMENT","Isso",null,"É diagnóstico de lacuna de missão e expressamente não comprova violação de regras de merge existentes."],["PLAN",19,"SEGREGATION_OF_DUTIES","Implementadores não se autocertificam","PLAN-S31-07","Auditor não assume autorização do titular nem poderes de bypass, merge ou operação de produção."],["PLAN",89,"REQUIRED_TESTS","GREEN: testes existentes","PLAN-S3-06","Estabelece matriz de testes, mutantes e execução por fonte confiável, distinta de mera definição de check."],["PLAN",117,"STRUCTURAL_TABLE_HEADER","Causa e classificação",null,"Cabeçalho de duas colunas para organização de RCA; não há efeito jurídico técnico autônomo."],["PLAN",123,"STRUCTURAL_SECTION_HEADER","ZERO-DRIFT",null,"Cabeçalho isolado de seção, cujo conteúdo normativo é expresso nos parágrafos subsequentes."],["PLAN",128,"CONDITIONAL_VISUAL_NA","Qualquer alteração futura de UI","PLAN-S4-14","Dispensa visual condicionada ao diff documental; alteração de interface obriga novo plano e teste."],["PLAN",133,"PAST_REVIEW_ONLY","Segundo parecer",null,"Parecer histórico CHANGES_REQUESTED de SHA anterior não satisfaz revisão vigente ou contraditório atual."],["PLAN",141,"PAST_REVIEW_ONLY","Terceiro parecer",null,"Parecer histórico da mesma série não é prova de revisão ou aprovação no HEAD atualmente avaliado."],["EMENDA",7,"STRUCTURAL_TABLE_HEADER","Ressalva comprovada",null,"Cabeçalho descritivo da matriz; os requisitos aplicáveis constam nas linhas específicas abaixo."],["EMENDA",63,"STRUCTURAL_SECTION_HEADER","ZERO-DRIFT",null,"Cabeçalho isolado da diretriz visual, sem predicado independente do conteúdo da seção."]].map(([doc,line,kind,marker,linked,reason])=>
+  Object.freeze({doc,line,kind,marker,related:linked?[linked]:[],reason})));
+export function materialReviewOfReverseGaps(inventory,worklist,reverse){
+  const issues=[];
+  const bySource=new Map((inventory?.lines||[]).map(x=>[x.id,x]));
+  const knownRules=new Set((worklist?.normative_rules||[]).map(x=>x.rule_id));
+  const seen=new Set();
+  if(!inventory?.inventory_verified||!worklist?.worklist_verified||
+    reverse?.uncovered_source_count!==18||!Array.isArray(reverse.uncovered))
+    issues.push("SEMANTIC_REVERSE_MATERIAL_BASELINE");
+  const records=(reverse?.uncovered||[]).map(u=>{
+    const doc=u.path?.includes("/EMENDA_")?"EMENDA":"PLAN";
+    const key=doc+":"+u.line;
+    const def=P0_REVERSE_GAP_REVIEWS.find(x=>x.doc===doc&&x.line===u.line);
+    const row=bySource.get(u.source_id);
+    if(!def||!row||seen.has(key)||u.path!==row.path||
+      u.line!==row.line||u.blob!==row.blob||
+      u.text_sha256!==row.text_sha256||!row.text.includes(def.marker)||
+      def.related.some(id=>!knownRules.has(id))||def.reason.length<55)
+      issues.push("SEMANTIC_REVERSE_MATERIAL_INVALID: "+key);
+    seen.add(key);
+    return {source_id:u.source_id,path:u.path,line:u.line,
+      blob:u.blob,text_sha256:u.text_sha256,text:row?.text??null,
+      kind:def?.kind??"MISSING_INTERPRETATION",
+      reason:def?.reason??null,related:def?.related??[],
+      review_level:"AUTHOR_PROPOSAL",
+      independent_review:null,assisted_review:null,required_review_by_stage:AUDIT_MODALITY_BY_STAGE,
+      positive_witness:null,negative_witness:null,
+      verdict:"REQUIRES_STAGE_SEMANTIC_REVIEW"};
+  });
+  for(const def of P0_REVERSE_GAP_REVIEWS)
+    if(!seen.has(def.doc+":"+def.line))
+      issues.push("SEMANTIC_REVERSE_MATERIAL_OMITTED: "+def.doc+":"+def.line);
+  if(records.length!==18||seen.size!==18)
+    issues.push("SEMANTIC_REVERSE_MATERIAL_INCOMPLETE");
+  return {schema:"contaos.semantic-reverse-gap-material.v1",records,
+    total:records.length,unique:seen.size,
+    source_linked:records.filter(r=>r.related.length>0).length,
+    structural_or_historical:records.filter(r=>r.related.length===0).length,
+    issues,adjudicated_independently:0,adjudicated_assisted_pre_prod:0,uncovered_spans_remaining:18,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+
+
+/**
+ * Executes 21,312 POSITIVE/NEGATIVE *integrity* probes over the actual corpus.
+ * It does not test normative truth or native GitHub enforcement. The verifier
+ * must never grant semantic PASS regardless of a structurally clean corpus.
+ */
+export function executeSemanticCorpusIntegrityMutants(dossier){
+  const issues=[];
+  const ruleMap=new Map((dossier?.rules||[]).map(r=>[r.rule_id,r]));
+  const names=["E1","E2","E3","E4","E5","E6","E7"];
+  const checkRule=(r,axis)=>{
+    const x=r?.axes?.[axis];
+    if(!x||!r.source_anchor?.blob||!r.exact_text||r.decision!=="INCONCLUSIVE")
+      return false;
+    switch(axis){
+      case "E1":
+        return x.source?.blob===r.source_anchor.blob&&
+          x.source?.line===r.source_anchor.line&&x.authority_decision===null;
+      case "E2":
+        return x.source_clause===r.exact_text&&Array.isArray(x.conditions)&&
+          x.state_transition===null;
+      case "E3":
+        return Array.isArray(x.positive_indicators)&&Array.isArray(x.negative_indicators)&&
+          x.legitimate_effect===null&&x.forbidden_effect===null;
+      case "E4":
+        return Array.isArray(x.rule_references)&&Array.isArray(x.concepts)&&
+          x.conflict_or_precedence_decision===null;
+      case "E5":
+        return x.head===null&&x.run_id===null&&x.job_id===null&&
+          x.log_sha256===null&&x.positive_witness===null&&x.negative_witness===null;
+      case "E6":
+        return Array.isArray(x.temporal_qualifiers)&&
+          typeof x.revocation_mentioned==="boolean"&&
+          x.native_revocation_verified===false;
+      case "E7":
+        return Array.isArray(x.source_stages)&&Array.isArray(x.topics)&&
+          x.boundary_verified===false;
+      default:return false;
+    }
+  };
+  const alteredAxis=(r,axis)=>{
+    const mutant={...r,axes:{...r.axes,[axis]:{...r.axes[axis]}}};
+    const x=mutant.axes[axis];
+    switch(axis){
+      case "E1":x.authority_decision="APPROVED";break;
+      case "E2":x.source_clause="INVENTED_STATE";break;
+      case "E3":x.legitimate_effect="VERIFIED";break;
+      case "E4":x.conflict_or_precedence_decision="NONINTERACTING";break;
+      case "E5":x.positive_witness={run_id:123};break;
+      case "E6":x.native_revocation_verified=true;break;
+      case "E7":x.boundary_verified=true;break;
+    }
+    return mutant;
+  };
+  const checkSentence=x=>!!x?.sentence_id&&!!x?.source_id&&
+    x.text_sha256===createHash("sha256").update(x.exact_text||"").digest("hex")&&
+    Array.isArray(x.subordinate_clauses)&&
+    x.subordinate_clauses.map(p=>p.text).join("")===x.exact_text&&
+    x.subordinate_clauses.every(p=>p.text_sha256===
+      createHash("sha256").update(p.text).digest("hex"))&&
+    x.human_classification===null&&x.positive_witness===null&&
+    x.negative_witness===null&&x.verdict==="INCONCLUSIVE";
+  const checkPair=x=>{
+    const a=ruleMap.get(x?.rule_a),b=ruleMap.get(x?.rule_b);
+    return !!a&&!!b&&x.rule_a!==x.rule_b&&
+      x.pair_id===x.rule_a+"|"+x.rule_b&&
+      x.source_a?.blob===a.source_anchor?.blob&&
+      x.source_b?.blob===b.source_anchor?.blob&&
+      x.rule_a_text===a.exact_text&&x.rule_b_text===b.exact_text&&
+      x.judgement==="UNADJUDICATED"&&x.positive_witness===null&&
+      x.negative_witness===null;
+  };
+  let pos=0,neg=0,slots=0;
+  for(const r of dossier?.rules||[])for(const axis of names){
+    slots++;
+    if(checkRule(r,axis))pos++;else issues.push("AXIS_BASELINE_FAIL:"+r.rule_id+":"+axis);
+    if(!checkRule(alteredAxis(r,axis),axis))neg++;else
+      issues.push("AXIS_MUTANT_ESCAPED:"+r.rule_id+":"+axis);
+  }
+  for(const sentence of dossier?.sentences||[]){
+    if(checkSentence(sentence))pos++;else
+      issues.push("SENTENCE_BASELINE_FAIL:"+sentence.sentence_id);
+    if(!checkSentence({...sentence,text_sha256:"0".repeat(64)}))neg++;else
+      issues.push("SENTENCE_MUTANT_ESCAPED:"+sentence.sentence_id);
+  }
+  for(const pair of dossier?.interactions||[]){
+    if(checkPair(pair))pos++;else issues.push("PAIR_BASELINE_FAIL:"+pair.pair_id);
+    if(!checkPair({...pair,rule_b_text:"MUTATED"+pair.rule_b_text}))neg++;else
+      issues.push("PAIR_MUTANT_ESCAPED:"+pair.pair_id);
+  }
+  const expected=959+381+9316;
+  if(slots!==959||pos!==expected||neg!==expected||
+     dossier?.rules?.length!==137||dossier?.sentences?.length!==381||
+     dossier?.interactions?.length!==9316)
+    issues.push("SEMANTIC_INTEGRITY_PROBE_COUNT_DRIFT");
+  return {schema:"contaos.semantic-corpus-integrity-mutations.v1",
+    axis_slots:slots,sentence_slots:dossier?.sentences?.length??0,
+    pair_slots:dossier?.interactions?.length??0,
+    positive_model_integrity_probes:pos,negative_model_integrity_probes:neg,
+    total_executed_model_probes:pos+neg,expected_model_probes:expected*2,
+    issues,real_semantic_adjudications:0,live_github_witnesses:0,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}
+
+/** Authored, source-linked substantive proposals for ten priority conflicts; not independent final adjudications. */
+export const P0_PRIORITY_SEMANTIC_PROPOSALS=Object.freeze([["AUTHORIZATION_OUTLIVES_REVIEW","CUMULATIVE_AUTHORIZATION","APPROVED vigente é condição necessária mas não suficiente: a autorização específica do titular deve continuar válida no mesmo repo, PR, HEAD e base.","Após a revogação, o status positivo anterior não sustenta nova publicação nem admite a PR na fila.","A autorização vigente, a revisão elegível e os checks atuais devem coincidir antes de qualquer tentativa.","A review histórica continua existente, mas a autorização temporalmente revogada tem precedência para bloquear o próximo passo."],["N17_TWO_REVIEWS_AUTHORIZATION_ONLY","NATIVE_ENFORCEMENT_GAP","Duas aprovações elegíveis com autoria terceira não restauram uma autorização específica que o titular revogou.","O estado nativo de revisão pode permanecer satisfeito; é necessário bloqueio próprio e nativo da entrada no grupo.","Somente a manutenção simultânea das duas aprovações e a retirada efetiva da autorização em fonte autenticada distingue o caso de um simples dismiss.","Sem terceiro autor autorizado e sem prova do veto nativo antes do merge, N17(c) continua sem execução e ativação proibida."],["ADMISSION_VERSUS_MERGE_GROUP","SEQUENTIAL_GATE_DEPENDENCE","Admissão da PR e autorização no SHA efêmero do merge_group são fases cumulativas com proveniência distinta.","O success de admissão não pode ser reutilizado quando o grupo, os pais ou o HEAD mudarem.","Composição autenticada da base e da PR, seguida de status do grupo para o SHA realmente ativo.","Qualquer mudança do grupo exige nova avaliação, sem transferir o status anterior."],["ACTIVE_VERSUS_CERTIFIED","LIFECYCLE_PRECEDENCE","A missão ACTIVE pode ter BUILD e testes aprovados sem ter cumprido merge, readback e checkpoint protegido.","A transição a CERTIFIED depende das duas provas aplicáveis e de revisão material no HEAD conforme o estágio: assistida pré-PROD ou independente PROD.","Readback pós-merge e checkpoint integrado são fatos distintos do parecer e do resultado CI.","Relatório local DONE ou encerramento de sessão não cancelam nem certificam a missão."],["APP_IDENTITY_VERSUS_CHECK_NAME","AUTHENTICITY_REQUIREMENT","A igualdade textual do nome de um check não comprova sua origem autorizada.","Somente commit status do App dedicado com integration_id exigido e SHA correto atende a identidade do publicador.","Check Run homônimo de Actions e status do integration_id errado devem falhar mesmo com conclusão verde.","Instalar App, credencial e required check requer gate administrativo de ativação separado do BUILD."],["FULL_DIFF_NO_DOCUMENTAL_ESCAPE","FULL_SCOPE_PRECEDENCE","Um manifesto full_diff verdadeiro obriga a verificar todos os caminhos, inclusive documentos extras.","Marcar a mudança como documental ou visual N/A não autoriza arquivo fora da lista protegida.","Comparar diff total com manifesto obtido na base protegida anterior, antes de qualquer filtro por código.","Tentativa de manifesto autocriado no HEAD candidato não substitui a origem protegida."],["WATCHDOG_VERSUS_ANTISTAGNATION","MONITORING_NOT_AUTHORITY","O watchdog pode diagnosticar falta de progresso; não é executor, aprovador ou certificador.","Duas tentativas sem delta causal exigem RCA ampliada e vedam retry idêntico.","Nova evidência causal permite examinar nova tentativa, mas não substitui lock, contrato e critérios de conclusão.","Heartbeat sem evidência de avanço causal não altera o estado formal da missão nem autoriza certificação."],["REVOCATION_AFTER_GREEN_STATUS","TEMPORAL_SAFETY_OBLIGATION","A revogação após status verde deve impedir nativamente a tentativa ativa antes do merge.","Novo status ou polling tardio não comprovam bloqueio atômico de entrada já elegível.","Somente recibo de retirada/invalidação com confronto de tempo anterior ao merge comprova efetividade.","Sem garantia verificável da plataforma contra a corrida revogação/merge, manter NO-GO de ativação."],["VISUAL_NA_WITH_REAL_APP_DIFF","SCOPE_GUARD_DOMINATES_NA","A dispensa de avaliação visual só cabe no diff estritamente não visual autorizado.","Mudar src/public ou interface de produto com rótulo visual N/A deve reprovar o gate de escopo.","Teste C verifica a natureza do diff do HEAD real e exige plano visual para mudanças aplicáveis.","O campo de impacto visual da PR é alegação, não prova de ausência de impacto."],["CERTIFICATION_VERSUS_RECOVERY","CERTIFICATION_EVIDENCE_CHAIN","Recuperar um processo ou concluir BUILD não produz certificado sem revisão e integração.","Certificação exige readback da main, evidência de revisão material conforme o estágio e checkpoint preservado no GitHub.","HEAD/base divergentes reabrem as verificações sem descartar o último checkpoint comprovado.","Encerramento de agente, retry e atualização documental não dispensam o rito de aprovação e integração."]].map(
+  ([caseId,classification,interpretation,risk,evidence,precedence])=>
+    Object.freeze({caseId,classification,interpretation,risk,evidence,precedence})));
+export function analyzePrioritySemanticProposals(triage){
+  const binding=validatePrioritySemanticDisputes(triage);
+  const probe=executePriorityCausalCounterproofs(triage);
+  const issues=[...binding.issues,...probe.issues];
+  const byCase=new Map(P0_SEMANTIC_PRIORITY_DISPUTES.map(x=>[x.case,x]));
+  const byProbe=new Map(probe.probes.map(x=>[x.case_id,x]));
+  const byRule=new Map((triage?.rules||[]).map(x=>[x.rule_id,x]));
+  const proposals=P0_PRIORITY_SEMANTIC_PROPOSALS.map(p=>{
+    const d=byCase.get(p.caseId),f=byProbe.get(p.caseId);
+    const pair=d&&(triage?.interactions||[]).find(x=>
+      x.pair_id===(triage?.rules||[]).filter(r=>d.rules.includes(r.rule_id))
+        .map(r=>r.rule_id).join("|"));
+    const anchors=(d?.rules||[]).map(x=>byRule.get(x)?.anchor??null);
+    if(!pair||anchors.length!==2||anchors.some(x=>!x)||
+       !f||!f.positive.model_allows||f.negative.model_allows||
+       [p.interpretation,p.risk,p.evidence,p.precedence].some(x=>x.length<75))
+      issues.push("SEMANTIC_PROPOSAL_INCOMPLETE: "+p.caseId);
+    return {case_id:p.caseId,pair_id:pair?.pair_id??null,
+      source_anchors:anchors,proposed_relationship:p.classification,
+      reasoned_interpretation:p.interpretation,critical_failure_mode:p.risk,
+      discriminating_proof_required:p.evidence,revocation_or_precedence:p.precedence,
+      offline_model_positive:f?.positive??null,offline_model_negative:f?.negative??null,
+      material_author_analysis:"PROVISIONAL_NOT_INDEPENDENT",
+      authenticated_live_positive:null,authenticated_live_negative:null,
+      independent_contradictory_review:null,semantic_adjudication:"PENDING"};
+  });
+  if(proposals.length!==10||new Set(proposals.map(x=>x.pair_id)).size!==10)
+    issues.push("SEMANTIC_PROPOSALS_COUNT_OR_DUPLICATE");
+  return {schema:"contaos.semantic-priority-substantive-proposals.v1",
+    proposals,materially_interpreted_by_author:proposals.length,
+    adjudicated_independently:0,authenticated_live_pairs:0,issues,
+    semantic_completeness:"INCONCLUSIVE",release:"NO_GO"};
+}

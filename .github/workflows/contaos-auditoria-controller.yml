@@ -5,6 +5,19 @@ on:
     paths:
       - "scripts/auditoria/**"
       - ".github/workflows/contaos-auditoria-controller.yml"
+      - ".github/workflows/contaos-missao-auditoria.yml"
+      - ".github/workflows/contaos-frontend-zero-drift.yml"
+      - ".github/workflows/contaos-teste-c-independente.yml"
+      - ".github/workflows/p0-nr001-anti-recurrence.yml"
+      - "scripts/ci/merge-group-context.mjs"
+      - "scripts/ci/merge-group-context.test.mjs"
+      - "scripts/p0-rca-impact-gate.mjs"
+      - "scripts/p0-rca-impact-gate.test.mjs"
+      - "docs/frontend/governanca/P0_AUDITOR_FISCAL_UNIVERSAL_4_1.md"
+      - "docs/frontend/governanca/MISSAO_ATIVA_4_1.json"
+      - "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
+  pull_request_review:
+    types: [submitted, dismissed, edited]
   push:
     branches: [main]
     paths:
@@ -13,6 +26,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  checks: read
+  actions: read
+  pull-requests: read
+  issues: read
 jobs:
   controller-offline:
     name: Controlador offline Windows
@@ -20,6 +37,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
@@ -27,8 +46,326 @@ jobs:
         run: python -B scripts/auditoria/test_runner.py
       - name: Testar preparacao, proveniencia e Git real
         run: python -B scripts/auditoria/test_preparation.py
+      - name: P0-ABS supervisor universal N01-N17 (RED/GREEN)
+        run: python -B scripts/auditoria/test_mission_supervisor.py
       - name: Testar controlador PowerShell e gates negativos
         shell: powershell
         run: |
           powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/auditoria/test-controller.ps1 -Controller scripts/auditoria/auditar-pr.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  adversarial-v2:
+    name: P0-ABS Adversarial V2 executavel
+    if: (github.event_name == 'pull_request' && github.event.pull_request.number == 690) || (github.event_name == 'pull_request_review' && github.event.pull_request.number == 690) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/build/p0-abs-fiscal-universal')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: P0 FULL_PROTOCOL source pins fail-fast
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/p0-rca-impact-gate.mjs --verify-full-protocol-pins
+      - name: P0 FULL_PROTOCOL provenance manual and PR regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="^P0 FULL_PROTOCOL (manual workflow_dispatch|PR merge checkout)" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-fullprotocol-context.tap
+          grep -Fqx '# pass 2' /tmp/p0-fullprotocol-context.tap
+          grep -Fqx '# fail 0' /tmp/p0-fullprotocol-context.tap
+      - name: P0 V2 CAUSAL_RED watchdog_postmerge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -B scripts/auditoria/test_mission_supervisor.py MissionSupervisorTests.test_v2_causal_watchdog_historical_red_then_green
+      - name: P0 V2 CAUSAL_RED artifact_attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 CAUSAL_RED artifact_attempt:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-causal-artifact.tap
+          grep -Fqx '# pass 1' /tmp/p0-causal-artifact.tap
+          grep -Fqx '# fail 0' /tmp/p0-causal-artifact.tap
+      - name: P0 V2 CAUSAL_RED review_comment
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 CAUSAL_RED review_comment:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-causal-review.tap
+          grep -Fqx '# pass 1' /tmp/p0-causal-review.tap
+          grep -Fqx '# fail 0' /tmp/p0-causal-review.tap
+      - name: P0 FULL_PROTOCOL matriz integral e testemunhas executaveis
+        shell: bash
+        env:
+          INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha || 'e007c4bad8f2c66c489c55e4752b71bb19c5ced0' }}
+          INPUT_PREAUDIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          node scripts/p0-rca-impact-gate.mjs --audit-full-protocol
+
+      - name: P0 SEMANTIC SOURCE protected inventory (NO-GO for semantic certification)
+        if: ${{ always() && !cancelled() }}
+        shell: bash
+        env:
+          INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha || 'e007c4bad8f2c66c489c55e4752b71bb19c5ced0' }}
+        run: |
+          set -euo pipefail
+          node scripts/p0-rca-impact-gate.mjs --audit-semantic-inventory | tee /tmp/p0-semantic-source-inventory.json
+          node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync("/tmp/p0-semantic-source-inventory.json","utf8"));if(!x.source_verified||x.anchored_lines!==118||x.axis_backlog?.axis_slots!==826||x.axis_backlog?.normative_rule_count!==137||x.axis_backlog?.normative_axis_slots!==959||x.axis_backlog?.anchored_normative_rules!==137||x.axis_backlog?.unlinked_normative_rules!==0||x.axis_backlog?.positionally_verified_rules!==90||x.axis_backlog?.segment_located_rules!==37||x.axis_backlog?.provisionally_located_rules!==0||x.axis_backlog?.all_possible_rule_pairs!==9316||x.axis_backlog?.untriaged_rule_pairs!==9316||x.reverse_coverage?.source_count!==118||x.reverse_coverage?.uncovered_source_count!==18||x.reverse_coverage?.covered_source_count!==100||x.reverse_coverage?.uncovered?.some(r=>!r.category||r.assessment!=="REQUIRES_STAGE_SEMANTIC_REVIEW")||x.reverse_coverage?.rule_count!==137||x.reverse_coverage?.unproven_rule_count!==137||x.reverse_coverage?.source_count!==x.reverse_coverage?.covered_source_count+x.reverse_coverage?.uncovered_source_count||x.reverse_coverage?.invalid?.length!==0||x.reverse_coverage?.semantic_completeness!=="INCONCLUSIVE"||x.reverse_coverage?.release!=="NO_GO"||x.semantic_preaudit_gate?.semantic_preaudit!=="INCONCLUSIVE"||x.semantic_preaudit_gate?.semantic_completeness!=="INCONCLUSIVE"||x.semantic_preaudit_gate?.release!=="NO_GO"||x.semantic_release_gate?.semantic_completeness!=="INCONCLUSIVE"||x.semantic_release_gate?.release!=="NO_GO"||x.semantic_release_gate?.rule_count!==137||x.semantic_release_gate?.sentence_count!==381||x.semantic_release_gate?.source_count!==118||x.semantic_release_gate?.pair_count!==9316||x.semantic_release_gate?.issues?.length<5||!x.sentence_candidates?.partition_verified||x.sentence_candidates?.candidate_count<=118||x.sentence_candidates?.unreviewed!==x.sentence_candidates?.candidate_count||x.axis_backlog?.semantic_completeness!=="INCONCLUSIVE"||x.axis_backlog?.rows?.length!==118||x.semantic_completeness!=="INCONCLUSIVE"||x.release!=="NO_GO")process.exit(1);console.log("SEMANTIC_SOURCE_INVENTORY VERIFIED; SEMANTIC_COMPLETENESS INCONCLUSIVE");'
+
+      # Dossiê textual completo, NÃO certificação semântica; sem privilégio de publicação.
+      - name: P0 SEMANTIC DOSSIER - negative tests E1-E7 381 9316
+        if: ${{ always() && !cancelled() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 (MATERIAL TRIAGE|TEN MATERIAL DISPUTES|SEMANTIC DOSSIER|TEN CAUSAL MODELS|REVERSE 18 MATERIAL|MUTATION FULL CORPUS|TEN REASONED INTERPRETATIONS|CRYPTO SNAPSHOT)" scripts/p0-rca-impact-gate.test.mjs | tee "$RUNNER_TEMP/p0-semantic-material-tests.tap"
+
+      - name: P0 SEMANTIC DOSSIER - export read-only SHA256 manifest NO-GO
+        if: ${{ always() && !cancelled() }}
+        shell: bash
+        env:
+          INPUT_PREAUDIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha || 'e007c4bad8f2c66c489c55e4752b71bb19c5ced0' }}
+        run: |
+          set -euo pipefail
+          node scripts/p0-rca-impact-gate.mjs --export-semantic-dossier --dossier-dir="$RUNNER_TEMP/contaos-semantic-corpus"
+          node -e 'const fs=require("fs");const p=process.env.RUNNER_TEMP+"/contaos-semantic-corpus/manifest.json";const m=JSON.parse(fs.readFileSync(p,"utf8"));if(m.counts?.rules!==137||m.counts?.axes!==959||m.counts?.sentences!==381||m.counts?.pairs!==9316||m.counts?.unique_pairs!==9316||m.semantic_completeness!=="INCONCLUSIVE"||m.release!=="NO_GO")process.exit(1);console.log("SEMANTIC DOSSIER MATERIALIZED, SHA256 VERIFIED, SEMANTIC_CERTIFICATION NO-GO")'
+
+      - name: P0 SEMANTIC DOSSIER - upload source-bound worklist
+        if: ${{ always() && !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: contaos-p0-semantic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/contaos-semantic-corpus/
+          retention-days: 30
+          if-no-files-found: error
+      - name: P0 V2 LAYER 01
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LAYER 01:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LAYER 02
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LAYER 02:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LAYER 03
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LAYER 03:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LAYER 04
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LAYER 04:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LAYER 05
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LAYER 05:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LAYER 06
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LAYER 06:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LAYER 07
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LAYER 07:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LAYER 08
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LAYER 08:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LAYER 09
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LAYER 09:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LAYER 10
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LAYER 10:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS security
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS security:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS provenance:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS concurrency
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS concurrency:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS lifecycle:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS state_machine
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS state_machine:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS integration:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS resilience
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS resilience:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS governance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS governance:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS supply_chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS supply_chain:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS legitimate_regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS legitimate_regression:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS observability
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS observability:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+      - name: P0 V2 LENS operational_environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern="P0 V2 LENS operational_environment:" scripts/p0-rca-impact-gate.test.mjs | tee /tmp/p0-v2-result.tap
+          grep -Fqx '# pass 1' /tmp/p0-v2-result.tap
+          grep -Fqx '# fail 0' /tmp/p0-v2-result.tap
+
+  # Separate non-required gate for release of the INTERNAL pre-certification.
+  # This is an assistant-authored pre-audit, never the independent Codex review.
+  assistant-preaudit-gate:
+    name: P0-ABS Preauditoria Assistente (precert apenas)
+    if: ((github.event_name == 'pull_request' || github.event_name == 'pull_request_review') && github.event.pull_request.number == 690) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/build/p0-abs-fiscal-universal')
+    needs: [controller-offline, adversarial-v2]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
+    steps:
+      - name: Checkout da PR para verificador sem credenciais persistentes
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Revalidar LIVE parecer/CI/artifact no exato instante de consumo
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          INPUT_PREAUDIT_PR: "690"
+          INPUT_PREAUDIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          INPUT_PREAUDIT_BASE: ${{ github.event.pull_request.base.sha || '' }}
+        run: |
+          set -euo pipefail
+          echo "PRÉ-CERTIFICAÇÃO BLOQUEADA até parecer PASS do assistente."
+          for attempt in $(seq 1 10); do
+            if output=$(node scripts/p0-rca-impact-gate.mjs --verify-assistant-preaudit 2>&1); then
+              echo "$output"
+              echo "P0 ASSISTENTE PASS autenticado. PRÉ-CERTIFICAÇÃO INTERNA LIBERADA."
+              echo "REVISAO ASSISTIDA PRE-PROD, APPROVED, MERGE e ATIVACAO continuam com gates proprios; independencia exclusiva GATE PROD."
+              exit 0
+            fi
+            echo "$output"
+            # A primary rate-limit 403 is a transient EXTERNAL blocker.
+            # Honor GitHub's authenticated reset epoch. Never pretend PASS.
+            if echo "$output" | grep -Eq 'GitHub HTTP (403|429).* remaining=0 reset-at=[0-9]{10}'; then
+              reset=$(printf '%s\n' "$output" | sed -nE 's/.*reset-at=([0-9]{10}).*/\1/p' | tail -n 1)
+              now=$(date -u +%s)
+              delay=$((reset - now + 10))
+              if [ "$delay" -lt 15 ]; then delay=15; fi
+              if [ "$delay" -gt 3900 ]; then
+                echo "P0-ABS BLOCKED_EXTERNAL: reset alem da janela segura."
+                exit 1
+              fi
+              echo "P0-ABS BLOCKED_EXTERNAL: limite GitHub esgotado, retomada somente apos reset autenticado."
+              sleep "$delay"
+              continue
+            fi
+            # Permission denials, invalid causal RED or missing authenticated
+            # steps need a correction, never 24 blind retries.
+            if echo "$output" | grep -Eq 'GitHub HTTP (401|403)|NR-006: RED causal|25 provas executaveis'; then
+              echo "P0-ABS BLOCKED: impedimento tecnico/permissao; nova revisao necessaria."
+              exit 1
+            fi
+            # Terminal failures must never be recycled as CI pending.
+            # Only pending checks or a still-unpublished current-HEAD receipt
+            # may enter the bounded wait loop.
+            if echo "$output" | grep -Fq '"waitable":false'; then
+              echo "P0-ABS CHANGES_REQUESTED: impedimento terminal, sem retries cegos."
+              exit 1
+            fi
+            if [ "$attempt" -eq 10 ]; then
+              echo "CHANGES_REQUESTED/BLOCKED: sem PASS íntegro neste HEAD."
+              exit 1
+            fi
+            sleep 45
+          done

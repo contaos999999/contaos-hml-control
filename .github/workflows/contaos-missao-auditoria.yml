@@ -1,0 +1,78 @@
+name: ContaOS Missao Watchdog P0-ABS (somente leitura)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "43 */4 * * *"
+
+# Auditor local Codex REMOVIDO deste workflow ate prova externa de isolamento
+# de runner group, ref e identidade gh. Nao ha acesso a credenciais locais.
+permissions:
+  contents: read
+  actions: read
+  checks: read
+  pull-requests: read
+
+concurrency:
+  group: contaos-watchdog-readonly-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  diagnostico:
+    name: Diagnostico de missao (nao certificacao)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout somente da main protegida
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Testar supervisor e watchdog
+        run: python -B scripts/auditoria/test_mission_supervisor.py
+      - name: Testar composicao da fila
+        run: node --test --test-reporter=tap scripts/ci/merge-group-context.test.mjs
+      - name: Diagnosticar missao a partir de API GitHub de leitura
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python -B scripts/auditoria/mission-supervisor.py \
+            --watchdog --contract docs/frontend/governanca/MISSAO_ATIVA_4_1.json \
+            > "$RUNNER_TEMP/contaos-watchdog.json" && result=0 || result=$?
+          if [ "$result" -ne 2 ]; then
+            echo "P0-ABS FAIL: diagnostico retornou sucesso indevido"
+            exit 1
+          fi
+          python - "$RUNNER_TEMP/contaos-watchdog.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf8") as handle:
+              report = json.load(handle)
+          assert report.get("source_verified") is True, "API/origem GitHub nao verificada"
+          assert report.get("certified") is False
+          assert report.get("eligible") is False
+          assert report.get("authoritative_for_merge") is False
+          assert report.get("activation_authorized") is False
+          assert isinstance(report.get("issues"), list)
+          print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+          print("DIAGNOSTICO SEM AUTORIZACAO DE MERGE")
+          PY
+      - name: Guardar evidencia diagnostica sem status privilegiado
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contaos-watchdog-${{ github.run_id }}
+          path: ${{ runner.temp }}/contaos-watchdog.json
+          if-no-files-found: warn
+          retention-days: 30
