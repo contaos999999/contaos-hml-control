@@ -800,3 +800,12 @@ test("V2-04 aguarda o efeito antes de contar exatamente duas consultas", () => {
     "RED_V2_04_CONTAGEM_PREMATURA: o caso conta as consultas sem aguardar o efeito",
   );
 });
+
+test("P0 ORQ F2 native transport rejects non-main event", async () => {
+  const { existsSync } = await import("node:fs");
+  assert.ok(existsSync(new URL("./p0-actions-transport.mjs", import.meta.url)), "RED_CAUSAL_NATIVE_TRANSPORT_ABSENT");
+  const { validatePush } = await import("./p0-actions-transport.mjs");
+  const result = await validatePush({ context: { eventName: "pull_request", ref: "refs/heads/other" } });
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.executionAllowed, false);
+});
