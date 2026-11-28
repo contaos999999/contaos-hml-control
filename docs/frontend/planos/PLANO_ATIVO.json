@@ -36,6 +36,7 @@
     "src/lib/diligencias/pareceresContratanteDados.ts",
     "src/test/v2-76-contrato.test.ts",
     "src/test/v2-76-tela.test.tsx",
+    "src/test/v2-47-tela.test.tsx",
     "scripts/testc/visual-audit.mjs",
     "scripts/testc/visual-audit.test.mjs",
     "scripts/testc/v2-integracao-visual.mjs",
