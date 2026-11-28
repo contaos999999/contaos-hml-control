@@ -1,0 +1,21 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 866,
+  "files": [
+    "src/components/organizacao/OrganizationSelector.tsx",
+    "src/test/selecionarOrganizacao.test.tsx",
+    "docs/frontend/rca/P0_RCA_ATIVO.json",
+    "docs/frontend/auditorias/P0_864_RED_EVIDENCIAS_2026-11-28.md",
+    ".github/workflows/p0-864-causal-red.yml"
+  ],
+  "plan_documento": "docs/frontend/planos/P0_864_RCA_F6_C0043_SELECAO_ORGANIZACAO_2026-11-28.md",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/866",
+  "plan_base_sha": "18b53fe3c7c80cba0c68cd4b203e5a0e84a4915e",
+  "plan_blob": "d8f77983631decb6d63c422d8ee37b647a6cf67f",
+  "plan_aprovacao": "Eficácia prospectiva exclusivamente após CI, revisão assistida e merge/readback protegido da PR #865; RED antes de BUILD.",
+  "justificativa": "Issue #864: intermitência da seleção organizacional em F6-C0043. Autorização fechada de diagnóstico, RED causal, correção mínima, regressões. Workflow focal temporário somente read-only, remover antes de merge. Escopo restrito por PR sem alterar allowlist global ou regular 76.",
+  "ativacao_autorizada": false,
+  "prod_changes_allowed": false,
+  "backend_changes_allowed": false
+}
