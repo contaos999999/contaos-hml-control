@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "d88bf0deff9b53fd10bb29036005f70a5c8613c9",
+  "source_commit": "32c5595c7af27436b20502b10fc67b7908ca811d",
   "source_date": "2026-11-28",
   "context_documents": [
     {
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "Reancoragem PLAN B2 #258: compare GitHub confirma somente PLAN backend e active-task alterados; 26 identidades canônicas preservadas. Sem certificação ou ativação."
+  "p0_reanchor_note": "B2 #259/F2 #860 CODE integrados; compare backend restrito aos quatro caminhos autorizados fora dos 26 caminhos canônicos. Sem certificado ou ativação material."
 }
